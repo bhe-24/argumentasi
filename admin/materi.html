@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Materi - Cendekia Aksara</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Quill Editor CSS (Rich Text) -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        display: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .font-display { font-family: 'Playfair Display', serif; }
+        
+        /* Sidebar Transition */
+        .sidebar-transition { transition: transform 0.3s ease-in-out; }
+        
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Quill Editor Custom Height */
+        #editor-container {
+            height: 400px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+        }
+        .ql-editor.ql-blank::before {
+            font-style: normal;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 texture-dots font-sans flex h-screen overflow-hidden text-slate-800">
+
+    <!-- OVERLAY LOADING -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-white/90 backdrop-blur-sm z-[100] flex flex-col items-center justify-center hidden">
+        <div class="w-16 h-16 border-4 border-amber-200 border-t-amber-500 rounded-full animate-spin mb-4"></div>
+        <h2 class="text-xl font-bold text-slate-800 font-display">Menyimpan Data...</h2>
+    </div>
+
+    <!-- SIDEBAR (Sama dengan Index) -->
+    <aside id="sidebar" class="bg-slate-900 text-slate-300 w-64 flex-shrink-0 fixed md:relative h-full z-40 transform -translate-x-full md:translate-x-0 sidebar-transition flex flex-col border-r border-slate-800 shadow-2xl">
+        <div class="p-6 border-b border-slate-800 flex items-center justify-center">
+            <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-10 object-contain" onerror="this.src='https://via.placeholder.com/150x50?text=LOGO'">
+        </div>
+        
+        <div class="flex-1 p-4 overflow-y-auto custom-scroll">
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-4 pl-2">Menu Kontrol</p>
+            <nav class="space-y-2">
+                <a href="index.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition group">
+                    <i class="fas fa-tachometer-alt w-5 text-center group-hover:text-amber-400 transition-colors"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="materi.html" class="flex items-center space-x-3 bg-amber-500/10 text-amber-400 border border-amber-500/20 px-4 py-3 rounded-xl font-semibold transition">
+                    <i class="fas fa-book-open w-5 text-center"></i>
+                    <span>Manajemen Materi</span>
+                </a>
+                <a href="budaya.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition group">
+                    <i class="fas fa-landmark w-5 text-center group-hover:text-amber-400 transition-colors"></i>
+                    <span>Eksplorasi Budaya</span>
+                </a>
+                <a href="pengguna.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition group">
+                    <i class="fas fa-users w-5 text-center group-hover:text-amber-400 transition-colors"></i>
+                    <span>Data Pengguna</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-slate-800">
+            <button onclick="window.location.href='../login.html'" class="flex items-center space-x-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 w-full px-4 py-3 rounded-xl font-medium transition">
+                <i class="fas fa-sign-out-alt w-5 text-center"></i>
+                <span>Keluar</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden relative bg-slate-50">
+        
+        <!-- TOPBAR -->
+        <header class="bg-white shadow-sm border-b border-slate-200 px-6 py-3 md:py-4 flex justify-between items-center z-30">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="md:hidden text-slate-600 focus:outline-none p-2 hover:bg-slate-100 rounded-lg">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <h1 class="font-display font-bold text-lg md:text-2xl text-slate-800 tracking-tight">Tulis Materi Baru</h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="index.html" class="text-sm font-bold text-slate-500 hover:text-blue-600 transition">
+                    <i class="fas fa-arrow-left mr-1"></i> Kembali
+                </a>
+            </div>
+        </header>
+
+        <!-- FORM CONTENT -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto custom-scroll p-4 md:p-8">
+            <div class="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+                
+                <!-- Header Form -->
+                <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                    <h2 class="font-bold text-slate-800 text-lg">Informasi Materi</h2>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Status:</label>
+                        <select id="inputStatus" class="text-sm font-bold border-none bg-white rounded-lg shadow-sm px-3 py-1.5 focus:ring-2 focus:ring-blue-100 outline-none">
+                            <option value="draft">Draft (Simpan Sementara)</option>
+                            <option value="published">Terbitkan (Publik)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <form id="materiForm" onsubmit="handleSave(event)" class="p-6 md:p-8 space-y-6">
+                    
+                    <!-- 1. Judul Materi -->
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Judul Materi</label>
+                        <input type="text" id="inputJudul" required class="w-full border-2 border-slate-200 rounded-xl p-4 focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition text-lg font-medium" placeholder="Contoh: Struktur Teks Argumentasi">
+                    </div>
+
+                    <!-- 2. Upload Gambar Cover (Base64 + Compress) -->
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Gambar Cover</label>
+                        <div class="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:bg-slate-50 hover:border-blue-400 transition cursor-pointer relative group" id="dropArea">
+                            <input type="file" id="inputCoverImage" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onchange="previewImage(this)">
+                            
+                            <!-- Tampilan Awal -->
+                            <div id="previewContainer" class="hidden flex flex-col items-center">
+                                <img id="imgPreview" src="" class="h-48 object-contain rounded-lg shadow-md mb-3">
+                                <p class="text-xs text-slate-500 font-medium">Klik untuk ganti gambar</p>
+                            </div>
+                            
+                            <!-- Icon Upload -->
+                            <div id="uploadPlaceholder" class="flex flex-col items-center">
+                                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                                    <i class="fas fa-cloud-upload-alt text-xl"></i>
+                                </div>
+                                <p class="text-sm font-bold text-slate-600">Klik atau Tarik Gambar ke Sini</p>
+                                <p class="text-xs text-slate-400 mt-1">Format: JPG/PNG (Otomatis dikompres)</p>
+                            </div>
+                        </div>
+                        <input type="hidden" id="base64Image">
+                    </div>
+
+                    <!-- 3. Rich Text Editor (Quill) -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-sm font-bold text-slate-700">Isi Materi</label>
+                            <span class="text-[10px] text-slate-400">Support: Bold, Italic, Link, Youtube, List</span>
+                        </div>
+                        
+                        <!-- Toolbar Quill -->
+                        <div id="editor-container" class="bg-white"></div>
+                    </div>
+
+                    <!-- Tombol Aksi -->
+                    <div class="pt-4 border-t border-slate-100 flex justify-end gap-4">
+                        <button type="button" onclick="window.history.back()" class="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition">Batal</button>
+                        <button type="submit" id="btnSave" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center gap-2">
+                            <i class="fas fa-save"></i> Simpan Materi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- LIBRARY SCRIPTS -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+    <!-- FIREBASE & LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            authDomain: "mading-cf676.firebaseapp.com",
+            projectId: "mading-cf676",
+            storageBucket: "mading-cf676.firebasestorage.app",
+            messagingSenderId: "72175203671",
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
+            measurementId: "G-590P9LLK7J"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- 1. INISIALISASI QUILL EDITOR ---
+        var quill = new Quill('#editor-container', {
+            theme: 'snow',
+            placeholder: 'Mulai tulis materi pembelajaran di sini...',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],        // Text formatting
+                    ['blockquote', 'code-block'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],       // Lists
+                    [{ 'color': [] }, { 'background': [] }],          // Text color
+                    ['link', 'image', 'video']                         // Link & Media (Video = Youtube)
+                ]
+            }
+        });
+
+        // --- 2. LOGIKA KOMPRESI GAMBAR (BASE64) ---
+        window.previewImage = function(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        // Resize & Compress menggunakan Canvas
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Max width 800px (agar tidak terlalu berat di Firestore)
+                        const maxWidth = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth) {
+                            height *= maxWidth / width;
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        // Draw gambar ke canvas
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Kompres ke JPG dengan kualitas 0.6
+                        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                        
+                        // Tampilkan preview
+                        document.getElementById('imgPreview').src = compressedDataUrl;
+                        document.getElementById('imgPreview').classList.remove('hidden');
+                        document.getElementById('previewContainer').classList.remove('hidden');
+                        document.getElementById('uploadPlaceholder').classList.add('hidden');
+                        
+                        // Simpan ke hidden input
+                        document.getElementById('base64Image').value = compressedDataUrl;
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // --- 3. CEK MODE EDIT ATAU TAMBAH BARU ---
+        let editDocId = null;
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get('action');
+        const id = urlParams.get('id');
+
+        // Jika mode edit
+        if (action === 'edit' && id) {
+            editDocId = id;
+            // Fetch data lama
+            getDoc(doc(db, "materials", id)).then((docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('inputJudul').value = data.judul;
+                    document.getElementById('inputStatus').value = data.status;
+                    
+                    // Load gambar lama
+                    if(data.coverImage) {
+                        document.getElementById('imgPreview').src = data.coverImage;
+                        document.getElementById('imgPreview').classList.remove('hidden');
+                        document.getElementById('previewContainer').classList.remove('hidden');
+                        document.getElementById('uploadPlaceholder').classList.add('hidden');
+                        document.getElementById('base64Image').value = data.coverImage;
+                    }
+
+                    // Load isi editor
+                    quill.root.innerHTML = data.isi || "";
+                }
+            });
+        }
+
+        // --- 4. FUNGSI SIMPAN ---
+        window.handleSave = async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('btnSave');
+            const overlay = document.getElementById('loadingOverlay');
+            
+            // UI Loading
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+            overlay.classList.remove('hidden');
+
+            const judul = document.getElementById('inputJudul').value;
+            const status = document.getElementById('inputStatus').value;
+            const coverImage = document.getElementById('base64Image').value; // Base64 Kompres
+            const isi = quill.root.innerHTML; // HTML dari Quill
+
+            // Validasi sederhana
+            if(!judul) {
+                alert("Judul harus diisi!");
+                location.reload();
+                return;
+            }
+
+            const dataToSave = {
+                judul: judul,
+                kategori: 'argumentasi', // Kategori default untuk halaman ini
+                status: status,
+                coverImage: coverImage,
+                isi: isi,
+                updatedAt: serverTimestamp()
+            };
+
+            try {
+                if (editDocId) {
+                    // Update Dokumen Lama
+                    await updateDoc(doc(db, "materials", editDocId), dataToSave);
+                    alert("Materi berhasil diperbarui!");
+                } else {
+                    // Buat Dokumen Baru
+                    dataToSave.createdAt = serverTimestamp();
+                    await addDoc(collection(db, "materials"), dataToSave);
+                    alert("Materi baru berhasil dibuat!");
+                }
+                window.location.href = "index.html";
+            } catch (error) {
+                console.error(error);
+                alert("Gagal menyimpan: " + error.message);
+                // Reset UI
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Simpan Materi';
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // Sidebar Toggle
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+            }
+        }
+    </script>
+</body>
+</html>
