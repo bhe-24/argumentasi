@@ -11,245 +11,438 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- HTML5 QR Code Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <!-- Tipografi: Poppins (teks) & Playfair Display (judul) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .font-display { font-family: 'Playfair Display', serif; }
+
         /* Animasi Skeleton Loading */
         .skeleton { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+
+        /* Tekstur titik halus untuk kesan kokoh & tidak monoton */
+        .texture-dots {
+            background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+        
+        /* Z-index tinggi untuk modal agar menutupi header */
+        .modal-z { z-index: 99999 !important; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col font-sans">
+<body class="bg-gray-50 min-h-screen flex flex-col">
 
-    <!-- BAGIAN ATAS (WARNA BIRU) -->
-    <!-- Header Utama: Setting (kiri) - Logo (tengah) - Aksi (kanan) -->
-    <header class="bg-blue-700 text-white p-3 md:p-4 shadow-md sticky top-0 z-40">
-        <div class="max-w-4xl mx-auto flex justify-between items-center gap-2">
+    <!-- BAGIAN ATAS (NAVY + AKSEN EMAS) -->
 
+    <!-- Bilah Kepercayaan: menegaskan kesan resmi & aman -->
+    <div class="bg-slate-950 text-slate-300 text-[10px] md:text-xs py-1.5 px-4 relative z-50">
+        <div class="max-w-5xl mx-auto flex items-center justify-center gap-4 md:gap-8">
+            <span class="flex items-center gap-1.5"><i class="fas fa-shield-halved text-amber-400"></i>Platform Resmi Cendekia Aksara</span>
+            <span class="hidden sm:flex items-center gap-1.5"><i class="fas fa-lock text-amber-400"></i>Sistem Terenkripsi & Terlindungi</span>
+        </div>
+    </div>
+
+    <!-- Header Utama (Diperbaiki menggunakan Grid agar proporsional dan logo besar) -->
+    <header class="relative bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white p-3 md:p-5 shadow-2xl sticky top-0 z-40 border-b-4 border-amber-500 overflow-visible">
+        <div class="absolute inset-0 texture-dots pointer-events-none"></div>
+        
+        <div class="relative max-w-5xl mx-auto grid grid-cols-3 items-center gap-2">
             <!-- Kiri: Ikon Setting -->
-            <div class="flex-1 flex justify-start">
-                <a href="setting-sistem.html" class="w-9 h-9 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center text-blue-700 hover:bg-gray-200 transition shadow shrink-0">
-                    <i class="fas fa-cog"></i>
+            <div class="flex justify-start">
+                <a href="setting-sistem.html" class="w-10 h-10 md:w-12 md:h-12 bg-white/10 hover:bg-amber-400 hover:text-slate-900 border border-white/20 rounded-full flex items-center justify-center text-white transition-all duration-300 shadow-md">
+                    <i class="fas fa-cog text-lg md:text-xl"></i>
                 </a>
             </div>
 
-            <!-- Tengah: Logo -->
-            <div class="flex justify-center shrink-0">
-                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Cendekia Aksara" class="h-9 md:h-12 object-contain" onerror="this.src='https://via.placeholder.com/150x50?text=LOGO'">
+            <!-- Tengah: Logo (Diperbesar & Presisi) -->
+            <div class="flex justify-center">
+                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Cendekia Aksara" class="h-12 sm:h-14 md:h-20 object-contain drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-transform" onerror="this.src='https://via.placeholder.com/150x50?text=LOGO'">
             </div>
 
             <!-- Kanan: Tombol Aksi -->
-            <div class="flex-1 flex justify-end">
-                <div class="relative">
-                    <button type="button" id="btnActionToggle" class="bg-blue-500 hover:bg-blue-600 px-3 md:px-4 py-2 rounded-full font-semibold transition flex items-center space-x-1 md:space-x-2 shadow text-sm md:text-base whitespace-nowrap">
-                        <span>Aksi</span>
-                        <i class="fas fa-chevron-down text-xs md:text-sm"></i>
+            <div class="flex justify-end relative">
+                <button type="button" onclick="toggleActionMenu(event)" class="bg-amber-400 hover:bg-amber-300 text-slate-900 px-4 md:px-6 py-2 md:py-2.5 rounded-full font-bold transition-all flex items-center space-x-2 shadow-[0_4px_10px_rgba(251,191,36,0.3)] text-xs md:text-base whitespace-nowrap border border-amber-200">
+                    <span>Aksi</span>
+                    <i class="fas fa-chevron-down text-[10px] md:text-xs"></i>
+                </button>
+                
+                <!-- Isi Dropdown Aksi -->
+                <div id="actionMenu" class="hidden absolute right-0 top-full mt-3 w-52 bg-white text-gray-800 rounded-xl shadow-2xl overflow-hidden border-2 border-slate-200 z-50 transform origin-top-right transition-all">
+                    <div class="bg-slate-50 px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b">Pintu Masuk</div>
+                    <a href="login.html" class="px-4 py-3 hover:bg-blue-50 border-b flex items-center transition-colors group">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                            <i class="fas fa-user-shield text-blue-600 group-hover:text-white text-sm"></i>
+                        </div>
+                        <span class="font-bold text-sm">Masuk Sistem</span>
+                    </a>
+                    <button type="button" onclick="openModal('modalMasukKelas')" class="w-full text-left px-4 py-3 hover:bg-green-50 flex items-center transition-colors group">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3 group-hover:bg-green-600 group-hover:text-white transition-colors">
+                            <i class="fas fa-door-open text-green-600 group-hover:text-white text-sm"></i>
+                        </div>
+                        <span class="font-bold text-sm">Ruang Kelas</span>
                     </button>
-                    <!-- Isi Dropdown -->
-                    <div id="actionMenu" class="hidden absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-xl overflow-hidden border z-50">
-                        <a href="login.html" class="block px-4 py-3 hover:bg-gray-100 border-b flex items-center">
-                            <i class="fas fa-sign-in-alt w-6 text-blue-600"></i> Login (Guru/Admin)
-                        </a>
-                        <button type="button" onclick="openModal('modalMasukKelas')" class="w-full text-left px-4 py-3 hover:bg-gray-100 flex items-center">
-                            <i class="fas fa-door-open w-6 text-green-600"></i> Masuk Kelas
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
     </header>
 
     <!-- Sub-Header Info -->
-    <div class="bg-blue-600 text-blue-100 py-3 shadow-inner">
-        <div class="max-w-4xl mx-auto px-4">
-            <div class="flex flex-col sm:flex-row justify-between items-center gap-2 text-sm md:text-base text-center sm:text-left">
+    <div class="bg-slate-900 text-blue-100 py-3 shadow-inner border-b border-slate-800">
+        <div class="max-w-5xl mx-auto px-4">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 text-xs md:text-sm text-center sm:text-left">
                 <!-- Waktu Kiri -->
-                <div class="flex items-center space-x-3">
-                    <i class="far fa-calendar-alt"></i>
-                    <span id="displayDate" class="font-medium">Memuat tanggal...</span>
+                <div class="flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+                    <i class="far fa-calendar-alt text-amber-400"></i>
+                    <span id="displayDate" class="font-medium tracking-wide">Memuat tanggal...</span>
                 </div>
 
-                <!-- Garis Tengah (hanya di layar >= sm) -->
-                <div class="hidden sm:block h-6 w-px bg-blue-400"></div>
-
                 <!-- Nama Kanan -->
-                <button type="button" onclick="openModal('modalNama')" class="flex items-center space-x-2 hover:text-white transition group">
+                <button type="button" onclick="openModal('modalNama')" class="flex items-center space-x-2 hover:text-amber-300 transition group bg-blue-900/40 px-4 py-1.5 rounded-full border border-blue-800/50">
                     <i class="far fa-user-circle text-lg"></i>
-                    <span id="displayName" class="font-bold underline decoration-dotted">Siapa namamu?</span>
+                    <span id="displayName" class="font-bold underline decoration-dotted decoration-amber-400">Siapa namamu?</span>
                 </button>
             </div>
-
-            <!-- Panduan Guru -->
-            <div class="text-center mt-3">
-                <button type="button" onclick="openModal('modalPanduanGuru')" class="text-xs md:text-sm bg-blue-800/50 hover:bg-blue-800 px-4 py-1.5 rounded-full transition border border-blue-400">
-                    <i class="fas fa-info-circle mr-1"></i> Panduan Penggunaan untuk Guru
+            
+            <!-- Panduan Guru (Center) -->
+            <div class="text-center mt-4 pb-1">
+                <button type="button" onclick="openModal('modalPanduanGuru')" class="text-[11px] md:text-sm bg-white/5 hover:bg-white/10 px-5 py-2 rounded-full transition border border-slate-700 text-slate-300 hover:text-white">
+                    <i class="fas fa-info-circle mr-1 text-blue-400"></i> Panduan Penggunaan Sistem untuk Guru & Admin
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- BAGIAN TOMBOL MENU UTAMA (WARNA HIJAU) -->
-    <section class="bg-green-600 py-8 px-4 shadow-lg border-b-4 border-green-700">
-        <div class="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
-            <a href="materi.html" class="bg-white rounded-xl p-4 text-center shadow transform hover:-translate-y-1 transition duration-200 group">
-                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-green-200">
-                    <i class="fas fa-book-open text-2xl text-green-600"></i>
+    <!-- BAGIAN TOMBOL MENU UTAMA -->
+    <section class="relative bg-emerald-800 py-10 md:py-14 px-4 shadow-lg overflow-hidden border-b-4 border-emerald-950">
+        <div class="absolute inset-0 texture-dots pointer-events-none opacity-50"></div>
+        <div class="relative max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            <a href="materi.html" class="bg-white rounded-2xl p-5 text-center shadow-[0_8px_20px_rgba(0,0,0,0.15)] border-2 border-transparent hover:border-amber-400 transform hover:-translate-y-2 transition-all duration-300 group">
+                <div class="w-14 h-14 md:w-16 md:h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3 border border-emerald-100 group-hover:bg-amber-100 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-book-open text-2xl md:text-3xl text-emerald-700 group-hover:text-amber-600"></i>
                 </div>
-                <h3 class="font-bold text-gray-800">Materi</h3>
+                <h3 class="font-bold text-slate-800 text-sm md:text-base uppercase tracking-wide">Materi</h3>
             </a>
-            <a href="latihan.html" class="bg-white rounded-xl p-4 text-center shadow transform hover:-translate-y-1 transition duration-200 group">
-                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-green-200">
-                    <i class="fas fa-pencil-alt text-2xl text-green-600"></i>
+            <a href="latihan.html" class="bg-white rounded-2xl p-5 text-center shadow-[0_8px_20px_rgba(0,0,0,0.15)] border-2 border-transparent hover:border-amber-400 transform hover:-translate-y-2 transition-all duration-300 group">
+                <div class="w-14 h-14 md:w-16 md:h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3 border border-emerald-100 group-hover:bg-amber-100 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-pencil-alt text-2xl md:text-3xl text-emerald-700 group-hover:text-amber-600"></i>
                 </div>
-                <h3 class="font-bold text-gray-800">Latihan</h3>
+                <h3 class="font-bold text-slate-800 text-sm md:text-base uppercase tracking-wide">Latihan</h3>
             </a>
-            <a href="handout.html" class="bg-white rounded-xl p-4 text-center shadow transform hover:-translate-y-1 transition duration-200 group">
-                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-green-200">
-                    <i class="fas fa-file-pdf text-2xl text-green-600"></i>
+            <a href="handout.html" class="bg-white rounded-2xl p-5 text-center shadow-[0_8px_20px_rgba(0,0,0,0.15)] border-2 border-transparent hover:border-amber-400 transform hover:-translate-y-2 transition-all duration-300 group">
+                <div class="w-14 h-14 md:w-16 md:h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3 border border-emerald-100 group-hover:bg-amber-100 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-file-pdf text-2xl md:text-3xl text-emerald-700 group-hover:text-amber-600"></i>
                 </div>
-                <h3 class="font-bold text-gray-800">Handout</h3>
+                <h3 class="font-bold text-slate-800 text-sm md:text-base uppercase tracking-wide">Handout</h3>
             </a>
-            <a href="kreasi.html" class="bg-white rounded-xl p-4 text-center shadow transform hover:-translate-y-1 transition duration-200 group">
-                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-green-200">
-                    <i class="fas fa-lightbulb text-2xl text-green-600"></i>
+            <a href="kreasi.html" class="bg-white rounded-2xl p-5 text-center shadow-[0_8px_20px_rgba(0,0,0,0.15)] border-2 border-transparent hover:border-amber-400 transform hover:-translate-y-2 transition-all duration-300 group">
+                <div class="w-14 h-14 md:w-16 md:h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3 border border-emerald-100 group-hover:bg-amber-100 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-lightbulb text-2xl md:text-3xl text-emerald-700 group-hover:text-amber-600"></i>
                 </div>
-                <h3 class="font-bold text-gray-800">Kreasi AI</h3>
+                <h3 class="font-bold text-slate-800 text-sm md:text-base uppercase tracking-wide">Kreasi AI</h3>
             </a>
         </div>
+        
+        <!-- Pembatas gelombang -->
+        <svg class="absolute bottom-0 left-0 w-full text-amber-50 pointer-events-none" viewBox="0 0 1440 40" preserveAspectRatio="none" style="height:40px;">
+            <path fill="currentColor" d="M0,32 C240,4 480,4 720,20 C960,36 1200,36 1440,12 L1440,40 L0,40 Z"></path>
+        </svg>
     </section>
 
-    <!-- BAGIAN KONTEN (WARNA KUNING/ORANYE) -->
-    <main class="flex-grow bg-amber-50">
+    <!-- BAGIAN KONTEN -->
+    <main class="flex-grow bg-amber-50 pb-12">
         
         <!-- Teks Argumentasi Terbaru -->
-        <section class="py-8 px-4 border-b border-amber-200">
-            <div class="max-w-4xl mx-auto">
-                <div class="flex items-center space-x-3 mb-6">
-                    <div class="w-2 h-8 bg-amber-500 rounded-full"></div>
-                    <h2 class="text-2xl font-extrabold text-amber-900">Update Teks Argumentasi</h2>
+        <section class="py-10 px-4">
+            <div class="max-w-5xl mx-auto">
+                <div class="flex items-center space-x-4 mb-8 border-b-2 border-amber-200 pb-4">
+                    <div class="w-3 h-10 bg-amber-500 rounded-lg shadow-sm"></div>
+                    <h2 class="text-2xl md:text-3xl font-display font-extrabold text-slate-800 tracking-tight">Kajian Argumentasi Terbaru</h2>
                 </div>
                 
-                <div id="containerArgumentasi" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Skeleton Loader (Akan hilang setelah Firebase merender) -->
-                    <div class="bg-white p-4 rounded-xl shadow border border-amber-100 flex items-center space-x-4 skeleton">
-                        <div class="w-16 h-16 bg-gray-200 rounded-full"></div>
-                        <div class="flex-1 space-y-2"><div class="h-4 bg-gray-200 rounded w-3/4"></div><div class="h-3 bg-gray-200 rounded w-1/2"></div></div>
+                <div id="containerArgumentasi" class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
+                    <!-- Skeleton -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-amber-100 flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-5 skeleton">
+                        <div class="w-20 h-20 bg-slate-200 rounded-xl"></div>
+                        <div class="flex-1 w-full space-y-3">
+                            <div class="h-5 bg-slate-200 rounded w-3/4"></div>
+                            <div class="h-4 bg-slate-200 rounded w-full"></div>
+                            <div class="h-4 bg-slate-200 rounded w-1/2"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- Artikel Umum Bahan Bacaan -->
-        <section class="py-8 px-4 bg-orange-100">
-            <div class="max-w-4xl mx-auto">
-                <div class="flex items-center space-x-3 mb-6">
-                    <div class="w-2 h-8 bg-orange-500 rounded-full"></div>
-                    <h2 class="text-2xl font-extrabold text-orange-900">Artikel & Budaya Temanggung</h2>
+        <section class="py-10 px-4 bg-white border-t border-amber-100 shadow-inner">
+            <div class="max-w-5xl mx-auto">
+                <div class="flex items-center space-x-4 mb-8 border-b-2 border-slate-100 pb-4">
+                    <div class="w-3 h-10 bg-blue-600 rounded-lg shadow-sm"></div>
+                    <h2 class="text-2xl md:text-3xl font-display font-extrabold text-slate-800 tracking-tight">Eksplorasi Budaya Temanggung</h2>
                 </div>
 
-                <div id="containerArtikel" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div id="containerArtikel" class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
                     <!-- Data dari Firebase masuk kesini -->
+                    <div class="bg-slate-50 p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-5 skeleton">
+                        <div class="w-20 h-20 bg-slate-200 rounded-xl"></div>
+                        <div class="flex-1 w-full space-y-3">
+                            <div class="h-5 bg-slate-200 rounded w-3/4"></div>
+                            <div class="h-4 bg-slate-200 rounded w-full"></div>
+                            <div class="h-4 bg-slate-200 rounded w-1/2"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
     </main>
 
-    <!-- FOOTER -->
-    <footer class="bg-gray-900 text-gray-400 py-8 px-4 text-center md:text-left">
-        <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- FOOTER PROFESIONAL -->
+    <footer class="bg-slate-950 text-slate-400 py-12 px-4 border-t-4 border-blue-900">
+        <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
             <div>
-                <h4 class="text-white font-bold mb-3">Cendekia Aksara Edukasi</h4>
-                <p class="text-sm">Platform bahan ajar digital interaktif teks argumentasi berbasis budaya lokal Temanggung.</p>
+                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-10 mx-auto md:mx-0 mb-4 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all">
+                <p class="text-sm leading-relaxed">Platform bahan ajar digital interaktif teks argumentasi berbasis pelestarian budaya lokal Kabupaten Temanggung.</p>
             </div>
             <div>
-                <h4 class="text-white font-bold mb-3">Tautan Penting</h4>
-                <ul class="text-sm space-y-2">
-                    <li><a href="kebijakan-privasi.html" class="hover:text-white">Kebijakan Privasi</a></li>
-                    <li><a href="#" onclick="openModal('modalPanduanGuru')" class="hover:text-white">Panduan Penggunaan</a></li>
+                <h4 class="text-white font-bold mb-4 uppercase tracking-widest text-sm">Navigasi Utama</h4>
+                <ul class="text-sm space-y-3">
+                    <li><a href="login.html" class="hover:text-amber-400 transition-colors"><i class="fas fa-angle-right mr-2"></i>Akses Administrator</a></li>
+                    <li><a href="#" onclick="openModal('modalPanduanGuru')" class="hover:text-amber-400 transition-colors"><i class="fas fa-angle-right mr-2"></i>Panduan Sistem</a></li>
                 </ul>
             </div>
             <div>
-                <h4 class="text-white font-bold mb-3">Kredit Developer</h4>
-                <p class="text-sm">&copy; 2026 Tim Pengembang Mading Cendekia.<br>Ditenagai oleh Firebase & Google AI.</p>
+                <h4 class="text-white font-bold mb-4 uppercase tracking-widest text-sm">Legalitas & Sistem</h4>
+                <ul class="text-sm space-y-3">
+                    <li><a href="kebijakan-privasi.html" class="hover:text-amber-400 transition-colors"><i class="fas fa-shield-alt mr-2"></i>Kebijakan Privasi</a></li>
+                    <li><a href="developer.html" class="hover:text-blue-400 transition-colors font-semibold"><i class="fas fa-code mr-2"></i>Informasi Developer</a></li>
+                </ul>
             </div>
+        </div>
+        <div class="max-w-5xl mx-auto mt-10 pt-6 border-t border-slate-800 text-center text-xs md:text-sm">
+            <p>&copy; 2026 Hak Cipta Dilindungi. Ditenagai oleh infrastruktur Google Firebase & AI.</p>
         </div>
     </footer>
 
-    <!-- ==================== MODALS ==================== -->
-
+    <!-- ==================== MODALS (UI LOGIC) ==================== -->
     <!-- Modal Isi Nama -->
-    <div id="modalNama" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 relative transform transition-all">
-            <button type="button" onclick="closeModal('modalNama')" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
-            <h3 class="text-2xl font-bold text-blue-700 mb-2">Halo, Sobat Aksara!</h3>
-            <p class="text-gray-600 mb-4">Siapa namamu? Masukkan namamu agar sistem bisa menyimpan progres belajarmu.</p>
-            <input type="text" id="inputNamaStudent" placeholder="Masukkan nama lengkap..." class="w-full border-2 border-gray-300 rounded-xl p-3 focus:border-blue-500 focus:outline-none mb-4 font-medium">
-            <button type="button" onclick="simpanNama()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">Simpan Nama</button>
+    <div id="modalNama" class="fixed inset-0 bg-slate-900/80 hidden modal-z flex items-center justify-center backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 relative transform scale-95 transition-transform duration-300" id="modalNamaContent">
+            <button type="button" onclick="closeModal('modalNama')" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 hover:bg-red-100 hover:text-red-500 transition-colors"><i class="fas fa-times"></i></button>
+            
+            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-user-graduate text-2xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-slate-800 text-center mb-2">Halo, Sobat Aksara!</h3>
+            <p class="text-slate-500 text-center mb-6 text-sm">Masukkan namamu agar sistem dapat menyimpan rekam jejak progres belajarmu di perangkat ini.</p>
+            
+            <input type="text" id="inputNamaStudent" placeholder="Ketik nama lengkapmu di sini..." class="w-full border-2 border-slate-200 rounded-xl p-4 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none mb-4 font-medium transition-all text-center text-lg">
+            
+            <button type="button" onclick="simpanNama()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-200">
+                Simpan & Lanjutkan Belajar
+            </button>
         </div>
     </div>
 
     <!-- Modal Panduan Guru -->
-    <div id="modalPanduanGuru" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto">
-            <button type="button" onclick="closeModal('modalPanduanGuru')" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
-            <h3 class="text-2xl font-bold text-blue-700 mb-4 border-b pb-2"><i class="fas fa-chalkboard-teacher mr-2"></i>Panduan Untuk Guru</h3>
-            <div class="space-y-4 text-gray-700">
-                <p>Selamat datang di Ruang Guru Cendekia Aksara. Berikut panduan singkat:</p>
-                <ol class="list-decimal pl-5 space-y-2">
-                    <li>Pilih menu <b>Aksi -> Login</b> untuk masuk menggunakan akun Guru.</li>
-                    <li>Setelah login, Anda akan diarahkan ke <b>Dashboard Guru</b> untuk mengelola materi kelas.</li>
-                    <li>Buat Kelas baru untuk mendapatkan <b>6 Digit Kode Kelas Unik</b> atau <b>QR Code</b>.</li>
-                    <li>Bagikan kode tersebut kepada siswa agar mereka bisa mengakses tugas dan materi spesifik kelas Anda.</li>
-                </ol>
-                <div class="bg-blue-50 p-3 rounded-lg border border-blue-200 mt-4 text-sm">
-                    <i class="fas fa-info-circle text-blue-500 mr-1"></i> <i>Admin sekolah memegang kendali penuh atas pendaftaran akun guru baru.</i>
+    <div id="modalPanduanGuru" class="fixed inset-0 bg-slate-900/80 hidden modal-z flex items-center justify-center backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 md:p-8 relative max-h-[90vh] overflow-y-auto transform scale-95 transition-transform duration-300" id="modalPanduanGuruContent">
+            <button type="button" onclick="closeModal('modalPanduanGuru')" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 hover:bg-red-100 hover:text-red-500 transition-colors"><i class="fas fa-times"></i></button>
+            
+            <div class="flex items-center space-x-3 mb-6 border-b-2 border-slate-100 pb-4">
+                <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center">
+                    <i class="fas fa-chalkboard-teacher text-lg"></i>
                 </div>
+                <h3 class="text-xl md:text-2xl font-bold text-slate-800">Panduan Sistem</h3>
             </div>
-            <div class="mt-6 text-right">
-                <a href="login.html" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">Ke Halaman Login</a>
+            
+            <div class="space-y-5 text-slate-600 text-sm md:text-base leading-relaxed">
+                <p>Selamat datang di infrastruktur digital Cendekia Aksara. Berikut adalah alur penggunaan sistem ruang kelas:</p>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <ol class="list-decimal pl-5 space-y-3 font-medium text-slate-700">
+                        <li>Pilih menu <b class="text-blue-600">Aksi &rarr; Masuk Sistem</b> pada pojok kanan atas.</li>
+                        <li>Autentikasi menggunakan kredensial Guru yang telah diverifikasi.</li>
+                        <li>Akses <b>Dashboard Pengajar</b> untuk membuat dan mengelola Ruang Kelas.</li>
+                        <li>Sistem akan secara otomatis menerbitkan <b class="text-emerald-600">Kode Unik 6 Digit</b> dan QR Code untuk dibagikan kepada siswa.</li>
+                    </ol>
+                </div>
+                <div class="flex items-start space-x-3 bg-blue-50/50 p-4 rounded-xl border border-blue-100 text-xs md:text-sm text-blue-800">
+                    <i class="fas fa-shield-alt text-blue-500 mt-0.5 text-lg"></i>
+                    <p><b>Catatan Keamanan:</b> Otoritas pendaftaran akun pengajar sepenuhnya berada di bawah kendali Administrator Sistem (Admin Sekolah) untuk mencegah penyalahgunaan data.</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Masuk Kelas (Manual / QR) -->
-    <div id="modalMasukKelas" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 relative">
-            <button type="button" onclick="closeModal('modalMasukKelas'); stopQRScanner();" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
-            <h3 class="text-2xl font-bold text-green-700 mb-2">Masuk Kelas</h3>
-            <p class="text-gray-600 mb-4">Masukkan 6 digit kode kelas dari gurumu atau scan QR code.</p>
+    <!-- Modal Masuk Kelas -->
+    <div id="modalMasukKelas" class="fixed inset-0 bg-slate-900/80 hidden modal-z flex items-center justify-center backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 md:p-8 relative transform scale-95 transition-transform duration-300" id="modalMasukKelasContent">
+            <button type="button" onclick="closeModal('modalMasukKelas'); stopQRScanner();" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 hover:bg-red-100 hover:text-red-500 transition-colors"><i class="fas fa-times"></i></button>
+            
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-door-open text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-800">Masuk Kelas</h3>
+                <p class="text-slate-500 mt-2 text-sm">Gunakan kode unik atau pindai QR Code dari gurumu.</p>
+            </div>
             
             <!-- Input Manual -->
             <div id="manualInputSection">
-                <input type="text" id="inputKodeKelas" maxlength="6" placeholder="Misal: AB1234" class="w-full border-2 border-gray-300 rounded-xl p-3 text-center text-xl uppercase tracking-widest font-bold focus:border-green-500 focus:outline-none mb-4">
-                <button type="button" onclick="prosesGabungKelas()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition mb-4">Gabung Kelas</button>
+                <input type="text" id="inputKodeKelas" maxlength="6" placeholder="Kode 6 Digit" class="w-full border-2 border-slate-200 rounded-xl p-4 text-center text-2xl uppercase tracking-[0.5em] font-bold text-slate-700 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 outline-none mb-4 transition-all">
+                <button type="button" onclick="prosesGabungKelas()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-emerald-200">
+                    Otentikasi Kelas
+                </button>
                 
-                <div class="flex items-center justify-center space-x-2 my-2 text-gray-400">
-                    <div class="w-10 h-px bg-gray-300"></div>
-                    <span class="text-sm">ATAU</span>
-                    <div class="w-10 h-px bg-gray-300"></div>
+                <div class="flex items-center justify-center space-x-3 my-6 text-slate-300">
+                    <div class="flex-1 h-px bg-slate-200"></div>
+                    <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Atau</span>
+                    <div class="flex-1 h-px bg-slate-200"></div>
                 </div>
                 
-                <button type="button" onclick="startQRScanner()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-xl transition flex justify-center items-center">
-                    <i class="fas fa-qrcode mr-2"></i> Scan QR Code
+                <button type="button" onclick="startQRScanner()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-xl transition-all shadow-lg flex justify-center items-center group">
+                    <i class="fas fa-qrcode mr-3 text-lg group-hover:text-amber-400 transition-colors"></i> Buka Pemindai QR
                 </button>
             </div>
 
             <!-- Scanner Section -->
             <div id="qrScannerSection" class="hidden flex flex-col items-center">
-                <div id="qr-reader" class="w-full max-w-sm rounded-lg overflow-hidden border-2 border-green-500"></div>
-                <button type="button" onclick="stopQRScanner()" class="mt-4 text-red-500 font-bold hover:underline">Batal Scan</button>
+                <div id="qr-reader" class="w-full max-w-sm rounded-xl overflow-hidden border-4 border-emerald-500 shadow-inner bg-black"></div>
+                <button type="button" onclick="stopQRScanner()" class="mt-6 text-slate-500 font-bold hover:text-red-500 transition-colors bg-slate-100 px-6 py-2 rounded-full">Batalkan Pemindaian</button>
             </div>
         </div>
     </div>
 
 
-    <!-- ==================== SCRIPT LOGIKA & FIREBASE ==================== -->
-    <script type="module">
-        // 1. Inisialisasi Firebase v10 Modular (Sesuai Data Project mading-cf676)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+    <!-- ==================== 1. SCRIPT LOGIKA UI (BERDIRI SENDIRI, SANGAT CEPAT) ==================== -->
+    <script>
+        // Set Tanggal Realtime
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('displayDate').textContent = new Date().toLocaleDateString('id-ID', dateOptions);
 
+        // Logika Dropdown Aksi (Anti Macet)
+        function toggleActionMenu(e) {
+            e.stopPropagation(); // Mencegah event klik menyebar ke window
+            const menu = document.getElementById('actionMenu');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                // Animasi halus masuk
+                setTimeout(() => { menu.classList.add('scale-100', 'opacity-100'); }, 10);
+            } else {
+                menu.classList.add('hidden');
+            }
+        }
+
+        // Klik di luar dropdown untuk menutup
+        window.addEventListener('click', (e) => {
+            const menu = document.getElementById('actionMenu');
+            const btn = document.getElementById('btnActionToggle');
+            if (!menu.classList.contains('hidden') && e.target !== btn && !btn.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        // Manajemen Nama Siswa (Local Storage)
+        function cekNamaLokal() {
+            const nama = localStorage.getItem('namaSiswaCendekia');
+            if (nama) {
+                document.getElementById('displayName').innerHTML = `Halo, <span class="text-amber-400">${nama}</span>!`;
+            }
+        }
+        cekNamaLokal(); // Eksekusi instan saat web diload
+
+        function simpanNama() {
+            const input = document.getElementById('inputNamaStudent').value;
+            if(input.trim() !== '') {
+                localStorage.setItem('namaSiswaCendekia', input);
+                cekNamaLokal();
+                closeModal('modalNama');
+            } else {
+                alert('Nama tidak boleh kosong!');
+                document.getElementById('inputNamaStudent').focus();
+            }
+        }
+
+        // Kontrol Modal (Dengan Animasi CSS)
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            const content = document.getElementById(id + 'Content');
+            modal.classList.remove('hidden');
+            
+            // Animasi Fade-in
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                if(content) content.classList.remove('scale-95');
+            }, 10);
+
+            // Jika buka modal nama, isi otomatis jika sudah ada
+            if(id === 'modalNama') {
+                const existing = localStorage.getItem('namaSiswaCendekia');
+                if(existing) document.getElementById('inputNamaStudent').value = existing;
+                setTimeout(() => document.getElementById('inputNamaStudent').focus(), 100);
+            }
+        }
+        
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            const content = document.getElementById(id + 'Content');
+            
+            // Animasi Fade-out
+            modal.classList.add('opacity-0');
+            if(content) content.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); // Waktu yang sama dengan duration-300 di class tailwind
+        }
+
+        // Integrasi Kamera QR Code
+        let html5QrcodeScanner = null;
+        function startQRScanner() {
+            document.getElementById('manualInputSection').classList.add('hidden');
+            document.getElementById('qrScannerSection').classList.remove('hidden');
+            
+            html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+            html5QrcodeScanner.render(
+                (decodedText) => {
+                    stopQRScanner();
+                    closeModal('modalMasukKelas');
+                    alert(`Kode Otentikasi Terdeteksi: ${decodedText}. Menghubungkan ke server...`);
+                    // Redirect logic: window.location.href = `kelas.html?code=${decodedText}`
+                }, 
+                (error) => { /* Abaikan pesan error background saat memindai */ }
+            );
+        }
+        
+        function stopQRScanner() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear().then(() => {
+                    document.getElementById('qrScannerSection').classList.add('hidden');
+                    document.getElementById('manualInputSection').classList.remove('hidden');
+                });
+            }
+        }
+        
+        function prosesGabungKelas() {
+            const kode = document.getElementById('inputKodeKelas').value.toUpperCase();
+            if(kode.length === 6) {
+                alert(`Memproses kode kelas: ${kode}...`);
+            } else {
+                alert("Otentikasi Gagal: Kode kelas harus tepat 6 karakter!");
+                document.getElementById('inputKodeKelas').focus();
+            }
+        }
+    </script>
+
+    <!-- ==================== 2. SCRIPT FIREBASE (DATABASE REAL) ==================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, where, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Konfigurasi Database Utama
         const firebaseConfig = {
             apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
             authDomain: "mading-cf676.firebaseapp.com",
@@ -262,160 +455,82 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const analytics = getAnalytics(app);
 
-        // 2. Logika Tanggal
-        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('displayDate').textContent = new Date().toLocaleDateString('id-ID', dateOptions);
-
-        // 3. Dropdown Aksi
-        const btnActionToggle = document.getElementById('btnActionToggle');
-        const actionMenu = document.getElementById('actionMenu');
-        btnActionToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            actionMenu.classList.toggle('hidden');
-        });
-        document.addEventListener('click', (e) => {
-            if (!actionMenu.contains(e.target)) actionMenu.classList.add('hidden');
-        });
-
-        // 4. Manajemen Nama (LocalStorage)
-        function cekNamaLokal() {
-            const nama = localStorage.getItem('namaSiswaCendekia');
-            if (nama) {
-                document.getElementById('displayName').innerHTML = `Halo, <span class="text-amber-300">${nama}</span>!`;
-            } else {
-                document.getElementById('displayName').textContent = "Siapa namamu?";
-            }
-        }
-        cekNamaLokal(); // Jalankan saat muat halaman
-
-        // Binding fungsi ke window agar bisa dipanggil on-click HTML inline
-        window.simpanNama = function() {
-            const input = document.getElementById('inputNamaStudent').value;
-            if(input.trim() !== '') {
-                localStorage.setItem('namaSiswaCendekia', input);
-                cekNamaLokal();
-                closeModal('modalNama');
-            } else {
-                alert('Nama tidak boleh kosong!');
-            }
-        }
-
-        // 5. Logika Modal
-        window.openModal = function(id) {
-            document.getElementById(id).classList.remove('hidden');
-            if(id === 'modalNama') {
-                const existing = localStorage.getItem('namaSiswaCendekia');
-                if(existing) document.getElementById('inputNamaStudent').value = existing;
-            }
-        }
-        window.closeModal = function(id) {
-            document.getElementById(id).classList.add('hidden');
-        }
-
-        // 6. Integrasi QR Scanner (Kamera)
-        let html5QrcodeScanner = null;
-        window.startQRScanner = function() {
-            document.getElementById('manualInputSection').classList.add('hidden');
-            document.getElementById('qrScannerSection').classList.remove('hidden');
-            
-            html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
-            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-        }
-        function onScanSuccess(decodedText, decodedResult) {
-            stopQRScanner();
-            closeModal('modalMasukKelas');
-            alert(`Berhasil scan kode: ${decodedText}. Meneruskan ke kelas...`);
-            // Lakukan redirect: window.location.href = `kelas.html?code=${decodedText}`
-        }
-        function onScanFailure(error) { /* Background error handling */ }
-        window.stopQRScanner = function() {
-            if (html5QrcodeScanner) {
-                html5QrcodeScanner.clear().then(() => {
-                    document.getElementById('qrScannerSection').classList.add('hidden');
-                    document.getElementById('manualInputSection').classList.remove('hidden');
-                });
-            }
-        }
-        window.prosesGabungKelas = function() {
-            const kode = document.getElementById('inputKodeKelas').value.toUpperCase();
-            if(kode.length === 6) {
-                alert(`Memproses kode ${kode}...`);
-                // Integrasi pengecekan firestore kelas
-            } else {
-                alert("Kode kelas harus 6 karakter!");
-            }
-        }
-
-        // 7. Mengambil Data Nyata (Real) dari Firestore
-        // Fungsi komponen perender UI Item
-        function renderCardItem(docId, data, urlPrefix) {
-            // Karena data Base64/Compressed disimpan Firebase, kita panggil properti gambarnya (default placeholder jika kosong)
-            const imgBase64 = data.coverImage || data.gambarBase64 || "https://via.placeholder.com/100?text=Logo"; 
+        // Fungsi Render Kartu Materi yang elegan
+        function renderCardItem(docId, data, urlPrefix, isArticle = false) {
+            const imgBase64 = data.coverImage || data.gambarBase64 || "https://via.placeholder.com/200x200?text=Data+Kosong"; 
             const judul = data.judul || "Judul Tidak Diketahui";
-            const cuplikan = data.cuplikan || data.deskripsiSingkat || "Klik untuk membaca selengkapnya...";
+            const cuplikan = data.cuplikan || data.deskripsiSingkat || "Klik untuk mulai membaca selengkapnya...";
+            const colorClass = isArticle ? "text-blue-700 bg-blue-50 border-blue-200" : "text-amber-700 bg-amber-50 border-amber-200";
+            const hoverColor = isArticle ? "hover:bg-blue-600 hover:text-white" : "hover:bg-amber-500 hover:text-white";
 
             return `
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition flex items-center space-x-4">
-                <div class="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 border-2 border-gray-200">
-                    <img src="${imgBase64}" alt="${judul}" class="w-full h-full object-cover">
+            <a href="${urlPrefix}${docId}" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-xl hover:border-slate-300 transition-all duration-300 flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-5 group">
+                <div class="w-full sm:w-28 sm:h-28 h-40 rounded-xl overflow-hidden shrink-0 border border-slate-100 shadow-inner relative">
+                    <div class="absolute inset-0 bg-slate-900/10 group-hover:bg-transparent transition-colors z-10"></div>
+                    <img src="${imgBase64}" alt="${judul}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500">
                 </div>
-                <div class="flex-1">
-                    <h3 class="font-bold text-gray-800 line-clamp-1">${judul}</h3>
-                    <p class="text-sm text-gray-500 line-clamp-1 mb-2">${cuplikan}</p>
-                    <a href="${urlPrefix}${docId}" class="inline-block bg-orange-100 hover:bg-orange-200 text-orange-700 text-xs font-bold px-3 py-1 rounded-full transition">
-                        Baca Selengkapnya <i class="fas fa-arrow-right ml-1"></i>
-                    </a>
+                <div class="flex-1 flex flex-col justify-center w-full">
+                    <h3 class="font-bold text-slate-800 text-lg md:text-xl line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors">${judul}</h3>
+                    <p class="text-sm text-slate-500 line-clamp-2 mb-4 leading-relaxed">${cuplikan}</p>
+                    <div>
+                        <span class="inline-flex items-center justify-center font-bold text-xs px-4 py-1.5 rounded-full border transition-colors ${colorClass} ${hoverColor}">
+                            Baca Selengkapnya <i class="fas fa-arrow-right ml-2 text-[10px]"></i>
+                        </span>
+                    </div>
                 </div>
-            </div>`;
+            </a>`;
         }
 
-        // Fetch Data Argumentasi & Artikel
+        // Mengambil Data Nyata
         async function fetchKontenBeranda() {
             const contArg = document.getElementById('containerArgumentasi');
             const contArt = document.getElementById('containerArtikel');
 
             try {
-                // Fetch Argumentasi (Kategori: argumentasi)
-                // Catatan: Pastikan di Firestore Anda ada collection 'materials' dgn field 'kategori'
+                // 1. Fetch Materi Argumentasi
                 const qArg = query(collection(db, "materials"), where("kategori", "==", "argumentasi"), limit(4));
                 const argSnapshot = await getDocs(qArg);
                 
                 if(argSnapshot.empty) {
-                    contArg.innerHTML = `<div class="col-span-2 text-center py-6 text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">Kosong. Belum ada materi teks argumentasi yang diunggah Admin.</div>`;
+                    contArg.innerHTML = `<div class="col-span-1 md:col-span-2 text-center py-10 text-slate-500 bg-white/50 rounded-2xl border-2 border-dashed border-slate-300">
+                        <i class="fas fa-folder-open text-4xl mb-3 text-slate-300"></i><br>Belum ada materi teks argumentasi yang dipublikasikan.
+                    </div>`;
                 } else {
                     contArg.innerHTML = "";
-                    argSnapshot.forEach((doc) => {
-                        contArg.innerHTML += renderCardItem(doc.id, doc.data(), "baca.html?tipe=argumentasi&id=");
-                    });
+                    argSnapshot.forEach((doc) => contArg.innerHTML += renderCardItem(doc.id, doc.data(), "baca.html?tipe=argumentasi&id=", false));
                 }
 
-                // Fetch Artikel Umum (Kategori: artikel)
+                // 2. Fetch Artikel Budaya
                 const qArt = query(collection(db, "materials"), where("kategori", "==", "artikel"), limit(4));
                 const artSnapshot = await getDocs(qArt);
                 
                 if(artSnapshot.empty) {
-                    contArt.innerHTML = `<div class="col-span-2 text-center py-6 text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">Kosong. Belum ada artikel eksplorasi budaya.</div>`;
+                    contArt.innerHTML = `<div class="col-span-1 md:col-span-2 text-center py-10 text-slate-500 bg-white/50 rounded-2xl border-2 border-dashed border-slate-300">
+                        <i class="fas fa-landmark text-4xl mb-3 text-slate-300"></i><br>Belum ada eksplorasi budaya yang dipublikasikan.
+                    </div>`;
                 } else {
                     contArt.innerHTML = "";
-                    artSnapshot.forEach((doc) => {
-                        contArt.innerHTML += renderCardItem(doc.id, doc.data(), "baca.html?tipe=artikel&id=");
-                    });
+                    artSnapshot.forEach((doc) => contArt.innerHTML += renderCardItem(doc.id, doc.data(), "baca.html?tipe=artikel&id=", true));
                 }
 
             } catch (error) {
-                console.error("Gagal memuat data Firestore:", error);
-                contArg.innerHTML = `<p class="text-red-500 text-sm">Gagal terhubung ke database. Pastikan Security Rules Firebase mengizinkan akses (read).</p>`;
-                contArt.innerHTML = `<p class="text-red-500 text-sm">Gagal terhubung ke database.</p>`;
+                console.error("Kesalahan Sistem Database:", error);
+                const errorHTML = `<div class="col-span-1 md:col-span-2 bg-red-50 p-5 rounded-2xl border border-red-200 flex items-start space-x-3 text-red-700">
+                    <i class="fas fa-exclamation-triangle mt-1"></i>
+                    <div><h4 class="font-bold">Koneksi Server Gagal</h4><p class="text-sm mt-1">Gagal terhubung ke pusat data. Sistem mencoba memuat kembali.</p></div>
+                </div>`;
+                contArg.innerHTML = errorHTML;
+                contArt.innerHTML = errorHTML;
             }
         }
 
-        // Eksekusi pemanggilan database saat halaman selesai dimuat
-        document.addEventListener("DOMContentLoaded", () => {
+        // Pastikan DOM selesai dirender sebelum Firebase memanggil data
+        if(document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', fetchKontenBeranda);
+        } else {
             fetchKontenBeranda();
-        });
-
+        }
     </script>
 </body>
 </html>
