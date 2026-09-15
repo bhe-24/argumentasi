@@ -21,43 +21,39 @@
 <body class="bg-gray-50 min-h-screen flex flex-col font-sans">
 
     <!-- BAGIAN ATAS (WARNA BIRU) -->
-    <!-- Header Utama -->
-    <header class="bg-blue-700 text-white p-4 shadow-md sticky top-0 z-40">
-        <div class="max-w-4xl mx-auto flex justify-between items-center relative">
-            
-            <!-- Ruang kosong kiri agar logo bisa presisi di tengah -->
-            <div class="flex-1"></div>
-            
-            <!-- Logo di Tengah -->
-            <div class="flex-1 flex justify-center">
-                <!-- Menggunakan i.imgur.com agar gambar langsung ter-render -->
-                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Cendekia Aksara" class="h-12 object-contain" onerror="this.src='https://via.placeholder.com/150x50?text=LOGO'">
+    <!-- Header Utama: Setting (kiri) - Logo (tengah) - Aksi (kanan) -->
+    <header class="bg-blue-700 text-white p-3 md:p-4 shadow-md sticky top-0 z-40">
+        <div class="max-w-4xl mx-auto flex justify-between items-center gap-2">
+
+            <!-- Kiri: Ikon Setting -->
+            <div class="flex-1 flex justify-start">
+                <a href="setting-sistem.html" class="w-9 h-9 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center text-blue-700 hover:bg-gray-200 transition shadow shrink-0">
+                    <i class="fas fa-cog"></i>
+                </a>
             </div>
-            
-            <!-- Aksi Kanan -->
-            <div class="flex-1 flex justify-end items-center space-x-4">
-                
-                <!-- Dropdown Tombol Aksi -->
+
+            <!-- Tengah: Logo -->
+            <div class="flex justify-center shrink-0">
+                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Cendekia Aksara" class="h-9 md:h-12 object-contain" onerror="this.src='https://via.placeholder.com/150x50?text=LOGO'">
+            </div>
+
+            <!-- Kanan: Tombol Aksi -->
+            <div class="flex-1 flex justify-end">
                 <div class="relative">
-                    <button id="btnActionToggle" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-full font-semibold transition flex items-center space-x-2 shadow">
+                    <button type="button" id="btnActionToggle" class="bg-blue-500 hover:bg-blue-600 px-3 md:px-4 py-2 rounded-full font-semibold transition flex items-center space-x-1 md:space-x-2 shadow text-sm md:text-base whitespace-nowrap">
                         <span>Aksi</span>
-                        <i class="fas fa-chevron-down text-sm"></i>
+                        <i class="fas fa-chevron-down text-xs md:text-sm"></i>
                     </button>
                     <!-- Isi Dropdown -->
-                    <div id="actionMenu" class="hidden absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-xl overflow-hidden border">
+                    <div id="actionMenu" class="hidden absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-xl overflow-hidden border z-50">
                         <a href="login.html" class="block px-4 py-3 hover:bg-gray-100 border-b flex items-center">
                             <i class="fas fa-sign-in-alt w-6 text-blue-600"></i> Login (Guru/Admin)
                         </a>
-                        <button onclick="openModal('modalMasukKelas')" class="w-full text-left px-4 py-3 hover:bg-gray-100 flex items-center">
+                        <button type="button" onclick="openModal('modalMasukKelas')" class="w-full text-left px-4 py-3 hover:bg-gray-100 flex items-center">
                             <i class="fas fa-door-open w-6 text-green-600"></i> Masuk Kelas
                         </button>
                     </div>
                 </div>
-
-                <!-- Ikon Setting -->
-                <a href="setting-sistem.html" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-blue-700 hover:bg-gray-200 transition shadow">
-                    <i class="fas fa-cog"></i>
-                </a>
             </div>
         </div>
     </header>
@@ -65,26 +61,26 @@
     <!-- Sub-Header Info -->
     <div class="bg-blue-600 text-blue-100 py-3 shadow-inner">
         <div class="max-w-4xl mx-auto px-4">
-            <div class="flex justify-between items-center text-sm md:text-base">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-2 text-sm md:text-base text-center sm:text-left">
                 <!-- Waktu Kiri -->
                 <div class="flex items-center space-x-3">
                     <i class="far fa-calendar-alt"></i>
                     <span id="displayDate" class="font-medium">Memuat tanggal...</span>
                 </div>
-                
-                <!-- Garis Tengah -->
-                <div class="h-6 w-px bg-blue-400"></div>
-                
+
+                <!-- Garis Tengah (hanya di layar >= sm) -->
+                <div class="hidden sm:block h-6 w-px bg-blue-400"></div>
+
                 <!-- Nama Kanan -->
-                <button onclick="openModal('modalNama')" class="flex items-center space-x-2 hover:text-white transition group">
+                <button type="button" onclick="openModal('modalNama')" class="flex items-center space-x-2 hover:text-white transition group">
                     <i class="far fa-user-circle text-lg"></i>
                     <span id="displayName" class="font-bold underline decoration-dotted">Siapa namamu?</span>
                 </button>
             </div>
-            
+
             <!-- Panduan Guru -->
             <div class="text-center mt-3">
-                <button onclick="openModal('modalPanduanGuru')" class="text-xs md:text-sm bg-blue-800/50 hover:bg-blue-800 px-4 py-1.5 rounded-full transition border border-blue-400">
+                <button type="button" onclick="openModal('modalPanduanGuru')" class="text-xs md:text-sm bg-blue-800/50 hover:bg-blue-800 px-4 py-1.5 rounded-full transition border border-blue-400">
                     <i class="fas fa-info-circle mr-1"></i> Panduan Penggunaan untuk Guru
                 </button>
             </div>
@@ -182,20 +178,20 @@
     <!-- ==================== MODALS ==================== -->
 
     <!-- Modal Isi Nama -->
-    <div id="modalNama" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm">
-        <div class="bg-white w-11/12 max-w-md rounded-2xl shadow-2xl p-6 relative transform transition-all">
-            <button onclick="closeModal('modalNama')" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+    <div id="modalNama" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 relative transform transition-all">
+            <button type="button" onclick="closeModal('modalNama')" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
             <h3 class="text-2xl font-bold text-blue-700 mb-2">Halo, Sobat Aksara!</h3>
             <p class="text-gray-600 mb-4">Siapa namamu? Masukkan namamu agar sistem bisa menyimpan progres belajarmu.</p>
             <input type="text" id="inputNamaStudent" placeholder="Masukkan nama lengkap..." class="w-full border-2 border-gray-300 rounded-xl p-3 focus:border-blue-500 focus:outline-none mb-4 font-medium">
-            <button onclick="simpanNama()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">Simpan Nama</button>
+            <button type="button" onclick="simpanNama()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">Simpan Nama</button>
         </div>
     </div>
 
     <!-- Modal Panduan Guru -->
-    <div id="modalPanduanGuru" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm">
-        <div class="bg-white w-11/12 max-w-lg rounded-2xl shadow-2xl p-6 relative">
-            <button onclick="closeModal('modalPanduanGuru')" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+    <div id="modalPanduanGuru" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+            <button type="button" onclick="closeModal('modalPanduanGuru')" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
             <h3 class="text-2xl font-bold text-blue-700 mb-4 border-b pb-2"><i class="fas fa-chalkboard-teacher mr-2"></i>Panduan Untuk Guru</h3>
             <div class="space-y-4 text-gray-700">
                 <p>Selamat datang di Ruang Guru Cendekia Aksara. Berikut panduan singkat:</p>
@@ -216,16 +212,16 @@
     </div>
 
     <!-- Modal Masuk Kelas (Manual / QR) -->
-    <div id="modalMasukKelas" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm">
-        <div class="bg-white w-11/12 max-w-md rounded-2xl shadow-2xl p-6 relative">
-            <button onclick="closeModal('modalMasukKelas'); stopQRScanner();" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+    <div id="modalMasukKelas" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 relative">
+            <button type="button" onclick="closeModal('modalMasukKelas'); stopQRScanner();" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
             <h3 class="text-2xl font-bold text-green-700 mb-2">Masuk Kelas</h3>
             <p class="text-gray-600 mb-4">Masukkan 6 digit kode kelas dari gurumu atau scan QR code.</p>
             
             <!-- Input Manual -->
             <div id="manualInputSection">
                 <input type="text" id="inputKodeKelas" maxlength="6" placeholder="Misal: AB1234" class="w-full border-2 border-gray-300 rounded-xl p-3 text-center text-xl uppercase tracking-widest font-bold focus:border-green-500 focus:outline-none mb-4">
-                <button onclick="prosesGabungKelas()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition mb-4">Gabung Kelas</button>
+                <button type="button" onclick="prosesGabungKelas()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition mb-4">Gabung Kelas</button>
                 
                 <div class="flex items-center justify-center space-x-2 my-2 text-gray-400">
                     <div class="w-10 h-px bg-gray-300"></div>
@@ -233,7 +229,7 @@
                     <div class="w-10 h-px bg-gray-300"></div>
                 </div>
                 
-                <button onclick="startQRScanner()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-xl transition flex justify-center items-center">
+                <button type="button" onclick="startQRScanner()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-xl transition flex justify-center items-center">
                     <i class="fas fa-qrcode mr-2"></i> Scan QR Code
                 </button>
             </div>
@@ -241,7 +237,7 @@
             <!-- Scanner Section -->
             <div id="qrScannerSection" class="hidden flex flex-col items-center">
                 <div id="qr-reader" class="w-full max-w-sm rounded-lg overflow-hidden border-2 border-green-500"></div>
-                <button onclick="stopQRScanner()" class="mt-4 text-red-500 font-bold hover:underline">Batal Scan</button>
+                <button type="button" onclick="stopQRScanner()" class="mt-4 text-red-500 font-bold hover:underline">Batal Scan</button>
             </div>
         </div>
     </div>
@@ -358,7 +354,7 @@
             // Karena data Base64/Compressed disimpan Firebase, kita panggil properti gambarnya (default placeholder jika kosong)
             const imgBase64 = data.coverImage || data.gambarBase64 || "https://via.placeholder.com/100?text=Logo"; 
             const judul = data.judul || "Judul Tidak Diketahui";
-            const cuplikan = data.cuplikan || data.deskripsi Singkat || "Klik untuk membaca selengkapnya...";
+            const cuplikan = data.cuplikan || data.deskripsiSingkat || "Klik untuk membaca selengkapnya...";
 
             return `
             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition flex items-center space-x-4">
