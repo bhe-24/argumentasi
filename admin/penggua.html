@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Pengguna - Cendekia Aksara</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome (Sudah diperbaiki href) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        display: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .font-display { font-family: 'Playfair Display', serif; }
+        .texture-dots { background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 16px 16px; }
+        .sidebar-transition { transition: transform 0.3s ease-in-out; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 texture-dots font-sans flex h-screen overflow-hidden text-slate-800">
+
+    <!-- OVERLAY LOADING -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-white/90 backdrop-blur-sm z-[100] flex flex-col items-center justify-center">
+        <div class="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-4"></div>
+        <h2 class="text-xl font-bold text-slate-800 font-display">Memuat Data Pengguna...</h2>
+    </div>
+
+    <!-- MODAL SUSPEND USER -->
+    <div id="modalSuspend" class="fixed inset-0 bg-slate-900/80 hidden modal-z flex items-center justify-center backdrop-blur-sm p-4 z-[110]">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 relative transform scale-95 transition-transform duration-300" id="modalSuspendContent">
+            <button type="button" onclick="closeModalSuspend()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 hover:bg-red-100 hover:text-red-500 transition-colors"><i class="fas fa-times"></i></button>
+            
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-user-slash text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">Suspend Akun Pengguna</h3>
+                <p class="text-slate-500 text-sm mt-1">Anda yakin ingin menanggu akun ini?</p>
+            </div>
+            
+            <form id="formSuspend" onsubmit="processSuspend(event)" class="space-y-4">
+                <input type="hidden" id="suspendUserId">
+                <input type="hidden" id="suspendUserRole">
+                
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                    <p class="text-sm font-bold text-slate-700" id="suspendUserName">Nama User</p>
+                    <p class="text-xs text-slate-500" id="suspendUserEmail">email@example.com</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-2">ALASAN SUSPEND</label>
+                    <div class="grid grid-cols-1 gap-2">
+                        <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-red-50 hover:border-red-200 transition">
+                            <input type="radio" name="suspendReason" value="Tindak Curang" class="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300" required>
+                            <span class="ml-3 text-sm font-medium text-slate-700">Tindak Curang (Cheating)</span>
+                        </label>
+                        <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-red-50 hover:border-red-200 transition">
+                            <input type="radio" name="suspendReason" value="Pelanggaran Kode Etik" class="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300">
+                            <span class="ml-3 text-sm font-medium text-slate-700">Pelanggaran Kode Etik</span>
+                        </label>
+                        <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-red-50 hover:border-red-200 transition">
+                            <input type="radio" name="suspendReason" value="Lainnya" class="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300">
+                            <span class="ml-3 text-sm font-medium text-slate-700">Lainnya</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-red-200">
+                    Konfirmasi Suspend
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SIDEBAR (Active Pengguna) -->
+    <aside id="sidebar" class="bg-slate-900 text-slate-300 w-64 flex-shrink-0 fixed md:relative h-full z-40 transform -translate-x-full md:translate-x-0 sidebar-transition flex flex-col border-r border-slate-800 shadow-2xl">
+        <div class="p-6 border-b border-slate-800 flex items-center justify-center">
+            <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-10 object-contain" onerror="this.src='https://via.placeholder.com/150x50?text=LOGO'">
+        </div>
+        
+        <div class="flex-1 p-4 overflow-y-auto custom-scroll">
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-4 pl-2">Menu Kontrol</p>
+            <nav class="space-y-2">
+                <a href="index.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition group">
+                    <i class="fas fa-tachometer-alt w-5 text-center group-hover:text-amber-400 transition-colors"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="materi.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition group">
+                    <i class="fas fa-book-open w-5 text-center group-hover:text-amber-400 transition-colors"></i>
+                    <span>Manajemen Materi</span>
+                </a>
+                <a href="budaya.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition group">
+                    <i class="fas fa-landmark w-5 text-center group-hover:text-amber-400 transition-colors"></i>
+                    <span>Eksplorasi Budaya</span>
+                </a>
+                <!-- PENGUNGA ACTIVE -->
+                <a href="pengguna.html" class="flex items-center space-x-3 bg-purple-500/10 text-purple-400 border border-purple-500/20 px-4 py-3 rounded-xl font-semibold transition">
+                    <i class="fas fa-users w-5 text-center"></i>
+                    <span>Data Pengguna</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-slate-800">
+            <button onclick="window.location.href='../login.html'" class="flex items-center space-x-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 w-full px-4 py-3 rounded-xl font-medium transition">
+                <i class="fas fa-sign-out-alt w-5 text-center"></i>
+                <span>Keluar</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden relative bg-slate-50">
+        
+        <!-- TOPBAR -->
+        <header class="bg-white shadow-sm border-b border-slate-200 px-6 py-3 md:py-4 flex justify-between items-center z-30">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="md:hidden text-slate-600 focus:outline-none p-2 hover:bg-slate-100 rounded-lg">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <h1 class="font-display font-bold text-lg md:text-2xl text-slate-800 tracking-tight">Manajemen Pengguna</h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="index.html" class="text-sm font-bold text-slate-500 hover:text-purple-600 transition">
+                    <i class="fas fa-arrow-left mr-1"></i> Kembali
+                </a>
+            </div>
+        </header>
+
+        <!-- KONTEN UTAMA -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto custom-scroll p-4 md:p-6">
+            
+            <!-- TABS FILTER -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-2 mb-6 flex gap-2">
+                <button onclick="switchUserTab('teacher')" id="tab-teacher" class="flex-1 py-3 rounded-xl font-bold text-sm transition bg-purple-600 text-white shadow-md">
+                    <i class="fas fa-chalkboard-teacher mr-2"></i> Guru
+                </button>
+                <button onclick="switchUserTab('student')" id="tab-student" class="flex-1 py-3 rounded-xl font-bold text-sm transition text-slate-500 hover:bg-slate-50 hover:text-slate-700">
+                    <i class="fas fa-user-graduate mr-2"></i> Siswa
+                </button>
+            </div>
+
+            <!-- LIST PENGGUNA -->
+            <div id="userListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Data akan di-render di sini oleh JS -->
+            </div>
+
+        </main>
+    </div>
+
+    <!-- FIREBASE & LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            authDomain: "mading-cf676.firebaseapp.com",
+            projectId: "mading-cf676",
+            storageBucket: "mading-cf676.firebasestorage.app",
+            messagingSenderId: "72175203671",
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
+            measurementId: "G-590P9LLK7J"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentRoleFilter = 'teacher';
+
+        // --- AUTH CHECK ---
+        onAuthStateChanged(auth, async (user) => {
+            const loading = document.getElementById('loadingOverlay');
+            if (user) {
+                loading.classList.add('hidden');
+                fetchUsers(currentRoleFilter);
+            } else {
+                window.location.href = '../login.html';
+            }
+        });
+
+        // --- FETCH & RENDER USERS ---
+        async function fetchUsers(role) {
+            const container = document.getElementById('userListContainer');
+            container.innerHTML = '<div class="col-span-full text-center py-10"><i class="fas fa-spinner fa-spin text-2xl text-slate-400"></i></div>';
+
+            try {
+                const q = query(collection(db, "users"), where("role", "==", role));
+                const querySnapshot = await getDocs(q);
+                
+                container.innerHTML = ""; // Clear loading
+
+                if (querySnapshot.empty) {
+                    container.innerHTML = `<div class="col-span-full text-center py-10 bg-white rounded-2xl border border-dashed border-slate-300">
+                        <p class="text-slate-500 font-medium">Tidak ada data ${role === 'teacher' ? 'Guru' : 'Siswa'}.</p>
+                    </div>`;
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const u = doc.data();
+                    const isSuspended = u.status === 'suspended';
+                    
+                    const cardHTML = `
+                        <div class="bg-white rounded-2xl shadow-sm border ${isSuspended ? 'border-red-200 bg-red-50/30' : 'border-slate-200'} p-6 relative overflow-hidden transition hover:shadow-md">
+                            <!-- Top Decoration -->
+                            <div class="absolute top-0 left-0 w-full h-1 ${isSuspended ? 'bg-red-400' : 'bg-purple-500'}"></div>
+                            
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-full ${isSuspended ? 'bg-red-100 text-red-500' : 'bg-purple-100 text-purple-600'} flex items-center justify-center shrink-0 text-lg">
+                                    <i class="fas fa-${role === 'teacher' ? 'chalkboard-teacher' : 'user-graduate'}"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-bold text-slate-800 text-lg truncate">${u.namaLengkap}</h3>
+                                    <p class="text-sm text-slate-500 truncate mb-2">${u.email}</p>
+                                    
+                                    <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide mb-4">
+                                        <span class="px-2 py-1 rounded bg-slate-100 text-slate-600">${role}</span>
+                                        ${isSuspended 
+                                            ? '<span class="px-2 py-1 rounded bg-red-100 text-red-600 flex items-center gap-1"><i class="fas fa-ban"></i> Disuspend</span>' 
+                                            : '<span class="px-2 py-1 rounded bg-green-100 text-green-600 flex items-center gap-1"><i class="fas fa-check"></i> Aktif</span>'}
+                                    </div>
+
+                                    <!-- Info Alasan Suspend -->
+                                    ${isSuspended && u.suspensionReason ? `<p class="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-100 mb-3"><b>Alasan:</b> ${u.suspensionReason}</p>` : ''}
+
+                                    <!-- Action Button -->
+                                    <button onclick="openSuspendModal('${doc.id}', '${role}', '${u.namaLengkap}', '${u.email}', ${isSuspended})" 
+                                        class="w-full text-sm font-bold py-2 rounded-lg transition flex items-center justify-center gap-2
+                                        ${isSuspended 
+                                            ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' 
+                                            : 'bg-red-100 text-red-700 hover:bg-red-200'}">
+                                        <i class="fas ${isSuspended ? 'fa-user-check' : 'fa-user-slash'}"></i> 
+                                        ${isSuspended ? 'Aktifkan Kembali' : 'Suspend Akun'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += cardHTML;
+                });
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = `<p class="text-red-500 text-center col-span-full">Gagal memuat data pengguna.</p>`;
+            }
+        }
+
+        // --- TAB SWITCHING ---
+        window.switchUserTab = function(role) {
+            currentRoleFilter = role;
+            
+            const tabTeacher = document.getElementById('tab-teacher');
+            const tabStudent = document.getElementById('tab-student');
+
+            if(role === 'teacher') {
+                tabTeacher.className = "flex-1 py-3 rounded-xl font-bold text-sm transition bg-purple-600 text-white shadow-md";
+                tabStudent.className = "flex-1 py-3 rounded-xl font-bold text-sm transition text-slate-500 hover:bg-slate-50 hover:text-slate-700";
+            } else {
+                tabStudent.className = "flex-1 py-3 rounded-xl font-bold text-sm transition bg-purple-600 text-white shadow-md";
+                tabTeacher.className = "flex-1 py-3 rounded-xl font-bold text-sm transition text-slate-500 hover:bg-slate-50 hover:text-slate-700";
+            }
+            fetchUsers(role);
+        }
+
+        // --- SUSPEND LOGIC ---
+        window.openSuspendModal = function(uid, role, nama, email, isCurrentlySuspended) {
+            // Jika sudah disuspend, langsung proses Activate tanpa modal
+            if(isCurrentlySuspended) {
+                if(confirm(`Aktifkan kembali akun ${nama}?`)) {
+                    updateUserStatus(uid, 'active', null);
+                }
+                return;
+            }
+
+            // Buka Modal Suspend
+            document.getElementById('suspendUserId').value = uid;
+            document.getElementById('suspendUserRole').value = role;
+            document.getElementById('suspendUserName').textContent = nama;
+            document.getElementById('suspendUserEmail').textContent = email;
+            
+            // Reset form radio
+            const radios = document.getElementsByName('suspendReason');
+            for(let r of radios) r.checked = false;
+
+            const modal = document.getElementById('modalSuspend');
+            const content = document.getElementById('modalSuspendContent');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            });
+        }
+
+        window.closeModalSuspend = function() {
+            const modal = document.getElementById('modalSuspend');
+            const content = document.getElementById('modalSuspendContent');
+            modal.classList.add('opacity-0');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        window.processSuspend = async function(e) {
+            e.preventDefault();
+            const uid = document.getElementById('suspendUserId').value;
+            const reason = document.querySelector('input[name="suspendReason"]:checked').value;
+            
+            closeModalSuspend();
+            updateUserStatus(uid, 'suspended', reason);
+        }
+
+        async function updateUserStatus(uid, newStatus, reason) {
+            const btn = event ? event.target : document.body;
+            const originalText = btn.innerHTML;
+            
+            try {
+                if(event) {
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+                    btn.disabled = true;
+                }
+
+                const data = { status: newStatus };
+                if(newStatus === 'suspended') {
+                    data.suspensionReason = reason;
+                    data.suspendedAt = serverTimestamp();
+                } else {
+                    data.suspensionReason = null; // Hapus alasan saat aktif
+                }
+
+                await updateDoc(doc(db, "users", uid), data);
+                alert(`Status pengguna berhasil diperbarui: ${newStatus.toUpperCase()}`);
+                fetchUsers(currentRoleFilter); // Refresh list
+
+            } catch (error) {
+                console.error(error);
+                alert("Gagal memperbarui status: " + error.message);
+                if(event) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        // Sidebar Toggle
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+            }
+        }
+    </script>
+</body>
+</html>
