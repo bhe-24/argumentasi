@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Materi Harian - Guru</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        display: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .font-display { font-family: 'Playfair Display', serif; }
+        .texture-dots { background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 16px 16px; }
+        
+        /* Sidebar Transition */
+        .sidebar-transition { transition: transform 0.3s ease-in-out; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        /* Loading Spinner */
+        .spinner { border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex h-screen overflow-hidden text-slate-800">
+
+    <!-- SIDEBAR (Guru Theme: Emerald) -->
+    <aside id="sidebar" class="bg-slate-900 text-slate-300 w-64 flex-shrink-0 fixed md:relative h-full z-40 transform -translate-x-full md:translate-x-0 sidebar-transition flex flex-col border-r border-slate-800 shadow-2xl">
+        <div class="p-6 border-b border-slate-800 flex items-center justify-center">
+            <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-10 object-contain" onerror="this.src='https://via.placeholder.com/150x50?text=LOGO'">
+        </div>
+        <div class="flex-1 p-4 overflow-y-auto custom-scroll">
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-4 pl-2">Menu Guru</p>
+            <nav class="space-y-2">
+                <a href="index.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition">
+                    <i class="fas fa-tachometer-alt w-5 text-center group-hover:text-amber-400"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="materi.html" class="flex items-center space-x-3 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-4 py-3 rounded-xl font-semibold transition">
+                    <i class="fas fa-magic w-5 text-center"></i>
+                    <span>Materi Cepat AI</span>
+                </a>
+                <a href="kelas.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition">
+                    <i class="fas fa-door-open w-5 text-center group-hover:text-amber-400"></i>
+                    <span>Ruang Kelas</span>
+                </a>
+            </nav>
+        </div>
+        <div class="p-4 border-t border-slate-800">
+            <button onclick="window.location.href='../login.html'" class="flex items-center space-x-3 text-red-400 hover:bg-red-500/10 w-full px-4 py-3 rounded-xl font-medium transition">
+                <i class="fas fa-sign-out-alt w-5 text-center"></i>
+                <span>Keluar</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden relative bg-slate-50">
+        
+        <!-- TOPBAR -->
+        <header class="bg-white shadow-sm border-b border-slate-200 px-6 py-3 md:py-4 flex justify-between items-center z-30">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="md:hidden text-slate-600 focus:outline-none p-2 hover:bg-slate-100 rounded-lg">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <h1 class="font-display font-bold text-lg md:text-2xl text-slate-800 tracking-tight">Pusat Materi Harian</h1>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-bold text-slate-800" id="guruNameDisplay">Memuat...</p>
+                    <p class="text-xs text-emerald-600 font-bold">Guru Pengajar</p>
+                </div>
+                <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 border border-emerald-200">
+                    <i class="fas fa-chalkboard-teacher text-lg"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTENT -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto custom-scroll p-4 md:p-6">
+            
+            <div class="max-w-5xl mx-auto space-y-8">
+                
+                <!-- SECTION 1: MATERI CEPAT (BUTTONS) -->
+                <div>
+                    <div class="flex items-center space-x-4 mb-6 border-b-2 border-emerald-200 pb-3">
+                        <div class="w-2 h-8 bg-emerald-500 rounded-md"></div>
+                        <h2 class="text-xl md:text-3xl font-display font-extrabold text-slate-800 tracking-tight">Generator Materi</h2>
+                    </div>
+                    
+                    <p class="text-sm text-slate-500 mb-4">Pilih topik di bawah ini untuk membuat materi bahan ajar hari ini. Sistem akan menyebarkan ke seluruh siswa.</p>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <!-- Button 1 -->
+                        <button onclick="generateMateri('Struktur Teks Argumentasi')" class="group bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-lg hover:border-emerald-400 transition-all duration-300 text-left relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-20 h-20 bg-emerald-50 rounded-full -mr-10 -mt-10 group-hover:mr-0 group-hover:mt-0 transition-all flex items-center justify-center">
+                                <i class="fas fa-sitemap text-2xl text-emerald-600"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-sm md:text-base relative z-10">Struktur Teks Argumentasi</h3>
+                        </button>
+                        
+                        <!-- Button 2 -->
+                        <button onclick="generateMateri('Kaidah Kebahasaan Teks Argumentasi')" class="group bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-lg hover:border-emerald-400 transition-all duration-300 text-left relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-20 h-20 bg-amber-50 rounded-full -mr-10 -mt-10 group-hover:mr-0 group-hover:mt-0 transition-all flex items-center justify-center">
+                                <i class="fas fa-spell-check text-2xl text-amber-600"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-sm md:text-base relative z-10">Kaidah Kebahasaan</h3>
+                        </button>
+
+                        <!-- Button 3 -->
+                        <button onclick="generateMateri('Paragraf Argumentatif')" class="group bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-lg hover:border-emerald-400 transition-all duration-300 text-left relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-20 h-20 bg-blue-50 rounded-full -mr-10 -mt-10 group-hover:mr-0 group-hover:mt-0 transition-all flex items-center justify-center">
+                                <i class="fas fa-align-left text-2xl text-blue-600"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-sm md:text-base relative z-10">Paragraf Argumentatif</h3>
+                        </button>
+
+                        <!-- Button 4 -->
+                        <button onclick="generateMateri('Contoh Soal Teks Argumentasi')" class="group bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-lg hover:border-emerald-400 transition-all duration-300 text-left relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-20 h-20 bg-purple-50 rounded-full -mr-10 -mt-10 group-hover:mr-0 group-hover:mt-0 transition-all flex items-center justify-center">
+                                <i class="fas fa-file-signature text-2xl text-purple-600"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-sm md:text-base relative z-10">Contoh Soal</h3>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: PREVIEW HARI INI -->
+                <div>
+                    <div class="flex items-center space-x-4 mb-4 border-b border-slate-200 pb-2">
+                        <div class="w-2 h-6 bg-amber-500 rounded-md"></div>
+                        <h2 class="text-lg font-bold text-slate-800">Materi Hari Ini</h2>
+                        <span id="todayDate" class="ml-auto text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded"></span>
+                    </div>
+
+                    <!-- AI Generation Container (Column for API Result) -->
+                    <div id="aiContentContainer" class="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 min-h-[200px] relative">
+                        <!-- Loading State -->
+                        <div id="loadingState" class="hidden text-center py-10">
+                            <div class="spinner inline-block"></div>
+                            <p class="text-slate-400 mt-3">AI sedang menyusun materi...</p>
+                        </div>
+                        
+                        <!-- Content Result (Hidden initially) -->
+                        <div id="resultContent" class="hidden prose prose-sm max-w-none text-slate-600">
+                            <!-- HTML akan disuntukkan di sini -->
+                        </div>
+
+                        <!-- Empty State -->
+                        <div id="emptyState" class="text-center py-8 text-slate-400">
+                            <i class="fas fa-magic text-4xl mb-2 text-slate-300"></i>
+                            <p>Belum ada materi yang dibuat hari ini.</p>
+                        </div>
+                    </div>
+
+                    <!-- History Log (Optional, to show saved items) -->
+                    <div class="mt-6 bg-slate-50 rounded-xl p-4 border border-slate-100">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-3">Riwayat Terkini</h4>
+                        <div id="historyList" class="space-y-2 text-xs text-slate-400">
+                            <!-- List history akan masuk di sini -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- FIREBASE & LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, orderBy, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            authDomain: "mading-cf676.firebaseapp.com",
+            projectId: "mading-cf676",
+            storageBucket: "mading-cf676.firebasestorage.app",
+            messagingSenderId: "72175203671",
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
+            measurementId: "G-590P9LLK7J"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- AUTH CHECK ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists() && userDoc.data().role === 'teacher') {
+                    document.getElementById('guruNameDisplay').textContent = userDoc.data().namaLengkap;
+                    loadTodayMaterial();
+                    loadHistory();
+                } else {
+                    window.location.href = '../login.html';
+                }
+            } else {
+                window.location.href = '../login.html';
+            }
+        });
+
+        // Helper: Format Date
+        document.getElementById('todayDate').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
+
+        // --- 1. GENERATE MATERI (MOCK AI + REAL SAVE) ---
+        window.generateMateri = async function(topic) {
+            const container = document.getElementById('aiContentContainer');
+            const loading = document.getElementById('loadingState');
+            const result = document.getElementById('resultContent');
+            const empty = document.getElementById('emptyState');
+            
+            // UI Loading
+            loading.classList.remove('hidden');
+            result.classList.add('hidden');
+            empty.classList.add('hidden');
+
+            // LOGIKA API (Simulasi Mock agar bisa langsung dicoba tanpa backend)
+            // GANTI BAGIAN INI DENGAN FETCH KE /api/materi.js jika sudah ada backend
+            let generatedContent = "";
+            
+            try {
+                // Simulasi delay AI
+                await new Promise(r => setTimeout(r, 2000)); 
+                
+                // Konten Mock (Bisa diganti dengan hasil fetch asli)
+                generatedContent = `
+                    <h3 class="font-bold text-xl text-slate-800 mb-4">${topic}</h3>
+                    <p class="mb-4">Berikut adalah penjelasan mengenai <strong>${topic}</strong> yang dibuat khusus untuk pembelajaran hari ini:</p>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li>Poin penting pertama dari topik ini adalah memahami struktur dasar.</li>
+                        <li>Kedua, analisis bagaimana topik ini diterapkan dalam kehidupan sehari-hari.</li>
+                        <li>Ketiga, lakukan latihan mandiri untuk menguji pemahaman.</li>
+                    </ul>
+                    <p class="mt-4 italic text-slate-500">*Materi ini dihasilkan oleh AI Assistant Cendekia Aksara untuk mempercepat proses pembuatan bahan ajar.</p>
+                `;
+
+                // Tampilkan Hasil
+                loading.classList.add('hidden');
+                result.innerHTML = generatedContent;
+                result.classList.remove('hidden');
+
+                // --- SIMPAN KE DATABASE (REAL LOGIC) ---
+                // Menghitung Expired Date: Jam 23:59 Hari Ini
+                const today = new Date();
+                const expiryDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 0, 0);
+
+                const dataToSave = {
+                    judul: topic,
+                    kategori: 'argumentasi_daily',
+                    isi: generatedContent,
+                    guruId: auth.currentUser.uid,
+                    guruName: document.getElementById('guruNameDisplay').textContent,
+                    createdAt: serverTimestamp(),
+                    expiryDate: expiryDate // Penting: Hapus otomatis besok
+                };
+
+                await addDoc(collection(db, "daily_materials"), dataToSave);
+                
+                // Notifikasi Sukses
+                alert(`Berhasil! Materi "${topic}" tersimpan dan akan terlihat oleh siswa sampai jam 23:59 malam ini.`);
+                
+                // Refresh tampilan
+                loadTodayMaterial();
+                loadHistory();
+
+            } catch (error) {
+                console.error(error);
+                alert("Gagal membuat materi: " + error.message);
+                loading.classList.add('hidden');
+            }
+        };
+
+        // --- 2. LOAD MATERI HARI INI (FOR PREVIEW) ---
+        async function loadTodayMaterial() {
+            const container = document.getElementById('aiContentContainer');
+            const loading = document.getElementById('loadingState');
+            const result = document.getElementById('resultContent');
+            const empty = document.getElementById('emptyState');
+
+            // Reset
+            loading.classList.remove('hidden');
+            result.classList.add('hidden');
+            empty.classList.add('hidden');
+
+            try {
+                // Query: Cari materi hari ini yang belum expired
+                const now = new Date();
+                const q = query(
+                    collection(db, "daily_materials"),
+                    where("expiryDate", ">", now), // Hanya ambil yang belum expired
+                    orderBy("createdAt", "desc")
+                );
+
+                const querySnapshot = await getDocs(q);
+                
+                loading.classList.add('hidden');
+
+                if (querySnapshot.empty) {
+                    empty.classList.remove('hidden');
+                } else {
+                    // Ambil materi terbaru saja
+                    const doc = querySnapshot.docs[0];
+                    const data = doc.data();
+                    
+                    result.innerHTML = `
+                        <div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-100">
+                            <h3 class="font-bold text-lg text-slate-800">${data.judul}</h3>
+                            <span class="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Aktif</span>
+                        </div>
+                        <div class="prose prose-sm max-w-none text-slate-600">
+                            ${data.isi}
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button onclick="deleteMaterial('${doc.id}')" class="text-xs text-red-400 hover:text-red-600 underline">Hapus Materi</button>
+                        </div>
+                    `;
+                    result.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                console.error("Gagal memuat materi hari ini", error);
+                loading.classList.add('hidden');
+                empty.classList.remove('hidden');
+            }
+        }
+
+        // --- 3. LOAD HISTORY (RIWAYAT) ---
+        async function loadHistory() {
+            const historyList = document.getElementById('historyList');
+            try {
+                const q = query(collection(db, "daily_materials"), orderBy("createdAt", "desc"), limit(5));
+                const snapshot = await getDocs(q);
+                
+                let html = "";
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    html += `
+                        <div class="flex justify-between items-center bg-white p-2 rounded border border-slate-100">
+                            <span class="truncate max-w-[150px]">${data.judul}</span>
+                            <span class="text-[9px] text-slate-400">${new Date(data.createdAt.seconds * 1000).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                    `;
+                });
+                historyList.innerHTML = html;
+            } catch (error) {
+                console.error("Gagal load history", error);
+            }
+        }
+
+        // --- 4. DELETE MATERI (Opsi Guru) ---
+        window.deleteMaterial = async function(id) {
+            if(confirm("Yakin ingin menghapus materi ini?")) {
+                await deleteDoc(doc(db, "daily_materials", id));
+                loadTodayMaterial();
+                loadHistory();
+            }
+        }
+
+        // Sidebar Toggle
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+            }
+        }
+    </script>
+</body>
+</html>
