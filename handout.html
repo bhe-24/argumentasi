@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pusat Handout & Buku - Argumentasi</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        display: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        brand: { gold: '#fbbf24', dark: '#0f172a', primary: '#0f4c81', emerald: '#065f46' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        .font-display { font-family: 'Playfair Display', serif; }
+        .texture-dots { background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px); background-size: 16px 16px; }
+        .header-scrolled { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border-bottom-color: transparent; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); }
+        .modal-z { z-index: 99999 !important; }
+        
+        /* Efek Sampul Buku */
+        .book-spine { border-left: 6px solid rgba(0,0,0,0.15); border-radius: 4px 8px 8px 4px; }
+        
+        /* Custom Scrollbar untuk Modal Preview */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- HEADER UTAMA -->
+    <header id="mainHeader" class="fixed w-full top-0 z-40 transition-all duration-300 bg-slate-900 text-white py-3 px-4 shadow-xl border-b-4 border-amber-500">
+        <div class="absolute inset-0 texture-dots pointer-events-none opacity-50"></div>
+        <div class="relative max-w-6xl mx-auto flex justify-between items-center">
+            
+            <a href="index.html" class="flex items-center gap-3 transform hover:scale-105 transition-transform">
+                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Argumentasi" class="h-10 sm:h-12 object-contain drop-shadow-md">
+            </a>
+            
+            <div class="relative">
+                <button type="button" onclick="toggleActionMenu(event)" class="bg-amber-400 hover:bg-amber-300 text-slate-900 px-5 py-2 rounded-full font-bold text-sm flex items-center gap-2 transition-all shadow-md active:scale-95 border border-amber-300">
+                    <span>Aksi</span>
+                    <i class="fas fa-chevron-down text-xs"></i>
+                </button>
+                
+                <!-- Dropdown Menu -->
+                <div id="actionMenu" class="hidden absolute right-0 top-full mt-3 w-56 bg-white rounded-2xl shadow-2xl overflow-hidden z-50 border border-slate-100 transform origin-top-right transition-all">
+                    <div class="bg-slate-50 px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">Pintu Masuk</div>
+                    <a href="login.html" class="block px-4 py-3.5 hover:bg-blue-50 border-b border-slate-100 flex items-center transition-colors group">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3 group-hover:bg-blue-600 transition-colors">
+                            <i class="fas fa-user-shield text-blue-600 group-hover:text-white text-xs"></i>
+                        </div>
+                        <span class="font-bold text-sm text-slate-700 group-hover:text-blue-700">Masuk Guru</span>
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+    </header>
+
+    <div class="h-16 md:h-[72px]"></div>
+
+    <!-- BILAH INFORMASI (Tanggal & Profil) -->
+    <div class="bg-slate-800 text-slate-300 py-2.5 px-4 shadow-inner border-b border-slate-700 relative z-30">
+        <div class="max-w-6xl mx-auto flex justify-center md:justify-start items-center gap-4 text-xs md:text-sm font-medium">
+            <div class="flex items-center gap-2">
+                <i class="far fa-calendar-alt text-amber-400"></i>
+                <span id="currentDateText">Memuat tanggal...</span>
+            </div>
+            <div class="w-px h-4 bg-slate-500"></div>
+            <div class="flex items-center gap-2 text-slate-400">
+                <i class="far fa-user-circle"></i>
+                <span id="displayNameBar" class="font-bold text-amber-400 truncate max-w-[150px]">Siswa Aktif</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- HERO SECTION -->
+    <section class="relative bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 py-10 md:py-16 px-4 shadow-lg overflow-hidden border-b border-blue-900">
+        <div class="absolute inset-0 texture-dots pointer-events-none opacity-30"></div>
+        <div class="relative max-w-6xl mx-auto text-center z-10">
+            <div class="w-16 h-16 bg-blue-500/20 border border-blue-400/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                <i class="fas fa-file-pdf text-3xl text-blue-400"></i>
+            </div>
+            <h1 class="text-3xl md:text-5xl font-display font-bold text-white mb-3">Koleksi <span class="text-amber-400">Handout Digital</span></h1>
+            <p class="text-blue-200 text-sm md:text-base max-w-2xl mx-auto">Akses dan unduh buku panduan, modul, serta lembar kerja (LKS) untuk menunjang pembelajaran analisis argumen Anda di mana saja.</p>
+        </div>
+    </section>
+
+    <!-- KONTEN UTAMA -->
+    <main class="flex-grow w-full max-w-6xl mx-auto px-4 py-8 md:py-12 relative z-20">
+        
+        <!-- Search & Filter Bar -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-8 flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div class="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 hide-scrollbar">
+                <button class="px-5 py-2 bg-slate-900 text-white text-xs font-bold rounded-full shrink-0 shadow-sm">Semua Dokumen</button>
+                <button class="px-5 py-2 bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 text-xs font-bold rounded-full shrink-0 transition-colors">Modul Ajar</button>
+                <button class="px-5 py-2 bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 text-xs font-bold rounded-full shrink-0 transition-colors">Buku Referensi</button>
+            </div>
+            <div class="relative w-full md:w-72">
+                <input type="text" placeholder="Cari judul buku/modul..." class="w-full bg-slate-50 border border-slate-200 text-sm rounded-full py-2.5 pl-10 pr-4 focus:outline-none focus:border-blue-400 focus:bg-white transition-all">
+                <i class="fas fa-search absolute left-4 top-3 text-slate-400"></i>
+            </div>
+        </div>
+
+        <!-- LOADING STATE -->
+        <div id="loadingState" class="flex flex-col items-center justify-center py-20">
+            <i class="fas fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i>
+            <h3 class="font-bold text-slate-800 text-lg">Memuat Rak Buku...</h3>
+        </div>
+
+        <!-- ERROR / EMPTY STATE -->
+        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 bg-white rounded-3xl shadow-sm border border-slate-200 border-dashed text-center px-4">
+            <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-4xl mb-4 border border-slate-100 text-slate-300">
+                <i class="fas fa-folder-open"></i>
+            </div>
+            <h3 class="font-bold text-slate-700 text-xl mb-2">Rak Buku Kosong</h3>
+            <p class="text-sm text-slate-500 max-w-md" id="errorMsg">Guru atau Administrator belum mengunggah file Handout / Buku Ajar berformat PDF ke dalam sistem.</p>
+        </div>
+
+        <!-- GRID HANDOUTS -->
+        <div id="handoutGrid" class="hidden grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <!-- Data di-inject via JS -->
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-400 py-10 border-t-4 border-amber-500 mt-auto">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+            <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Argumentasi" class="h-8 object-contain mx-auto mb-4 grayscale opacity-70">
+            <p class="text-xs max-w-md mx-auto mb-6">Pusat unduhan materi ajar digital untuk mendukung generasi pemikir kritis berbasis budaya lokal dan logika yang kuat.</p>
+            <div class="border-t border-slate-800 pt-6 text-[10px]">
+                &copy; 2026 Platform Argumentasi. Hak Cipta Dilindungi.
+            </div>
+        </div>
+    </footer>
+
+    <!-- ============================================================ -->
+    <!-- MODAL PRATINJAU PDF (PREVIEW)                                -->
+    <!-- ============================================================ -->
+    <div id="modalPreview" class="fixed inset-0 bg-slate-900/95 hidden modal-z flex flex-col backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        
+        <!-- Topbar Modal Preview -->
+        <div class="bg-white px-4 md:px-6 py-3 flex justify-between items-center shadow-lg z-10 relative">
+            <div class="flex items-center gap-3 overflow-hidden">
+                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center text-red-600 shrink-0">
+                    <i class="fas fa-file-pdf text-xl"></i>
+                </div>
+                <div class="truncate">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Pratinjau Dokumen</span>
+                    <h3 class="font-bold text-slate-800 text-sm md:text-base truncate leading-none" id="previewTitle">Judul Buku</h3>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <a href="#" id="btnUnduhModal" target="_blank" download class="hidden md:flex bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white px-4 py-2 rounded-full font-bold text-xs transition-colors items-center gap-2 border border-emerald-200">
+                    <i class="fas fa-download"></i> Unduh File
+                </a>
+                <button onclick="tutupPreview()" class="text-slate-400 hover:text-red-500 bg-slate-100 hover:bg-red-50 w-10 h-10 rounded-full flex items-center justify-center transition-all ml-2">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading Indicator untuk Iframe -->
+        <div id="previewLoading" class="absolute inset-0 flex flex-col items-center justify-center z-0">
+            <i class="fas fa-circle-notch fa-spin text-4xl text-white mb-4"></i>
+            <p class="text-white font-medium">Memuat Dokumen PDF...</p>
+        </div>
+
+        <!-- Body Modal (Iframe Container) -->
+        <div class="flex-1 w-full bg-slate-800 relative z-10 custom-scroll overflow-hidden">
+            <iframe id="pdfIframe" src="" class="w-full h-full border-0" title="PDF Preview" onload="document.getElementById('previewLoading').classList.add('hidden');"></iframe>
+        </div>
+    </div>
+
+    <!-- SCRIPT UI DASAR -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+            document.getElementById('currentDateText').innerText = new Date().toLocaleDateString('id-ID', dateOptions);
+            const nama = localStorage.getItem('namaSiswaCendekia');
+            if(nama) document.getElementById('displayNameBar').innerText = nama;
+        });
+
+        window.toggleActionMenu = function(e) {
+            e.stopPropagation();
+            document.getElementById('actionMenu').classList.toggle('hidden');
+        };
+
+        window.addEventListener('click', () => {
+            const menu = document.getElementById('actionMenu');
+            if(menu && !menu.classList.contains('hidden')) menu.classList.add('hidden');
+        });
+
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('mainHeader');
+            if (window.scrollY > 20) header.classList.add('header-scrolled', 'py-2');
+            else header.classList.remove('header-scrolled', 'py-2');
+        });
+
+        // Logika Modal Pratinjau
+        window.bukaPreview = function(url, judul) {
+            const modal = document.getElementById('modalPreview');
+            const iframe = document.getElementById('pdfIframe');
+            
+            document.getElementById('previewTitle').innerText = judul;
+            document.getElementById('btnUnduhModal').href = url;
+            document.getElementById('previewLoading').classList.remove('hidden');
+            
+            // Menggunakan Google Docs Viewer sebagai fallback terbaik untuk render PDF iframe lintas browser/mobile
+            const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+            iframe.src = viewerUrl;
+
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => modal.classList.remove('opacity-0'));
+            
+            // Cegah body scroll
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.tutupPreview = function() {
+            const modal = document.getElementById('modalPreview');
+            const iframe = document.getElementById('pdfIframe');
+            
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                iframe.src = ''; // Hentikan proses loading di background
+                document.body.style.overflow = 'auto'; // Kembalikan scroll
+            }, 300);
+        };
+    </script>
+
+    <!-- SCRIPT FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            projectId: "mading-cf676",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Render Kartu Handout
+        function renderHandoutCard(data) {
+            // Gambar fallback jika admin belum upload cover
+            const coverImg = data.coverImage || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500";
+            const fileUrl = data.fileUrl || "#";
+            
+            // Format ukuran file jika ada (contoh: 2.4 MB), jika tidak ada tulis "PDF Document"
+            const sizeText = data.fileSize ? `${data.fileSize} MB` : 'PDF Document';
+
+            return `
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-3 md:p-4 flex flex-col group hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 fade-in">
+                <!-- Cover Image (Book Style) -->
+                <div class="relative w-full aspect-[3/4] rounded-lg overflow-hidden mb-4 shadow-md bg-slate-200">
+                    <img src="${coverImg}" alt="${data.judul}" class="w-full h-full object-cover book-spine transform group-hover:scale-105 transition-transform duration-500">
+                    <div class="absolute top-2 right-2 bg-red-500 text-white text-[9px] md:text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm tracking-widest">
+                        PDF
+                    </div>
+                </div>
+                
+                <!-- Info -->
+                <h3 class="font-bold text-slate-800 text-sm leading-snug line-clamp-2 mb-1 group-hover:text-blue-600 transition-colors">${data.judul}</h3>
+                <p class="text-[11px] text-slate-500 mb-4 line-clamp-1">${data.kategori || 'Bahan Ajar'} • ${sizeText}</p>
+                
+                <!-- Tombol Aksi -->
+                <div class="mt-auto flex gap-2">
+                    <button onclick="bukaPreview('${fileUrl}', '${data.judul.replace(/'/g, "\\'")}')" class="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white text-[11px] md:text-xs font-bold py-2 md:py-2.5 rounded-xl transition-colors">
+                        Pratinjau
+                    </button>
+                    <a href="${fileUrl}" target="_blank" download class="w-10 md:w-11 flex items-center justify-center bg-slate-100 hover:bg-emerald-500 hover:text-white text-slate-500 rounded-xl transition-colors shadow-sm" title="Unduh File">
+                        <i class="fas fa-download text-sm"></i>
+                    </a>
+                </div>
+            </div>`;
+        }
+
+        async function fetchHandouts() {
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const handoutGrid = document.getElementById('handoutGrid');
+
+            try {
+                // Asumsi: Admin upload file ke collection 'handouts'
+                // Jika collection Anda berbeda (misal gabung di 'materials' dengan type='pdf'), silakan sesuaikan query-nya.
+                const q = query(collection(db, "handouts"), orderBy("createdAt", "desc"));
+                const snap = await getDocs(q);
+
+                loadingState.classList.add('hidden');
+
+                if (snap.empty) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                let html = "";
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    // Cegah tampil jika tidak ada URL PDF
+                    if(data.fileUrl) {
+                        html += renderHandoutCard({
+                            judul: data.judul || "Handout Tanpa Judul",
+                            coverImage: data.coverImage,
+                            fileUrl: data.fileUrl,
+                            fileSize: data.ukuranFile, // opsional dari database
+                            kategori: data.kategori // opsional dari database
+                        });
+                    }
+                });
+
+                if(html === "") {
+                    emptyState.classList.remove('hidden');
+                } else {
+                    handoutGrid.innerHTML = html;
+                    handoutGrid.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                loadingState.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                document.getElementById('errorMsg').innerText = "Gagal mengambil data dari server. Periksa koneksi Anda atau hubungi Admin.";
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchHandouts);
+    </script>
+</body>
+</html>
