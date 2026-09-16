@@ -1,24 +1,28 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Materi Harian - Siswa</title>
+    <title>Materi Harian - Fokus Belajar</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Poppins', 'sans-serif'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
                         display: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        brand: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a' }
                     }
                 }
             }
@@ -26,327 +30,315 @@
     </script>
 
     <style>
-        body { font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #f0fdf4; }
-        .font-display { font-family: 'Playfair Display', serif; }
+        body { background-color: #f8fafc; color: #334155; -webkit-tap-highlight-color: transparent; }
         
-        /* Animasi Masuk */
-        @keyframes slideInUp {
-            from { opacity: 0; transform: translateY(20px); }
+        /* Typography untuk Materi Harian (Pengganti plugin prose) */
+        .materi-content h1, .materi-content h2, .materi-content h3 { font-family: 'Playfair Display', serif; color: #0f172a; margin-top: 1.5em; margin-bottom: 0.5em; font-weight: 700; }
+        .materi-content h2 { font-size: 1.5rem; }
+        .materi-content p { margin-bottom: 1.25em; line-height: 1.8; color: #475569; }
+        .materi-content ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1.25em; }
+        .materi-content li { margin-bottom: 0.5em; line-height: 1.7; }
+        .materi-content blockquote { border-left: 4px solid #3b82f6; padding-left: 1rem; font-style: italic; background: #eff6ff; padding: 1rem; border-radius: 0 8px 8px 0; }
+
+        /* Animasi Masuk Transisi Lembut */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .animate-enter { animation: slideInUp 0.6s ease-out forwards; }
+        .animate-fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-        /* Scrollbar Halus */
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        
-        /* Loading Spinner */
-        .spinner { border: 3px solid rgba(255,255,255,0.3); border-top-color: #3b82f6; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Skeleton Loading */
+        .skeleton { background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; border-radius: 4px; }
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* Progress Bar */
+        #progressBar { transform-origin: left; transform: scaleX(0); transition: transform 0.2s ease-out; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col text-slate-800">
+<body class="min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
 
-    <!-- HEADER SISWA -->
-    <header class="bg-white shadow-sm border-b border-slate-200 px-4 py-3 md:py-4 flex justify-between items-center z-30">
-        <div class="flex items-center gap-3">
-            <!-- Tombol Menu Mobile -->
-            <button onclick="toggleSidebar()" class="md:hidden text-slate-600 focus:outline-none p-2 hover:bg-slate-100 rounded-lg">
-                <i class="fas fa-bars text-xl"></i>
-            </button>
-            <div>
-                <h1 class="font-display font-bold text-lg md:text-2xl text-slate-800 tracking-tight">Materi Hari Ini</h1>
-                <p class="text-xs text-slate-500 font-medium">Belajar, Pahami, dan Berhasil</p>
-            </div>
+    <!-- STICKY HEADER -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <!-- Reading Progress Bar -->
+        <div class="absolute bottom-0 left-0 h-1 w-full bg-slate-100">
+            <div id="progressBar" class="h-full bg-brand-500 w-full"></div>
         </div>
-        <div class="flex items-center gap-3">
-            <!-- Avatar Siswa -->
-            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 border-2 border-white">
-                <i class="fas fa-user-graduate text-lg"></i>
+
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+            <!-- Title / Logo Area -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center text-brand-600 border border-brand-100">
+                    <i class="fas fa-book-open text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-slate-900 tracking-tight leading-tight">Ruang Materi</h1>
+                    <p class="text-[11px] text-slate-500 font-medium uppercase tracking-wider" id="displayDate">Memuat tanggal...</p>
+                </div>
             </div>
-            <!-- Nama Siswa -->
-            <div class="text-right">
-                <p class="text-sm font-bold text-slate-800 leading-none" id="studentNameDisplay">Halo, Teman</p>
-                <p class="text-[10px] text-blue-600 font-bold uppercase">Siswa Aktif</p>
+
+            <!-- Profile & Logout -->
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:block text-right">
+                    <p class="text-sm font-bold text-slate-800 leading-none" id="studentNameDisplay">Siswa Aktif</p>
+                    <p class="text-[11px] text-brand-600 font-semibold mt-1">Siswa</p>
+                </div>
+                <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
+                <button onclick="window.location.href='../login.html'" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors group" title="Keluar">
+                    <i class="fas fa-sign-out-alt text-lg group-hover:scale-110 transition-transform"></i>
+                </button>
             </div>
         </div>
     </header>
 
-    <!-- SIDEBAR SISWA -->
-    <aside id="sidebar" class="bg-slate-900 text-slate-300 w-64 flex-shrink-0 fixed md:relative h-full z-40 transform -translate-x-full md:translate-x-0 sidebar-transition flex flex-col border-r border-slate-800 shadow-2xl">
-        <div class="p-6 border-b border-slate-800 flex items-center justify-center">
-            <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-10 object-contain" onerror="this.src='https://via.placeholder.com/150x50?text=LOGO'">
+    <!-- MAIN CONTENT (FOKUS MEMBACA) -->
+    <main class="flex-1 w-full max-w-3xl mx-auto px-4 py-8 sm:py-12 pb-32">
+        
+        <!-- BAGIAN 1: JUDUL & HEADER MATERI -->
+        <div class="mb-10 text-center animate-fade-up">
+            <span class="inline-block px-3 py-1 bg-brand-50 text-brand-700 text-xs font-bold rounded-full border border-brand-100 mb-4">
+                Materi Hari Ini
+            </span>
+            <h1 id="materialTitle" class="text-3xl sm:text-4xl md:text-5xl font-display font-extrabold text-slate-900 leading-tight mb-4">
+                Memuat Materi...
+            </h1>
+            <div class="flex items-center justify-center gap-2 text-sm text-slate-500">
+                <i class="fas fa-chalkboard-teacher"></i>
+                <span>Oleh Guru Anda</span>
+            </div>
         </div>
-        <div class="flex-1 p-4 overflow-y-auto custom-scroll">
-            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-4 pl-2">Menu Siswa</p>
-            <nav class="space-y-2">
-                <a href="materi.html" class="flex items-center space-x-3 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-4 py-3 rounded-xl font-semibold transition">
-                    <i class="fas fa-book-open w-5 text-center"></i>
-                    <span>Materi Harian</span>
-                </a>
-                <a href="latihan.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition">
-                    <i class="fas fa-pencil-alt w-5 text-center group-hover:text-amber-400"></i>
-                    <span>Latihan</span>
-                </a>
-                <a href="handout.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition">
-                    <i class="fas fa-file-pdf w-5 text-center group-hover:text-amber-400"></i>
-                    <span>Handout</span>
-                </a>
-                <a href="kreasi.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition">
-                    <i class="fas fa-lightbulb w-5 text-center group-hover:text-amber-400"></i>
-                    <span>Kreasi AI</span>
-                </a>
-            </nav>
+
+        <!-- AREA LOADING SKELETON -->
+        <div id="loadingState" class="space-y-4 py-4">
+            <div class="skeleton h-6 w-3/4 mb-6"></div>
+            <div class="skeleton h-4 w-full"></div>
+            <div class="skeleton h-4 w-full"></div>
+            <div class="skeleton h-4 w-5/6"></div>
+            <div class="skeleton h-32 w-full mt-6"></div>
         </div>
-        <div class="p-4 border-t border-slate-800">
-            <button onclick="window.location.href='../login.html'" class="flex items-center space-x-3 text-red-400 hover:bg-red-500/10 w-full px-4 py-3 rounded-xl font-medium transition">
-                <i class="fas fa-sign-out-alt w-5 text-center"></i>
-                <span>Keluar</span>
+
+        <!-- AREA KOSONG -->
+        <div id="emptyState" class="hidden text-center py-16 bg-white rounded-3xl border border-dashed border-slate-300">
+            <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-mug-hot text-2xl text-slate-400"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-700">Tidak ada materi hari ini</h3>
+            <p class="text-sm text-slate-500 mt-2">Silakan beristirahat atau baca buku referensi lainnya.</p>
+        </div>
+
+        <!-- BAGIAN 2: PENJELASAN MATERI (FIREBASE CONTENT) -->
+        <div id="resultContent" class="materi-content text-lg hidden animate-fade-up" style="animation-delay: 0.1s;">
+            <!-- Konten dari Firestore akan dirender di sini -->
+        </div>
+
+        <!-- BAGIAN 3: INFORMASI & CONTOH TEKS ARGUMEN (INTERAKTIF) -->
+        <div id="argumentSection" class="hidden mt-12 animate-fade-up" style="animation-delay: 0.2s;">
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <!-- Header Akordeon -->
+                <button onclick="toggleAccordion('argAccordion')" class="w-full flex justify-between items-center p-6 bg-slate-50 hover:bg-slate-100 transition-colors focus:outline-none">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-amber-100 text-amber-600 p-2 rounded-lg">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-800 text-left">Informasi Tambahan: Contoh Teks Argumen</h3>
+                    </div>
+                    <i id="argIcon" class="fas fa-chevron-down text-slate-400 transition-transform duration-300"></i>
+                </button>
+                
+                <!-- Isi Akordeon -->
+                <div id="argAccordion" class="hidden p-6 border-t border-slate-100 bg-white">
+                    <p class="text-slate-600 mb-4 text-sm leading-relaxed">
+                        Berikut adalah pengingat struktur dasar dan contoh paragraf argumentasi yang baik, gunakan ini sebagai acuan dalam memahami materi di atas.
+                    </p>
+                    <div class="bg-brand-50 border-l-4 border-brand-500 p-5 rounded-r-lg">
+                        <h4 class="font-bold text-brand-900 mb-2 font-display">Dampak Penggunaan Plastik Sekali Pakai</h4>
+                        <p class="text-sm text-brand-800 mb-3 leading-relaxed">
+                            <strong>(Pendahuluan/Klaim):</strong> Penggunaan plastik sekali pakai harus segera dikurangi secara drastis karena menimbulkan kerusakan lingkungan yang tidak dapat diperbaiki.
+                        </p>
+                        <p class="text-sm text-brand-800 mb-3 leading-relaxed">
+                            <strong>(Bukti/Alasan):</strong> Data dari Kementerian Lingkungan Hidup menunjukkan lebih dari 60% sampah plastik di lautan berasal dari kemasan sekali pakai. Plastik ini membutuhkan waktu hingga 400 tahun untuk terurai dan dapat meracuni rantai makanan laut yang akhirnya dikonsumsi manusia.
+                        </p>
+                        <p class="text-sm text-brand-800 leading-relaxed">
+                            <strong>(Kesimpulan):</strong> Oleh karena itu, peralihan ke bahan ramah lingkungan bukan lagi sekadar pilihan gaya hidup, melainkan kebutuhan mendesak untuk menjaga masa depan bumi kita.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FLOATING ACTION BAR (TANDAI SELESAI) -->
+    <div id="bottomAction" class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] transform translate-y-full transition-transform duration-500 z-40 flex justify-center">
+        <div class="max-w-3xl w-full flex items-center justify-between">
+            <p class="text-xs text-slate-500 hidden sm:block">Pastikan Anda telah memahami seluruh materi sebelum menandai selesai.</p>
+            <button id="btnMarkDone" class="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white font-bold px-8 py-3 rounded-xl transition-colors shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2" onclick="markAsRead()">
+                <i class="fas fa-check-circle"></i> Tandai Sudah Dibaca
             </button>
         </div>
-    </aside>
-
-    <!-- MAIN CONTENT -->
-    <div class="flex-1 flex flex-col h-full overflow-hidden relative">
-        
-        <!-- CONTAINER UTAMA -->
-        <main class="flex-1 overflow-x-hidden overflow-y-auto custom-scroll p-4 md:p-8 pb-20">
-            
-            <div class="max-w-4xl mx-auto">
-                
-                <!-- DATE INDICATOR -->
-                <div class="flex justify-center mb-8 animate-enter">
-                    <span id="displayDate" class="inline-block bg-white border border-blue-200 text-blue-800 font-bold px-6 py-2 rounded-full shadow-sm">
-                        Hari Ini
-                    </span>
-                </div>
-
-                <!-- KARTU MATERI (INTERAKTIF) -->
-                <div id="materialContainer" class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200 relative animate-enter">
-                    
-                    <!-- HEADER KARTU -->
-                    <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-white flex justify-between items-center relative overflow-hidden">
-                        <div class="relative z-10">
-                            <h2 class="text-2xl md:text-3xl font-display font-bold" id="materialTitle">Memuat...</h2>
-                            <p class="text-blue-100 text-sm md:text-base font-medium">Materi Hari Ini</p>
-                        </div>
-                        <!-- Decorasi Background -->
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
-                    </div>
-
-                    <!-- ISI KONTEN (AI GENERATED CONTENT) -->
-                    <div id="contentArea" class="p-6 md:p-8 bg-slate-50 min-h-[400px] relative">
-                        <!-- Loading -->
-                        <div id="loadingState" class="hidden flex flex-col items-center justify-center py-10">
-                            <div class="spinner"></div>
-                            <p class="text-slate-400 mt-2 text-sm">Mencari materi terbaru...</p>
-                        </div>
-                        
-                        <!-- Empty State -->
-                        <div id="emptyState" class="text-center py-10 md:py-16 hidden">
-                            <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i class="fas fa-hourglass-start text-3xl text-slate-400"></i>
-                            </div>
-                            <h3 class="text-xl font-bold text-slate-600 mb-2">Belum Ada Materi</h3>
-                            <p class="text-sm text-slate-400 max-w-sm mx-auto">Guru Anda belum mengirim materi hari ini.</p>
-                            <p class="text-xs text-blue-500 mt-2">Cek kembali nanti atau minta guru anda membuat materi baru.</p>
-                        </div>
-
-                        <!-- Content -->
-                        <div id="resultContent" class="prose prose-sm max-w-none text-slate-700 hidden animate-enter">
-                            <!-- HTML akan dirender di sini -->
-                        </div>
-                    </div>
-
-                    <!-- FOOTER KARTU (ACTIONS) -->
-                    <div class="bg-white border-t border-slate-100 p-4 flex justify-between items-center relative z-10">
-                        <div class="flex items-center text-xs text-slate-400">
-                            <i class="fas fa-clock mr-1"></i>
-                            <span>Refresh otomatis setiap 10 detik</span>
-                        </div>
-                        <button id="btnMarkDone" class="hidden bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-md" onclick="markAsRead()">
-                            <i class="fas fa-check mr-1"></i> Sudah Dibaca
-                        </button>
-                    </div>
-                </div>
-
-                <!-- INFO TAMBAHAN (INTERAKTIF) -->
-                <div class="mt-8 bg-blue-50 rounded-2xl p-6 border border-blue-100 animate-enter" style="animation-delay: 0.2s">
-                    <h3 class="text-lg font-bold text-blue-900 flex items-center gap-2 mb-3">
-                        <i class="fas fa-lightbulb text-yellow-500"></i> Tips Belajar
-                    </h3>
-                    <ul class="text-sm text-slate-700 space-y-2">
-                        <li>Baca materi dengan teliti sampai selesai.</li>
-                        <li>Jika ragu, jangan lupa tanya guru di kelas.</li>
-                        <li>Materi ini akan hilang otomatis jam 23:59 malam ini.</li>
-                    </ul>
-                </div>
-
-            </div>
-        </main>
     </div>
 
-    <!-- FIREBASE & LOGIC -->
+    <!-- FIREBASE & LOGIC INTERAKTIF -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, query, where, orderBy, getDocs, doc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, where, orderBy, doc, getDoc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        // Ganti dengan konfigurasi Firebase Anda
         const firebaseConfig = {
             apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
             authDomain: "mading-cf676.firebaseapp.com",
             projectId: "mading-cf676",
             storageBucket: "mading-cf676.firebasestorage.app",
             messagingSenderId: "72175203671",
-            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
-            measurementId: "G-590P9LLK7J"
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        let unsubscribe = null; 
+        let currentDocId = null;
 
-        let unsubscribe = null; // Listener handle untuk cleanup
+        // Tanggal Dinamis
+        const dateOptions = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+        document.getElementById('displayDate').textContent = new Date().toLocaleDateString('id-ID', dateOptions);
 
-        // --- 1. CHECK AUTH SISWA ---
+        // Interaktivitas: Reading Progress Bar
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height);
+            document.getElementById('progressBar').style.transform = `scaleX(${scrolled})`;
+        });
+
+        // Interaktivitas: Akordeon Teks Argumen
+        window.toggleAccordion = function(id) {
+            const el = document.getElementById(id);
+            const icon = document.getElementById('argIcon');
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                el.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
+        }
+
+        // --- AUTH & LOAD MATERI ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                // Cek Role: Siswa boleh akses halaman ini (role = 'student')
-                if (userDoc.exists()) {
-                    const nama = localStorage.getItem('namaSiswaCendekia') || userDoc.data().namaLengkap;
-                    document.getElementById('studentNameDisplay').textContent = `Halo, ${nama}`;
-                    loadDailyMaterial();
-                } else {
-                    window.location.href = '../login.html';
-                }
+                const nama = localStorage.getItem('namaSiswaCendekia') || "Pelajar Hebat";
+                document.getElementById('studentNameDisplay').textContent = nama;
+                loadDailyMaterial();
             } else {
                 window.location.href = '../login.html';
             }
         });
 
-        // Helper Tanggal
-        const dateOptions = { weekday: 'long', day: 'numeric', month: 'long' };
-        document.getElementById('displayDate').textContent = new Date().toLocaleDateString('id-ID', dateOptions);
-
-        // --- 2. LOAD MATERI HARI INI (REALTIME & EXPIRY CHECK) ---
         function loadDailyMaterial() {
-            const container = document.getElementById('materialContainer');
             const loading = document.getElementById('loadingState');
             const empty = document.getElementById('emptyState');
             const result = document.getElementById('resultContent');
-            const btnDone = document.getElementById('btnMarkDone');
+            const argSection = document.getElementById('argumentSection');
             const title = document.getElementById('materialTitle');
+            const bottomBar = document.getElementById('bottomAction');
 
-            // Reset UI
-            loading.classList.remove('hidden');
-            empty.classList.add('hidden');
-            result.classList.add('hidden');
-            btnDone.classList.add('hidden');
-
-            // Query: Materi yang Active (Belum Expired) dan Hari Ini
-            // Kita bandingkan expiryDate > now DAN createdAt >= start of today
             const now = new Date();
-            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-
             const q = query(
                 collection(db, "daily_materials"),
-                where("expiryDate", ">", now), // Hanya yang masih valid
-                orderBy("createdAt", "desc") // Terbaru di atas
+                where("expiryDate", ">", now),
+                orderBy("createdAt", "desc")
             );
 
             unsubscribe = onSnapshot(q, (snapshot) => {
-                loading.classList.add('hidden'); // Matikan loading setelah data masuk
+                loading.classList.add('hidden'); 
 
                 if (snapshot.empty) {
-                    // Tidak ada materi hari ini
                     empty.classList.remove('hidden');
-                    title.textContent = "Belum Ada Materi";
+                    title.textContent = "Waktu Istirahat";
+                    bottomBar.classList.add('translate-y-full'); // Sembunyikan bottom bar
                 } else {
-                    // Ada materi
-                    const doc = snapshot.docs[0]; // Ambil satu materi terbaru
-                    const data = doc.data();
+                    const docSnap = snapshot.docs[0];
+                    currentDocId = docSnap.id;
+                    const data = docSnap.data();
 
-                    // Cek status baca
-                    checkReadStatus(doc.id, data);
-
-                    title.textContent = data.judul || "Materi Hari Ini";
-                    result.innerHTML = data.isi; // Render HTML Quill dari Guru
+                    title.textContent = data.judul || "Materi Pembelajaran";
+                    result.innerHTML = data.isi; 
                     result.classList.remove('hidden');
-                    btnDone.classList.remove('hidden');
+                    argSection.classList.remove('hidden'); // Munculkan contoh argumen
+                    
+                    // Munculkan bottom bar dengan animasi
+                    setTimeout(() => {
+                        bottomBar.classList.remove('translate-y-full');
+                    }, 500);
+
+                    checkReadStatus(currentDocId, data);
                 }
             });
-
-            // Fungsi Refresh manual (simulasi Realtime)
-            setInterval(loadDailyMaterial, 60000); // Refresh setiap 1 menit
         }
 
-        // --- 3. CEK STATUS BACA (INTERAKTIF) ---
         async function checkReadStatus(docId, data) {
             const btnDone = document.getElementById('btnMarkDone');
             const userId = auth.currentUser.uid;
-
-            // Cek subcollection reads
             const readRef = doc(db, "daily_materials", docId, "reads", userId);
             const readSnap = await getDoc(readRef);
 
             if (readSnap.exists() && readSnap.data().read) {
-                // Sudah dibaca
-                btnDone.innerHTML = '<i class="fas fa-check"></i> Selesai';
-                btnDone.classList.add('bg-emerald-500'); 
-                btnDone.classList.remove('bg-emerald-500', 'hover:bg-emerald-600');
-                btnDone.onclick = null; // Hapus fungsi
+                setButtonDoneState(btnDone);
             } else {
-                // Belum dibaca
-                btnDone.onclick = () => markAsRead(docId, data.judul);
-                btnDone.innerHTML = '<i class="fas fa-check"></i> Tandai Selesai';
-                btnDone.classList.remove('bg-emerald-500');
-                btnDone.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+                btnDone.onclick = () => window.markAsReadProcess(docId, data.judul);
+                btnDone.innerHTML = '<i class="fas fa-check-circle"></i> Tandai Sudah Dibaca';
+                btnDone.className = "w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white font-bold px-8 py-3 rounded-xl transition-colors shadow-lg shadow-brand-500/30 flex items-center justify-center gap-2";
             }
         }
 
-        // --- 4. TANDAI SELESAI (INTERAKTIF) ---
-        window.markAsRead = async function(docId, judul) {
-            if(confirm(`Anda yakin sudah mempelajari materi "${judul}" hari ini?`)) {
-                try {
-                    await setDoc(doc(db, "daily_materials", docId, "reads", auth.currentUser.uid), {
-                        read: true,
-                        readAt: serverTimestamp()
-                    });
-                    
-                    // Update UI Button
-                    const btn = document.getElementById('btnMarkDone');
-                    btn.innerHTML = '<i class="fas fa-check"></i> Selesai';
-                    btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
-                    btn.classList.add('bg-emerald-500', 'cursor-default');
-                    btn.onclick = null;
-                    
-                    showToast("Selamat! Materi ditandai selesai.", "success");
-                } catch (error) {
-                    console.error("Gagal menandai:", error);
-                }
+        window.markAsReadProcess = async function(docId, judul) {
+            try {
+                await setDoc(doc(db, "daily_materials", docId, "reads", auth.currentUser.uid), {
+                    read: true,
+                    readAt: serverTimestamp()
+                });
+                
+                const btn = document.getElementById('btnMarkDone');
+                setButtonDoneState(btn);
+                showModernToast("Selesai! Kamu telah menyelesaikan materi hari ini.");
+            } catch (error) {
+                console.error("Gagal menandai:", error);
+                showModernToast("Terjadi kesalahan sistem.", "error");
             }
         }
 
-        // Helper Toast Notification
-        function showToast(message, type = 'success') {
-            const container = document.body;
+        function setButtonDoneState(btn) {
+            btn.innerHTML = '<i class="fas fa-check-double"></i> Selesai Dipelajari';
+            btn.className = "w-full sm:w-auto bg-emerald-100 text-emerald-700 font-bold px-8 py-3 rounded-xl cursor-default flex items-center justify-center gap-2";
+            btn.onclick = null;
+        }
+
+        function showModernToast(message, type = 'success') {
             const toast = document.createElement('div');
-            toast.className = `fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-xl text-sm z-[200] animate-bounce`;
-            toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle text-green-400' : 'info-circle text-blue-400'} mr-2"></i> ${message}`;
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
+            const isSuccess = type === 'success';
+            toast.className = `fixed top-20 left-1/2 transform -translate-x-1/2 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl z-[100] transition-all duration-500 translate-y-[-100px] opacity-0 ${isSuccess ? 'bg-slate-900 text-white' : 'bg-red-600 text-white'}`;
+            
+            toast.innerHTML = `
+                <div class="${isSuccess ? 'text-emerald-400' : 'text-white'} text-xl">
+                    <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
+                </div>
+                <p class="font-medium text-sm">${message}</p>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Animasi masuk
+            setTimeout(() => {
+                toast.classList.remove('translate-y-[-100px]', 'opacity-0');
+                toast.classList.add('translate-y-0', 'opacity-100');
+            }, 10);
 
-        // Sidebar Logic
-        window.toggleSidebar = function() {
-            const sidebar = document.getElementById('sidebar');
-            if (sidebar.classList.contains('-translate-x-full')) {
-                sidebar.classList.remove('-translate-x-full');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-            }
+            // Animasi keluar
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-100px]', 'opacity-0');
+                setTimeout(() => toast.remove(), 500);
+            }, 3500);
         }
     </script>
 </body>
