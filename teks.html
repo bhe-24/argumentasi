@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kumpulan Teks Argumentasi - Argumentasi</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        display: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        brand: { gold: '#fbbf24', dark: '#0f172a', primary: '#0f4c81', emerald: '#065f46' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        .font-display { font-family: 'Playfair Display', serif; }
+        .texture-dots { background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px); background-size: 16px 16px; }
+        .header-scrolled { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border-bottom-color: transparent; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); }
+        .modal-z { z-index: 99999 !important; }
+        
+        /* Custom scrollbar untuk slider horizontal */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- HEADER UTAMA -->
+    <header id="mainHeader" class="fixed w-full top-0 z-40 transition-all duration-300 bg-slate-900 text-white py-3 px-4 shadow-xl border-b-4 border-amber-500">
+        <div class="absolute inset-0 texture-dots pointer-events-none opacity-50"></div>
+        <div class="relative max-w-6xl mx-auto flex justify-between items-center">
+            
+            <a href="index.html" class="flex items-center gap-3 transform hover:scale-105 transition-transform">
+                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Argumentasi" class="h-10 sm:h-12 object-contain drop-shadow-md">
+            </a>
+            
+            <div class="relative">
+                <button type="button" onclick="toggleActionMenu(event)" class="bg-amber-400 hover:bg-amber-300 text-slate-900 px-5 py-2 rounded-full font-bold text-sm flex items-center gap-2 transition-all shadow-md active:scale-95 border border-amber-300">
+                    <span>Aksi</span>
+                    <i class="fas fa-chevron-down text-xs"></i>
+                </button>
+                
+                <!-- Dropdown Menu -->
+                <div id="actionMenu" class="hidden absolute right-0 top-full mt-3 w-56 bg-white rounded-2xl shadow-2xl overflow-hidden z-50 border border-slate-100 transform origin-top-right transition-all">
+                    <div class="bg-slate-50 px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">Pintu Masuk</div>
+                    <a href="login.html" class="block px-4 py-3.5 hover:bg-blue-50 border-b border-slate-100 flex items-center transition-colors group">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3 group-hover:bg-blue-600 transition-colors">
+                            <i class="fas fa-user-shield text-blue-600 group-hover:text-white text-xs"></i>
+                        </div>
+                        <span class="font-bold text-sm text-slate-700 group-hover:text-blue-700">Masuk Guru</span>
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+    </header>
+
+    <div class="h-16 md:h-[72px]"></div>
+
+    <!-- BILAH INFORMASI -->
+    <div class="bg-slate-800 text-slate-300 py-2.5 px-4 shadow-inner border-b border-slate-700 relative z-30">
+        <div class="max-w-6xl mx-auto flex justify-center md:justify-start items-center gap-4 text-xs md:text-sm font-medium">
+            <div class="flex items-center gap-2">
+                <i class="far fa-calendar-alt text-amber-400"></i>
+                <span id="currentDateText">Memuat tanggal...</span>
+            </div>
+            <div class="w-px h-4 bg-slate-500"></div>
+            <div class="flex items-center gap-2 text-slate-400">
+                <i class="far fa-user-circle"></i>
+                <span id="displayNameBar" class="font-bold text-amber-400 truncate max-w-[150px]">Siswa Aktif</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- HERO SECTION -->
+    <section class="relative bg-gradient-to-br from-emerald-900 via-slate-900 to-emerald-950 py-12 md:py-16 px-4 shadow-lg overflow-hidden border-b border-emerald-900/50">
+        <div class="absolute inset-0 texture-dots pointer-events-none opacity-20"></div>
+        <div class="absolute top-[-20%] left-[-10%] w-64 h-64 bg-amber-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+        <div class="absolute bottom-[-20%] right-[-10%] w-64 h-64 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+        
+        <div class="relative max-w-4xl mx-auto text-center z-10">
+            <div class="w-16 h-16 bg-emerald-500/20 border border-emerald-400/30 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm transform rotate-3">
+                <i class="fas fa-layer-group text-3xl text-emerald-400 -rotate-3"></i>
+            </div>
+            <h1 class="text-3xl md:text-5xl font-display font-bold text-white mb-4">Galeri <span class="text-amber-400">Argumentasi</span></h1>
+            <p class="text-emerald-100 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">Eksplorasi berbagai teks argumentasi yang telah dikelompokkan secara dinamis berdasarkan tema dan topik bahasan oleh Guru Anda.</p>
+        </div>
+    </section>
+
+    <!-- KONTEN UTAMA -->
+    <main class="flex-grow w-full max-w-6xl mx-auto px-4 py-8 md:py-12 relative z-20">
+        
+        <!-- LOADING STATE -->
+        <div id="loadingState" class="flex flex-col items-center justify-center py-20 bg-white rounded-3xl shadow-sm border border-slate-100">
+            <i class="fas fa-circle-notch fa-spin text-4xl text-emerald-500 mb-4"></i>
+            <h3 class="font-bold text-slate-800 text-lg mb-1">Membaca Data Server...</h3>
+            <p class="text-sm text-slate-500">Menyusun kategori dan section teks secara otomatis.</p>
+        </div>
+
+        <!-- ERROR / EMPTY STATE -->
+        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 bg-white rounded-3xl shadow-sm border border-slate-200 border-dashed text-center px-4">
+            <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-4xl mb-4 border border-slate-100 text-slate-300">
+                <i class="fas fa-box-open"></i>
+            </div>
+            <h3 class="font-bold text-slate-700 text-xl mb-2">Belum Ada Teks Argumentasi</h3>
+            <p class="text-sm text-slate-500 max-w-md mb-6" id="errorMsg">Admin atau Guru belum mempublikasikan teks argumentasi ke dalam sistem. Silakan kembali lagi nanti.</p>
+            <a href="index.html" class="bg-slate-900 text-white px-6 py-3 rounded-full font-bold hover:bg-slate-800 transition-colors"><i class="fas fa-arrow-left mr-2"></i> Kembali ke Beranda</a>
+        </div>
+
+        <!-- CONTAINER UNTUK SECTION DINAMIS -->
+        <div id="dynamicSectionsContainer" class="hidden flex-col gap-8 fade-in">
+            <!-- Data Section akan diinjeksi ke sini oleh JS -->
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-400 py-10 border-t-4 border-amber-500 mt-auto">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+            <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Argumentasi" class="h-8 object-contain mx-auto mb-4 grayscale opacity-70">
+            <p class="text-xs max-w-md mx-auto mb-6">Membangun generasi pemikir kritis melalui bahan ajar digital Argumentasi yang berbasis budaya lokal dan berlandaskan logika kuat.</p>
+            <div class="border-t border-slate-800 pt-6 text-[10px]">
+                &copy; 2026 Platform Argumentasi. Hak Cipta Dilindungi.
+            </div>
+        </div>
+    </footer>
+
+    <!-- SCRIPT UI DASAR -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+            document.getElementById('currentDateText').innerText = new Date().toLocaleDateString('id-ID', dateOptions);
+            const nama = localStorage.getItem('namaSiswaCendekia');
+            if(nama) document.getElementById('displayNameBar').innerText = nama;
+        });
+
+        window.toggleActionMenu = function(e) {
+            e.stopPropagation();
+            document.getElementById('actionMenu').classList.toggle('hidden');
+        };
+
+        window.addEventListener('click', () => {
+            const menu = document.getElementById('actionMenu');
+            if(menu && !menu.classList.contains('hidden')) menu.classList.add('hidden');
+        });
+
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('mainHeader');
+            if (window.scrollY > 20) header.classList.add('header-scrolled', 'py-2');
+            else header.classList.remove('header-scrolled', 'py-2');
+        });
+    </script>
+
+    <!-- SCRIPT FIREBASE & LOGIKA GROUPING SECTION OTOMATIS -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Konfigurasi Firebase Anda
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            projectId: "mading-cf676",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Komponen Render Kartu Materi
+        function renderCardItem(data, badgeColorClass) {
+            return `
+            <a href="baca.html?id=${data.id}" class="flex-none w-[280px] bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 hover:border-amber-400 transition-all duration-300 flex flex-col snap-start group overflow-hidden h-full">
+                <div class="h-40 relative overflow-hidden bg-slate-100 shrink-0">
+                    <img src="${data.img}" alt="${data.judul}" loading="lazy" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" onerror="this.src='https://via.placeholder.com/400x250?text=Gambar+Materi'">
+                    <div class="absolute top-3 left-3 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border shadow-sm backdrop-blur-md ${badgeColorClass}">
+                        ${data.kategoriLabel}
+                    </div>
+                </div>
+                <div class="p-5 flex flex-col flex-1">
+                    <h3 class="font-bold text-slate-800 text-base line-clamp-2 mb-2 group-hover:text-emerald-600 transition-colors leading-snug">${data.judul}</h3>
+                    <p class="text-xs text-slate-500 line-clamp-3 mb-4 leading-relaxed flex-1">${data.deskripsi}</p>
+                    <div class="mt-auto flex justify-between items-center text-xs text-slate-400 font-medium border-t border-slate-100 pt-3">
+                        <span class="flex items-center gap-1.5"><i class="far fa-clock"></i> ${data.waktuBaca}</span>
+                        <span class="text-emerald-600 font-bold group-hover:translate-x-1 transition-transform flex items-center gap-1">Baca <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </div>
+            </a>`;
+        }
+
+        async function fetchAndGroupMaterials() {
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const container = document.getElementById('dynamicSectionsContainer');
+
+            try {
+                // Fetch seluruh materi. Kita gunakan orderBy createdAt untuk menjaga urutan terbaru
+                const q = query(collection(db, "materials"), orderBy("createdAt", "desc"));
+                const snap = await getDocs(q);
+
+                loadingState.classList.add('hidden');
+
+                if (snap.empty) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                // Logika Pengelompokan (Grouping) berdasarkan Section Admin
+                const groupedData = {};
+                let hasData = false;
+
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const kateg = (data.kategori || "").toLowerCase();
+                    
+                    // Kita hanya memproses yang kategorinya adalah Argumentasi (atau Artikel/Berita)
+                    if(kateg.includes('argumentasi')) {
+                        hasData = true;
+                        
+                        // KUNCI DINAMIS: Admin bisa menambahkan field `section_admin` atau `topik` di Firestore
+                        // Jika tidak ada, dimasukkan ke "Koleksi Umum"
+                        const sectionName = data.section_admin || data.topik || data.kategori_spesifik || "Koleksi Teks Umum";
+                        
+                        if (!groupedData[sectionName]) {
+                            groupedData[sectionName] = [];
+                        }
+                        
+                        groupedData[sectionName].push({
+                            id: doc.id,
+                            judul: data.judul || "Tanpa Judul",
+                            kategoriLabel: "Argumentasi",
+                            deskripsi: data.cuplikan || data.deskripsiSingkat || "Klik untuk membaca selengkapnya...",
+                            img: data.coverImage || data.gambarBase64 || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=500",
+                            waktuBaca: data.waktuBaca || "5 Min"
+                        });
+                    }
+                });
+
+                if (!hasData) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                // Warna Indikator Bar untuk setiap section agar menarik (Berputar otomatis)
+                const barColors = ['bg-amber-500', 'bg-emerald-500', 'bg-blue-500', 'bg-rose-500', 'bg-purple-500', 'bg-indigo-500'];
+                const badgeColors = [
+                    'text-amber-700 bg-amber-50 border-amber-200', 
+                    'text-emerald-700 bg-emerald-50 border-emerald-200',
+                    'text-blue-700 bg-blue-50 border-blue-200',
+                    'text-rose-700 bg-rose-50 border-rose-200',
+                    'text-purple-700 bg-purple-50 border-purple-200',
+                    'text-indigo-700 bg-indigo-50 border-indigo-200'
+                ];
+                
+                let htmlOutput = "";
+                let colorIndex = 0;
+
+                // Looping untuk merender HTML dari setiap Section yang terbentuk
+                for (const [sectionName, items] of Object.entries(groupedData)) {
+                    const currentBarColor = barColors[colorIndex % barColors.length];
+                    const currentBadgeColor = badgeColors[colorIndex % badgeColors.length];
+                    colorIndex++;
+
+                    let cardsHtml = "";
+                    items.forEach(item => {
+                        cardsHtml += renderCardItem(item, currentBadgeColor);
+                    });
+
+                    // Susun HTML per Section (Persis seperti yang Anda minta)
+                    htmlOutput += `
+                    <section class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 md:p-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center">
+                                <div class="w-2.5 h-8 ${currentBarColor} rounded-full mr-3 shadow-sm"></div>
+                                <h2 class="text-2xl font-display font-bold text-slate-800 capitalize">${sectionName}</h2>
+                            </div>
+                            <span class="text-xs font-bold text-slate-400 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">${items.length} Teks</span>
+                        </div>
+                        
+                        <div class="flex overflow-x-auto gap-5 pb-4 snap-x hide-scrollbar">
+                            ${cardsHtml}
+                        </div>
+                    </section>
+                    `;
+                }
+
+                container.innerHTML = htmlOutput;
+                container.classList.remove('hidden');
+                container.classList.add('flex');
+
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                loadingState.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                document.getElementById('errorMsg').innerText = "Terjadi gangguan jaringan saat memuat data dari server. Silakan muat ulang halaman.";
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchAndGroupMaterials);
+    </script>
+</body>
+</html>
