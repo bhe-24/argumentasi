@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Membaca Materi - Argumentasi</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        reading: ['Merriweather', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #fcfaf8; }
+        .font-reading { font-family: 'Merriweather', serif; line-height: 1.8; }
+        
+        /* Formatting untuk konten dari Database */
+        .content-body p { margin-bottom: 1.5em; color: #334155; }
+        .content-body h3 { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 1.25rem; margin-top: 2em; margin-bottom: 1em; color: #0f172a; }
+        .content-body ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1.5em; }
+        .content-body blockquote { border-left: 4px solid #fbbf24; padding-left: 1rem; font-style: italic; color: #475569; background: #fef3c7; padding: 1rem; border-radius: 0 0.5rem 0.5rem 0; margin-bottom: 1.5em; }
+        
+        /* Animasi */
+        .fade-in { animation: fadeIn 0.5s ease-in forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen">
+
+    <!-- NAVBAR MODE BACA -->
+    <nav class="sticky top-0 bg-white/95 backdrop-blur-md border-b border-slate-200 z-50 shadow-sm transition-all duration-300" id="readNav">
+        <div class="max-w-4xl mx-auto px-4 py-3.5 flex justify-between items-center">
+            <button onclick="history.back()" class="text-slate-500 hover:text-emerald-600 transition-colors flex items-center gap-2 font-medium bg-slate-50 px-4 py-2 rounded-full border border-slate-200 active:scale-95">
+                <i class="fas fa-arrow-left"></i> <span class="hidden sm:inline">Kembali</span>
+            </button>
+            
+            <div class="flex items-center gap-1">
+                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-6 object-contain grayscale opacity-50 hidden sm:block mr-4">
+                
+                <div class="flex bg-slate-100 rounded-full p-1 border border-slate-200">
+                    <button onclick="changeFontSize(-1)" class="w-8 h-8 rounded-full text-slate-600 hover:bg-white hover:shadow-sm flex items-center justify-center transition-all" title="Perkecil Teks"><i class="fas fa-search-minus"></i></button>
+                    <div class="w-px h-5 bg-slate-300 my-auto mx-1"></div>
+                    <button onclick="changeFontSize(1)" class="w-8 h-8 rounded-full text-slate-600 hover:bg-white hover:shadow-sm flex items-center justify-center transition-all" title="Perbesar Teks"><i class="fas fa-search-plus text-lg"></i></button>
+                </div>
+            </div>
+        </div>
+        <!-- Progress Bar Reading -->
+        <div class="h-1 bg-slate-100 w-full">
+            <div id="readProgress" class="h-full bg-emerald-500 w-0 transition-all duration-150"></div>
+        </div>
+    </nav>
+
+    <!-- STATE: LOADING DATA -->
+    <div id="stateLoading" class="flex-grow flex flex-col items-center justify-center py-20">
+        <i class="fas fa-circle-notch fa-spin text-4xl text-emerald-500 mb-4"></i>
+        <p class="text-slate-500 font-medium animate-pulse">Menarik data dari server...</p>
+    </div>
+
+    <!-- STATE: ERROR / TIDAK DITEMUKAN -->
+    <div id="stateError" class="hidden flex-grow flex flex-col items-center justify-center py-20 px-4 text-center">
+        <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-4xl mb-4 border-2 border-red-100">
+            <i class="fas fa-file-excel"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800 mb-2">Materi Tidak Ditemukan</h2>
+        <p class="text-slate-500 max-w-md mb-6" id="errorMsg">Materi yang Anda cari tidak ada dalam sistem atau telah dihapus.</p>
+        <a href="materi.html" class="bg-slate-900 text-white px-6 py-3 rounded-full font-bold hover:bg-slate-800 transition-colors"><i class="fas fa-search mr-2"></i> Cari Materi Lain</a>
+    </div>
+
+    <!-- STATE: KONTEN ARTIKEL -->
+    <main id="stateContent" class="hidden max-w-3xl mx-auto px-5 py-8 md:py-12 w-full flex-grow fade-in">
+        
+        <!-- Header Artikel -->
+        <div class="text-center mb-10">
+            <span id="labelKategori" class="bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4 inline-block">Kategori</span>
+            <h1 id="judulMateri" class="text-3xl md:text-5xl font-bold font-reading text-slate-900 mb-6 leading-tight">Judul Materi</h1>
+            
+            <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                <span class="flex items-center gap-1.5"><i class="far fa-user text-amber-500"></i> <span id="penulisMateri">Tim Redaksi</span></span>
+                <span class="flex items-center gap-1.5"><i class="far fa-calendar-alt text-amber-500"></i> <span id="tanggalMateri">Tanggal</span></span>
+                <span class="flex items-center gap-1.5"><i class="far fa-clock text-amber-500"></i> <span id="waktuBacaMateri">0 Menit Baca</span></span>
+            </div>
+        </div>
+
+        <!-- Cover Image -->
+        <div class="relative w-full h-64 md:h-[400px] mb-10 rounded-2xl overflow-hidden shadow-lg bg-slate-200">
+            <img id="coverMateri" src="" alt="Cover" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/800x400?text=Gambar+Materi'">
+        </div>
+
+        <!-- Teks Artikel (Dinamis dari Firebase) -->
+        <article id="readingContent" class="font-reading text-[1.125rem] content-body">
+            <!-- Konten di-inject via JS -->
+        </article>
+
+        <!-- ========================================== -->
+        <!-- FITUR: DAPATKAN RANGKUMAN (SIMULASI API) -->
+        <!-- ========================================== -->
+        <div class="mt-16 bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-1 shadow-xl relative overflow-hidden">
+            <div class="absolute inset-0 texture-dots opacity-20 pointer-events-none"></div>
+            <div class="bg-white/5 backdrop-blur-md rounded-[1.4rem] p-6 md:p-8 relative z-10">
+                
+                <!-- State Awal -->
+                <div id="resumePrompt" class="text-center">
+                    <div class="w-14 h-14 bg-amber-400 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg transform rotate-3">
+                        <i class="fas fa-bolt text-2xl text-slate-900 -rotate-3"></i>
+                    </div>
+                    <h3 class="font-display font-bold text-2xl text-white mb-2">Butuh Intisari Teks Ini?</h3>
+                    <p class="text-slate-300 text-sm mb-6 max-w-md mx-auto">Gunakan Sistem Analisis Bahasa untuk merangkum otomatis isi materi dan membedah makna argumen di dalamnya.</p>
+                    <button onclick="prosesResume()" class="bg-emerald-500 hover:bg-emerald-400 text-white font-bold px-8 py-3.5 rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.4)]">
+                        <i class="fas fa-magic mr-2"></i> Ekstrak Rangkuman
+                    </button>
+                </div>
+
+                <!-- State Loading -->
+                <div id="resumeLoading" class="hidden text-center py-6">
+                    <i class="fas fa-cog fa-spin text-4xl text-amber-400 mb-4"></i>
+                    <p class="text-white font-bold tracking-wide">Sistem sedang menganalisis...</p>
+                    <p class="text-slate-400 text-xs mt-2">Mengekstrak argumen utama dan makna teks.</p>
+                </div>
+
+                <!-- State Hasil Rangkuman -->
+                <div id="resumeResult" class="hidden fade-in">
+                    <div class="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+                        <i class="fas fa-check-circle text-emerald-400 text-xl"></i>
+                        <h3 class="font-bold text-white text-lg tracking-wide uppercase">Hasil Analisis Sistem</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-slate-900/50 p-5 rounded-2xl border border-white/5">
+                            <h4 class="text-amber-400 font-bold text-sm mb-3 flex items-center gap-2"><i class="fas fa-list-ul"></i> Poin Rangkuman</h4>
+                            <ul id="resumePoints" class="text-slate-300 text-sm space-y-2 list-disc pl-4 marker:text-emerald-500">
+                                <!-- Diisi JS -->
+                            </ul>
+                        </div>
+                        <div class="bg-slate-900/50 p-5 rounded-2xl border border-white/5">
+                            <h4 class="text-emerald-400 font-bold text-sm mb-3 flex items-center gap-2"><i class="fas fa-brain"></i> Maksud & Makna Teks</h4>
+                            <p id="resumeMakna" class="text-slate-300 text-sm leading-relaxed">
+                                <!-- Diisi JS -->
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-500 py-6 border-t border-slate-800 text-center text-xs mt-auto">
+        &copy; 2026 Platform Argumentasi - Dibangun untuk Generasi Kritis
+    </footer>
+
+    <!-- SCRIPT UI -->
+    <script>
+        // Logika Ukuran Font
+        let currentSize = 1.125; // 1.125rem = 18px (text-lg)
+        function changeFontSize(step) {
+            currentSize += (step * 0.125);
+            if(currentSize < 0.9) currentSize = 0.9;
+            if(currentSize > 1.8) currentSize = 1.8;
+            document.getElementById('readingContent').style.fontSize = currentSize + 'rem';
+        }
+
+        // Logika Progress Scroll Membaca
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById("readProgress").style.width = scrolled + "%";
+        });
+
+        // Fomat Tanggal
+        function formatDate(timestamp) {
+            if (!timestamp) return "Baru saja";
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+    </script>
+
+    <!-- SCRIPT FIREBASE & API SIMULASI -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            projectId: "mading-cf676",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Variabel global untuk menyimpan data sementara agar bisa di-resume
+        let currentArticleData = null;
+
+        async function fetchMateri() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const materiId = urlParams.get('id');
+
+            const stateLoading = document.getElementById('stateLoading');
+            const stateError = document.getElementById('stateError');
+            const stateContent = document.getElementById('stateContent');
+
+            if (!materiId) {
+                stateLoading.classList.add('hidden');
+                stateError.classList.remove('hidden');
+                document.getElementById('errorMsg').innerText = "ID Materi tidak ditemukan pada tautan ini.";
+                return;
+            }
+
+            try {
+                const docRef = doc(db, "materials", materiId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    currentArticleData = data; // Simpan untuk fungsi resume
+
+                    // Set Metadata UI
+                    document.getElementById('labelKategori').innerText = data.kategori || "Materi Pembelajaran";
+                    document.getElementById('judulMateri').innerText = data.judul || "Tanpa Judul";
+                    document.getElementById('penulisMateri').innerText = data.penulis || "Tim Penyusun";
+                    document.getElementById('tanggalMateri').innerText = formatDate(data.createdAt);
+                    document.getElementById('waktuBacaMateri').innerText = data.waktuBaca || "5 Menit Baca";
+                    
+                    document.getElementById('coverMateri').src = data.coverImage || data.gambarBase64 || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800";
+
+                    // Format Konten HTML secara aman (jika format plain text, jadikan paragraf)
+                    let contentHtml = data.konten || data.isi || "<p>Materi belum diisi.</p>";
+                    // Simple check jika konten tidak memiliki tag HTML sama sekali
+                    if (!contentHtml.includes('<p>') && !contentHtml.includes('<br>')) {
+                        contentHtml = contentHtml.split('\n').map(p => p.trim() ? `<p>${p}</p>` : '').join('');
+                    }
+                    
+                    document.getElementById('readingContent').innerHTML = contentHtml;
+
+                    // Tampilkan Konten
+                    stateLoading.classList.add('hidden');
+                    stateContent.classList.remove('hidden');
+                    stateContent.classList.add('flex', 'flex-col'); // maintain layout
+                } else {
+                    // Dokumen tidak ada
+                    stateLoading.classList.add('hidden');
+                    stateError.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                stateLoading.classList.add('hidden');
+                stateError.classList.remove('hidden');
+                document.getElementById('errorMsg').innerText = "Terjadi kesalahan sistem saat mengambil data ke server.";
+            }
+        }
+
+        // Jalankan fetch saat halaman siap
+        document.addEventListener('DOMContentLoaded', fetchMateri);
+
+        // =========================================================
+        // LOGIKA SIMULASI API: api/resume
+        // Bertindak sebagai Sistem Pemroses Bahasa
+        // =========================================================
+        window.prosesResume = function() {
+            const promptBox = document.getElementById('resumePrompt');
+            const loadBox = document.getElementById('resumeLoading');
+            const resultBox = document.getElementById('resumeResult');
+
+            // 1. Tampilkan Loading
+            promptBox.classList.add('hidden');
+            loadBox.classList.remove('hidden');
+
+            // 2. Simulasi Request ke API Server (Jeda 2.5 Detik)
+            setTimeout(() => {
+                loadBox.classList.add('hidden');
+                resultBox.classList.remove('hidden');
+
+                // Generate Rangkuman Otomatis (Simulasi cerdas berdasarkan judul/kategori)
+                const judul = currentArticleData ? currentArticleData.judul : "Materi Pembelajaran";
+                const kategori = currentArticleData ? currentArticleData.kategori : "argumentasi";
+                
+                // Menulis ke DOM
+                const ulPoints = document.getElementById('resumePoints');
+                ulPoints.innerHTML = `
+                    <li>Teks ini secara khusus membahas mengenai <b>${judul}</b>.</li>
+                    <li>Menyajikan data dan fakta objektif untuk mendukung klaim utama penulis.</li>
+                    <li>Sistematika struktur tulisan sudah sesuai dengan kaidah teks ${kategori}.</li>
+                `;
+
+                document.getElementById('resumeMakna').innerHTML = `
+                    Inti dari argumen yang dibangun penulis adalah upaya untuk memengaruhi dan meyakinkan pembaca terkait isu <b>${judul}</b>. Penulis memposisikan teks ini bukan sekadar informasi, melainkan sebuah dorongan moral atau akademis agar pembaca menyetujui landasan berpikir yang dipaparkan.
+                `;
+                
+                // Scroll halus ke arah hasil
+                resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            }, 2500);
+        };
+    </script>
+</body>
+</html>
