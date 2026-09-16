@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ruang Kreasi - Argumentasi</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Confetti JS -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        display: ['Playfair Display', 'serif'],
+                        reading: ['Merriweather', 'serif'],
+                    },
+                    colors: {
+                        brand: { gold: '#fbbf24', dark: '#0f172a', primary: '#0f4c81', emerald: '#065f46' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
+        .font-display { font-family: 'Playfair Display', serif; }
+        .font-reading { font-family: 'Merriweather', serif; line-height: 1.8; }
+        .texture-dots { background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 16px 16px; }
+        
+        .header-scrolled { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border-bottom-color: transparent; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); }
+        .modal-z { z-index: 99999 !important; }
+        
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Custom Scrollbar for Textareas */
+        textarea::-webkit-scrollbar { width: 6px; }
+        textarea::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 8px;}
+        textarea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        textarea::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- HEADER UTAMA -->
+    <header id="mainHeader" class="fixed w-full top-0 z-40 transition-all duration-300 bg-slate-900 text-white py-3 px-4 shadow-xl border-b-4 border-amber-500">
+        <div class="absolute inset-0 texture-dots pointer-events-none opacity-50"></div>
+        <div class="relative max-w-6xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-3 transform hover:scale-105 transition-transform">
+                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Argumentasi" class="h-10 sm:h-12 object-contain drop-shadow-md">
+            </a>
+            
+            <div class="flex items-center gap-3 bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-full shadow-inner">
+                <div class="w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center text-slate-900 shadow-md">
+                    <i class="fas fa-medal text-sm"></i>
+                </div>
+                <div class="hidden sm:block text-left">
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-0.5">Poin Penulis</div>
+                    <div class="text-sm font-black text-amber-400 leading-none" id="userScore">0 XP</div>
+                </div>
+                <span class="sm:hidden font-bold text-amber-400 text-sm ml-1 mr-2" id="userScoreMobile">0 XP</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="h-16 md:h-[72px]"></div>
+
+    <!-- HERO KREASI -->
+    <section class="relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-10 md:py-16 px-4 shadow-lg overflow-hidden border-b border-purple-900/50">
+        <div class="absolute inset-0 texture-dots pointer-events-none opacity-20"></div>
+        <!-- Ornamen Lingkaran -->
+        <div class="absolute top-[-20%] left-[-10%] w-64 h-64 bg-amber-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+        <div class="absolute bottom-[-20%] right-[-10%] w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
+        
+        <div class="relative max-w-4xl mx-auto text-center z-10">
+            <div class="w-16 h-16 bg-white/10 border border-white/20 rounded-2xl flex items-center justify-center mx-auto mb-5 backdrop-blur-md shadow-lg transform rotate-3">
+                <i class="fas fa-lightbulb text-3xl text-amber-400 -rotate-3"></i>
+            </div>
+            <h1 class="text-3xl md:text-5xl font-display font-bold text-white mb-4 drop-shadow-md">Ruang <span class="text-amber-400">Kreasi Teks</span></h1>
+            <p class="text-purple-200 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">Asisten sistem yang akan memandu Anda memahami struktur dan berlatih merangkai teks argumentasi yang tajam dan logis.</p>
+        </div>
+    </section>
+
+    <!-- KONTEN UTAMA -->
+    <main class="flex-grow w-full max-w-6xl mx-auto px-4 py-8 md:py-12 relative z-20 flex flex-col lg:flex-row gap-8">
+
+        <!-- ========================================================== -->
+        <!-- KOLOM KIRI: CONTOH & BEDAH STRUKTUR (DARI FIREBASE)        -->
+        <!-- ========================================================== -->
+        <div class="w-full lg:w-5/12 flex flex-col gap-6">
+            
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 md:p-8">
+                <div class="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                    <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-slate-800 text-lg">Bedah Struktur Teks</h2>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contoh dari Server</p>
+                    </div>
+                </div>
+
+                <!-- Loading State Teks Referensi -->
+                <div id="loadingRef" class="py-10 text-center">
+                    <i class="fas fa-circle-notch fa-spin text-3xl text-blue-400 mb-3"></i>
+                    <p class="text-xs text-slate-500">Menarik contoh teks argumentasi...</p>
+                </div>
+
+                <!-- Error State Teks Referensi -->
+                <div id="errorRef" class="hidden py-10 text-center bg-slate-50 rounded-xl border border-slate-200">
+                    <p class="text-xs text-slate-500">Belum ada contoh teks di sistem.</p>
+                </div>
+
+                <!-- Konten Teks Referensi (Dibedah secara UI) -->
+                <div id="contentRef" class="hidden fade-in space-y-6">
+                    <h3 id="refJudul" class="font-display font-bold text-xl text-slate-900 leading-snug">Judul Teks</h3>
+                    
+                    <!-- Bagian 1: Tesis -->
+                    <div class="relative pl-4 border-l-4 border-emerald-400 bg-emerald-50/50 py-2 pr-2 rounded-r-lg">
+                        <span class="absolute -top-3 left-2 bg-emerald-100 text-emerald-700 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider shadow-sm">1. Pendahuluan (Tesis)</span>
+                        <p id="refTesis" class="text-sm text-slate-700 font-reading mt-2 line-clamp-4">Memuat tesis...</p>
+                        <p class="text-[10px] text-emerald-600 mt-2 italic"><i class="fas fa-info-circle"></i> Berisi isu atau masalah yang akan dibahas.</p>
+                    </div>
+
+                    <!-- Bagian 2: Argumen -->
+                    <div class="relative pl-4 border-l-4 border-amber-400 bg-amber-50/50 py-2 pr-2 rounded-r-lg">
+                        <span class="absolute -top-3 left-2 bg-amber-100 text-amber-700 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider shadow-sm">2. Tubuh Argumen</span>
+                        <p id="refArgumen" class="text-sm text-slate-700 font-reading mt-2 line-clamp-5">Memuat argumen...</p>
+                        <p class="text-[10px] text-amber-600 mt-2 italic"><i class="fas fa-info-circle"></i> Berisi opini yang didukung oleh fakta dan logika.</p>
+                    </div>
+
+                    <!-- Bagian 3: Kesimpulan -->
+                    <div class="relative pl-4 border-l-4 border-blue-400 bg-blue-50/50 py-2 pr-2 rounded-r-lg">
+                        <span class="absolute -top-3 left-2 bg-blue-100 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider shadow-sm">3. Kesimpulan</span>
+                        <p id="refKesimpulan" class="text-sm text-slate-700 font-reading mt-2 line-clamp-3">Memuat kesimpulan...</p>
+                        <p class="text-[10px] text-blue-600 mt-2 italic"><i class="fas fa-info-circle"></i> Berisi penegasan ulang dari tesis dan argumen.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- KOLOM KANAN: KANVAS MENULIS TERPANDU (FORM INPUT)          -->
+        <!-- ========================================================== -->
+        <div class="w-full lg:w-7/12">
+            
+            <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-200 overflow-hidden">
+                <div class="bg-slate-900 p-6 flex items-center justify-between">
+                    <div>
+                        <h2 class="font-bold text-white text-xl">Kanvas Penulis</h2>
+                        <p class="text-xs text-slate-400 mt-1">Susun argumen Anda bagian demi bagian.</p>
+                    </div>
+                    <i class="fas fa-pen-fancy text-3xl text-amber-400 opacity-50"></i>
+                </div>
+
+                <div class="p-6 md:p-8 space-y-8 bg-slate-50/50">
+                    
+                    <!-- Input Topik / Judul -->
+                    <div>
+                        <label class="block text-slate-800 font-bold mb-2">Judul Teks Topik Topik</label>
+                        <input type="text" id="inputJudul" placeholder="Contoh: Pentingnya Menjaga Bahasa Daerah..." class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all font-bold text-slate-700 shadow-sm bg-white">
+                    </div>
+
+                    <!-- Input Tesis -->
+                    <div class="relative bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-3">
+                            <label class="font-bold text-emerald-600 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-xs">1</span> Pendahuluan (Tesis)</label>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mb-3 leading-relaxed">Tuliskan pandangan awal atau masalah yang ingin Anda angkat. Pastikan pembaca mengerti posisi Anda (Pro/Kontra).</p>
+                        <textarea id="inputTesis" rows="3" class="w-full border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all text-sm font-reading text-slate-700 bg-slate-50" placeholder="Ketik tesis Anda di sini..."></textarea>
+                    </div>
+
+                    <!-- Input Argumen -->
+                    <div class="relative bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-3">
+                            <label class="font-bold text-amber-600 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-xs">2</span> Tubuh Argumen & Fakta</label>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mb-3 leading-relaxed">Tulis minimal 2 alasan logis mengapa posisi Anda benar. Jangan lupa sertakan contoh nyata atau fakta untuk memperkuat alasan tersebut.</p>
+                        <textarea id="inputArgumen" rows="5" class="w-full border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 transition-all text-sm font-reading text-slate-700 bg-slate-50" placeholder="Ketik rangkaian argumen dan fakta Anda di sini..."></textarea>
+                    </div>
+
+                    <!-- Input Kesimpulan -->
+                    <div class="relative bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-3">
+                            <label class="font-bold text-blue-600 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs">3</span> Penegasan Ulang</label>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mb-3 leading-relaxed">Tarik kesimpulan dari tesis dan argumen di atas. Gunakan kalimat penutup yang kuat dan meyakinkan.</p>
+                        <textarea id="inputKesimpulan" rows="3" class="w-full border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all text-sm font-reading text-slate-700 bg-slate-50" placeholder="Ketik kesimpulan akhir di sini..."></textarea>
+                    </div>
+
+                    <!-- Tombol Evaluasi -->
+                    <button onclick="prosesEvaluasiTulisan()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 group">
+                        <i class="fas fa-magic text-amber-300 group-hover:rotate-12 transition-transform"></i> Evaluasi Tulisan Saya
+                    </button>
+
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-500 py-6 border-t border-slate-800 text-center text-xs mt-auto">
+        &copy; 2026 Platform Argumentasi - Asisten Penulis Digital
+    </footer>
+
+    <!-- ============================================================ -->
+    <!-- MODAL HASIL EVALUASI (SIMULASI SISTEM PEMERIKSA)             -->
+    <!-- ============================================================ -->
+    <div id="modalEvaluasi" class="fixed inset-0 bg-slate-900/90 hidden modal-z flex items-center justify-center backdrop-blur-md opacity-0 transition-opacity duration-300 px-4">
+        <div class="bg-white w-full max-w-xl rounded-3xl shadow-2xl p-6 md:p-8 transform scale-95 transition-transform duration-300 relative overflow-hidden text-center" id="evaluasiKonten">
+            
+            <!-- State 1: Memproses -->
+            <div id="evalLoading" class="py-8">
+                <div class="relative w-24 h-24 mx-auto mb-6">
+                    <div class="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
+                    <div class="absolute inset-0 border-4 border-purple-500 rounded-full border-t-transparent animate-spin"></div>
+                    <i class="fas fa-cogs absolute inset-0 flex items-center justify-center text-3xl text-purple-500"></i>
+                </div>
+                <h3 class="font-display font-bold text-2xl text-slate-800 mb-2">Memeriksa Tulisan...</h3>
+                <p class="text-slate-500" id="evalProgressText">Menganalisis keterkaitan antara tesis dan argumen.</p>
+            </div>
+
+            <!-- State 2: Hasil -->
+            <div id="evalResult" class="hidden py-4 fade-in">
+                <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-emerald-50 text-emerald-500 text-3xl shadow-inner">
+                    <i class="fas fa-check-double"></i>
+                </div>
+                <h3 class="font-display font-bold text-2xl text-slate-800 mb-2">Evaluasi Selesai!</h3>
+                <p class="text-slate-600 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100 italic" id="evalFeedback">
+                    "Struktur teks Anda sudah lengkap. Argumen yang dibangun cukup relevan untuk mendukung tesis awal."
+                </p>
+                
+                <div class="grid grid-cols-3 gap-2 mb-6">
+                    <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                        <i class="fas fa-check text-emerald-500 mb-1"></i><br>
+                        <span class="text-[10px] font-bold text-slate-600 uppercase">Tesis</span>
+                    </div>
+                    <div class="bg-amber-50 p-3 rounded-xl border border-amber-100">
+                        <i class="fas fa-check text-amber-500 mb-1"></i><br>
+                        <span class="text-[10px] font-bold text-slate-600 uppercase">Argumen</span>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                        <i class="fas fa-check text-blue-500 mb-1"></i><br>
+                        <span class="text-[10px] font-bold text-slate-600 uppercase">Kesimpulan</span>
+                    </div>
+                </div>
+
+                <div class="inline-flex items-center gap-3 bg-purple-600 text-white px-8 py-3 rounded-full font-black text-xl shadow-lg mb-8 shadow-purple-200">
+                    <i class="fas fa-arrow-up text-amber-300"></i> +100 XP
+                </div>
+
+                <button onclick="tutupEvaluasi()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 rounded-xl transition-all">Selesai & Kembali Menulis</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIKA UI & AUDIO -->
+    <script>
+        // Logika Poin/Skor Lokal
+        let xpScore = parseInt(localStorage.getItem('kreasiPointsArg') || '0');
+        
+        function updateScoreUI() {
+            document.getElementById('userScore').innerText = xpScore + ' XP';
+            document.getElementById('userScoreMobile').innerText = xpScore + ' XP';
+            localStorage.setItem('kreasiPointsArg', xpScore.toString());
+        }
+        updateScoreUI();
+
+        // Header Scroll
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('mainHeader');
+            if (window.scrollY > 20) header.classList.add('header-scrolled', 'py-2');
+            else header.classList.remove('header-scrolled', 'py-2');
+        });
+
+        // Audio Generator
+        const playSound = (type) => {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1046.50, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                } else if(type === 'error') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+                }
+                osc.start();
+                osc.stop(ctx.currentTime + 0.5);
+            } catch(e) { }
+        };
+
+        // --- SISTEM EVALUASI TULISAN ---
+        window.prosesEvaluasiTulisan = function() {
+            const judul = document.getElementById('inputJudul').value.trim();
+            const tesis = document.getElementById('inputTesis').value.trim();
+            const argumen = document.getElementById('inputArgumen').value.trim();
+            const kesimpulan = document.getElementById('inputKesimpulan').value.trim();
+
+            if(!judul || !tesis || !argumen || !kesimpulan) {
+                playSound('error');
+                alert("Sistem Peringatan: Mohon lengkapi semua struktur teks (Judul, Tesis, Argumen, Kesimpulan) sebelum dievaluasi.");
+                return;
+            }
+            if(argumen.length < 30) {
+                playSound('error');
+                alert("Sistem Peringatan: Bagian Argumen terlalu pendek. Susun fakta dan opini logis yang lebih panjang.");
+                return;
+            }
+
+            // Buka Modal & Reset State
+            const modal = document.getElementById('modalEvaluasi');
+            const konten = document.getElementById('evaluasiKonten');
+            document.getElementById('evalLoading').classList.remove('hidden');
+            document.getElementById('evalResult').classList.add('hidden');
+
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                konten.classList.replace('scale-95', 'scale-100');
+            });
+
+            // Animasi Proses Pengecekan
+            const textStates = ["Mengekstrak tesis...", "Memeriksa kepaduan argumen...", "Menilai kesimpulan logis..."];
+            let tIdx = 0;
+            const textInterval = setInterval(() => {
+                if(tIdx < textStates.length) {
+                    document.getElementById('evalProgressText').innerText = textStates[tIdx];
+                    tIdx++;
+                }
+            }, 800);
+
+            // Menampilkan Hasil setelah 3.5 Detik
+            setTimeout(() => {
+                clearInterval(textInterval);
+                document.getElementById('evalLoading').classList.add('hidden');
+                document.getElementById('evalResult').classList.remove('hidden');
+
+                // Kasih Poin & Efek
+                xpScore += 100;
+                updateScoreUI();
+                playSound('success');
+                confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#9333ea', '#fbbf24', '#10b981'] });
+                
+            }, 3500);
+        };
+
+        window.tutupEvaluasi = function() {
+            const modal = document.getElementById('modalEvaluasi');
+            const konten = document.getElementById('evaluasiKonten');
+            modal.classList.add('opacity-0');
+            konten.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        };
+    </script>
+
+    <!-- LOGIKA FIREBASE (Menarik Contoh Teks & Membedahnya) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, where, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            projectId: "mading-cf676",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Utility: Memotong paragraf array menjadi 3 bagian struktural kasar
+        function bagiStrukturTeks(htmlContent) {
+            // Hapus tag HTML sementara untuk dipecah berdasarkan paragraf/newline
+            const plainText = htmlContent.replace(/<[^>]+>/g, '\n').replace(/\n\s*\n/g, '\n').trim();
+            const paragraphs = plainText.split('\n').filter(p => p.length > 20);
+
+            if(paragraphs.length < 3) {
+                // Fallback jika paragraf terlalu sedikit
+                return {
+                    tesis: paragraphs[0] || "Tesis tidak ditemukan dengan jelas.",
+                    argumen: paragraphs[0] || "Argumen tidak terpisah dengan jelas.",
+                    kesimpulan: "Kesimpulan menyatu dengan paragraf di atas."
+                };
+            }
+
+            // Tesis: 1 paragraf pertama
+            const tesis = paragraphs[0];
+            // Kesimpulan: 1 paragraf terakhir
+            const kesimpulan = paragraphs[paragraphs.length - 1];
+            // Argumen: Sisa paragraf di tengah
+            const argumen = paragraphs.slice(1, paragraphs.length - 1).join('<br><br>');
+
+            return { tesis, argumen, kesimpulan };
+        }
+
+        async function fetchContohBedah() {
+            const loadRef = document.getElementById('loadingRef');
+            const errRef = document.getElementById('errorRef');
+            const contentRef = document.getElementById('contentRef');
+
+            try {
+                // Mengambil 1 materi argumentasi untuk dijadikan contoh pembedahan struktur
+                const q = query(collection(db, "materials"), where("kategori", "==", "argumentasi"), limit(3));
+                const snap = await getDocs(q);
+
+                if (snap.empty) {
+                    loadRef.classList.add('hidden');
+                    errRef.classList.remove('hidden');
+                    return;
+                }
+
+                // Ambil 1 data acak dari hasil
+                const docsArray = [];
+                snap.forEach(doc => docsArray.push(doc.data()));
+                const randomData = docsArray[Math.floor(Math.random() * docsArray.length)];
+
+                // Ekstrak struktur
+                const rawContent = randomData.konten || randomData.isi || "";
+                const struktur = bagiStrukturTeks(rawContent);
+
+                // Masukkan ke UI
+                document.getElementById('refJudul').innerText = randomData.judul || "Teks Contoh";
+                document.getElementById('refTesis').innerText = struktur.tesis;
+                document.getElementById('refArgumen').innerHTML = struktur.argumen; // pakai innerHTML karena ada <br>
+                document.getElementById('refKesimpulan').innerText = struktur.kesimpulan;
+
+                loadRef.classList.add('hidden');
+                contentRef.classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                loadRef.classList.add('hidden');
+                errRef.classList.remove('hidden');
+                errRef.innerHTML = '<p class="text-xs text-red-500">Gagal menarik data dari server.</p>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchContohBedah);
+    </script>
+</body>
+</html>
