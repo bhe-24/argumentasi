@@ -59,15 +59,12 @@
         .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
         /* Memastikan video scanner tidak menutupi elemen lain */
-        #qr-reader {
-            z-index: 0 !important;
-            position: relative;
-        }
-        /* Memastikan elemen kontrol berada di atas video */
-        .scanner-controls {
-            position: relative;
-            z-index: 10 !important;
-        }
+        #qr-reader { z-index: 0 !important; position: relative; }
+        .scanner-controls { position: relative; z-index: 10 !important; }
+
+        /* Hide Scrollbar for Horizontal Scroll Sections */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
@@ -83,7 +80,6 @@
     <!-- HEADER UTAMA -->
     <header class="relative bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white py-2 md:py-4 px-3 md:px-5 shadow-2xl sticky top-0 z-40 border-b-4 border-amber-500">
         <div class="absolute inset-0 texture-dots pointer-events-none"></div>
-        
         <div class="relative max-w-6xl mx-auto grid grid-cols-3 items-center gap-2">
             <!-- Kiri -->
             <div class="flex justify-start">
@@ -91,19 +87,16 @@
                     <i class="fas fa-cog text-base md:text-xl"></i>
                 </a>
             </div>
-
             <!-- Tengah -->
             <div class="flex justify-center">
                 <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-10 sm:h-14 md:h-20 object-contain drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-transform max-w-full" onerror="this.src='https://via.placeholder.com/150x50?text=LOGO'">
             </div>
-
             <!-- Kanan -->
             <div class="flex justify-end relative">
                 <button id="btnActionToggle" type="button" onclick="toggleActionMenu(event)" class="bg-amber-400 hover:bg-amber-300 text-slate-900 px-3 md:px-5 py-1.5 md:py-2.5 rounded-full font-bold transition-all flex items-center space-x-1 md:space-x-2 shadow-[0_4px_10px_rgba(251,191,36,0.3)] text-[11px] md:text-sm border border-amber-200 active:scale-95 whitespace-nowrap">
                     <span>Aksi</span>
                     <i class="fas fa-chevron-down text-[9px] md:text-xs"></i>
                 </button>
-                
                 <div id="actionMenu" class="hidden absolute right-0 top-full mt-2 w-56 bg-white text-gray-800 rounded-xl shadow-2xl overflow-hidden border border-slate-200 z-50 transform origin-top-right transition-all duration-200 opacity-0 scale-95">
                     <div class="bg-slate-50 px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b">Pintu Masuk</div>
                     <a href="login.html" class="block px-4 py-3 hover:bg-blue-50 border-b flex items-center transition-colors group active:bg-blue-100">
@@ -126,25 +119,32 @@
     <!-- INFO BAR -->
     <div class="bg-slate-900 text-blue-100 py-2 md:py-3 shadow-inner border-b border-slate-800">
         <div class="max-w-6xl mx-auto px-4">
-            <div class="flex flex-col sm:flex-row justify-between items-center gap-2 md:gap-3 text-[11px] md:text-sm">
+            <!-- Mobile View: Kiri (Tanggal), Kanan (Nama) -->
+            <div class="flex justify-between items-center sm:hidden text-[11px]">
                 <div class="flex items-center space-x-2 bg-slate-800/50 px-3 py-1 rounded-full border border-slate-700/50">
-                    <i class="far fa-calendar-alt text-amber-400 text-xs md:text-sm"></i>
+                    <i class="far fa-calendar-alt text-amber-400 text-xs"></i>
                     <span id="displayDate" class="font-medium tracking-wide">Memuat...</span>
                 </div>
-
-                <button type="button" onclick="openModal('modalPanduanGuru')" class="hidden sm:flex items-center space-x-2 hover:text-amber-300 transition px-3 py-1 rounded-full border border-transparent hover:border-slate-600">
-                    <i class="fas fa-info-circle text-blue-400"></i> <span>Panduan Guru</span>
-                </button>
-
                 <button type="button" onclick="openModal('modalNama')" class="flex items-center space-x-2 hover:text-amber-300 transition bg-blue-900/30 px-3 py-1 rounded-full border border-blue-800/50">
-                    <i class="far fa-user-circle text-sm md:text-lg"></i>
-                    <span id="displayName" class="font-bold underline decoration-dotted decoration-amber-400 truncate max-w-[120px] md:max-w-xs">Siapa namamu?</span>
+                    <i class="far fa-user-circle"></i>
+                    <span id="displayName" class="font-bold underline decoration-dotted decoration-amber-400 truncate max-w-[150px]">Siapa namamu?</span>
                 </button>
             </div>
             
-            <div class="sm:hidden text-center mt-2">
-                <button type="button" onclick="openModal('modalPanduanGuru')" class="text-[10px] text-slate-400 hover:text-white underline">
-                    <i class="fas fa-chalkboard-teacher mr-1"></i> Panduan Pengguna
+            <!-- Laptop View: Kiri (Tanggal), Tengah (Panduan), Kanan (Nama) -->
+            <div class="hidden sm:flex flex-col sm:flex-row justify-between items-center gap-3 text-sm">
+                <div class="flex items-center space-x-2 bg-slate-800/50 px-3 py-1 rounded-full border border-slate-700/50">
+                    <i class="far fa-calendar-alt text-amber-400"></i>
+                    <span id="displayDateDesktop" class="font-medium tracking-wide">Memuat tanggal...</span>
+                </div>
+
+                <button type="button" onclick="openModal('modalPanduanGuru')" class="flex items-center space-x-2 hover:text-amber-300 transition px-3 py-1 rounded-full border border-transparent hover:border-slate-600">
+                    <i class="fas fa-info-circle text-blue-400"></i> <span>Panduan Pengguna</span>
+                </button>
+
+                <button type="button" onclick="openModal('modalNama')" class="flex items-center space-x-2 hover:text-amber-300 transition bg-blue-900/30 px-3 py-1 rounded-full border border-blue-800/50">
+                    <i class="far fa-user-circle text-lg"></i>
+                    <span id="displayNameDesktop" class="font-bold underline decoration-dotted decoration-amber-400 truncate max-w-[200px]">Siapa namamu?</span>
                 </button>
             </div>
         </div>
@@ -179,7 +179,6 @@
                 <h3 class="font-bold text-slate-800 text-xs md:text-base uppercase tracking-wide">Kreasi AI</h3>
             </a>
         </div>
-        
         <svg class="absolute bottom-0 left-0 w-full text-amber-50 pointer-events-none" viewBox="0 0 1440 40" preserveAspectRatio="none" style="height:40px;">
             <path fill="currentColor" d="M0,32 C240,4 480,4 720,20 C960,36 1200,36 1440,12 L1440,40 L0,40 Z"></path>
         </svg>
@@ -188,47 +187,38 @@
     <!-- KONTEN UTAMA -->
     <main class="flex-grow bg-amber-50 pb-12">
         
-        <section class="py-8 md:py-10 px-4">
+        <!-- SECTION 1: TEKS ARGUMENTASI -->
+        <section class="py-8 md:py-10 px-4 bg-white border-b border-slate-100 shadow-sm">
             <div class="max-w-6xl mx-auto">
-                <div class="flex items-center space-x-4 mb-6 border-b-2 border-amber-200 pb-3">
-                    <div class="w-2 h-8 md:h-10 bg-amber-500 rounded-md"></div>
-                    <h2 class="text-xl md:text-3xl font-display font-extrabold text-slate-800 tracking-tight">Kajian Argumentasi</h2>
-                </div>
-                <div id="containerArgumentasi" class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                    <div class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-amber-100 flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 skeleton">
-                        <div class="w-20 h-20 bg-slate-200 rounded-xl shrink-0"></div>
-                        <div class="flex-1 w-full space-y-3">
-                            <div class="h-5 bg-slate-200 rounded w-3/4"></div>
-                            <div class="h-4 bg-slate-200 rounded w-full"></div>
-                            <div class="h-4 bg-slate-200 rounded w-1/2"></div>
-                        </div>
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-2 h-8 md:h-10 bg-amber-500 rounded-md"></div>
+                        <h2 class="text-xl md:text-3xl font-display font-extrabold text-slate-800 tracking-tight">Teks Argumentasi</h2>
                     </div>
-                    <div class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-amber-100 flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 skeleton hidden md:flex">
-                        <div class="w-20 h-20 bg-slate-200 rounded-xl shrink-0"></div>
-                        <div class="flex-1 w-full space-y-3">
-                            <div class="h-5 bg-slate-200 rounded w-3/4"></div>
-                            <div class="h-4 bg-slate-200 rounded w-full"></div>
-                            <div class="h-4 bg-slate-200 rounded w-1/2"></div>
-                        </div>
+                    <div class="md:hidden text-slate-400 text-xs flex items-center gap-1 animate-pulse"><i class="fas fa-arrow-right"></i> Geser</div>
+                </div>
+
+                <div class="relative">
+                    <div id="sliderArgumentasi" class="flex overflow-x-auto gap-4 pb-4 snap-x hide-scrollbar">
+                        <!-- Data akan dimasukkan lewat JS -->
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="py-8 md:py-10 px-4 bg-white border-t border-amber-100 shadow-inner">
+        <!-- SECTION 2: ARTIKEL -->
+        <section class="py-8 md:py-10 px-4 bg-slate-50">
             <div class="max-w-6xl mx-auto">
-                <div class="flex items-center space-x-4 mb-6 border-b-2 border-slate-100 pb-3">
-                    <div class="w-2 h-8 md:h-10 bg-blue-600 rounded-md"></div>
-                    <h2 class="text-xl md:text-3xl font-display font-extrabold text-slate-800 tracking-tight">Eksplorasi Budaya</h2>
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-2 h-8 md:h-10 bg-blue-600 rounded-md"></div>
+                        <h2 class="text-xl md:text-3xl font-display font-extrabold text-slate-800 tracking-tight">Artikel & Berita</h2>
+                    </div>
                 </div>
-                <div id="containerArtikel" class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                    <div class="bg-slate-50 p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 skeleton">
-                        <div class="w-20 h-20 bg-slate-200 rounded-xl shrink-0"></div>
-                        <div class="flex-1 w-full space-y-3">
-                            <div class="h-5 bg-slate-200 rounded w-3/4"></div>
-                            <div class="h-4 bg-slate-200 rounded w-full"></div>
-                            <div class="h-4 bg-slate-200 rounded w-1/2"></div>
-                        </div>
+
+                <div class="relative">
+                    <div id="sliderArtikel" class="flex overflow-x-auto gap-4 pb-4 snap-x hide-scrollbar">
+                        <!-- Data akan dimasukkan lewat JS -->
                     </div>
                 </div>
             </div>
@@ -236,89 +226,88 @@
 
     </main>
 
-    <!-- FOOTER -->
-    <footer class="bg-slate-950 text-slate-400 py-10 px-4 border-t-4 border-blue-900">
-        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-            <div>
-                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-8 mx-auto md:mx-0 mb-4 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all">
-                <p class="text-xs md:text-sm leading-relaxed">Platform bahan ajar digital interaktif berbasis pelestarian budaya lokal.</p>
+    <!-- FOOTER (DIREVISI: Kiri Logo/Tengah Menu/Kanan Dev) -->
+    <footer class="bg-slate-950 text-slate-400 py-8 px-4 border-t-4 border-blue-900">
+        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- KOLOM KIRI (Identitas) -->
+            <div class="text-center md:text-left order-1">
+                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-10 mx-auto md:mx-0 mb-4 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all">
+                <p class="text-[10px] md:text-sm leading-relaxed">Platform bahan ajar digital interaktif berbasis pelestarian budaya lokal.</p>
             </div>
-            <div>
-                <h4 class="text-white font-bold mb-4 uppercase tracking-widest text-xs md:text-sm">Menu</h4>
-                <ul class="text-xs md:text-sm space-y-2 md:space-y-3">
-                    <li><a href="login.html" class="hover:text-amber-400 transition-colors"><i class="fas fa-angle-right mr-2"></i>Admin</a></li>
-                    <li><a href="#" onclick="openModal('modalPanduanGuru')" class="hover:text-amber-400 transition-colors"><i class="fas fa-angle-right mr-2"></i>Panduan</a></li>
+
+            <!-- KOLOM TENGAH (Menu) -->
+            <div class="text-center order-2 md:order-1">
+                <h4 class="text-white font-bold mb-3 uppercase tracking-widest text-[10px] md:text-xs">Menu Cepat</h4>
+                <ul class="text-[10px] md:text-sm space-y-2">
+                    <li><a href="materi.html" class="hover:text-amber-400 transition-colors"><i class="fas fa-book-open mr-1"></i> Materi</a></li>
+                    <li><a href="latihan.html" class="hover:text-amber-400 transition-colors"><i class="fas fa-pencil-alt mr-1"></i> Latihan</a></li>
+                    <li><a href="handout.html" class="hover:text-amber-400 transition-colors"><i class="fas fa-file-pdf mr-1"></i> Handout</a></li>
+                    <li><a href="kreasi.html" class="hover:text-amber-400 transition-colors"><i class="fas fa-lightbulb mr-1"></i> Kreasi AI</a></li>
+                    <li><a href="#" onclick="openModal('modalPanduanGuru')" class="hover:text-amber-400 transition-colors"><i class="fas fa-info-circle mr-1"></i> Panduan</a></li>
                 </ul>
             </div>
-            <div>
-                <h4 class="text-white font-bold mb-4 uppercase tracking-widest text-xs md:text-sm">Legal</h4>
-                <ul class="text-xs md:text-sm space-y-2 md:space-y-3">
-                    <li><a href="kebijakan-privasi.html" class="hover:text-amber-400 transition-colors"><i class="fas fa-shield-alt mr-2"></i>Privasi</a></li>
-                    <li><a href="developer.html" class="hover:text-blue-400 transition-colors font-semibold"><i class="fas fa-code mr-2"></i>Developer</a></li>
+
+            <!-- KOLOM KANAN (System & Developer) -->
+            <div class="text-center md:text-right order-3 md:order-1">
+                <h4 class="text-white font-bold mb-3 uppercase tracking-widest text-[10px] md:text-xs">Sistem</h4>
+                <ul class="text-[10px] md:text-sm space-y-2">
+                    <li><a href="login.html" class="hover:text-amber-400 transition-colors"><i class="fas fa-user-shield mr-1"></i> Admin</a></li>
+                    <li><a href="developer.html" class="hover:text-blue-400 transition-colors font-semibold"><i class="fas fa-code mr-1"></i> Developer</a></li>
                 </ul>
+                <!-- Mobile: Pindah Home ke sini agar footer seimbang -->
+                <div class="md:hidden mt-4 pt-4 border-t border-slate-800">
+                    <a href="index.html" class="text-slate-500 hover:text-white text-xs"><i class="fas fa-home"></i> Home</a>
+                </div>
             </div>
         </div>
-        <div class="max-w-6xl mx-auto mt-8 pt-6 border-t border-slate-800 text-center text-[10px] md:text-xs">
-            <p>&copy; 2026 Cendekia Aksara. All rights reserved.</p>
+        
+        <!-- Copyright (Selalu di bawah) -->
+        <div class="max-w-6xl mx-auto mt-6 md:mt-8 pt-6 border-t border-slate-800 text-center text-[10px] md:text-xs hidden md:block">
+            <p>&copy; 2026 Hak Cipta Dilindungi. Ditenagai oleh infrastruktur Google Firebase & AI.</p>
         </div>
     </footer>
 
-    <!-- ==================== MODALS ==================== -->
-    
-    <!-- Modal Isi Nama -->
+    <!-- MODALS -->
     <div id="modalNama" class="fixed inset-0 bg-slate-900/80 hidden modal-z flex items-center justify-center backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
         <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 relative transform scale-95 transition-transform duration-300">
             <button type="button" onclick="closeModal('modalNama')" class="absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 hover:bg-red-100 hover:text-red-500 transition-colors"><i class="fas fa-times"></i></button>
-            
-            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                <i class="fas fa-user-graduate text-xl"></i>
-            </div>
+            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fas fa-user-graduate text-xl"></i></div>
             <h3 class="text-xl font-bold text-slate-800 text-center mb-1">Halo, Sobat!</h3>
             <p class="text-slate-500 text-center mb-4 text-xs">Siapa namamu agar kami bisa kenal?</p>
-            
             <input type="text" id="inputNamaStudent" placeholder="Tulis namamu..." class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none mb-3 font-medium transition-all text-center">
-            
-            <button type="button" onclick="simpanNama()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95">
-                Mulai Belajar
-            </button>
+            <button type="button" onclick="simpanNama()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95">Mulai Belajar</button>
         </div>
     </div>
 
-    <!-- Modal Panduan Guru -->
     <div id="modalPanduanGuru" class="fixed inset-0 bg-slate-900/80 hidden modal-z flex items-center justify-center backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
         <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-5 md:p-6 relative max-h-[85vh] overflow-y-auto custom-scroll transform scale-95 transition-transform duration-300">
             <button type="button" onclick="closeModal('modalPanduanGuru')" class="absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 hover:bg-red-100 hover:text-red-500 transition-colors"><i class="fas fa-times"></i></button>
-            
             <div class="flex items-center space-x-3 mb-5 border-b border-slate-100 pb-3">
-                <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center shrink-0">
-                    <i class="fas fa-chalkboard-teacher text-lg"></i>
-                </div>
-                <h3 class="text-xl font-bold text-slate-800">Panduan Penggunaan</h3>
+                <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center shrink-0"><i class="fas fa-chalkboard-teacher text-lg"></i></div>
+                <h3 class="text-xl font-bold text-slate-800">Panduan Lengkap Guru</h3>
             </div>
-            
             <div class="space-y-4 text-slate-600 text-sm leading-relaxed">
-                <p>Selamat datang di Cendekia Aksara. Berikut alur penggunaan:</p>
+                <p>Selamat datang di Cendekia Aksara. Berikut adalah alur penggunaan sistem lengkap untuk Guru:</p>
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <ol class="list-decimal pl-5 space-y-2 font-medium text-slate-700">
-                        <li>Klik <b class="text-blue-600">Aksi &rarr; Masuk Sistem</b>.</li>
-                        <li>Gunakan akun Guru yang terdaftar.</li>
-                        <li>Buat Ruang Kelas dan dapatkan Kode/QR.</li>
-                        <li>Bagikan kode kepada siswa.</li>
-                    </ol>
+                    <div class="flex items-center gap-3 mb-3 text-blue-800 font-bold"><span class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs">1</span> Login ke Sistem</div>
+                    <p class="ml-9 text-slate-600 mb-4">Masuk menggunakan akun guru yang sudah diverifikasi email Anda melalui tombol "Aksi" > "Masuk Sistem".</p>
+                    <div class="flex items-center gap-3 mb-3 text-blue-800 font-bold"><span class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs">2</span> Membuat Ruang Kelas</div>
+                    <p class="ml-9 text-slate-600 mb-4">Di Dashboard Guru, pilih menu "Buat Kelas". Isi nama mata pelajaran dan kelas. Sistem akan memberikan <b>Kode Unik 6 Digit</b>.</p>
+                    <div class="flex items-center gap-3 mb-3 text-blue-800 font-bold"><span class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs">3</span> Berbagi Kode & QR</div>
+                    <p class="ml-9 text-slate-600 mb-4">Sajikan kode unik tersebut atau tampilkan QR Code di papan tulis kepada siswa.</p>
+                    <div class="flex items-center gap-3 mb-3 text-blue-800 font-bold"><span class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs">4</span> Monitoring Siswa</div>
+                    <p class="ml-9 text-slate-600">Siswa yang sudah bergabung akan otomatis masuk ke daftar kelas. Anda dapat memantau kehadiran dan progres belajar mereka secara Real-time.</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Masuk Kelas (QR + Input) - DIPERBAIKI -->
     <div id="modalMasukKelas" class="fixed inset-0 bg-slate-900/95 hidden modal-z flex items-center justify-center backdrop-blur-md p-4 opacity-0 transition-opacity duration-300 z-[100]">
         <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-5 md:p-6 relative transform scale-95 transition-transform duration-300 flex flex-col">
-            
-            <!-- Tombol Close (X) - Diberi z-index tinggi agar bisa diklik di atas kamera -->
             <button type="button" onclick="closeModalWithCameraCheck('modalMasukKelas')" class="absolute top-3 right-3 w-10 h-10 flex items-center justify-center bg-white rounded-full text-slate-500 hover:bg-red-100 hover:text-red-500 transition-colors z-50 shadow-lg border border-slate-100">
                 <i class="fas fa-times text-lg"></i>
             </button>
-            
             <div class="text-center mb-5 relative z-10">
                 <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
                     <i class="fas fa-door-open text-2xl"></i>
@@ -326,43 +315,25 @@
                 <h3 class="text-xl font-bold text-slate-800">Gabung Kelas</h3>
                 <p class="text-slate-500 mt-1 text-xs">Masukkan kode atau scan QR Code.</p>
             </div>
-            
-            <!-- Input Manual -->
             <div id="manualInputSection" class="relative z-10">
                 <input type="text" id="inputKodeKelas" maxlength="6" placeholder="XXXXXX" class="w-full border-2 border-slate-200 rounded-xl p-3 text-center text-xl uppercase tracking-[0.2em] font-bold text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none mb-3 transition-all">
-                <button type="button" onclick="prosesGabungKelas()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-emerald-200 active:scale-95">
-                    Masuk Sekarang
-                </button>
-                
-                <div class="flex items-center justify-center space-x-3 my-5 text-slate-300">
-                    <div class="flex-1 h-px bg-slate-200"></div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Atau</span>
-                    <div class="flex-1 h-px bg-slate-200"></div>
-                </div>
-                
-                <button type="button" onclick="startQRScanner()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex justify-center items-center group active:scale-95">
-                    <i class="fas fa-qrcode mr-2 group-hover:text-amber-400 transition-colors"></i> Scan QR Code
-                </button>
+                <button type="button" onclick="prosesGabungKelas()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-emerald-200 active:scale-95">Masuk Sekarang</button>
+                <div class="flex items-center justify-center space-x-3 my-5 text-slate-300"><div class="flex-1 h-px bg-slate-200"></div><span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Atau</span><div class="flex-1 h-px bg-slate-200"></div></div>
+                <button type="button" onclick="startQRScanner()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex justify-center items-center group active:scale-95"><i class="fas fa-qrcode mr-2 group-hover:text-amber-400 transition-colors"></i> Scan QR Code</button>
             </div>
-
-            <!-- Scanner Section (Hidden by default) -->
-            <!-- Container ini menggunakan relative z-0 agar kamera di bawah -->
             <div id="qrScannerSection" class="hidden flex flex-col items-center w-full relative z-0">
                 <div id="qr-reader" class="w-full rounded-xl overflow-hidden border-4 border-emerald-500 shadow-inner bg-black min-h-[250px]"></div>
-                
-                <!-- Tombol Kembali - Diberi z-50 agar di atas video -->
-                <button type="button" onclick="stopQRScanner()" class="mt-4 text-slate-500 font-bold hover:text-red-500 transition-colors bg-white px-6 py-2 rounded-full text-sm shadow-md border border-slate-100 active:bg-slate-100 z-50 relative">
-                    <i class="fas fa-arrow-left mr-2"></i> Kembali ke Input Manual
-                </button>
+                <button type="button" onclick="stopQRScanner()" class="mt-4 text-slate-500 font-bold hover:text-red-500 transition-colors bg-white px-6 py-2 rounded-full text-sm shadow-md border border-slate-100 active:bg-slate-100 z-50 relative"><i class="fas fa-arrow-left mr-2"></i> Kembali ke Input Manual</button>
             </div>
         </div>
     </div>
 
-
-    <!-- ==================== SCRIPT LOGIC ==================== -->
+    <!-- SCRIPT LOGIC -->
     <script>
         const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('displayDate').textContent = new Date().toLocaleDateString('id-ID', dateOptions);
+        const dateStr = new Date().toLocaleDateString('id-ID', dateOptions);
+        if(document.getElementById('displayDate')) document.getElementById('displayDate').textContent = dateStr;
+        if(document.getElementById('displayDateDesktop')) document.getElementById('displayDateDesktop').textContent = dateStr;
 
         function toggleActionMenu(e) {
             e.stopPropagation(); 
@@ -377,16 +348,12 @@
                 closeDropdown();
             }
         }
-
         function closeDropdown() {
             const menu = document.getElementById('actionMenu');
             menu.classList.remove('opacity-100', 'scale-100');
             menu.classList.add('opacity-0', 'scale-95');
-            setTimeout(() => {
-                menu.classList.add('hidden');
-            }, 200);
+            setTimeout(() => menu.classList.add('hidden'), 200);
         }
-
         window.addEventListener('click', (e) => {
             const menu = document.getElementById('actionMenu');
             const btn = document.getElementById('btnActionToggle');
@@ -397,9 +364,9 @@
 
         function cekNamaLokal() {
             const nama = localStorage.getItem('namaSiswaCendekia');
-            if (nama) {
-                document.getElementById('displayName').innerHTML = `Halo, <span class="text-amber-400">${nama}</span>!`;
-            }
+            const text = nama ? `Halo, <span class="text-amber-400">${nama}</span>!` : "Siapa namamu?";
+            if(document.getElementById('displayName')) document.getElementById('displayName').innerHTML = text;
+            if(document.getElementById('displayNameDesktop')) document.getElementById('displayNameDesktop').innerHTML = text;
         }
         cekNamaLokal();
 
@@ -414,82 +381,49 @@
                 setTimeout(() => input.classList.remove('border-red-500', 'ring-1', 'ring-red-500'), 2000);
             }
         }
-
         function openModal(id) {
             const modal = document.getElementById(id);
-            const content = modal.querySelector('.transform'); // Flexibly finding content
+            const content = modal.querySelector('.transform');
             modal.classList.remove('hidden');
-            
             requestAnimationFrame(() => {
                 modal.classList.remove('opacity-0');
-                if(content) {
-                    content.classList.remove('scale-95');
-                    content.classList.add('scale-100');
-                }
+                if(content) { content.classList.remove('scale-95'); content.classList.add('scale-100'); }
             });
-
             if(id === 'modalNama') {
                 const existing = localStorage.getItem('namaSiswaCendekia');
                 if(existing) document.getElementById('inputNamaStudent').value = existing;
                 setTimeout(() => document.getElementById('inputNamaStudent').focus(), 100);
             }
         }
-        
         function closeModal(id) {
             const modal = document.getElementById(id);
             const content = modal.querySelector('.transform');
-            
             modal.classList.add('opacity-0');
-            if(content) {
-                content.classList.remove('scale-100');
-                content.classList.add('scale-95');
-            }
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+            if(content) { content.classList.remove('scale-100'); content.classList.add('scale-95'); }
+            setTimeout(() => modal.classList.add('hidden'), 300);
         }
-
         function closeModalWithCameraCheck(id) {
             const scannerSection = document.getElementById('qrScannerSection');
-            if (!scannerSection.classList.contains('hidden')) {
-                stopQRScanner();
-            }
+            if (!scannerSection.classList.contains('hidden')) stopQRScanner();
             closeModal(id);
         }
 
-        // QR Logic
         let html5QrcodeScanner = null;
-
         function startQRScanner() {
             document.getElementById('manualInputSection').classList.add('hidden');
             document.getElementById('qrScannerSection').classList.remove('hidden');
-            
             document.getElementById('qr-reader').innerHTML = "";
-            
-            html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { 
-                fps: 10, 
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0
-            }, false);
-            
-            html5QrcodeScanner.render(
-                (decodedText) => {
-                    stopQRScanner();
-                    closeModalWithCameraCheck('modalMasukKelas');
-                    
-                    const toast = document.createElement('div');
-                    toast.className = 'fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-xl text-sm z-[200] animate-bounce';
-                    toast.innerHTML = `<i class="fas fa-check-circle text-green-400 mr-2"></i> Kode: ${decodedText} Berhasil!`;
-                    document.body.appendChild(toast);
-                    setTimeout(() => toast.remove(), 3000);
-                }, 
-                (error) => { 
-                    // Ignore noise
-                }
-            );
+            html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false);
+            html5QrcodeScanner.render((decodedText) => {
+                stopQRScanner();
+                closeModalWithCameraCheck('modalMasukKelas');
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-xl text-sm z-[200] animate-bounce';
+                toast.innerHTML = `<i class="fas fa-check-circle text-green-400 mr-2"></i> Kode: ${decodedText} Berhasil!`;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            }, (error) => { });
         }
-        
         function stopQRScanner() {
             if (html5QrcodeScanner) {
                 html5QrcodeScanner.clear().then(() => {
@@ -497,31 +431,19 @@
                     document.getElementById('manualInputSection').classList.remove('hidden');
                     html5QrcodeScanner = null;
                 }).catch(err => {
-                    console.error("Gagal mematikan kamera", err);
-                    // Fallback force UI update jika library gagal clean up
                     document.getElementById('qrScannerSection').classList.add('hidden');
                     document.getElementById('manualInputSection').classList.remove('hidden');
                     html5QrcodeScanner = null;
                 });
             }
         }
-        
         function prosesGabungKelas() {
             const kode = document.getElementById('inputKodeKelas').value.toUpperCase();
             if(kode.length === 6) {
                 const btn = document.querySelector('#manualInputSection button');
                 const originalText = btn.innerText;
-                btn.innerText = "Memproses...";
-                btn.disabled = true;
-                btn.classList.add('opacity-75');
-                
-                setTimeout(() => {
-                    alert(`Berhasil bergabung ke kelas: ${kode}`);
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-75');
-                    document.getElementById('inputKodeKelas').value = "";
-                }, 1000);
+                btn.innerText = "Memproses..."; btn.disabled = true; btn.classList.add('opacity-75');
+                setTimeout(() => { alert(`Berhasil bergabung ke kelas: ${kode}`); btn.innerText = originalText; btn.disabled = false; btn.classList.remove('opacity-75'); document.getElementById('inputKodeKelas').value = ""; }, 1000);
             } else {
                 alert("Kode kelas harus 6 digit huruf/angka.");
                 document.getElementById('inputKodeKelas').focus();
@@ -532,7 +454,7 @@
     <!-- ==================== FIREBASE DATA ==================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, where, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, where, limit, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
@@ -547,70 +469,68 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        function renderCardItem(docId, data, urlPrefix, isArticle = false) {
-            const imgBase64 = data.coverImage || data.gambarBase64 || "https://picsum.photos/seed/" + docId + "/200/200"; 
+        function renderCardItem(docId, data, type) {
+            const imgBase64 = data.coverImage || data.gambarBase64 || "https://picsum.photos/seed/" + docId + "/300/200"; 
             const judul = data.judul || "Judul Materi";
             const cuplikan = data.cuplikan || data.deskripsiSingkat || "Klik untuk membaca materi selengkapnya.";
+            const link = `baca.html?tipe=${type}&id=${docId}`;
             
-            const badgeColor = isArticle 
-                ? "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600" 
-                : "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-500 hover:text-white hover:border-amber-500";
-
             return `
-            <a href="${urlPrefix}${docId}" class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col sm:flex-row items-center sm:items-start gap-4 group h-full">
-                <div class="w-full sm:w-28 sm:h-28 h-40 rounded-xl overflow-hidden shrink-0 border border-slate-100 bg-slate-50 relative">
+            <a href="${link}" class="flex-none w-[280px] bg-white rounded-2xl shadow-md border border-slate-100 hover:shadow-xl hover:border-amber-400 transition-all duration-300 flex flex-col snap-start group h-full">
+                <div class="h-40 rounded-t-xl overflow-hidden relative shrink-0">
                     <img src="${imgBase64}" alt="${judul}" loading="lazy" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 </div>
-                <div class="flex-1 flex flex-col justify-between text-center sm:text-left w-full">
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-base md:text-lg line-clamp-2 mb-2 group-hover:text-blue-700 transition-colors">${judul}</h3>
-                        <p class="text-xs md:text-sm text-slate-500 line-clamp-2 mb-3 leading-relaxed">${cuplikan}</p>
-                    </div>
-                    <div class="flex justify-center sm:justify-start">
-                        <span class="inline-flex items-center justify-center font-semibold text-[10px] md:text-xs px-3 py-1.5 rounded-full border transition-all duration-300 ${badgeColor}">
-                            Baca Selengkapnya <i class="fas fa-arrow-right ml-2 text-[9px] md:text-[10px]"></i>
+                <div class="p-4 flex flex-col flex-1">
+                    <h3 class="font-bold text-slate-800 text-sm line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors">${judul}</h3>
+                    <p class="text-xs text-slate-500 line-clamp-2 mb-3 flex-1">${cuplikan}</p>
+                    <div class="mt-auto flex justify-end">
+                        <span class="text-[10px] font-bold text-blue-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                            Baca <i class="fas fa-arrow-right"></i>
                         </span>
                     </div>
                 </div>
             </a>`;
         }
 
+        function renderSeeMoreBtn(link) {
+            return `
+            <a href="${link}" class="flex-none w-20 md:w-24 flex flex-col items-center justify-center text-center snap-start group">
+                <div class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center mb-2 group-hover:bg-amber-500 group-hover:border-amber-500 group-hover:text-white transition-all">
+                    <i class="fas fa-arrow-right text-slate-400 group-hover:text-white"></i>
+                </div>
+                <span class="text-[10px] font-bold text-slate-500 group-hover:text-amber-500">Lihat Semua</span>
+            </a>`;
+        }
+
         async function fetchKontenBeranda() {
-            const contArg = document.getElementById('containerArgumentasi');
-            const contArt = document.getElementById('containerArtikel');
+            const sliderArg = document.getElementById('sliderArgumentasi');
+            const sliderArt = document.getElementById('sliderArtikel');
 
             try {
-                const qArg = query(collection(db, "materials"), where("kategori", "==", "argumentasi"), limit(4));
+                // 1. Fetch Teks Argumentasi
+                const qArg = query(collection(db, "materials"), where("kategori", "==", "argumentasi"), orderBy("createdAt", "desc"), limit(5));
                 const argSnapshot = await getDocs(qArg);
                 
-                if(argSnapshot.empty) {
-                    contArg.innerHTML = `<div class="col-span-1 md:col-span-2 flex flex-col items-center justify-center py-10 text-slate-400 bg-white/50 rounded-2xl border-2 border-dashed border-slate-300">
-                        <i class="fas fa-folder-open text-3xl mb-2"></i><span class="text-sm font-medium">Belum ada materi.</span>
-                    </div>`;
-                } else {
-                    contArg.innerHTML = "";
-                    argSnapshot.forEach((doc) => contArg.innerHTML += renderCardItem(doc.id, doc.data(), "baca.html?tipe=argumentasi&id=", false));
-                }
+                let argHTML = "";
+                argSnapshot.forEach((doc) => argHTML += renderCardItem(doc.id, doc.data(), 'argumentasi'));
+                argHTML += renderSeeMoreBtn("teks.html");
+                sliderArg.innerHTML = argHTML;
 
-                const qArt = query(collection(db, "materials"), where("kategori", "==", "artikel"), limit(4));
+                // 2. Fetch Artikel
+                const qArt = query(collection(db, "materials"), where("kategori", "==", "artikel"), orderBy("createdAt", "desc"), limit(5));
                 const artSnapshot = await getDocs(qArt);
                 
-                if(artSnapshot.empty) {
-                    contArt.innerHTML = `<div class="col-span-1 md:col-span-2 flex flex-col items-center justify-center py-10 text-slate-400 bg-white/50 rounded-2xl border-2 border-dashed border-slate-300">
-                        <i class="fas fa-landmark text-3xl mb-2"></i><span class="text-sm font-medium">Belum ada artikel.</span>
-                    </div>`;
-                } else {
-                    contArt.innerHTML = "";
-                    artSnapshot.forEach((doc) => contArt.innerHTML += renderCardItem(doc.id, doc.data(), "baca.html?tipe=artikel&id=", true));
-                }
+                let artHTML = "";
+                artSnapshot.forEach((doc) => artHTML += renderCardItem(doc.id, doc.data(), 'artikel'));
+                artHTML += renderSeeMoreBtn("teks.html?kategori=artikel");
+                sliderArt.innerHTML = artHTML;
 
             } catch (error) {
                 console.error("Database Error:", error);
-                const errorMsg = `<div class="col-span-1 md:col-span-2 bg-red-50 p-4 rounded-2xl border border-red-100 flex items-center gap-3 text-red-700 text-sm">
-                    <i class="fas fa-wifi text-xl"></i> <div><b>Gagal Memuat Data</b><br>Cek koneksi internet Anda.</div>
-                </div>`;
-                if(contArg) contArg.innerHTML = errorMsg;
-                if(contArt) contArt.innerHTML = errorMsg;
+                const errorMsg = `<div class="p-4 bg-red-50 border border-red-100 rounded-2xl text-center text-red-600 text-xs">Gagal memuat data.</div>`;
+                if(sliderArg) sliderArg.innerHTML = errorMsg;
+                if(sliderArt) sliderArt.innerHTML = errorMsg;
             }
         }
 
