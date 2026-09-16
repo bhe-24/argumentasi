@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ruang Kelas Digital - Argumentasi</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Confetti JS -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        display: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        brand: { gold: '#fbbf24', dark: '#0f172a', primary: '#0f4c81', emerald: '#065f46' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
+        .font-display { font-family: 'Playfair Display', serif; }
+        .texture-dots { background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px); background-size: 16px 16px; }
+        
+        .header-scrolled { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border-bottom-color: transparent; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); }
+        .modal-z { z-index: 99999 !important; }
+        
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 8px;}
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- HEADER UTAMA -->
+    <header id="mainHeader" class="fixed w-full top-0 z-40 transition-all duration-300 bg-slate-900 text-white py-3 px-4 shadow-xl border-b-4 border-amber-500">
+        <div class="absolute inset-0 texture-dots pointer-events-none opacity-50"></div>
+        <div class="relative max-w-6xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-3 transform hover:scale-105 transition-transform">
+                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Argumentasi" class="h-10 sm:h-12 object-contain drop-shadow-md">
+            </a>
+            
+            <div class="flex items-center gap-3 bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-full shadow-inner">
+                <div class="w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center text-slate-900 shadow-md">
+                    <i class="fas fa-star text-sm"></i>
+                </div>
+                <div class="hidden sm:block text-left">
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-0.5">Total Poinmu</div>
+                    <div class="text-sm font-black text-amber-400 leading-none" id="userScore">0 XP</div>
+                </div>
+                <span class="sm:hidden font-bold text-amber-400 text-sm ml-1 mr-2" id="userScoreMobile">0 XP</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="h-16 md:h-[72px]"></div>
+
+    <!-- STATE: LOADING KELAS -->
+    <div id="loadingClass" class="flex-grow flex flex-col items-center justify-center py-20 bg-white relative z-20">
+        <i class="fas fa-circle-notch fa-spin text-5xl text-indigo-500 mb-4"></i>
+        <h2 class="text-2xl font-bold text-slate-800">Menyinkronkan Kelas...</h2>
+        <p class="text-slate-500 mt-2">Menghubungkan ke server pembelajaran.</p>
+    </div>
+
+    <!-- STATE: ERROR / KODE TIDAK VALID -->
+    <div id="errorClass" class="hidden flex-grow flex flex-col items-center justify-center py-20 bg-white relative z-20 px-4 text-center">
+        <div class="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-5xl mb-6 border-4 border-red-100">
+            <i class="fas fa-door-closed"></i>
+        </div>
+        <h2 class="text-3xl font-bold text-slate-800 mb-2">Kelas Tidak Ditemukan</h2>
+        <p class="text-slate-500 max-w-md mx-auto mb-8">Kode kelas tidak valid, kelas telah ditutup oleh guru, atau Anda belum bergabung ke kelas mana pun.</p>
+        <a href="index.html" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-8 rounded-full transition-all shadow-lg active:scale-95">
+            Kembali ke Beranda
+        </a>
+    </div>
+
+    <!-- STATE: RUANG KELAS AKTIF -->
+    <div id="activeClass" class="hidden flex-col min-h-screen">
+        
+        <!-- HERO KELAS -->
+        <section class="relative bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 py-10 md:py-16 px-4 shadow-lg overflow-hidden border-b border-indigo-900/50">
+            <div class="absolute inset-0 texture-dots pointer-events-none opacity-20"></div>
+            <!-- Dekorasi Game -->
+            <div class="absolute top-10 left-10 text-white/5 text-9xl transform -rotate-12 pointer-events-none"><i class="fas fa-gamepad"></i></div>
+            <div class="absolute bottom-10 right-10 text-white/5 text-9xl transform rotate-12 pointer-events-none"><i class="fas fa-trophy"></i></div>
+            
+            <div class="relative max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 z-10">
+                <div class="text-center md:text-left">
+                    <span class="inline-block py-1 px-3 rounded-full bg-indigo-800/50 border border-indigo-600/50 text-amber-300 text-xs font-bold tracking-widest uppercase mb-3">Ruang Kelas Aktif</span>
+                    <h1 class="text-3xl md:text-5xl font-display font-bold text-white mb-2 drop-shadow-md" id="className">Memuat Kelas...</h1>
+                    <p class="text-indigo-200 text-sm md:text-base flex items-center justify-center md:justify-start gap-2">
+                        <i class="fas fa-chalkboard-teacher text-amber-400"></i> Guru: <span id="teacherName" class="font-bold">...</span>
+                    </p>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl text-center shadow-lg">
+                    <p class="text-[10px] font-bold text-indigo-200 uppercase tracking-widest mb-1">Kode Kelas</p>
+                    <div class="text-3xl font-black text-white tracking-[0.2em]" id="classCodeDisplay">------</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- KONTEN KELAS -->
+        <main class="flex-grow w-full max-w-6xl mx-auto px-4 py-8 relative z-20 flex flex-col lg:flex-row gap-8">
+            
+            <!-- KOLOM KIRI (MATERI & TUGAS) -->
+            <div class="w-full lg:w-8/12 flex flex-col gap-8">
+                
+                <!-- SECTION: MATERI KELAS -->
+                <section>
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 shadow-sm">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-slate-800 text-xl">Bahan Pendukung</h2>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Materi dari Guru</p>
+                        </div>
+                    </div>
+
+                    <!-- Tempat Injeksi Materi -->
+                    <div id="materiContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Loading -->
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center animate-pulse"><div class="h-4 bg-slate-200 rounded w-1/2 mx-auto mb-2"></div></div>
+                    </div>
+
+                    <!-- Empty State Materi -->
+                    <div id="materiEmpty" class="hidden bg-white p-8 rounded-3xl shadow-sm border border-slate-200 border-dashed text-center">
+                        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300"><i class="fas fa-folder-open text-2xl"></i></div>
+                        <p class="text-sm font-bold text-slate-600">Belum Ada Materi</p>
+                        <p class="text-xs text-slate-500 mt-1">Guru belum membagikan presentasi atau modul di kelas ini.</p>
+                    </div>
+                </section>
+
+                <!-- SECTION: MISI & TUGAS -->
+                <section>
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 shadow-sm">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-slate-800 text-xl">Misi & Penugasan</h2>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Selesaikan untuk XP</p>
+                        </div>
+                    </div>
+
+                    <!-- Tempat Injeksi Tugas -->
+                    <div id="tugasContainer" class="flex flex-col gap-4">
+                        <!-- Loading -->
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 animate-pulse"><div class="h-4 bg-slate-200 rounded w-1/3 mb-2"></div></div>
+                    </div>
+
+                    <!-- Empty State Tugas -->
+                    <div id="tugasEmpty" class="hidden bg-white p-8 rounded-3xl shadow-sm border border-slate-200 border-dashed text-center">
+                        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300"><i class="fas fa-check-circle text-2xl"></i></div>
+                        <p class="text-sm font-bold text-slate-600">Hore! Tidak Ada Misi</p>
+                        <p class="text-xs text-slate-500 mt-1">Anda sudah menyelesaikan semua penugasan, atau guru belum memberikan misi baru.</p>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- KOLOM KANAN (LEADERBOARD & KELUAR) -->
+            <div class="w-full lg:w-4/12 flex flex-col gap-6">
+                
+                <!-- LEADERBOARD -->
+                <div class="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden">
+                    <div class="bg-gradient-to-r from-amber-400 to-amber-500 p-5 flex items-center justify-between text-white">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-trophy text-2xl drop-shadow-md"></i>
+                            <h2 class="font-bold text-lg">Papan Prestasi</h2>
+                        </div>
+                        <span class="text-xs font-bold bg-white/20 px-2 py-1 rounded">Top Kelas</span>
+                    </div>
+                    
+                    <div class="p-2" id="leaderboardContainer">
+                        <!-- Akan diinjeksi via JS. Contoh UI di bawah ini -->
+                        <div class="p-6 text-center text-slate-400 animate-pulse">Menghitung peringkat...</div>
+                    </div>
+                </div>
+
+                <!-- TOMBOL KELUAR KELAS -->
+                <button onclick="konfirmasiKeluarKelas()" class="w-full bg-white hover:bg-red-50 text-red-500 font-bold py-4 rounded-2xl border-2 border-red-100 hover:border-red-300 transition-all shadow-sm flex items-center justify-center gap-2 active:scale-95">
+                    <i class="fas fa-sign-out-alt"></i> Keluar dari Kelas Ini
+                </button>
+
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL: PENGERJAAN MISI -->
+    <div id="modalMisi" class="fixed inset-0 bg-slate-900/90 hidden modal-z flex items-center justify-center backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh]">
+            
+            <div class="bg-slate-900 p-5 flex justify-between items-center text-white border-b-4 border-emerald-500">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400">
+                        <i class="fas fa-flag-checkered text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold" id="misiJudul">Judul Tugas</h3>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" id="misiTipe">Esai Analisis</span>
+                    </div>
+                </div>
+                <button onclick="tutupModalMisi()" class="text-slate-400 hover:text-red-500 bg-white/10 w-8 h-8 rounded-full flex items-center justify-center transition-all"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="p-6 overflow-y-auto custom-scroll" id="misiBody">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
+                    <h4 class="font-bold text-slate-700 text-sm mb-1">Instruksi Guru:</h4>
+                    <p class="text-sm text-slate-600 font-reading leading-relaxed" id="misiDeskripsi">Deskripsi tugas...</p>
+                </div>
+                
+                <div class="flex items-center justify-between mb-3">
+                    <label class="font-bold text-slate-800 text-sm">Lembar Jawaban Anda</label>
+                    <span class="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-1 rounded shadow-sm" id="misiReward">+100 XP</span>
+                </div>
+                <textarea id="misiJawaban" rows="5" class="w-full border-2 border-slate-200 rounded-xl p-4 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 outline-none transition-all font-medium text-slate-700" placeholder="Ketik jawaban argumen Anda di sini..."></textarea>
+            </div>
+            
+            <div class="p-5 bg-white border-t border-slate-100">
+                <button onclick="kirimMisi()" id="btnKirimMisi" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fas fa-paper-plane"></i> Kumpulkan Misi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT UI DASAR & GAMIFIKASI -->
+    <script>
+        // Data Sistem
+        let classCodeGlobal = null;
+        let xpScore = parseInt(localStorage.getItem('kelasPointsArg') || '0');
+        
+        function updateScoreUI() {
+            document.getElementById('userScore').innerText = xpScore + ' XP';
+            document.getElementById('userScoreMobile').innerText = xpScore + ' XP';
+            localStorage.setItem('kelasPointsArg', xpScore.toString());
+        }
+        updateScoreUI();
+
+        // Modal Misi Logic
+        window.bukaModalMisi = function(judul, deskripsi, tipe, rewardXp) {
+            document.getElementById('misiJudul').innerText = judul;
+            document.getElementById('misiDeskripsi').innerText = deskripsi;
+            document.getElementById('misiTipe').innerText = tipe;
+            document.getElementById('misiReward').innerText = `+${rewardXp} XP`;
+            document.getElementById('misiJawaban').value = '';
+            
+            // Simpan reward sementara ke atribut elemen
+            document.getElementById('btnKirimMisi').setAttribute('data-reward', rewardXp);
+
+            const modal = document.getElementById('modalMisi');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('.transform').classList.replace('scale-95', 'scale-100');
+            });
+        };
+
+        window.tutupModalMisi = function() {
+            const modal = document.getElementById('modalMisi');
+            modal.classList.add('opacity-0');
+            modal.querySelector('.transform').classList.replace('scale-100', 'scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        };
+
+        window.kirimMisi = function() {
+            const jawaban = document.getElementById('misiJawaban').value.trim();
+            if(jawaban.length < 10) {
+                alert("Jawaban terlalu singkat. Mohon kerjakan misi dengan serius!");
+                return;
+            }
+            
+            const btn = document.getElementById('btnKirimMisi');
+            const rewardXp = parseInt(btn.getAttribute('data-reward') || '0');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Memproses Evaluasi...';
+            btn.disabled = true;
+
+            // Simulasi Evaluasi Sistem
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                tutupModalMisi();
+                
+                // Tambah XP & Efek
+                xpScore += rewardXp;
+                updateScoreUI();
+                confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#fbbf24', '#10b981', '#3b82f6'] });
+                
+                alert(`Misi Berhasil Diselesaikan! Anda mendapatkan ${rewardXp} XP.`);
+                // Dalam skenario asli, ini akan update ke Firebase agar status tugas berubah menjadi "Selesai".
+                // Untuk purwarupa, kita reload halaman agar refresh state (asumsi simulasi).
+                setTimeout(() => location.reload(), 1500);
+
+            }, 2000);
+        };
+
+        window.konfirmasiKeluarKelas = function() {
+            if(confirm("Apakah Anda yakin ingin keluar dari kelas ini? Semua progres misi mungkin tidak akan tersimpan jika Anda keluar.")) {
+                // Hapus sesi kelas lokal
+                window.location.href = "index.html";
+            }
+        };
+
+        // Scroll
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('mainHeader');
+            if (window.scrollY > 20) header.classList.add('header-scrolled', 'py-2');
+            else header.classList.remove('header-scrolled', 'py-2');
+        });
+    </script>
+
+    <!-- SCRIPT FIREBASE (LOGIKA DINAMIS RUANG KELAS) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, collection, query, orderBy, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            projectId: "mading-cf676",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Komponen Render Materi
+        function renderMaterialCard(data) {
+            let iconClass = 'fa-file-alt text-blue-500 bg-blue-100';
+            const tipe = (data.tipe || '').toLowerCase();
+            
+            if(tipe.includes('pdf')) iconClass = 'fa-file-pdf text-red-500 bg-red-100';
+            else if(tipe.includes('ppt') || tipe.includes('presentasi')) iconClass = 'fa-file-powerpoint text-orange-500 bg-orange-100';
+            else if(tipe.includes('video')) iconClass = 'fa-play-circle text-purple-500 bg-purple-100';
+
+            const url = data.url || '#';
+
+            return `
+            <a href="${url}" target="_blank" class="group bg-white p-4 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md hover:border-blue-300 transition-all flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${iconClass} group-hover:scale-110 transition-transform">
+                    <i class="fas ${iconClass.split(' ')[0]} text-xl"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-bold text-slate-800 text-sm truncate group-hover:text-blue-600 transition-colors">${data.judul}</h3>
+                    <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">${data.tipe || 'Dokumen'}</p>
+                </div>
+                <i class="fas fa-chevron-right text-slate-300 group-hover:text-blue-500 transition-colors"></i>
+            </a>`;
+        }
+
+        // Komponen Render Tugas
+        function renderTaskCard(data) {
+            const reward = data.rewardXp || 100;
+            const statusColor = data.selesai ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700';
+            const statusText = data.selesai ? '<i class="fas fa-check-circle"></i> Selesai' : '<i class="fas fa-clock"></i> Belum Dikerjakan';
+            const disableClick = data.selesai ? '' : `onclick="bukaModalMisi('${data.judul}', '${data.deskripsi}', '${data.tipe}', ${reward})"`;
+            
+            return `
+            <div ${disableClick} class="group bg-white p-5 rounded-2xl shadow-sm border-2 border-slate-100 hover:border-amber-400 transition-all flex flex-col md:flex-row md:items-center gap-4 ${data.selesai ? 'opacity-70 cursor-default' : 'cursor-pointer active:scale-[0.98]'}">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest ${statusColor}">${statusText}</span>
+                        <span class="text-[10px] font-bold text-amber-500 bg-amber-50 px-2 py-0.5 rounded">+${reward} XP</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-base group-hover:text-amber-600 transition-colors">${data.judul}</h3>
+                    <p class="text-xs text-slate-500 mt-1 line-clamp-2">${data.deskripsi}</p>
+                </div>
+                ${!data.selesai ? `
+                <div class="hidden md:flex w-10 h-10 bg-slate-50 rounded-full items-center justify-center group-hover:bg-amber-500 group-hover:text-white text-slate-300 transition-colors shrink-0">
+                    <i class="fas fa-arrow-right"></i>
+                </div>` : ''}
+            </div>`;
+        }
+
+        // Komponen Render Peringkat
+        function renderLeaderboardItem(data, index) {
+            let rankIcon = `<span class="font-black text-slate-500">${index + 1}</span>`;
+            let bgClass = "bg-white";
+            
+            if(index === 0) {
+                rankIcon = '<i class="fas fa-crown text-amber-500 text-xl"></i>';
+                bgClass = "bg-amber-50 border border-amber-200";
+            } else if(index === 1) {
+                rankIcon = '<i class="fas fa-medal text-slate-400 text-xl"></i>';
+            } else if(index === 2) {
+                rankIcon = '<i class="fas fa-medal text-orange-400 text-xl"></i>';
+            }
+
+            return `
+            <div class="flex items-center justify-between p-3 rounded-xl mb-2 ${bgClass} shadow-sm border border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 text-center shrink-0">${rankIcon}</div>
+                    <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold shrink-0">
+                        ${data.nama.charAt(0).toUpperCase()}
+                    </div>
+                    <div class="min-w-0">
+                        <h4 class="font-bold text-slate-800 text-sm truncate">${data.nama}</h4>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-widest">Siswa</p>
+                    </div>
+                </div>
+                <div class="font-black text-emerald-600 text-sm shrink-0">${data.xp} XP</div>
+            </div>`;
+        }
+
+        async function initClassRoom() {
+            // 1. Dapatkan Kode Kelas dari URL
+            const urlParams = new URLSearchParams(window.location.search);
+            classCodeGlobal = urlParams.get('id');
+
+            const loadScr = document.getElementById('loadingClass');
+            const errScr = document.getElementById('errorClass');
+            const activeScr = document.getElementById('activeClass');
+
+            if(!classCodeGlobal) {
+                loadScr.classList.add('hidden');
+                errScr.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                // 2. Verifikasi Kelas di Firebase
+                const classRef = doc(db, "classes", classCodeGlobal);
+                const classSnap = await getDoc(classRef);
+
+                if(!classSnap.exists()) {
+                    loadScr.classList.add('hidden');
+                    errScr.classList.remove('hidden');
+                    return;
+                }
+
+                const classData = classSnap.data();
+                document.getElementById('className').innerText = classData.namaKelas || "Ruang Kelas";
+                document.getElementById('teacherName').innerText = classData.namaGuru || "Admin Sistem";
+                document.getElementById('classCodeDisplay').innerText = classCodeGlobal.toUpperCase();
+
+                // 3. Fetch Materi Kelas (Dinamis)
+                const matQ = query(collection(db, `classes/${classCodeGlobal}/materials`), orderBy("createdAt", "desc"));
+                const matSnap = await getDocs(matQ);
+                const matCont = document.getElementById('materiContainer');
+                const matEmp = document.getElementById('materiEmpty');
+                
+                if(matSnap.empty) {
+                    matCont.classList.add('hidden');
+                    matEmp.classList.remove('hidden');
+                } else {
+                    let h = "";
+                    matSnap.forEach(d => h += renderMaterialCard(d.data()));
+                    matCont.innerHTML = h;
+                }
+
+                // 4. Fetch Penugasan (Dinamis)
+                const taskQ = query(collection(db, `classes/${classCodeGlobal}/assignments`), orderBy("createdAt", "desc"));
+                const taskSnap = await getDocs(taskQ);
+                const taskCont = document.getElementById('tugasContainer');
+                const taskEmp = document.getElementById('tugasEmpty');
+                
+                if(taskSnap.empty) {
+                    taskCont.classList.add('hidden');
+                    taskEmp.classList.remove('hidden');
+                } else {
+                    let h = "";
+                    taskSnap.forEach(d => h += renderTaskCard(d.data()));
+                    taskCont.innerHTML = h;
+                }
+
+                // 5. Fetch Leaderboard (Dinamis, Top 5)
+                const boardQ = query(collection(db, `classes/${classCodeGlobal}/students`), orderBy("xp", "desc"), limit(5));
+                const boardSnap = await getDocs(boardQ);
+                const boardCont = document.getElementById('leaderboardContainer');
+                
+                if(boardSnap.empty) {
+                    boardCont.innerHTML = '<div class="p-6 text-center text-sm text-slate-500 font-medium bg-slate-50 rounded-xl">Belum ada data siswa di papan peringkat.</div>';
+                } else {
+                    let h = "";
+                    let idx = 0;
+                    boardSnap.forEach(d => {
+                        h += renderLeaderboardItem(d.data(), idx);
+                        idx++;
+                    });
+                    boardCont.innerHTML = h;
+                }
+
+                // Tampilkan Ruang Kelas
+                loadScr.classList.add('hidden');
+                activeScr.classList.remove('hidden');
+                activeScr.classList.add('flex');
+
+            } catch (error) {
+                console.error("Gagal memuat data kelas:", error);
+                loadScr.classList.add('hidden');
+                errScr.classList.remove('hidden');
+                document.getElementById('errorMsg').innerText = "Terjadi gangguan saat mengambil data kelas dari database server.";
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initClassRoom);
+    </script>
+</body>
+</html>
