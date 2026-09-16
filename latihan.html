@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ruang Latihan - Argumentasi</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Confetti JS -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        display: ['Playfair Display', 'serif'],
+                        reading: ['Merriweather', 'serif'],
+                    },
+                    colors: {
+                        brand: { gold: '#fbbf24', dark: '#0f172a', primary: '#0f4c81', emerald: '#065f46' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
+        .font-display { font-family: 'Playfair Display', serif; }
+        .font-reading { font-family: 'Merriweather', serif; line-height: 1.8; }
+        .texture-dots { background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px); background-size: 16px 16px; }
+        
+        .header-scrolled { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border-bottom-color: transparent; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); }
+        .modal-z { z-index: 99999 !important; }
+        
+        /* Formatting Teks Database */
+        .content-body p { margin-bottom: 1.2em; color: #334155; }
+        
+        /* Animasi */
+        .fade-in { animation: fadeIn 0.5s ease-in forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .pulse-btn { animation: pulseBtn 2s infinite; }
+        @keyframes pulseBtn { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- HEADER UTAMA -->
+    <header id="mainHeader" class="fixed w-full top-0 z-40 transition-all duration-300 bg-slate-900 text-white py-3 px-4 shadow-xl border-b-4 border-amber-500">
+        <div class="absolute inset-0 texture-dots pointer-events-none opacity-50"></div>
+        <div class="relative max-w-6xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-3 transform hover:scale-105 transition-transform">
+                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Argumentasi" class="h-10 sm:h-12 object-contain drop-shadow-md">
+            </a>
+            
+            <!-- Dashboard Singkat Siswa -->
+            <div class="flex items-center gap-3 bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-full shadow-inner">
+                <div class="w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center text-slate-900 shadow-md">
+                    <i class="fas fa-star text-sm"></i>
+                </div>
+                <div class="hidden sm:block">
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-0.5">Skor Latihan</div>
+                    <div class="text-sm font-black text-amber-400 leading-none" id="userScore">0 XP</div>
+                </div>
+                <span class="sm:hidden font-bold text-amber-400 text-sm ml-1 mr-2" id="userScoreMobile">0 XP</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="h-16 md:h-[72px]"></div>
+
+    <!-- HERO DASHBOARD LATIHAN -->
+    <section class="bg-gradient-to-br from-blue-900 to-indigo-950 py-8 relative border-b border-indigo-900 shadow-md">
+        <div class="absolute inset-0 texture-dots pointer-events-none opacity-20"></div>
+        <div class="max-w-4xl mx-auto px-5 relative z-10 text-center">
+            <h1 class="text-3xl md:text-4xl font-display font-bold text-white mb-2">Pusat Latihan <span class="text-amber-400">Analisis</span></h1>
+            <p class="text-indigo-200 text-sm">Sistem telah menyiapkan sebuah teks argumentasi acak untuk Anda bedah hari ini.</p>
+        </div>
+    </section>
+
+    <!-- KONTEN UTAMA -->
+    <main class="flex-grow w-full max-w-4xl mx-auto px-4 py-8 md:py-12 relative z-20">
+
+        <!-- LOADING STATE -->
+        <div id="loadingState" class="flex flex-col items-center justify-center py-20 bg-white rounded-3xl shadow-sm border border-slate-100">
+            <i class="fas fa-satellite-dish fa-spin text-4xl text-indigo-500 mb-4"></i>
+            <h3 class="font-bold text-slate-800 text-lg">Menarik Data Materi...</h3>
+            <p class="text-sm text-slate-500">Mencari teks argumentasi secara acak dari database.</p>
+        </div>
+
+        <!-- ERROR STATE -->
+        <div id="errorState" class="hidden flex flex-col items-center justify-center py-20 bg-white rounded-3xl shadow-sm border border-red-100">
+            <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+            <h3 class="font-bold text-slate-800 text-lg">Materi Tidak Tersedia</h3>
+            <p class="text-sm text-slate-500 text-center max-w-sm" id="errorMsg">Belum ada teks argumentasi yang dipublikasikan di sistem. Silakan kembali nanti.</p>
+            <button onclick="location.reload()" class="mt-6 bg-slate-900 text-white px-6 py-2 rounded-full font-bold hover:bg-slate-800 transition-colors"><i class="fas fa-sync-alt mr-2"></i> Coba Lagi</button>
+        </div>
+
+        <!-- AREA TEKS (SUMBER ANALISIS) -->
+        <div id="contentState" class="hidden fade-in space-y-8">
+            
+            <!-- Dokumen Bacaan -->
+            <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 overflow-hidden relative">
+                <!-- Label Sudut -->
+                <div class="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-bl-xl shadow-sm z-10">
+                    Bahan Analisis
+                </div>
+                
+                <div class="p-6 md:p-10">
+                    <h2 id="teksJudul" class="text-2xl md:text-3xl font-display font-bold text-slate-900 mb-4 leading-snug">Judul Teks Argumentasi</h2>
+                    <div class="flex items-center gap-3 text-xs font-bold text-slate-400 uppercase tracking-widest mb-8 border-b border-slate-100 pb-4">
+                        <i class="fas fa-file-alt text-amber-500"></i> Sumber Data Otomatis
+                    </div>
+                    
+                    <article id="teksKonten" class="font-reading text-lg content-body text-slate-700">
+                        <!-- Teks dimuat dari JS -->
+                    </article>
+                </div>
+            </div>
+
+            <!-- MENU LATIHAN / AKSI -->
+            <div class="pt-4">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 shadow-sm">
+                        <i class="fas fa-tasks text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-800 leading-tight">Pilih Misi Latihan</h3>
+                        <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Selesaikan untuk meraih poin</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Tombol Mode Latihan -->
+                    <button onclick="bukaSistemLatihan('pilgan')" class="group bg-white p-5 rounded-2xl shadow-sm hover:shadow-lg border-2 border-slate-100 hover:border-blue-400 transition-all text-left flex items-start gap-4 active:scale-95">
+                        <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors shrink-0">
+                            <span class="font-black text-lg">A</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 mb-1 group-hover:text-blue-600 transition-colors">Pemahaman Pokok</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">Jawab pertanyaan pilihan ganda terkait gagasan utama teks di atas.</p>
+                        </div>
+                    </button>
+
+                    <button onclick="bukaSistemLatihan('esai')" class="group bg-white p-5 rounded-2xl shadow-sm hover:shadow-lg border-2 border-slate-100 hover:border-emerald-400 transition-all text-left flex items-start gap-4 active:scale-95">
+                        <div class="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-colors shrink-0">
+                            <i class="fas fa-pen-nib text-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 mb-1 group-hover:text-emerald-600 transition-colors">Esai Argumentasi</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">Susun tanggapan tertulis. Sistem akan mengevaluasi bobot argumen Anda.</p>
+                        </div>
+                    </button>
+
+                    <button onclick="bukaSistemLatihan('struktur')" class="group bg-white p-5 rounded-2xl shadow-sm hover:shadow-lg border-2 border-slate-100 hover:border-amber-400 transition-all text-left flex items-start gap-4 active:scale-95">
+                        <div class="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-colors shrink-0">
+                            <i class="fas fa-layer-group text-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 mb-1 group-hover:text-amber-600 transition-colors">Bedah Struktur Teks</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">Identifikasi bagian pendahuluan, tubuh argumen, dan kesimpulan.</p>
+                        </div>
+                    </button>
+
+                    <button onclick="bukaSistemLatihan('kritis')" class="group bg-white p-5 rounded-2xl shadow-sm hover:shadow-lg border-2 border-slate-100 hover:border-rose-400 transition-all text-left flex items-start gap-4 active:scale-95">
+                        <div class="w-12 h-12 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 group-hover:bg-rose-500 group-hover:text-white transition-colors shrink-0 pulse-btn">
+                            <i class="fas fa-brain text-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 mb-1 group-hover:text-rose-600 transition-colors">Uji Berpikir Kritis</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">Temukan kelemahan logis atau bias dari argumen penulis di teks tersebut.</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-500 py-6 border-t border-slate-800 text-center text-xs mt-auto">
+        &copy; 2026 Platform Argumentasi - Latihan Menganalisis Teks
+    </footer>
+
+    <!-- ============================================================ -->
+    <!-- MODAL SISTEM LATIHAN (Simulasi Interaksi API/Latihan)        -->
+    <!-- ============================================================ -->
+    <div id="modalLatihan" class="fixed inset-0 bg-slate-900/90 hidden modal-z flex flex-col backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        
+        <!-- Topbar Modal -->
+        <div class="bg-white px-5 py-4 flex justify-between items-center shadow-md z-10">
+            <div class="flex items-center gap-3">
+                <div id="latihanIkon" class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
+                    <i class="fas fa-laptop-code"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-800 leading-none" id="latihanJudul">Sistem Evaluasi</h3>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mesin Pemroses Bahasa</span>
+                </div>
+            </div>
+            <button onclick="tutupSistemLatihan()" class="text-slate-400 hover:text-red-500 bg-slate-100 hover:bg-red-50 w-10 h-10 rounded-full flex items-center justify-center transition-all"><i class="fas fa-times"></i></button>
+        </div>
+
+        <!-- Body Modal -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center items-center">
+            <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl p-6 md:p-10 transform scale-95 transition-transform duration-300 relative overflow-hidden" id="modalKonten">
+                
+                <!-- State Input -->
+                <div id="inputArea" class="block">
+                    <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-6 text-sm text-slate-700 font-medium" id="pertanyaanSistem">
+                        Berdasarkan teks yang Anda baca, tuliskan analisis Anda secara mendalam di bawah ini.
+                    </div>
+                    <textarea id="jawabanSiswa" rows="5" class="w-full border-2 border-slate-200 rounded-xl p-4 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-medium text-slate-700 resize-none" placeholder="Ketik jawaban argumen Anda di sini..."></textarea>
+                    <button onclick="prosesEvaluasiSistem()" class="w-full mt-4 bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fas fa-paper-plane text-amber-400"></i> Kirim untuk Dievaluasi Sistem
+                    </button>
+                </div>
+
+                <!-- State Loading (Memproses) -->
+                <div id="loadingArea" class="hidden py-10 text-center">
+                    <div class="relative w-20 h-20 mx-auto mb-6">
+                        <div class="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
+                        <div class="absolute inset-0 border-4 border-indigo-500 rounded-full border-t-transparent animate-spin"></div>
+                        <i class="fas fa-microchip absolute inset-0 flex items-center justify-center text-2xl text-indigo-500"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-lg mb-1">Menganalisis Parameter...</h3>
+                    <p class="text-sm text-slate-500" id="loadingTeks">Mengevaluasi logika, struktur, dan kesesuaian konteks.</p>
+                </div>
+
+                <!-- State Hasil Evaluasi -->
+                <div id="hasilArea" class="hidden text-center fade-in">
+                    <div class="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-5 border-4 border-emerald-50 text-emerald-500 text-4xl shadow-inner">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h3 class="font-display font-bold text-2xl text-slate-800 mb-2">Evaluasi Selesai!</h3>
+                    <p class="text-slate-600 text-sm mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100 italic" id="feedbackSistem">
+                        "Jawaban Anda menunjukkan pemahaman yang sangat baik terhadap struktur argumen teks."
+                    </p>
+                    
+                    <div class="inline-flex items-center gap-3 bg-amber-400 text-slate-900 px-6 py-3 rounded-full font-black text-xl shadow-lg mb-8">
+                        <i class="fas fa-arrow-up"></i> +50 XP
+                    </div>
+
+                    <button onclick="tutupSistemLatihan()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 rounded-xl transition-all">Kembali ke Latihan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIKA UX & AUDIO -->
+    <script>
+        // Logika Poin/Skor Lokal
+        let xpScore = parseInt(localStorage.getItem('latihanPointsCendekia') || '0');
+        
+        function updateScoreUI() {
+            document.getElementById('userScore').innerText = xpScore + ' XP';
+            document.getElementById('userScoreMobile').innerText = xpScore + ' XP';
+            localStorage.setItem('latihanPointsCendekia', xpScore.toString());
+        }
+        updateScoreUI();
+
+        // Header Scroll
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('mainHeader');
+            if (window.scrollY > 20) header.classList.add('header-scrolled', 'py-2');
+            else header.classList.remove('header-scrolled', 'py-2');
+        });
+
+        // Audio Generator (Tanpa file eksternal)
+        const playSound = (type) => {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1046.50, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                }
+                osc.start();
+                osc.stop(ctx.currentTime + 0.4);
+            } catch(e) { }
+        };
+
+        // --- SISTEM EVALUASI (SIMULASI API/LATIHAN) ---
+        let currentMode = '';
+
+        window.bukaSistemLatihan = function(mode) {
+            currentMode = mode;
+            const modal = document.getElementById('modalLatihan');
+            const konten = document.getElementById('modalKonten');
+            const judul = document.getElementById('latihanJudul');
+            const ikon = document.getElementById('latihanIkon');
+            const tanya = document.getElementById('pertanyaanSistem');
+            const input = document.getElementById('jawabanSiswa');
+
+            // Reset UI Modal
+            document.getElementById('inputArea').classList.remove('hidden');
+            document.getElementById('loadingArea').classList.add('hidden');
+            document.getElementById('hasilArea').classList.add('hidden');
+            input.value = '';
+
+            // Set Data berdasarkan Mode
+            if(mode === 'pilgan') {
+                judul.innerText = "Uji Pemahaman Pokok";
+                ikon.innerHTML = '<span class="font-black">A</span>';
+                ikon.className = "w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600";
+                tanya.innerHTML = "<b>Pertanyaan:</b> Apa gagasan/tesis utama yang ingin disampaikan penulis pada teks di belakang?";
+                input.placeholder = "Tuliskan simpulan gagasan utamanya di sini...";
+            } else if(mode === 'esai') {
+                judul.innerText = "Evaluasi Esai Argumentasi";
+                ikon.innerHTML = '<i class="fas fa-pen-nib"></i>';
+                ikon.className = "w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600";
+                tanya.innerHTML = "<b>Instruksi:</b> Apakah Anda setuju dengan klaim penulis? Tuliskan argumen sanggahan atau dukungan Anda.";
+                input.placeholder = "Saya setuju/tidak setuju karena...";
+            } else if(mode === 'struktur') {
+                judul.innerText = "Deteksi Struktur Teks";
+                ikon.innerHTML = '<i class="fas fa-layer-group"></i>';
+                ikon.className = "w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-600";
+                tanya.innerHTML = "<b>Analisis:</b> Temukan dan tuliskan paragraf mana yang merupakan bagian 'Pendahuluan/Tesis' dan jelaskan mengapa.";
+                input.placeholder = "Bagian tesis terdapat pada...";
+            } else if(mode === 'kritis') {
+                judul.innerText = "Mesin Berpikir Kritis";
+                ikon.innerHTML = '<i class="fas fa-brain"></i>';
+                ikon.className = "w-10 h-10 bg-rose-100 rounded-full flex items-center justify-center text-rose-600";
+                tanya.innerHTML = "<b>Uji Logika:</b> Temukan kelemahan (fallacy) atau bias dari teks tersebut. Data apa yang kurang menurut Anda?";
+                input.placeholder = "Kelemahan teks ini terletak pada...";
+            }
+
+            // Tampilkan Modal
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                konten.classList.replace('scale-95', 'scale-100');
+                setTimeout(() => input.focus(), 300);
+            });
+        };
+
+        window.tutupSistemLatihan = function() {
+            const modal = document.getElementById('modalLatihan');
+            const konten = document.getElementById('modalKonten');
+            modal.classList.add('opacity-0');
+            konten.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        };
+
+        window.prosesEvaluasiSistem = function() {
+            const jawaban = document.getElementById('jawabanSiswa').value.trim();
+            if(jawaban.length < 10) {
+                alert("Sistem membutuhkan jawaban yang lebih panjang dan terstruktur untuk dievaluasi. Minimal 10 karakter.");
+                return;
+            }
+
+            // Animasi Proses (Simulasi API)
+            document.getElementById('inputArea').classList.add('hidden');
+            document.getElementById('loadingArea').classList.remove('hidden');
+
+            const textStates = ["Mengekstrak kalimat...", "Menilai bobot logika...", "Mencocokkan parameter rubrik..."];
+            let tIdx = 0;
+            const textInterval = setInterval(() => {
+                if(tIdx < textStates.length) {
+                    document.getElementById('loadingTeks').innerText = textStates[tIdx];
+                    tIdx++;
+                }
+            }, 800);
+
+            // Output Hasil setelah 3 Detik
+            setTimeout(() => {
+                clearInterval(textInterval);
+                document.getElementById('loadingArea').classList.add('hidden');
+                document.getElementById('hasilArea').classList.remove('hidden');
+
+                // Dynamic Feedback
+                const feedbacks = [
+                    "Sistem mencatat argumentasi Anda cukup kuat dan selaras dengan konteks.",
+                    "Analisis yang sangat tajam! Anda berhasil mengurai struktur teks dengan tepat.",
+                    "Pemikiran kritis Anda terekam dengan baik. Logika yang Anda bangun sangat relevan.",
+                    "Kemampuan literasi analisis Anda terbukti memuaskan pada sesi ini."
+                ];
+                document.getElementById('feedbackSistem').innerHTML = `"${feedbacks[Math.floor(Math.random() * feedbacks.length)]}"`;
+
+                // Kasih Poin & Efek
+                xpScore += 50;
+                updateScoreUI();
+                playSound('success');
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#fbbf24', '#10b981', '#3b82f6'] });
+                
+            }, 3000);
+        };
+    </script>
+
+    <!-- LOGIKA FIREBASE (Acak Teks Otomatis) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            projectId: "mading-cf676",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function fetchRandomText() {
+            const loadingState = document.getElementById('loadingState');
+            const errorState = document.getElementById('errorState');
+            const contentState = document.getElementById('contentState');
+
+            try {
+                // Tarik semua materi kategori argumentasi (Atau beri limit yang cukup jika data sangat besar)
+                const q = query(collection(db, "materials"), where("kategori", "==", "argumentasi"));
+                const snap = await getDocs(q);
+
+                if (snap.empty) {
+                    loadingState.classList.add('hidden');
+                    errorState.classList.remove('hidden');
+                    return;
+                }
+
+                // Kumpulkan dokumen ke Array untuk di-acak
+                const docsArray = [];
+                snap.forEach(doc => docsArray.push(doc.data()));
+
+                // Pilih 1 Data Secara Acak
+                const randomIndex = Math.floor(Math.random() * docsArray.length);
+                const randomData = docsArray[randomIndex];
+
+                // Inject ke DOM
+                document.getElementById('teksJudul').innerText = randomData.judul || "Teks Argumentasi Tanpa Judul";
+                
+                let contentHtml = randomData.konten || randomData.isi || "Tidak ada konten tulisan pada materi ini.";
+                if (!contentHtml.includes('<p>') && !contentHtml.includes('<br>')) {
+                    contentHtml = contentHtml.split('\n').map(p => p.trim() ? `<p>${p}</p>` : '').join('');
+                }
+                document.getElementById('teksKonten').innerHTML = contentHtml;
+
+                // Tampilkan UI
+                loadingState.classList.add('hidden');
+                contentState.classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                loadingState.classList.add('hidden');
+                errorState.classList.remove('hidden');
+                document.getElementById('errorMsg').innerText = "Gagal terhubung ke pusat data. Periksa jaringan Anda.";
+            }
+        }
+
+        // Mulai penarikan teks saat load
+        document.addEventListener('DOMContentLoaded', fetchRandomText);
+    </script>
+</body>
+</html>
