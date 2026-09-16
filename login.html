@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Fonts: Poppins & Playfair (Sama dengan Index) -->
+    <!-- Fonts: Poppins & Playfair -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
@@ -29,13 +29,20 @@
         body { font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
         .font-display { font-family: 'Playfair Display', serif; }
 
-        /* Tekstur Background Sama dengan Index */
+        /* Background Texture */
         .texture-dots {
             background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
             background-size: 16px 16px;
         }
 
-        /* Custom Toast Notification Animation */
+        /* Animasi Masuk Halaman */
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-enter { animation: slideUpFade 0.6s ease-out forwards; }
+
+        /* Custom Toast */
         .toast-enter { transform: translateX(100%); opacity: 0; }
         .toast-enter-active { transform: translateX(0); opacity: 1; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
         .toast-exit { transform: translateX(0); opacity: 1; }
@@ -44,22 +51,20 @@
 </head>
 <body class="min-h-screen flex items-center justify-center font-sans bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 texture-dots relative">
 
-    <!-- Dekorasi Background Bulat (Estetika) -->
+    <!-- Background Blobs -->
     <div class="absolute top-0 left-0 w-64 h-64 bg-amber-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
     <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
     <div class="absolute -bottom-8 left-20 w-64 h-64 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
 
-    <!-- Container Toast Notification (Pengganti Alert) -->
+    <!-- Container Toast -->
     <div id="toastContainer" class="fixed top-5 right-5 z-[100] flex flex-col gap-3"></div>
 
     <!-- Container Auth Utama -->
-    <div class="bg-white w-11/12 max-w-md rounded-3xl shadow-2xl overflow-hidden relative z-10 border border-slate-100">
+    <div class="bg-white w-11/12 max-w-md rounded-3xl shadow-2xl overflow-hidden relative z-10 border border-slate-100 animate-enter">
         
-        <!-- Header Auth (Desain Menyesuaikan Index) -->
+        <!-- Header -->
         <div class="relative bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 p-6 md:p-8 text-center border-b-4 border-amber-500">
-            <!-- Overlay Tekstur -->
             <div class="absolute inset-0 texture-dots pointer-events-none opacity-30"></div>
-            
             <div class="relative z-10">
                 <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-12 md:h-14 mx-auto mb-3 object-contain drop-shadow-md" onerror="this.src='https://via.placeholder.com/150x50?text=LOGO'">
                 <h2 class="font-display text-white font-bold text-2xl tracking-wide" id="authTitle">Masuk ke Sistem</h2>
@@ -67,7 +72,7 @@
             </div>
         </div>
 
-        <!-- Toggle Login / Register (Styled) -->
+        <!-- Tabs -->
         <div class="flex bg-slate-50 border-b border-slate-100" id="tabContainer">
             <button id="tabLogin" onclick="switchMode('login')" class="flex-1 py-4 text-center font-bold text-slate-900 border-b-4 border-amber-500 bg-white transition-all duration-300 hover:bg-slate-50">
                 Masuk
@@ -77,11 +82,10 @@
             </button>
         </div>
 
-        <!-- Form Container -->
+        <!-- Form -->
         <div class="p-6 md:p-8">
             <form id="authForm" onsubmit="handleAuth(event)">
-                
-                <!-- Input Nama (Hidden by Default) -->
+                <!-- Input Nama -->
                 <div id="groupNama" class="hidden mb-5 transform transition-all duration-300">
                     <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">Nama Lengkap</label>
                     <div class="relative group">
@@ -114,31 +118,27 @@
                     </div>
                 </div>
 
-                <!-- Keamanan Captcha Angka -->
+                <!-- Captcha -->
                 <div class="mb-6 bg-blue-50/50 p-4 rounded-xl border border-blue-100" id="groupCaptcha">
                     <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-3">Kode Keamanan</label>
                     <div class="flex items-center space-x-3">
-                        <div class="bg-white text-blue-900 font-bold px-4 py-3 rounded-lg text-xl tracking-widest flex-1 text-center shadow-inner border border-blue-200" id="captchaQuestion">
-                            <!-- Diisi oleh JS -->
-                        </div>
+                        <div class="bg-white text-blue-900 font-bold px-4 py-3 rounded-lg text-xl tracking-widest flex-1 text-center shadow-inner border border-blue-200" id="captchaQuestion"></div>
                         <input type="number" id="inputCaptcha" required class="w-24 py-3 px-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 text-center font-bold text-lg transition-all" placeholder="?">
                     </div>
-                    <p class="text-[10px] text-slate-500 mt-2 flex items-center"><i class="fas fa-shield-alt mr-1"></i> Jawab soal matematika sederhana untuk verifikasi manusia.</p>
+                    <p class="text-[10px] text-slate-500 mt-2 flex items-center"><i class="fas fa-shield-alt mr-1"></i> Jawab soal matematika sederhana.</p>
                 </div>
 
-                <!-- Tampilan Menunggu Verifikasi Email (Styled) -->
+                <!-- Tampilan Verifikasi -->
                 <div id="groupVerifikasi" class="hidden mb-6 bg-emerald-50 p-6 rounded-xl border border-emerald-100 text-center relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
                     <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
                         <i class="fas fa-envelope-open-text text-2xl text-emerald-600"></i>
                     </div>
                     <h3 class="font-bold text-emerald-800 mb-2 text-lg">Cek Inbox Email Anda</h3>
-                    <p class="text-xs text-emerald-700 mb-5 leading-relaxed">Kami telah mengirimkan tautan verifikasi. Silakan buka email (termasuk folder SPAM) dan klik tombol verifikasi.</p>
-                    
+                    <p class="text-xs text-emerald-700 mb-5 leading-relaxed">Kami telah mengirimkan tautan verifikasi. Silakan buka email (termasuk folder SPAM).</p>
                     <button type="button" onclick="cekStatusVerifikasi()" id="btnVerifikasi" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-all shadow-md shadow-emerald-200 active:scale-95 flex items-center justify-center gap-2">
                         <i class="fas fa-sync-alt"></i> Saya Sudah Verifikasi
                     </button>
-                    <p class="text-[10px] text-slate-400 mt-3">Sistem akan memvalidasi status email Anda secara real-time.</p>
                 </div>
 
                 <!-- Submit Button -->
@@ -146,7 +146,6 @@
                     <span id="btnText">Masuk Sekarang</span>
                     <i id="btnIcon" class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
                 </button>
-
             </form>
             
             <div class="mt-8 text-center border-t border-slate-100 pt-4" id="backToHome">
@@ -157,7 +156,7 @@
         </div>
     </div>
 
-    <!-- Firebase SDK (LOGIKA SISTEM TETAP SAMA) -->
+    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -177,12 +176,10 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- UI: TOAST NOTIFICATION SYSTEM (PENGGANTI ALERT) ---
+        // --- UI TOAST SYSTEM ---
         window.showToast = function(message, type = 'success') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            
-            // Definisi Warna & Icon berdasarkan Tipe
             let bgClass, iconClass, borderClass;
             if (type === 'success') {
                 bgClass = 'bg-white border-l-4 border-emerald-500';
@@ -207,10 +204,7 @@
                 </div>
                 <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
             `;
-
             container.appendChild(toast);
-
-            // Hapus otomatis setelah 4 detik
             setTimeout(() => {
                 toast.classList.remove('toast-enter-active');
                 toast.classList.add('toast-exit-active');
@@ -218,7 +212,6 @@
             }, 4000);
         }
 
-        // --- Logika UI State ---
         let currentMode = 'login';
         let pendingUser = { nama: '', email: '' };
         let captchaAnswer = 0;
@@ -234,7 +227,6 @@
 
         window.switchMode = function(mode) {
             currentMode = mode;
-            
             const tabLogin = document.getElementById('tabLogin');
             const tabRegister = document.getElementById('tabRegister');
             const groupNama = document.getElementById('groupNama');
@@ -243,7 +235,6 @@
             const authSubtitle = document.getElementById('authSubtitle');
             const btnText = document.getElementById('btnText');
 
-            // Reset UI View
             document.getElementById('authForm').reset();
             generateCaptcha();
             document.getElementById('groupEmail').classList.remove('hidden');
@@ -253,43 +244,33 @@
             btnSubmit.classList.remove('hidden');
 
             if (mode === 'login') {
-                // Style Tab Login Aktif
                 tabLogin.className = "flex-1 py-4 text-center font-bold text-slate-900 border-b-4 border-amber-500 bg-white transition-all duration-300";
                 tabRegister.className = "flex-1 py-4 text-center font-bold text-slate-400 border-b-4 border-transparent transition-all duration-300 hover:text-slate-600 hover:bg-slate-50";
-                
                 groupNama.classList.add('hidden');
                 document.getElementById('inputNama').removeAttribute('required');
-                
                 authTitle.textContent = "Masuk ke Sistem";
                 authSubtitle.textContent = "Silakan autentikasi untuk melanjutkan";
                 btnText.textContent = "Masuk Sekarang";
             } else {
-                // Style Tab Register Aktif
                 tabRegister.className = "flex-1 py-4 text-center font-bold text-slate-900 border-b-4 border-amber-500 bg-white transition-all duration-300";
                 tabLogin.className = "flex-1 py-4 text-center font-bold text-slate-400 border-b-4 border-transparent transition-all duration-300 hover:text-slate-600 hover:bg-slate-50";
-                
                 groupNama.classList.remove('hidden');
                 document.getElementById('inputNama').setAttribute('required', 'true');
-                
                 authTitle.textContent = "Pendaftaran Guru";
                 authSubtitle.textContent = "Buat akun untuk membuka ruang kelas Anda";
                 btnText.textContent = "Daftar Akun";
-                
-                // Ubah warna tombol sedikit agar beda visual
                 btnSubmit.classList.remove('from-blue-600', 'to-blue-700');
                 btnSubmit.classList.add('from-emerald-600', 'to-emerald-700');
             }
-            // Reset tombol warna default jika kembali ke login
             if(mode === 'login') {
                 btnSubmit.classList.add('from-blue-600', 'to-blue-700');
                 btnSubmit.classList.remove('from-emerald-600', 'to-emerald-700');
             }
         }
 
-        // --- Logika Submit Real ke Firebase ---
+        // --- LOGIKA LOGIN & REGISTER ---
         window.handleAuth = async function(e) {
             e.preventDefault();
-            
             const email = document.getElementById('inputEmail').value.trim();
             const password = document.getElementById('inputPassword').value;
             const inputCaptcha = parseInt(document.getElementById('inputCaptcha').value);
@@ -297,18 +278,12 @@
             const btnText = document.getElementById('btnText');
             const btnIcon = document.getElementById('btnIcon');
 
-            // 1. Validasi Captcha
             if (isNaN(inputCaptcha) || inputCaptcha !== captchaAnswer) {
-                showToast("Kode keamanan salah! Silakan hitung kembali.", "error");
+                showToast("Kode keamanan salah!", "error");
                 generateCaptcha();
-                // Animasi shake pada input captcha
-                const captchaInput = document.getElementById('inputCaptcha');
-                captchaInput.classList.add('animate-pulse', 'border-red-500');
-                setTimeout(() => captchaInput.classList.remove('animate-pulse', 'border-red-500'), 1000);
                 return;
             }
 
-            // Helper: Set Loading State
             const setLoading = (isLoading, text) => {
                 if(isLoading) {
                     btnText.textContent = text;
@@ -316,18 +291,17 @@
                     btnSubmit.disabled = true;
                     btnSubmit.classList.add('opacity-80', 'cursor-not-allowed');
                 } else {
-                    btnText.textContent = text; // Reset text
+                    btnText.textContent = text;
                     btnIcon.className = "fas fa-arrow-right group-hover:translate-x-1 transition-transform";
                     btnSubmit.disabled = false;
                     btnSubmit.classList.remove('opacity-80', 'cursor-not-allowed');
                 }
             }
 
-            // ================= LOGIKA LOGIN REAL =================
+            // === LOGIN ===
             if (currentMode === 'login') {
                 try {
                     setLoading(true, "Memverifikasi...");
-
                     const userCredential = await signInWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
 
@@ -335,8 +309,18 @@
                     if (userDoc.exists()) {
                         const userData = userDoc.data();
                         
+                        // 1. CEK STATUS SUSPEND (KEAMANAN)
+                        if (userData.status === 'suspended') {
+                            showToast("AKUN ANDA DITANGGUHKAN! Hubungi Administrator.", "error");
+                            await signOut(auth);
+                            generateCaptcha();
+                            setLoading(false, "Masuk Sekarang");
+                            return;
+                        }
+
+                        // 2. CEK VERIFIKASI EMAIL (KHUSUS GURU)
                         if (userData.role === 'teacher' && !user.emailVerified) {
-                            showToast("Akun belum aktif. Silakan verifikasi email Anda.", "error");
+                            showToast("Akun belum aktif. Cek email verifikasi.", "error");
                             await signOut(auth);
                             generateCaptcha();
                             setLoading(false, "Masuk Sekarang");
@@ -344,23 +328,22 @@
                         }
 
                         showToast(`Selamat datang, ${userData.namaLengkap}!`, "success");
+                        
+                        // 3. REDIRECT KE DASHBOARD YANG BENAR
                         if (userData.role === 'admin') {
-                            setTimeout(() => window.location.href = "admin-dashboard.html", 1000);
+                            setTimeout(() => window.location.href = "admin/index.html", 1000); // SUDAH DIPERBAIKI
                         } else {
-                            setTimeout(() => window.location.href = "guru-dashboard.html", 1000);
+                            setTimeout(() => window.location.href = "guru/index.html", 1000); // SUDAH DIPERBAIKI
                         }
                     } else {
-                        showToast("Data user tidak ditemukan. Hubungi Admin.", "error");
+                        showToast("Data user tidak ditemukan.", "error");
                         await signOut(auth);
                         setLoading(false, "Masuk Sekarang");
                     }
                 } catch (error) {
-                    let errorMsg = "Gagal masuk. Periksa kredensial Anda.";
-                    if(error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                        errorMsg = "Email atau password salah.";
-                    } else if (error.code === 'auth/too-many-requests') {
-                        errorMsg = "Terlalu banyak percobaan. Coba lagi nanti.";
-                    }
+                    let errorMsg = "Gagal masuk.";
+                    if(error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') errorMsg = "Email atau password salah.";
+                    else if (error.code === 'auth/too-many-requests') errorMsg = "Terlalu banyak percobaan gagal.";
                     showToast(errorMsg, "error");
                     generateCaptcha();
                     setLoading(false, "Masuk Sekarang");
@@ -368,68 +351,45 @@
                 return;
             }
 
-            // ================= LOGIKA REGISTER REAL =================
+            // === REGISTER ===
             if (currentMode === 'register') {
                 const nama = document.getElementById('inputNama').value.trim();
 
-                // SKENARIO 1: ADMIN
                 if (email.endsWith('@arg.ac.id')) {
                     try {
                         setLoading(true, "Mendaftarkan Admin...");
-
                         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                         const user = userCredential.user;
-                        
                         await setDoc(doc(db, "users", user.uid), {
-                            namaLengkap: nama,
-                            email: email,
-                            role: "admin",
-                            createdAt: new Date()
+                            namaLengkap: nama, email: email, role: "admin", createdAt: new Date()
                         });
-
-                        showToast("Registrasi Admin Berhasil! Mengalihkan...", "success");
-                        setTimeout(() => window.location.href = "admin/index.html", 1500);
-
+                        showToast("Registrasi Admin Berhasil!", "success");
+                        setTimeout(() => window.location.href = "admin/index.html", 1500); // REDIRECT BENAR
                     } catch (error) {
-                        showToast("Gagal mendaftarkan admin: " + error.message, "error");
+                        showToast("Gagal: " + error.message, "error");
                         generateCaptcha();
                         setLoading(false, "Daftar Akun");
                     }
-                } 
-                
-                // SKENARIO 2: GURU (Verifikasi Email)
-                else {
+                } else {
                     try {
                         setLoading(true, "Menghubungi Server...");
-
                         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                         const user = userCredential.user;
-
                         await sendEmailVerification(user);
+                        pendingUser.nama = nama; pendingUser.email = email;
 
-                        pendingUser.nama = nama;
-                        pendingUser.email = email;
-
-                        // UI Switch to Verification View
                         document.getElementById('groupNama').classList.add('hidden');
                         document.getElementById('groupEmail').classList.add('hidden');
                         document.getElementById('groupPassword').classList.add('hidden');
                         document.getElementById('groupCaptcha').classList.add('hidden');
                         document.getElementById('tabContainer').classList.add('hidden');
                         btnSubmit.classList.add('hidden');
-                        
                         document.getElementById('authTitle').textContent = "Verifikasi Email";
                         document.getElementById('authSubtitle').textContent = "Satu langkah lagi menjadi bagian dari kami";
-                        
                         document.getElementById('groupVerifikasi').classList.remove('hidden');
-                        // Animation untuk masuk
-                        document.getElementById('groupVerifikasi').classList.add('animate-pulse');
-                        setTimeout(() => document.getElementById('groupVerifikasi').classList.remove('animate-pulse'), 500);
-
                         showToast("Email verifikasi telah dikirim!", "success");
-
                     } catch (error) {
-                        showToast("Gagal mendaftar: " + error.message, "error");
+                        showToast("Gagal: " + error.message, "error");
                         generateCaptcha();
                         setLoading(false, "Daftar Akun");
                     }
@@ -437,12 +397,9 @@
             }
         }
 
-        // --- Logika Cek Status Verifikasi ---
         window.cekStatusVerifikasi = async function() {
             const btnVerifikasi = document.getElementById('btnVerifikasi');
             const originalText = btnVerifikasi.innerHTML;
-            
-            // Efek loading pada tombol verifikasi
             btnVerifikasi.disabled = true;
             btnVerifikasi.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengecek...';
 
@@ -450,24 +407,19 @@
                 const user = auth.currentUser;
                 if (user) {
                     await user.reload(); 
-                    
                     if (user.emailVerified) {
                         await setDoc(doc(db, "users", user.uid), {
-                            namaLengkap: pendingUser.nama,
-                            email: pendingUser.email,
-                            role: "teacher",
-                            createdAt: new Date()
+                            namaLengkap: pendingUser.nama, email: pendingUser.email, role: "teacher", createdAt: new Date()
                         });
-
-                        showToast("Verifikasi Berhasil! Mengalihkan ke Dashboard...", "success");
-                        setTimeout(() => window.location.href = "guru-dashboard.html", 1500);
+                        showToast("Verifikasi Berhasil!", "success");
+                        setTimeout(() => window.location.href = "guru/index.html", 1500); // REDIRECT BENAR
                     } else {
-                        showToast("Email Anda belum diverifikasi. Cek inbox/spam lagi.", "error");
+                        showToast("Email belum diverifikasi.", "error");
                         btnVerifikasi.disabled = false;
                         btnVerifikasi.innerHTML = originalText;
                     }
                 } else {
-                    showToast("Sesi habis. Silakan muat ulang halaman.", "error");
+                    showToast("Sesi habis.", "error");
                     btnVerifikasi.disabled = false;
                     btnVerifikasi.innerHTML = originalText;
                 }
