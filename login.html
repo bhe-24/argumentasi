@@ -2,8 +2,9 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Otentikasi Sistem - Cendekia Aksara</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Otentikasi Sistem - Argumentasi</title>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
@@ -19,6 +20,9 @@
                     fontFamily: {
                         sans: ['Poppins', 'sans-serif'],
                         display: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        brand: { gold: '#fbbf24', dark: '#0f172a', primary: '#0f4c81', emerald: '#065f46' }
                     }
                 }
             }
@@ -31,127 +35,162 @@
 
         /* Background Texture */
         .texture-dots {
-            background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px);
             background-size: 16px 16px;
         }
 
         /* Animasi Masuk Halaman */
         @keyframes slideUpFade {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .animate-enter { animation: slideUpFade 0.6s ease-out forwards; }
+        .animate-enter { animation: slideUpFade 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
         /* Custom Toast */
         .toast-enter { transform: translateX(100%); opacity: 0; }
-        .toast-enter-active { transform: translateX(0); opacity: 1; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+        .toast-enter-active { transform: translateX(0); opacity: 1; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
         .toast-exit { transform: translateX(0); opacity: 1; }
         .toast-exit-active { transform: translateX(100%); opacity: 0; transition: all 0.3s ease-in; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center font-sans bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 texture-dots relative">
-
-    <!-- Background Blobs -->
-    <div class="absolute top-0 left-0 w-64 h-64 bg-amber-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-    <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-    <div class="absolute -bottom-8 left-20 w-64 h-64 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+<body class="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-x-hidden md:p-6">
 
     <!-- Container Toast -->
     <div id="toastContainer" class="fixed top-5 right-5 z-[100] flex flex-col gap-3"></div>
 
-    <!-- Container Auth Utama -->
-    <div class="bg-white w-11/12 max-w-md rounded-3xl shadow-2xl overflow-hidden relative z-10 border border-slate-100 animate-enter">
+    <!-- MAIN CONTAINER (SPLIT SCREEN DI LAPTOP, SINGLE COLUMN DI MOBILE) -->
+    <div class="bg-white w-full h-screen md:h-auto md:max-w-5xl md:rounded-[2rem] md:shadow-2xl overflow-hidden relative z-10 flex flex-col md:flex-row animate-enter border-0 md:border border-slate-100">
         
-        <!-- Header -->
-        <div class="relative bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 p-6 md:p-8 text-center border-b-4 border-amber-500">
-            <div class="absolute inset-0 texture-dots pointer-events-none opacity-30"></div>
+        <!-- ========================================== -->
+        <!-- KOLOM KIRI (BRANDING - KHUSUS LAPTOP/TABLET) -->
+        <!-- ========================================== -->
+        <div class="hidden md:flex md:w-5/12 lg:w-1/2 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 p-10 lg:p-12 flex-col justify-between relative border-r-4 border-amber-500 overflow-hidden">
+            <div class="absolute inset-0 texture-dots pointer-events-none opacity-40"></div>
+            
+            <!-- Blob Effects -->
+            <div class="absolute top-[-10%] left-[-10%] w-64 h-64 bg-amber-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
+            <div class="absolute bottom-[-10%] right-[-10%] w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+
             <div class="relative z-10">
-                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-12 md:h-14 mx-auto mb-3 object-contain drop-shadow-md" onerror="this.src='https://via.placeholder.com/150x50?text=LOGO'">
-                <h2 class="font-display text-white font-bold text-2xl tracking-wide" id="authTitle">Masuk ke Sistem</h2>
-                <p class="text-blue-200 text-xs md:text-sm mt-2 font-light" id="authSubtitle">Silakan autentikasi untuk melanjutkan</p>
+                <a href="index.html" class="inline-block hover:scale-105 transition-transform duration-300">
+                    <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Argumentasi" class="h-12 object-contain drop-shadow-lg filter brightness-110">
+                </a>
+            </div>
+
+            <div class="relative z-10 my-auto pt-10">
+                <h2 class="font-display text-white font-bold text-4xl lg:text-5xl leading-tight mb-6 drop-shadow-md">
+                    Membangun Generasi <br><span class="text-amber-400">Pemikir Kritis.</span>
+                </h2>
+                <p class="text-slate-300 text-sm lg:text-base leading-relaxed border-l-2 border-slate-600 pl-4">
+                    Platform edukasi digital yang dirancang khusus untuk memfasilitasi pembelajaran teks argumentasi yang logis, terstruktur, dan berbasis budaya lokal.
+                </p>
+            </div>
+
+            <div class="relative z-10 flex items-center gap-3 text-xs text-slate-400 font-medium pt-8">
+                <i class="fas fa-shield-alt text-amber-500 text-base"></i> Sistem Terenkripsi Standar Firebase
             </div>
         </div>
 
-        <!-- Tabs -->
-        <div class="flex bg-slate-50 border-b border-slate-100" id="tabContainer">
-            <button id="tabLogin" onclick="switchMode('login')" class="flex-1 py-4 text-center font-bold text-slate-900 border-b-4 border-amber-500 bg-white transition-all duration-300 hover:bg-slate-50">
-                Masuk
-            </button>
-            <button id="tabRegister" onclick="switchMode('register')" class="flex-1 py-4 text-center font-bold text-slate-400 border-b-4 border-transparent transition-all duration-300 hover:text-slate-600 hover:bg-slate-50">
-                Daftar
-            </button>
-        </div>
-
-        <!-- Form -->
-        <div class="p-6 md:p-8">
-            <form id="authForm" onsubmit="handleAuth(event)">
-                <!-- Input Nama -->
-                <div id="groupNama" class="hidden mb-5 transform transition-all duration-300">
-                    <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">Nama Lengkap</label>
-                    <div class="relative group">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-user text-slate-400 group-focus-within:text-amber-500 transition-colors"></i>
-                        </div>
-                        <input type="text" id="inputNama" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all text-sm" placeholder="Nama lengkap Anda">
-                    </div>
-                </div>
-
-                <!-- Input Email -->
-                <div class="mb-5 transform transition-all duration-300" id="groupEmail">
-                    <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">Alamat Email</label>
-                    <div class="relative group">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-envelope text-slate-400 group-focus-within:text-amber-500 transition-colors"></i>
-                        </div>
-                        <input type="email" id="inputEmail" required class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all text-sm" placeholder="contoh@gmail.com">
-                    </div>
-                </div>
-
-                <!-- Input Password -->
-                <div class="mb-5 transform transition-all duration-300" id="groupPassword">
-                    <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">Kata Sandi</label>
-                    <div class="relative group">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-lock text-slate-400 group-focus-within:text-amber-500 transition-colors"></i>
-                        </div>
-                        <input type="password" id="inputPassword" required class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all text-sm" placeholder="Minimal 6 karakter">
-                    </div>
-                </div>
-
-                <!-- Captcha -->
-                <div class="mb-6 bg-blue-50/50 p-4 rounded-xl border border-blue-100" id="groupCaptcha">
-                    <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-3">Kode Keamanan</label>
-                    <div class="flex items-center space-x-3">
-                        <div class="bg-white text-blue-900 font-bold px-4 py-3 rounded-lg text-xl tracking-widest flex-1 text-center shadow-inner border border-blue-200" id="captchaQuestion"></div>
-                        <input type="number" id="inputCaptcha" required class="w-24 py-3 px-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 text-center font-bold text-lg transition-all" placeholder="?">
-                    </div>
-                    <p class="text-[10px] text-slate-500 mt-2 flex items-center"><i class="fas fa-shield-alt mr-1"></i> Jawab soal matematika sederhana.</p>
-                </div>
-
-                <!-- Tampilan Verifikasi -->
-                <div id="groupVerifikasi" class="hidden mb-6 bg-emerald-50 p-6 rounded-xl border border-emerald-100 text-center relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
-                    <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                        <i class="fas fa-envelope-open-text text-2xl text-emerald-600"></i>
-                    </div>
-                    <h3 class="font-bold text-emerald-800 mb-2 text-lg">Cek Inbox Email Anda</h3>
-                    <p class="text-xs text-emerald-700 mb-5 leading-relaxed">Kami telah mengirimkan tautan verifikasi. Silakan buka email (termasuk folder SPAM).</p>
-                    <button type="button" onclick="cekStatusVerifikasi()" id="btnVerifikasi" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-all shadow-md shadow-emerald-200 active:scale-95 flex items-center justify-center gap-2">
-                        <i class="fas fa-sync-alt"></i> Saya Sudah Verifikasi
-                    </button>
-                </div>
-
-                <!-- Submit Button -->
-                <button type="submit" id="btnSubmit" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3.5 rounded-xl transition-all duration-300 shadow-lg shadow-blue-200 active:scale-95 flex items-center justify-center gap-2 group">
-                    <span id="btnText">Masuk Sekarang</span>
-                    <i id="btnIcon" class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
-                </button>
-            </form>
+        <!-- ========================================== -->
+        <!-- KOLOM KANAN (FORM AUTENTIKASI) -->
+        <!-- ========================================== -->
+        <div class="w-full md:w-7/12 lg:w-1/2 flex flex-col h-full bg-white relative">
             
-            <div class="mt-8 text-center border-t border-slate-100 pt-4" id="backToHome">
-                <a href="index.html" class="text-xs font-medium text-slate-400 hover:text-amber-500 transition-colors flex items-center justify-center gap-1">
-                    <i class="fas fa-arrow-left"></i> Kembali ke Beranda
-                </a>
+            <!-- MOBILE HEADER (Hanya Tampil di HP) -->
+            <div class="md:hidden bg-slate-900 p-6 text-center relative border-b-4 border-amber-500 rounded-b-3xl shadow-md z-20">
+                <div class="absolute inset-0 texture-dots pointer-events-none opacity-30"></div>
+                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Argumentasi" class="h-10 mx-auto relative z-10 drop-shadow-md filter brightness-110">
+            </div>
+
+            <!-- Tabs Navigasi Form -->
+            <div class="flex bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100" id="tabContainer">
+                <button id="tabLogin" onclick="switchMode('login')" class="flex-1 py-4 md:py-5 text-center font-bold text-slate-900 border-b-[3px] border-amber-500 transition-all duration-300 hover:bg-slate-50 text-sm tracking-wide">
+                    MASUK SISTEM
+                </button>
+                <button id="tabRegister" onclick="switchMode('register')" class="flex-1 py-4 md:py-5 text-center font-bold text-slate-400 border-b-[3px] border-transparent transition-all duration-300 hover:text-slate-600 hover:bg-slate-50 text-sm tracking-wide">
+                    DAFTAR BARU
+                </button>
+            </div>
+
+            <!-- Area Form -->
+            <div class="p-6 md:p-8 lg:p-12 flex-1 overflow-y-auto hide-scrollbar flex flex-col justify-center">
+                
+                <div class="text-center md:text-left mb-8">
+                    <h2 class="font-display text-slate-800 font-bold text-2xl md:text-3xl tracking-tight" id="authTitle">Selamat Datang!</h2>
+                    <p class="text-slate-500 text-sm mt-1.5" id="authSubtitle">Silakan masukkan kredensial Anda untuk melanjutkan</p>
+                </div>
+
+                <form id="authForm" onsubmit="handleAuth(event)" class="w-full">
+                    
+                    <!-- Input Nama -->
+                    <div id="groupNama" class="hidden mb-5 transform transition-all duration-300 opacity-0 -translate-y-2">
+                        <label class="block text-slate-700 text-[11px] font-bold uppercase tracking-widest mb-2">Nama Lengkap</label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-slate-400 group-focus-within:text-amber-500 transition-colors"></i>
+                            </div>
+                            <input type="text" id="inputNama" class="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-400 focus:bg-white focus:ring-4 focus:ring-amber-50 transition-all text-sm font-medium text-slate-700" placeholder="Ketik nama lengkap Anda">
+                        </div>
+                    </div>
+
+                    <!-- Input Email -->
+                    <div class="mb-5" id="groupEmail">
+                        <label class="block text-slate-700 text-[11px] font-bold uppercase tracking-widest mb-2">Alamat Email</label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i class="fas fa-envelope text-slate-400 group-focus-within:text-amber-500 transition-colors"></i>
+                            </div>
+                            <input type="email" id="inputEmail" required class="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-400 focus:bg-white focus:ring-4 focus:ring-amber-50 transition-all text-sm font-medium text-slate-700" placeholder="contoh@gmail.com">
+                        </div>
+                    </div>
+
+                    <!-- Input Password -->
+                    <div class="mb-6" id="groupPassword">
+                        <label class="block text-slate-700 text-[11px] font-bold uppercase tracking-widest mb-2">Kata Sandi</label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i class="fas fa-lock text-slate-400 group-focus-within:text-amber-500 transition-colors"></i>
+                            </div>
+                            <input type="password" id="inputPassword" required class="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-400 focus:bg-white focus:ring-4 focus:ring-amber-50 transition-all text-sm font-medium text-slate-700" placeholder="Minimal 6 karakter">
+                        </div>
+                    </div>
+
+                    <!-- Captcha -->
+                    <div class="mb-8 bg-blue-50/70 p-4 rounded-xl border border-blue-100 relative overflow-hidden" id="groupCaptcha">
+                        <div class="absolute top-0 right-0 w-16 h-16 bg-blue-100 rounded-bl-full -mr-4 -mt-4 opacity-50"></div>
+                        <label class="block text-slate-700 text-[11px] font-bold uppercase tracking-widest mb-3 relative z-10">Verifikasi Keamanan</label>
+                        <div class="flex items-center space-x-3 relative z-10">
+                            <div class="bg-white text-slate-800 font-extrabold px-4 py-3 rounded-lg text-lg md:text-xl tracking-widest flex-1 text-center shadow-sm border border-slate-200" id="captchaQuestion"></div>
+                            <input type="number" id="inputCaptcha" required class="w-24 py-3 px-2 bg-white border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 text-center font-bold text-lg transition-all" placeholder="?">
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-2 flex items-center relative z-10"><i class="fas fa-shield-alt mr-1 text-blue-500"></i> Buktikan Anda bukan robot.</p>
+                    </div>
+
+                    <!-- Tampilan Verifikasi (Disembunyikan secara default) -->
+                    <div id="groupVerifikasi" class="hidden mb-6 bg-emerald-50 p-6 rounded-2xl border border-emerald-100 text-center relative overflow-hidden shadow-inner">
+                        <div class="absolute top-0 left-0 w-full h-1.5 bg-emerald-500"></div>
+                        <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-emerald-100">
+                            <i class="fas fa-envelope-open-text text-2xl text-emerald-600"></i>
+                        </div>
+                        <h3 class="font-bold text-emerald-900 mb-2 text-lg">Cek Inbox Email Anda</h3>
+                        <p class="text-xs text-emerald-700 mb-6 leading-relaxed">Kami telah mengirimkan tautan verifikasi. Silakan buka email Anda (termasuk folder SPAM).</p>
+                        <button type="button" onclick="cekStatusVerifikasi()" id="btnVerifikasi" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-emerald-200/50 active:scale-95 flex items-center justify-center gap-2">
+                            <i class="fas fa-sync-alt"></i> SAYA SUDAH KLIK VERIFIKASI
+                        </button>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="btnSubmit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-[0_8px_30px_rgb(0,0,0,0.12)] active:scale-95 flex items-center justify-center gap-2 group">
+                        <span id="btnText" class="tracking-wide">Masuk Sistem</span>
+                        <i id="btnIcon" class="fas fa-arrow-right group-hover:translate-x-1.5 transition-transform"></i>
+                    </button>
+                </form>
+                
+                <div class="mt-8 text-center pt-5 border-t border-slate-100" id="backToHome">
+                    <a href="index.html" class="text-xs font-semibold text-slate-500 hover:text-amber-500 transition-colors flex items-center justify-center gap-1.5 py-2">
+                        <i class="fas fa-arrow-left"></i> Kembali ke Beranda Halaman
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -162,6 +201,7 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        // HARAP PASTIKAN CONFIG FIREBASE INI BENAR SESUAI PROJECT ANDA
         const firebaseConfig = {
             apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
             authDomain: "mading-cf676.firebaseapp.com",
@@ -181,6 +221,7 @@
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             let bgClass, iconClass, borderClass;
+            
             if (type === 'success') {
                 bgClass = 'bg-white border-l-4 border-emerald-500';
                 iconClass = 'text-emerald-500 fa-check-circle';
@@ -189,20 +230,20 @@
                 bgClass = 'bg-white border-l-4 border-red-500';
                 iconClass = 'text-red-500 fa-exclamation-circle';
                 borderClass = 'border-red-100';
-            } else if (type === 'info') {
+            } else {
                 bgClass = 'bg-white border-l-4 border-blue-500';
                 iconClass = 'text-blue-500 fa-info-circle';
                 borderClass = 'border-blue-100';
             }
 
-            toast.className = `${bgClass} shadow-xl rounded-r-lg p-4 flex items-center gap-3 min-w-[300px] max-w-sm toast-enter toast-enter-active ${borderClass} border border-t-0 border-r-0 border-b-0`;
+            toast.className = `${bgClass} shadow-2xl rounded-r-xl p-4 flex items-center gap-3 min-w-[300px] max-w-sm toast-enter toast-enter-active ${borderClass} border border-t-0 border-r-0 border-b-0`;
             toast.innerHTML = `
-                <i class="fas ${iconClass} text-xl"></i>
+                <i class="fas ${iconClass} text-2xl"></i>
                 <div class="flex-1">
-                    <h4 class="font-bold text-sm text-slate-800 capitalize">${type}</h4>
+                    <h4 class="font-bold text-sm text-slate-800 capitalize">${type === 'success' ? 'Berhasil!' : 'Peringatan!'}</h4>
                     <p class="text-xs text-slate-600 leading-snug mt-0.5">${message}</p>
                 </div>
-                <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+                <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-700 transition-colors p-1"><i class="fas fa-times"></i></button>
             `;
             container.appendChild(toast);
             setTimeout(() => {
@@ -212,10 +253,12 @@
             }, 4000);
         }
 
+        // State Auth
         let currentMode = 'login';
         let pendingUser = { nama: '', email: '' };
         let captchaAnswer = 0;
         
+        // Generate Captcha Matematika
         window.generateCaptcha = function() {
             const num1 = Math.floor(Math.random() * 10) + 1;
             const num2 = Math.floor(Math.random() * 10) + 1;
@@ -223,8 +266,11 @@
             document.getElementById('captchaQuestion').textContent = `${num1} + ${num2} = ?`;
             document.getElementById('inputCaptcha').value = '';
         }
-        generateCaptcha();
+        
+        // Inisialisasi Captcha Pertama Kali
+        document.addEventListener('DOMContentLoaded', generateCaptcha);
 
+        // Switcher Tab Navigasi Login/Daftar
         window.switchMode = function(mode) {
             currentMode = mode;
             const tabLogin = document.getElementById('tabLogin');
@@ -235,6 +281,7 @@
             const authSubtitle = document.getElementById('authSubtitle');
             const btnText = document.getElementById('btnText');
 
+            // Reset UI
             document.getElementById('authForm').reset();
             generateCaptcha();
             document.getElementById('groupEmail').classList.remove('hidden');
@@ -244,31 +291,41 @@
             btnSubmit.classList.remove('hidden');
 
             if (mode === 'login') {
-                tabLogin.className = "flex-1 py-4 text-center font-bold text-slate-900 border-b-4 border-amber-500 bg-white transition-all duration-300";
-                tabRegister.className = "flex-1 py-4 text-center font-bold text-slate-400 border-b-4 border-transparent transition-all duration-300 hover:text-slate-600 hover:bg-slate-50";
-                groupNama.classList.add('hidden');
+                tabLogin.className = "flex-1 py-4 md:py-5 text-center font-bold text-slate-900 border-b-[3px] border-amber-500 bg-white transition-all duration-300 text-sm tracking-wide";
+                tabRegister.className = "flex-1 py-4 md:py-5 text-center font-bold text-slate-400 border-b-[3px] border-transparent transition-all duration-300 hover:text-slate-600 hover:bg-slate-50 text-sm tracking-wide";
+                
+                groupNama.classList.replace('opacity-100', 'opacity-0');
+                groupNama.classList.replace('translate-y-0', '-translate-y-2');
+                setTimeout(() => groupNama.classList.add('hidden'), 300);
+                
                 document.getElementById('inputNama').removeAttribute('required');
-                authTitle.textContent = "Masuk ke Sistem";
-                authSubtitle.textContent = "Silakan autentikasi untuk melanjutkan";
-                btnText.textContent = "Masuk Sekarang";
+                authTitle.textContent = "Selamat Datang!";
+                authSubtitle.textContent = "Silakan masukkan kredensial Anda untuk melanjutkan";
+                btnText.textContent = "Masuk Sistem";
+                
+                // Styling Tombol Login
+                btnSubmit.className = "w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-[0_8px_30px_rgb(0,0,0,0.12)] active:scale-95 flex items-center justify-center gap-2 group";
             } else {
-                tabRegister.className = "flex-1 py-4 text-center font-bold text-slate-900 border-b-4 border-amber-500 bg-white transition-all duration-300";
-                tabLogin.className = "flex-1 py-4 text-center font-bold text-slate-400 border-b-4 border-transparent transition-all duration-300 hover:text-slate-600 hover:bg-slate-50";
+                tabRegister.className = "flex-1 py-4 md:py-5 text-center font-bold text-slate-900 border-b-[3px] border-amber-500 bg-white transition-all duration-300 text-sm tracking-wide";
+                tabLogin.className = "flex-1 py-4 md:py-5 text-center font-bold text-slate-400 border-b-[3px] border-transparent transition-all duration-300 hover:text-slate-600 hover:bg-slate-50 text-sm tracking-wide";
+                
                 groupNama.classList.remove('hidden');
+                setTimeout(() => {
+                    groupNama.classList.replace('opacity-0', 'opacity-100');
+                    groupNama.classList.replace('-translate-y-2', 'translate-y-0');
+                }, 50);
+                
                 document.getElementById('inputNama').setAttribute('required', 'true');
                 authTitle.textContent = "Pendaftaran Guru";
-                authSubtitle.textContent = "Buat akun untuk membuka ruang kelas Anda";
-                btnText.textContent = "Daftar Akun";
-                btnSubmit.classList.remove('from-blue-600', 'to-blue-700');
-                btnSubmit.classList.add('from-emerald-600', 'to-emerald-700');
-            }
-            if(mode === 'login') {
-                btnSubmit.classList.add('from-blue-600', 'to-blue-700');
-                btnSubmit.classList.remove('from-emerald-600', 'to-emerald-700');
+                authSubtitle.textContent = "Buat akun resmi untuk membuka ruang kelas digital Anda";
+                btnText.textContent = "Daftar Akun Baru";
+                
+                // Styling Tombol Daftar
+                btnSubmit.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-lg shadow-emerald-200/50 active:scale-95 flex items-center justify-center gap-2 group";
             }
         }
 
-        // --- LOGIKA LOGIN & REGISTER ---
+        // --- LOGIKA UTAMA AUTHENTIKASI FIREBASE ---
         window.handleAuth = async function(e) {
             e.preventDefault();
             const email = document.getElementById('inputEmail').value.trim();
@@ -278,83 +335,90 @@
             const btnText = document.getElementById('btnText');
             const btnIcon = document.getElementById('btnIcon');
 
+            // Validasi Captcha
             if (isNaN(inputCaptcha) || inputCaptcha !== captchaAnswer) {
-                showToast("Kode keamanan salah!", "error");
+                showToast("Jawaban matematika salah, silakan coba lagi.", "error");
                 generateCaptcha();
+                document.getElementById('inputCaptcha').focus();
                 return;
             }
 
+            // Fungsi helper animasi loading tombol
             const setLoading = (isLoading, text) => {
                 if(isLoading) {
                     btnText.textContent = text;
-                    btnIcon.className = "fas fa-spinner fa-spin";
+                    btnIcon.className = "fas fa-circle-notch fa-spin";
                     btnSubmit.disabled = true;
                     btnSubmit.classList.add('opacity-80', 'cursor-not-allowed');
                 } else {
                     btnText.textContent = text;
-                    btnIcon.className = "fas fa-arrow-right group-hover:translate-x-1 transition-transform";
+                    btnIcon.className = "fas fa-arrow-right group-hover:translate-x-1.5 transition-transform";
                     btnSubmit.disabled = false;
                     btnSubmit.classList.remove('opacity-80', 'cursor-not-allowed');
                 }
             }
 
-            // === LOGIN ===
+            // ================== PROSES LOGIN ==================
             if (currentMode === 'login') {
                 try {
-                    setLoading(true, "Memverifikasi...");
+                    setLoading(true, "Memverifikasi Kredensial...");
                     const userCredential = await signInWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
-
                     const userDoc = await getDoc(doc(db, "users", user.uid));
+                    
                     if (userDoc.exists()) {
                         const userData = userDoc.data();
                         
-                        // 1. CEK STATUS SUSPEND (KEAMANAN)
+                        // Cek Keamanan Akun (Suspended)
                         if (userData.status === 'suspended') {
-                            showToast("AKUN ANDA DITANGGUHKAN! Hubungi Administrator.", "error");
+                            showToast("Akses Ditolak! Akun ditangguhkan.", "error");
                             await signOut(auth);
                             generateCaptcha();
-                            setLoading(false, "Masuk Sekarang");
+                            setLoading(false, "Masuk Sistem");
                             return;
                         }
 
-                        // 2. CEK VERIFIKASI EMAIL (KHUSUS GURU)
+                        // Cek Verifikasi Email (Wajib untuk Guru)
                         if (userData.role === 'teacher' && !user.emailVerified) {
-                            showToast("Akun belum aktif. Cek email verifikasi.", "error");
+                            showToast("Email belum diverifikasi. Silakan cek inbox Anda.", "error");
                             await signOut(auth);
                             generateCaptcha();
-                            setLoading(false, "Masuk Sekarang");
+                            setLoading(false, "Masuk Sistem");
                             return;
                         }
 
-                        showToast(`Selamat datang, ${userData.namaLengkap}!`, "success");
+                        showToast(`Halo, ${userData.namaLengkap}! Mengarahkan...`, "success");
                         
-                        // 3. REDIRECT KE DASHBOARD YANG BENAR
+                        // Redirect berdasarkan Role
                         if (userData.role === 'admin') {
-                            setTimeout(() => window.location.href = "admin/index.html", 1000); // SUDAH DIPERBAIKI
+                            setTimeout(() => window.location.href = "admin/index.html", 1200);
                         } else {
-                            setTimeout(() => window.location.href = "guru/index.html", 1000); // SUDAH DIPERBAIKI
+                            setTimeout(() => window.location.href = "guru/index.html", 1200);
                         }
                     } else {
-                        showToast("Data user tidak ditemukan.", "error");
+                        showToast("Profil data akun tidak ditemukan.", "error");
                         await signOut(auth);
-                        setLoading(false, "Masuk Sekarang");
+                        setLoading(false, "Masuk Sistem");
                     }
                 } catch (error) {
-                    let errorMsg = "Gagal masuk.";
-                    if(error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') errorMsg = "Email atau password salah.";
-                    else if (error.code === 'auth/too-many-requests') errorMsg = "Terlalu banyak percobaan gagal.";
+                    let errorMsg = "Terjadi kesalahan sistem.";
+                    if(error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                        errorMsg = "Alamat email atau kata sandi tidak cocok.";
+                    } else if (error.code === 'auth/too-many-requests') {
+                        errorMsg = "Akses ditahan sementara, terlalu banyak percobaan.";
+                    }
                     showToast(errorMsg, "error");
                     generateCaptcha();
-                    setLoading(false, "Masuk Sekarang");
+                    setLoading(false, "Masuk Sistem");
                 }
                 return;
             }
 
-            // === REGISTER ===
+            // ================== PROSES REGISTER ==================
             if (currentMode === 'register') {
                 const nama = document.getElementById('inputNama').value.trim();
 
+                // Daftar Akun Admin (Khusus email kampus arg.ac.id)
                 if (email.endsWith('@arg.ac.id')) {
                     try {
                         setLoading(true, "Mendaftarkan Admin...");
@@ -363,68 +427,84 @@
                         await setDoc(doc(db, "users", user.uid), {
                             namaLengkap: nama, email: email, role: "admin", createdAt: new Date()
                         });
-                        showToast("Registrasi Admin Berhasil!", "success");
-                        setTimeout(() => window.location.href = "admin/index.html", 1500); // REDIRECT BENAR
+                        showToast("Akses Admin Diberikan!", "success");
+                        setTimeout(() => window.location.href = "admin/index.html", 1500);
                     } catch (error) {
                         showToast("Gagal: " + error.message, "error");
                         generateCaptcha();
-                        setLoading(false, "Daftar Akun");
+                        setLoading(false, "Daftar Akun Baru");
                     }
-                } else {
+                } 
+                // Daftar Akun Guru (Perlu Verifikasi Email)
+                else {
                     try {
-                        setLoading(true, "Menghubungi Server...");
+                        setLoading(true, "Membangun Akun...");
                         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                         const user = userCredential.user;
                         await sendEmailVerification(user);
-                        pendingUser.nama = nama; pendingUser.email = email;
+                        
+                        // Simpan data sementara di variabel global menunggu verifikasi
+                        pendingUser.nama = nama; 
+                        pendingUser.email = email;
 
+                        // Ubah Tampilan UI ke Mode Menunggu Verifikasi
                         document.getElementById('groupNama').classList.add('hidden');
                         document.getElementById('groupEmail').classList.add('hidden');
                         document.getElementById('groupPassword').classList.add('hidden');
                         document.getElementById('groupCaptcha').classList.add('hidden');
                         document.getElementById('tabContainer').classList.add('hidden');
                         btnSubmit.classList.add('hidden');
-                        document.getElementById('authTitle').textContent = "Verifikasi Email";
-                        document.getElementById('authSubtitle').textContent = "Satu langkah lagi menjadi bagian dari kami";
+                        
+                        document.getElementById('authTitle').textContent = "Verifikasi Diperlukan";
+                        document.getElementById('authSubtitle').textContent = "Satu langkah akhir untuk mengamankan akun Anda";
                         document.getElementById('groupVerifikasi').classList.remove('hidden');
+                        
                         showToast("Email verifikasi telah dikirim!", "success");
                     } catch (error) {
-                        showToast("Gagal: " + error.message, "error");
+                        let errMsg = "Pendaftaran Gagal.";
+                        if(error.code === 'auth/email-already-in-use') errMsg = "Email ini sudah terdaftar sebelumnya.";
+                        else if(error.code === 'auth/weak-password') errMsg = "Kata sandi terlalu lemah.";
+                        
+                        showToast(errMsg, "error");
                         generateCaptcha();
-                        setLoading(false, "Daftar Akun");
+                        setLoading(false, "Daftar Akun Baru");
                     }
                 }
             }
         }
 
+        // Logic Tombol "Saya Sudah Klik Verifikasi"
         window.cekStatusVerifikasi = async function() {
             const btnVerifikasi = document.getElementById('btnVerifikasi');
             const originalText = btnVerifikasi.innerHTML;
             btnVerifikasi.disabled = true;
-            btnVerifikasi.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengecek...';
+            btnVerifikasi.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Mengecek Server...';
 
             try {
                 const user = auth.currentUser;
                 if (user) {
                     await user.reload(); 
                     if (user.emailVerified) {
+                        // Jika verified, baru kita rekam data Gurunya ke Firestore Database
                         await setDoc(doc(db, "users", user.uid), {
-                            namaLengkap: pendingUser.nama, email: pendingUser.email, role: "teacher", createdAt: new Date()
+                            namaLengkap: pendingUser.nama, 
+                            email: pendingUser.email, 
+                            role: "teacher", 
+                            createdAt: new Date()
                         });
-                        showToast("Verifikasi Berhasil!", "success");
-                        setTimeout(() => window.location.href = "guru/index.html", 1500); // REDIRECT BENAR
+                        showToast("Verifikasi Sukses! Menyiapkan ruang Anda...", "success");
+                        setTimeout(() => window.location.href = "guru/index.html", 1500);
                     } else {
-                        showToast("Email belum diverifikasi.", "error");
+                        showToast("Sistem mendeteksi email Anda belum terverifikasi. Coba lagi.", "error");
                         btnVerifikasi.disabled = false;
                         btnVerifikasi.innerHTML = originalText;
                     }
                 } else {
-                    showToast("Sesi habis.", "error");
-                    btnVerifikasi.disabled = false;
-                    btnVerifikasi.innerHTML = originalText;
+                    showToast("Sesi pendaftaran terputus. Silakan daftar ulang.", "error");
+                    setTimeout(() => window.location.reload(), 2000);
                 }
             } catch (error) {
-                showToast("Terjadi kesalahan koneksi.", "error");
+                showToast("Terjadi gangguan jaringan saat mengecek.", "error");
                 btnVerifikasi.disabled = false;
                 btnVerifikasi.innerHTML = originalText;
             }
