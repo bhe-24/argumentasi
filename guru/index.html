@@ -29,8 +29,9 @@
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; }
         .font-display { font-family: 'Playfair Display', serif; }
-        .modal-z { z-index: 99999 !important; }
         .texture-dots { background-image: radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px); background-size: 16px 16px; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -57,7 +58,7 @@
                 </div>
                 
                 <div class="flex items-center gap-4">
-                    <a href="../index.html" class="hidden sm:flex text-sm text-slate-500 hover:text-blue-600 font-medium items-center gap-2 transition-colors">
+                    <a href="../index.html" class="hidden sm:flex text-sm text-slate-500 hover:text-blue-600 font-medium items-center gap-2 transition-colors border border-slate-200 px-3 py-1.5 rounded-full bg-slate-50">
                         <i class="fas fa-external-link-alt"></i> Tampilan Siswa
                     </a>
                     <div class="w-px h-6 bg-slate-200 hidden sm:block"></div>
@@ -91,95 +92,115 @@
             <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <h2 class="text-3xl md:text-4xl font-display font-bold mb-2">Selamat Datang, <span id="welcomeName" class="text-amber-400">Guru</span></h2>
-                    <p class="text-blue-200 text-sm max-w-xl leading-relaxed">Kelola ruang kelas, terbitkan bahan ajar, dan pantau perkembangan literasi kritis siswa Anda dari satu panel kontrol terpusat.</p>
+                    <p class="text-blue-200 text-sm max-w-xl leading-relaxed">Pusat kendali Anda. Buat ruang kelas interaktif (SMP/SMA), terbitkan bahan ajar, dan kelola laporan aktivitas siswa secara terpusat.</p>
                 </div>
                 <div class="shrink-0 flex items-center gap-4 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20">
                     <div class="text-center">
-                        <p class="text-3xl font-black text-white" id="statKelas">0</p>
+                        <p class="text-3xl font-black text-white" id="statKelasAktif">0</p>
                         <p class="text-[10px] font-bold text-blue-200 uppercase tracking-widest mt-1">Kelas Aktif</p>
                     </div>
                     <div class="w-px h-10 bg-white/20"></div>
                     <div class="text-center">
-                        <p class="text-3xl font-black text-white" id="statMateri">0</p>
-                        <p class="text-[10px] font-bold text-blue-200 uppercase tracking-widest mt-1">Materi Terbit</p>
+                        <p class="text-3xl font-black text-slate-300" id="statKelasArsip">0</p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Diarsipkan</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- MAIN MENU (5 TOMBOL UTAMA) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- MAIN MENU (TOMBOL AKSI CEPAT) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             
-            <!-- Menu 1: Buat Kelas Baru (Buka Modal) -->
-            <button onclick="bukaModalBuatKelas()" class="group bg-white p-6 rounded-3xl shadow-sm border border-slate-200 hover:border-emerald-500 hover:shadow-xl transition-all text-left flex flex-col justify-between h-48 relative overflow-hidden active:scale-95">
-                <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
-                <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl shadow-inner relative z-10 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                    <i class="fas fa-plus"></i>
+            <!-- Menu 1: Buat Kelas Baru (Arahkan ke file buat-kelas.html) -->
+            <a href="buat-kelas.html" class="group bg-emerald-600 p-6 rounded-3xl shadow-md border border-emerald-500 hover:bg-emerald-700 hover:shadow-xl transition-all text-left flex flex-col justify-between h-40 relative overflow-hidden active:scale-95 text-white">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                <div class="flex items-center justify-between relative z-10">
+                    <div class="w-12 h-12 bg-white/20 text-white rounded-2xl flex items-center justify-center text-xl shadow-inner backdrop-blur-sm">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <i class="fas fa-arrow-right text-emerald-300 opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-2"></i>
                 </div>
                 <div class="relative z-10 mt-auto">
-                    <h3 class="font-bold text-slate-800 text-lg group-hover:text-emerald-700 transition-colors">Buat Ruang Kelas</h3>
-                    <p class="text-xs text-slate-500 mt-1">Hasilkan kode akses untuk memulai kelas baru.</p>
-                </div>
-            </button>
-
-            <!-- Menu 2: Pantau & Kelola Kelas -->
-            <a href="kelola-kelas.html" class="group bg-white p-6 rounded-3xl shadow-sm border border-slate-200 hover:border-blue-500 hover:shadow-xl transition-all text-left flex flex-col justify-between h-48 relative overflow-hidden active:scale-95">
-                <div class="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
-                <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl shadow-inner relative z-10 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                    <i class="fas fa-users-cog"></i>
-                </div>
-                <div class="relative z-10 mt-auto">
-                    <h3 class="font-bold text-slate-800 text-lg group-hover:text-blue-700 transition-colors">Pantau Kelas</h3>
-                    <p class="text-xs text-slate-500 mt-1">Kelola tugas, pantau siswa, dan lihat papan peringkat.</p>
+                    <h3 class="font-bold text-white text-lg">Buat Ruang Kelas Baru</h3>
+                    <p class="text-xs text-emerald-200 mt-1">Desain kelas berbasis CP/TP kurikulum.</p>
                 </div>
             </a>
 
-            <!-- Menu 3: Terbitkan Materi & Handout -->
-            <a href="upload-materi.html" class="group bg-white p-6 rounded-3xl shadow-sm border border-slate-200 hover:border-amber-500 hover:shadow-xl transition-all text-left flex flex-col justify-between h-48 relative overflow-hidden active:scale-95">
-                <div class="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
-                <div class="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl shadow-inner relative z-10 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+            <!-- Menu 2: Terbitkan Materi & Handout -->
+            <a href="upload-materi.html" class="group bg-white p-6 rounded-3xl shadow-sm border border-slate-200 hover:border-amber-500 hover:shadow-xl transition-all text-left flex flex-col justify-between h-40 relative overflow-hidden active:scale-95">
+                <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-xl shadow-inner relative z-10 group-hover:bg-amber-500 group-hover:text-white transition-colors">
                     <i class="fas fa-book-open"></i>
                 </div>
                 <div class="relative z-10 mt-auto">
                     <h3 class="font-bold text-slate-800 text-lg group-hover:text-amber-700 transition-colors">Terbitkan Materi</h3>
-                    <p class="text-xs text-slate-500 mt-1">Upload teks argumentasi, modul, atau PDF bahan ajar.</p>
+                    <p class="text-xs text-slate-500 mt-1">Upload teks argumentasi atau PDF bahan ajar.</p>
                 </div>
             </a>
 
-            <!-- Menu 4: Terbitkan Artikel -->
-            <a href="upload-artikel.html" class="group bg-white p-6 rounded-3xl shadow-sm border border-slate-200 hover:border-purple-500 hover:shadow-xl transition-all text-left flex flex-col justify-between h-48 relative overflow-hidden active:scale-95">
-                <div class="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
-                <div class="w-14 h-14 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center text-2xl shadow-inner relative z-10 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+            <!-- Menu 3: Terbitkan Artikel -->
+            <a href="upload-artikel.html" class="group bg-white p-6 rounded-3xl shadow-sm border border-slate-200 hover:border-blue-500 hover:shadow-xl transition-all text-left flex flex-col justify-between h-40 relative overflow-hidden active:scale-95">
+                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-xl shadow-inner relative z-10 group-hover:bg-blue-500 group-hover:text-white transition-colors">
                     <i class="fas fa-newspaper"></i>
                 </div>
                 <div class="relative z-10 mt-auto">
-                    <h3 class="font-bold text-slate-800 text-lg group-hover:text-purple-700 transition-colors">Terbitkan Artikel</h3>
-                    <p class="text-xs text-slate-500 mt-1">Publikasikan berita, artikel ilmiah, atau opini terkini.</p>
+                    <h3 class="font-bold text-slate-800 text-lg group-hover:text-blue-700 transition-colors">Terbitkan Artikel</h3>
+                    <p class="text-xs text-slate-500 mt-1">Publikasikan berita atau opini terkini ke Galeri.</p>
                 </div>
             </a>
-
-            <!-- Menu 5: Arsip & Riwayat -->
-            <a href="arsip.html" class="group bg-slate-800 p-6 rounded-3xl shadow-md border border-slate-700 hover:border-slate-400 hover:shadow-xl transition-all text-left flex flex-col justify-between h-48 relative overflow-hidden active:scale-95 text-white">
-                <div class="absolute inset-0 texture-dots pointer-events-none opacity-20"></div>
-                <div class="w-14 h-14 bg-white/10 text-white rounded-2xl flex items-center justify-center text-2xl shadow-inner relative z-10 border border-white/20">
-                    <i class="fas fa-archive"></i>
-                </div>
-                <div class="relative z-10 mt-auto">
-                    <h3 class="font-bold text-white text-lg">Arsip & Laporan</h3>
-                    <p class="text-xs text-slate-400 mt-1">Akses rekapitulasi nilai dan riwayat kelas yang sudah ditutup.</p>
-                </div>
-            </a>
-
         </div>
 
-        <!-- RIWAYAT KELAS TERAKHIR (Quick View) -->
-        <div class="mt-12 bg-white rounded-3xl shadow-sm border border-slate-200 p-6 md:p-8">
-            <h3 class="font-bold text-slate-800 text-lg mb-6 flex items-center gap-3">
-                <i class="fas fa-history text-slate-400"></i> Kelas Terakhir Anda
-            </h3>
+        <!-- ============================================================== -->
+        <!-- BAGIAN 1: RUANG KELAS AKTIF -->
+        <!-- ============================================================== -->
+        <div class="mb-10">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-2 h-8 bg-emerald-500 rounded-full"></div>
+                <h3 class="font-bold text-slate-800 text-2xl font-display">Ruang Kelas Aktif</h3>
+                <span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest ml-2" id="badgeKelasAktif">0 Berjalan</span>
+            </div>
             
-            <div id="recentClassesList" class="space-y-4">
-                <div class="text-center py-6 text-slate-400 animate-pulse">Memuat riwayat kelas...</div>
+            <!-- Grid Kelas Aktif -->
+            <div id="activeClassesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- State Loading -->
+                <div class="p-8 text-center text-slate-400 bg-white rounded-3xl border border-slate-200 animate-pulse col-span-full">
+                    Mencari kelas aktif...
+                </div>
+            </div>
+
+            <!-- Empty State Kelas Aktif -->
+            <div id="activeEmptyState" class="hidden bg-white p-10 rounded-3xl shadow-sm border border-slate-200 border-dashed text-center">
+                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                    <i class="fas fa-door-open text-2xl"></i>
+                </div>
+                <p class="font-bold text-slate-700 text-lg">Belum Ada Kelas Aktif</p>
+                <p class="text-sm text-slate-500 mb-6 max-w-sm mx-auto">Silakan buat ruang kelas baru untuk mulai merancang materi dan mengundang siswa.</p>
+                <a href="buat-kelas.html" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-full transition-all shadow-md">
+                    <i class="fas fa-plus"></i> Buat Kelas Sekarang
+                </a>
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- BAGIAN 2: ARSIP KELAS SELESAI -->
+        <!-- ============================================================== -->
+        <div class="mb-10">
+            <div class="flex items-center gap-3 mb-6 pt-6 border-t border-slate-200">
+                <div class="w-2 h-8 bg-slate-400 rounded-full"></div>
+                <h3 class="font-bold text-slate-800 text-2xl font-display">Arsip Kelas Selesai</h3>
+                <span class="bg-slate-200 text-slate-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest ml-2">Ditutup</span>
+            </div>
+            
+            <!-- Grid Kelas Arsip -->
+            <div id="archivedClassesGrid" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <!-- State Loading -->
+                <div class="p-6 text-center text-slate-400 bg-slate-50 rounded-2xl border border-slate-200 animate-pulse col-span-full">
+                    Memuat riwayat arsip...
+                </div>
+            </div>
+
+            <!-- Empty State Arsip -->
+            <div id="archiveEmptyState" class="hidden bg-slate-50 p-8 rounded-3xl border border-slate-200 border-dashed text-center">
+                <p class="font-medium text-slate-500 text-sm"><i class="fas fa-archive text-slate-300 mr-2"></i> Belum ada kelas yang diarsipkan atau diakhiri.</p>
             </div>
         </div>
 
@@ -191,61 +212,18 @@
         </div>
     </footer>
 
-    <!-- ============================================================ -->
-    <!-- MODAL BUAT KELAS BARU -->
-    <!-- ============================================================ -->
-    <div id="modalBuatKelas" class="fixed inset-0 bg-slate-900/80 hidden modal-z flex items-center justify-center backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 relative transform scale-95 transition-transform duration-300">
-            <button type="button" onclick="tutupModal('modalBuatKelas')" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 hover:rotate-90 transition-all"><i class="fas fa-times text-xl"></i></button>
-            
-            <!-- Form Buat -->
-            <div id="formBuatState">
-                <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border-2 border-emerald-100 shadow-sm"><i class="fas fa-door-open text-3xl"></i></div>
-                <h3 class="text-2xl font-bold text-slate-800 text-center mb-2">Buka Ruang Kelas</h3>
-                <p class="text-slate-500 text-center mb-6 text-sm">Sistem akan men-generate kode unik secara otomatis.</p>
-                
-                <form onsubmit="prosesBuatKelas(event)">
-                    <div class="mb-5">
-                        <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">Nama Ruang/Mata Pelajaran</label>
-                        <input type="text" id="inputNamaKelas" required class="w-full border-2 border-slate-200 rounded-xl p-3.5 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition-all font-bold text-slate-700" placeholder="Contoh: X MIPA 1 - Sesi Analisis">
-                    </div>
-                    <button type="submit" id="btnBuatKelas" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-emerald-200 active:scale-95 flex items-center justify-center gap-2">
-                        <i class="fas fa-magic"></i> Generate Kode Kelas
-                    </button>
-                </form>
-            </div>
-
-            <!-- Sukses Buat State -->
-            <div id="suksesBuatState" class="hidden text-center py-4">
-                <div class="w-20 h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-200 animate-bounce"><i class="fas fa-check text-4xl"></i></div>
-                <h3 class="text-xl font-bold text-slate-800 mb-1">Kelas Berhasil Dibuat!</h3>
-                <p class="text-slate-500 text-sm mb-6">Bagikan kode ini kepada siswa Anda agar mereka bisa masuk.</p>
-                
-                <div class="bg-slate-900 p-6 rounded-2xl border-4 border-amber-400 shadow-inner mb-6 relative">
-                    <div class="absolute inset-0 texture-dots opacity-20 pointer-events-none"></div>
-                    <p class="text-amber-400 font-black text-5xl tracking-[0.25em]" id="kodeGenerated">XCV123</p>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="tutupModal('modalBuatKelas')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-all">Tutup</button>
-                    <a href="kelola-kelas.html" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2">
-                        Kelola Kelas <i class="fas fa-arrow-right"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Notifikasi Toast Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-3 pointer-events-none"></div>
 
     <!-- SCRIPT FIREBASE & LOGIC DASHBOARD -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // Konfigurasi Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
-            authDomain: "mading-cf676.firebaseapp.com",
             projectId: "mading-cf676",
         };
 
@@ -255,6 +233,24 @@
 
         let currentGuru = null;
 
+        // FUNGSI TOAST NOTIFIKASI
+        window.showToast = function(msg, isError = false) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bg = isError ? 'bg-red-600' : 'bg-slate-800';
+            toast.className = `${bg} text-white px-6 py-3 rounded-xl shadow-2xl text-sm font-bold flex items-center gap-3 transform translate-y-10 opacity-0 transition-all duration-300`;
+            toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${msg}`;
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+            });
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
         // 1. SISTEM KEAMANAN & OTENTIKASI
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -263,34 +259,30 @@
                     if (userDoc.exists()) {
                         const userData = userDoc.data();
                         
-                        // Proteksi Ganda: Hanya role Teacher/Admin yang boleh akses
+                        // Proteksi Ganda: Hanya role Teacher/Admin
                         if (userData.role === 'teacher' || userData.role === 'admin') {
                             currentGuru = { uid: user.uid, nama: userData.namaLengkap };
                             
-                            // Tampilkan Info Guru di UI
                             document.getElementById('navTeacherName').innerText = userData.namaLengkap;
                             document.getElementById('welcomeName').innerText = userData.namaLengkap;
                             
-                            // Tarik Statistik & Tutup Shield Keamanan
-                            await loadDashboardStats();
+                            // Tarik Data Kelas (Aktif & Arsip)
+                            await loadClassesData();
+                            
                             document.getElementById('authGuard').classList.add('opacity-0');
                             setTimeout(() => document.getElementById('authGuard').classList.add('hidden'), 500);
                         } else {
-                            // Jika Role bukan guru (misal siswa nyasar), tendang ke halaman utama
                             window.location.href = '../index.html';
                         }
                     } else {
-                        // Data tidak valid, paksa keluar
                         await signOut(auth);
                         window.location.href = '../login.html';
                     }
                 } catch (error) {
-                    console.error("Auth check failed:", error);
-                    alert("Gagal memverifikasi sesi. Coba login ulang.");
+                    console.error("Auth error:", error);
                     window.location.href = '../login.html';
                 }
             } else {
-                // Jika belum login, tendang ke login
                 window.location.href = '../login.html';
             }
         });
@@ -303,122 +295,154 @@
             }
         }
 
-        // 3. TARIK DATA STATISTIK DASHBOARD
-        async function loadDashboardStats() {
+        // 3. TARIK DATA KELAS (AKTIF & ARSIP)
+        async function loadClassesData() {
             try {
-                // Hitung jumlah kelas milik guru ini
-                const qClass = query(collection(db, "classes"), where("guruId", "==", currentGuru.uid));
+                const qClass = query(collection(db, "classes"), where("guruId", "==", currentGuru.uid), orderBy("createdAt", "desc"));
                 const snapClass = await getDocs(qClass);
-                document.getElementById('statKelas').innerText = snapClass.size;
 
-                // Tampilkan Riwayat Kelas ke UI List
-                const rcContainer = document.getElementById('recentClassesList');
-                if(snapClass.empty) {
-                    rcContainer.innerHTML = `<div class="p-4 bg-slate-50 border border-slate-100 rounded-xl text-center text-sm text-slate-500 font-medium">Anda belum membuat kelas sama sekali.</div>`;
-                } else {
-                    let html = "";
-                    let counter = 0;
-                    snapClass.forEach(doc => {
-                        if(counter < 3) { // Tampilkan max 3 terbaru
-                            const dt = doc.data();
-                            html += `
-                            <div class="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-blue-300 transition-colors">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-black tracking-wider text-sm shadow-inner">
-                                        ${doc.id}
-                                    </div>
-                                    <div>
-                                        <h4 class="font-bold text-slate-800">${dt.namaKelas}</h4>
-                                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5"><i class="fas fa-users text-blue-400"></i> Ruang Aktif</p>
-                                    </div>
+                let activeCount = 0;
+                let archiveCount = 0;
+                let activeHtml = "";
+                let archiveHtml = "";
+
+                snapClass.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const classId = docSnap.id; // KODE 6 ANGKA
+                    const isSMA = (data.jenjang || '').toLowerCase() === 'sma';
+                    const themeColor = isSMA ? 'blue' : 'amber';
+                    const bgHeader = isSMA ? 'bg-gradient-to-r from-blue-900 to-blue-800' : 'bg-gradient-to-r from-amber-500 to-amber-600';
+                    const jenjangText = isSMA ? 'SMA/SMK' : 'SMP/MTs';
+
+                    if(data.status === 'active') {
+                        activeCount++;
+                        // RENDER KARTU KELAS AKTIF (Control Panel)
+                        activeHtml += `
+                        <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-200 overflow-hidden flex flex-col relative group">
+                            <!-- Header Kartu -->
+                            <div class="${bgHeader} p-5 text-white flex justify-between items-start">
+                                <div>
+                                    <span class="bg-white/20 text-white text-[10px] font-bold px-2.5 py-1 rounded shadow-sm tracking-widest uppercase mb-2 inline-block">Jenjang ${jenjangText}</span>
+                                    <h3 class="font-display font-bold text-xl leading-tight pr-4">${data.namaKelas}</h3>
                                 </div>
-                                <a href="kelola-kelas.html?id=${doc.id}" class="text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors border border-blue-100">Kelola</a>
-                            </div>`;
-                            counter++;
-                        }
-                    });
-                    rcContainer.innerHTML = html;
+                                <div class="bg-white text-slate-900 font-black text-xl tracking-[0.2em] px-3 py-1.5 rounded-lg shadow-md border-b-4 border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors" title="Klik untuk Salin Kode" onclick="salinKode('${classId}')">
+                                    ${classId}
+                                </div>
+                            </div>
+
+                            <!-- Body Info -->
+                            <div class="p-5 flex-1 flex flex-col gap-4">
+                                <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center"><i class="fas fa-users"></i></div>
+                                        <div>
+                                            <p class="text-[10px] font-bold text-slate-400 uppercase">Siswa Tergabung</p>
+                                            <p class="text-sm font-black text-slate-800">${data.jumlahSiswa || 0} Anak</p>
+                                        </div>
+                                    </div>
+                                    <button class="text-xs font-bold text-${themeColor}-600 bg-${themeColor}-50 hover:bg-${themeColor}-100 px-3 py-1.5 rounded-lg border border-${themeColor}-200 transition-colors flex items-center gap-1">
+                                        <i class="fas fa-qrcode"></i> Kartu QR
+                                    </button>
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="mt-auto flex flex-col gap-2">
+                                    <a href="ruang-kelas.html?id=${classId}" class="w-full bg-${themeColor}-600 hover:bg-${themeColor}-700 text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
+                                        <i class="fas fa-door-open"></i> Buka Ruang Mengajar
+                                    </a>
+                                    <button onclick="akhiriKelas('${classId}', '${data.namaKelas}')" class="w-full bg-white hover:bg-red-50 text-red-500 font-bold py-2.5 rounded-xl border-2 border-red-100 transition-all text-xs flex items-center justify-center gap-2">
+                                        <i class="fas fa-lock"></i> Akhiri & Arsipkan Kelas
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`;
+                    } else if(data.status === 'archived') {
+                        archiveCount++;
+                        // RENDER KARTU ARSIP (Read-Only)
+                        archiveHtml += `
+                        <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5 flex flex-col group relative overflow-hidden">
+                            <div class="absolute top-0 right-0 bg-slate-200 text-slate-500 text-[9px] font-bold px-3 py-1 rounded-bl-lg uppercase">Selesai</div>
+                            <div class="flex items-center gap-3 mb-3 mt-2">
+                                <div class="w-10 h-10 bg-slate-200 text-slate-500 rounded-xl flex items-center justify-center text-lg"><i class="fas fa-archive"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-slate-700 text-sm leading-tight">${data.namaKelas}</h4>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Kode: ${classId}</p>
+                                </div>
+                            </div>
+                            <button class="w-full mt-auto bg-white border border-slate-200 hover:border-blue-300 text-slate-600 hover:text-blue-600 font-bold py-2 rounded-xl text-xs transition-all shadow-sm">
+                                Lihat Laporan Nilai
+                            </button>
+                        </div>`;
+                    }
+                });
+
+                // Update Angka Statistik Header
+                document.getElementById('statKelasAktif').innerText = activeCount;
+                document.getElementById('statKelasArsip').innerText = archiveCount;
+                document.getElementById('badgeKelasAktif').innerText = activeCount + " Berjalan";
+
+                // Inject HTML Kelas Aktif
+                const activeGrid = document.getElementById('activeClassesGrid');
+                const activeEmpty = document.getElementById('activeEmptyState');
+                if(activeCount === 0) {
+                    activeGrid.classList.add('hidden');
+                    activeEmpty.classList.remove('hidden');
+                } else {
+                    activeGrid.innerHTML = activeHtml;
+                    activeGrid.classList.remove('hidden');
+                    activeEmpty.classList.add('hidden');
                 }
 
-                // Hitung jumlah materi yang dipublish (semua kategori)
-                const qMat = query(collection(db, "materials"));
-                const snapMat = await getDocs(qMat);
-                document.getElementById('statMateri').innerText = snapMat.size;
+                // Inject HTML Arsip
+                const archiveGrid = document.getElementById('archivedClassesGrid');
+                const archiveEmpty = document.getElementById('archiveEmptyState');
+                if(archiveCount === 0) {
+                    archiveGrid.classList.add('hidden');
+                    archiveEmpty.classList.remove('hidden');
+                } else {
+                    archiveGrid.innerHTML = archiveHtml;
+                    archiveGrid.classList.remove('hidden');
+                    archiveEmpty.classList.add('hidden');
+                }
 
             } catch (error) {
-                console.error("Gagal load statistik:", error);
+                console.error("Gagal load data kelas:", error);
+                showToast("Gagal menarik data kelas dari server.", true);
             }
         }
 
-        // 4. LOGIKA MODAL BUAT KELAS
-        window.bukaModalBuatKelas = function() {
-            document.getElementById('formBuatState').classList.remove('hidden');
-            document.getElementById('suksesBuatState').classList.add('hidden');
-            document.getElementById('inputNamaKelas').value = '';
-
-            const modal = document.getElementById('modalBuatKelas');
-            modal.classList.remove('hidden');
-            requestAnimationFrame(() => {
-                modal.classList.remove('opacity-0');
-                modal.querySelector('.transform').classList.replace('scale-95', 'scale-100');
+        // 4. LOGIKA INTERAKSI KARTU
+        window.salinKode = function(kode) {
+            navigator.clipboard.writeText(kode).then(() => {
+                showToast(`Kode ${kode} berhasil disalin!`);
             });
         }
 
-        window.tutupModal = function(id) {
-            const modal = document.getElementById(id);
-            modal.classList.add('opacity-0');
-            modal.querySelector('.transform').classList.replace('scale-100', 'scale-95');
-            setTimeout(() => modal.classList.add('hidden'), 300);
-        }
+        window.akhiriKelas = async function(classId, namaKelas) {
+            const konfirmasi = confirm(`TINDAKAN PERMANEN!\n\nApakah Anda yakin ingin MENGAKHIRI dan MENGARSIPKAN kelas "${namaKelas}"?\n\nSiswa tidak akan bisa masuk atau mengerjakan tugas lagi di kelas ini.`);
+            
+            if(konfirmasi) {
+                try {
+                    const classRef = doc(db, "classes", classId);
+                    await updateDoc(classRef, {
+                        status: 'archived',
+                        archivedAt: new Date()
+                    });
+                    
+                    showToast("Kelas berhasil diarsipkan!", false);
+                    
+                    // Reload Data
+                    const activeGrid = document.getElementById('activeClassesGrid');
+                    const archiveGrid = document.getElementById('archivedClassesGrid');
+                    activeGrid.innerHTML = `<div class="p-8 text-center text-slate-400 bg-white rounded-3xl border border-slate-200 animate-pulse col-span-full">Memperbarui data...</div>`;
+                    archiveGrid.innerHTML = `<div class="p-6 text-center text-slate-400 bg-slate-50 rounded-2xl border border-slate-200 animate-pulse col-span-full">Memperbarui data...</div>`;
+                    
+                    await loadClassesData();
 
-        // Generate Random Code (6 digit Alfanumerik)
-        function generateClassCode() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let result = '';
-            for (let i = 0; i < 6; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return result;
-        }
-
-        window.prosesBuatKelas = async function(e) {
-            e.preventDefault();
-            const namaKelas = document.getElementById('inputNamaKelas').value.trim();
-            const btn = document.getElementById('btnBuatKelas');
-            const originalText = btn.innerHTML;
-
-            if(!namaKelas) return;
-
-            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Membangun Kelas...';
-            btn.disabled = true;
-
-            try {
-                // Generate Unique Code
-                const newCode = generateClassCode();
-                
-                // Simpan ke Firestore
-                await setDoc(doc(db, "classes", newCode), {
-                    namaKelas: namaKelas,
-                    guruId: currentGuru.uid,
-                    namaGuru: currentGuru.nama,
-                    status: 'active',
-                    createdAt: new Date()
-                });
-
-                // Update UI Modal ke Success State
-                document.getElementById('formBuatState').classList.add('hidden');
-                document.getElementById('suksesBuatState').classList.remove('hidden');
-                document.getElementById('kodeGenerated').innerText = newCode;
-                
-                // Refresh list kelas di background
-                loadDashboardStats();
-
-            } catch (error) {
-                console.error("Gagal buat kelas:", error);
-                alert("Terjadi kesalahan jaringan saat membuat kelas. Silakan coba lagi.");
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                } catch (error) {
+                    console.error("Gagal arsip:", error);
+                    showToast("Terjadi kesalahan saat mengarsipkan kelas.", true);
+                }
             }
         }
     </script>
