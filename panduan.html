@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pusat Bantuan - Argumentasi</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: { 
+                        brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } 
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        
+        /* Hide scrollbar for horizontal tabs */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Accordion transition */
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .faq-item.active .faq-answer {
+            max-height: 500px; /* Cukup besar untuk menampung teks */
+            transition: max-height 0.5s ease-in;
+        }
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+        .faq-icon { transition: transform 0.3s; }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen">
+
+    <!-- CONTAINER UTAMA (Mobile App Frame) -->
+    <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col overflow-hidden sm:border-x border-slate-200">
+        
+        <!-- HEADER ALA APLIKASI -->
+        <header class="bg-brand-green pt-4 pb-3 px-4 relative z-20 shadow-sm">
+            <!-- Top Bar -->
+            <div class="flex items-center gap-3 mb-4">
+                <a href="javascript:history.back()" class="text-white text-lg px-2 py-1"><i class="fas fa-chevron-left"></i></a>
+                <h1 class="text-lg font-semibold text-white flex-1">Pusat Bantuan</h1>
+            </div>
+            
+            <!-- Search Bar (Gaya Referensi) -->
+            <div class="bg-white rounded flex items-center px-3 py-2 shadow-sm">
+                <i class="fas fa-search text-slate-400 text-sm mr-2"></i>
+                <input type="text" id="searchInput" placeholder="Cari kendala atau panduan..." class="w-full bg-transparent outline-none text-slate-700 text-sm placeholder-slate-400" onkeyup="cariFAQ()">
+            </div>
+        </header>
+
+        <!-- BANNER PENGUMUMAN (Ala Referensi) -->
+        <div class="bg-amber-50 border-b border-amber-100 py-2.5 px-4 flex items-center gap-3 shrink-0">
+            <i class="fas fa-volume-up text-amber-500 text-sm"></i>
+            <marquee scrollamount="4" class="text-xs text-amber-700 font-medium">Sistem Evaluator Pemrosesan Teks versi 2.0 telah aktif. Pastikan kode kelas yang dimasukkan sudah benar.</marquee>
+            <i class="fas fa-chevron-right text-amber-300 text-xs"></i>
+        </div>
+
+        <!-- MAIN KONTEN (Scrollable) -->
+        <div class="flex-grow overflow-y-auto hide-scrollbar flex flex-col pb-6 bg-slate-100">
+            
+            <!-- SECTION 1: PANDUAN SISWA -->
+            <div class="bg-white mt-2 px-4 py-5 shadow-sm">
+                <h2 class="font-bold text-slate-800 text-sm mb-3 flex items-center gap-2">
+                    <i class="fas fa-user-graduate text-blue-500"></i> Panduan Untuk Siswa
+                </h2>
+                <div class="space-y-3">
+                    <div class="flex gap-3 items-start bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <div class="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0 text-xs font-bold">1</div>
+                        <div>
+                            <h3 class="text-xs font-bold text-slate-700">Identitas Diri & Gabung Kelas</h3>
+                            <p class="text-[10px] text-slate-500 mt-1">Isi nama Anda di halaman depan. Untuk mengikuti kuis/latihan, klik "Gabung Kelas" dan ketikkan 6 Angka Kode dari Guru.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 items-start bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <div class="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0 text-xs font-bold">2</div>
+                        <div>
+                            <h3 class="text-xs font-bold text-slate-700">Mengerjakan Misi Latihan</h3>
+                            <p class="text-[10px] text-slate-500 mt-1">Di dalam Ruang Kelas, kerjakan misi (Pilihan Ganda/Esai). Sistem Evaluator akan langsung menilai tulisan Anda secara otomatis.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: PANDUAN GURU -->
+            <div class="bg-white mt-2 px-4 py-5 shadow-sm border-t border-slate-100">
+                <h2 class="font-bold text-slate-800 text-sm mb-3 flex items-center gap-2">
+                    <i class="fas fa-chalkboard-teacher text-brand-green"></i> Panduan Untuk Guru
+                </h2>
+                <div class="space-y-3">
+                    <div class="flex gap-3 items-start bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <div class="w-6 h-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shrink-0 text-xs font-bold">1</div>
+                        <div>
+                            <h3 class="text-xs font-bold text-slate-700">Akses Portal Admin</h3>
+                            <p class="text-[10px] text-slate-500 mt-1">Gunakan email yang telah terdaftar untuk masuk. Jika Anda admin sekolah, gunakan email berakhiran <code class="bg-slate-200 px-1 rounded text-emerald-600">@arg.ac.id</code>.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 items-start bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <div class="w-6 h-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shrink-0 text-xs font-bold">2</div>
+                        <div>
+                            <h3 class="text-xs font-bold text-slate-700">Membuat & Mengelola Kelas</h3>
+                            <p class="text-[10px] text-slate-500 mt-1">Pilih jenjang, atur Kurikulum (CP/TP), lalu unggah PDF. Sistem akan memecah materi dan membuat kode akses 6 digit untuk siswa.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: FAQ (TANYA JAWAB) -->
+            <div class="bg-white mt-2 flex-grow shadow-sm">
+                
+                <!-- Title & Tabs -->
+                <div class="px-4 py-4 border-b border-slate-100">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="font-bold text-slate-800 text-sm">FAQ</h2>
+                        <span class="text-xs text-slate-400">Lihat Semua <i class="fas fa-chevron-right ml-1 text-[10px]"></i></span>
+                    </div>
+                    <!-- Horizontal Tabs -->
+                    <div class="flex gap-2 overflow-x-auto hide-scrollbar">
+                        <button class="px-4 py-1.5 bg-white border border-red-400 text-red-500 text-xs font-medium rounded shrink-0">Recommended</button>
+                        <button class="px-4 py-1.5 bg-slate-50 border border-slate-100 text-slate-600 text-xs font-medium rounded shrink-0">Akun & Login</button>
+                        <button class="px-4 py-1.5 bg-slate-50 border border-slate-100 text-slate-600 text-xs font-medium rounded shrink-0">Ruang Kelas</button>
+                        <button class="px-4 py-1.5 bg-slate-50 border border-slate-100 text-slate-600 text-xs font-medium rounded shrink-0">Sistem Nilai</button>
+                    </div>
+                </div>
+
+                <!-- FAQ List -->
+                <div class="flex flex-col" id="faqContainer">
+                    
+                    <!-- Item FAQ 1 -->
+                    <div class="faq-item border-b border-slate-100">
+                        <button class="w-full text-left px-4 py-4 flex justify-between items-center focus:outline-none" onclick="toggleFaq(this)">
+                            <span class="text-[13px] text-slate-700 font-medium pr-4">Bagaimana jika saya lupa kata sandi (password)?</span>
+                            <i class="fas fa-chevron-down text-slate-300 text-xs faq-icon"></i>
+                        </button>
+                        <div class="faq-answer px-4 bg-slate-50">
+                            <p class="text-[11px] text-slate-500 pb-4 leading-relaxed">
+                                Anda dapat mengklik tombol "Lupa?" di halaman Log In pada kolom kata sandi. Masukkan email Anda, lalu sistem akan mengirimkan tautan reset kata sandi langsung ke kotak masuk email Anda.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Item FAQ 2 -->
+                    <div class="faq-item border-b border-slate-100">
+                        <button class="w-full text-left px-4 py-4 flex justify-between items-center focus:outline-none" onclick="toggleFaq(this)">
+                            <span class="text-[13px] text-slate-700 font-medium pr-4">Apa yang harus dilakukan jika kode kelas invalid?</span>
+                            <i class="fas fa-chevron-down text-slate-300 text-xs faq-icon"></i>
+                        </button>
+                        <div class="faq-answer px-4 bg-slate-50">
+                            <p class="text-[11px] text-slate-500 pb-4 leading-relaxed">
+                                Pastikan Anda mengetikkan 6 digit angka dengan benar. Jika masih invalid, kemungkinan guru Anda telah menutup atau mengarsipkan ruang kelas tersebut. Silakan hubungi guru yang bersangkutan.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Item FAQ 3 -->
+                    <div class="faq-item border-b border-slate-100">
+                        <button class="w-full text-left px-4 py-4 flex justify-between items-center focus:outline-none" onclick="toggleFaq(this)">
+                            <span class="text-[13px] text-slate-700 font-medium pr-4">Bagaimana cara sistem menilai esai saya?</span>
+                            <i class="fas fa-chevron-down text-slate-300 text-xs faq-icon"></i>
+                        </button>
+                        <div class="faq-answer px-4 bg-slate-50">
+                            <p class="text-[11px] text-slate-500 pb-4 leading-relaxed">
+                                Sistem Evaluator kami membedah struktur tulisan Anda (Tesis, Argumen, Kesimpulan) dan mengecek relevansi serta logika argumentasi berdasarkan kurikulum (CP/TP) yang telah diatur oleh guru.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Item FAQ 4 -->
+                    <div class="faq-item border-b border-slate-100">
+                        <button class="w-full text-left px-4 py-4 flex justify-between items-center focus:outline-none" onclick="toggleFaq(this)">
+                            <span class="text-[13px] text-slate-700 font-medium pr-4">Bagaimana jika email verifikasi guru tidak masuk?</span>
+                            <i class="fas fa-chevron-down text-slate-300 text-xs faq-icon"></i>
+                        </button>
+                        <div class="faq-answer px-4 bg-slate-50">
+                            <p class="text-[11px] text-slate-500 pb-4 leading-relaxed">
+                                Silakan periksa folder SPAM atau Junk di email Anda. Jika tetap tidak ada, Anda dapat menekan tombol "Kirim Ulang Email" di halaman verifikasi (harus menunggu 2 menit antar percobaan).
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SECTION 4: HUBUNGI KAMI (WHATSAPP) -->
+            <div class="bg-white mt-2 px-4 py-5 pb-8 shadow-sm">
+                <h2 class="font-bold text-slate-800 text-sm mb-4">Hubungi Kami</h2>
+                
+                <button onclick="bukaWhatsApp()" class="w-full bg-white border border-slate-200 rounded-lg p-3 flex items-center gap-3 hover:bg-slate-50 transition-colors active:scale-95 shadow-sm">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center shrink-0">
+                        <!-- Warna icon WhatsApp hijau sesuai brand aslinya -->
+                        <i class="fab fa-whatsapp text-green-500 text-lg"></i>
+                    </div>
+                    <span class="font-medium text-slate-700 text-[13px] text-left flex-1">Chat Support Sekarang</span>
+                    <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- SCRIPT LOGIKA UX -->
+    <script>
+        // Logika Accordion FAQ
+        function toggleFaq(button) {
+            const item = button.parentElement;
+            
+            // Opsional: Tutup FAQ lain jika ingin hanya 1 yang terbuka
+            document.querySelectorAll('.faq-item').forEach(el => {
+                if(el !== item) el.classList.remove('active');
+            });
+
+            // Toggle item yang diklik
+            item.classList.toggle('active');
+        }
+
+        // Logika Cari FAQ Sederhana
+        function cariFAQ() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const items = document.querySelectorAll('.faq-item');
+            
+            items.forEach(item => {
+                const text = item.querySelector('span').innerText.toLowerCase();
+                if(text.includes(input)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // Logika Buka WhatsApp dengan Template Pesan
+        function bukaWhatsApp() {
+            const nomorWA = "628895615630"; // Format internasional tanpa '+' atau '0'
+            
+            // Ambil nama dari local storage jika ada, jika tidak kosongkan
+            const namaSiswa = localStorage.getItem('namaSiswaCendekia') || "[Isi Nama Anda]";
+            
+            // Format Template Pesan (Gunakan %0A untuk enter/baris baru)
+            const templatePesan = 
+`Halo Tim Support Argumentasi,%0A
+Saya membutuhkan bantuan terkait sistem.%0A
+%0A
+Nama : ${namaSiswa}%0A
+Peran : [Siswa / Guru] *pilih salah satu%0A
+Kendala : [Tuliskan kendala Anda secara detail di sini]%0A
+%0A
+Terima kasih.`;
+
+            // Buat Link
+            const linkWA = `https://wa.me/${nomorWA}?text=${templatePesan}`;
+            
+            // Buka di tab baru / aplikasi WA
+            window.open(linkWA, '_blank');
+        }
+    </script>
+</body>
+</html>
