@@ -2,7 +2,7 @@
 <html lang="id" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Membaca Materi - Argumentasi</title>
     
     <!-- Tailwind CSS -->
@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <script>
         tailwind.config = {
@@ -20,6 +20,9 @@
                     fontFamily: {
                         sans: ['Poppins', 'sans-serif'],
                         reading: ['Merriweather', 'serif'],
+                    },
+                    colors: { 
+                        brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } 
                     }
                 }
             }
@@ -27,172 +30,189 @@
     </script>
 
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #fcfaf8; }
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
         .font-reading { font-family: 'Merriweather', serif; line-height: 1.8; }
         
+        /* Menyembunyikan scrollbar untuk estetika Mobile App */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
         /* Formatting untuk konten dari Database */
-        .content-body p { margin-bottom: 1.5em; color: #334155; }
-        .content-body h3 { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 1.25rem; margin-top: 2em; margin-bottom: 1em; color: #0f172a; }
-        .content-body ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1.5em; }
-        .content-body blockquote { border-left: 4px solid #10b981; padding-left: 1rem; font-style: italic; color: #475569; background: #ecfdf5; padding: 1rem; border-radius: 0 0.5rem 0.5rem 0; margin-bottom: 1.5em; }
+        .content-body p { margin-bottom: 1.25em; color: #334155; }
+        .content-body h3 { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 1.1rem; margin-top: 1.5em; margin-bottom: 0.75em; color: #0f172a; }
+        .content-body ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1.25em; }
+        .content-body blockquote { border-left: 3px solid #10b981; padding-left: 0.75rem; font-style: italic; color: #475569; background: #ecfdf5; padding: 0.75rem; border-radius: 0 0.5rem 0.5rem 0; margin-bottom: 1.25em; font-size: 0.95em;}
         
         /* Animasi */
-        .fade-in { animation: fadeIn 0.5s ease-in forwards; }
+        .fade-in { animation: fadeIn 0.4s ease-in forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="text-slate-800 flex flex-col min-h-screen">
+<body class="flex justify-center min-h-screen">
 
-    <!-- NAVBAR MODE BACA -->
-    <nav class="sticky top-0 bg-white/95 backdrop-blur-md border-b border-slate-200 z-50 shadow-sm transition-all duration-300" id="readNav">
-        <div class="max-w-4xl mx-auto px-4 py-3.5 flex justify-between items-center">
-            <button onclick="history.back()" class="text-slate-500 hover:text-emerald-600 transition-colors flex items-center gap-2 font-medium bg-slate-50 px-4 py-2 rounded-full border border-slate-200 active:scale-95">
-                <i class="fas fa-arrow-left"></i> <span class="hidden sm:inline">Kembali</span>
+    <!-- CONTAINER UTAMA (Mobile App Frame) -->
+    <div class="w-full max-w-md bg-white relative min-h-screen shadow-2xl flex flex-col overflow-hidden sm:border-x border-slate-200">
+
+        <!-- NAVBAR MODE BACA (Green App Style) -->
+        <header class="bg-brand-green pt-4 pb-3 px-4 relative z-20 shadow-sm flex justify-between items-center text-white sticky top-0">
+            <button onclick="history.back()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors active:scale-95">
+                <i class="fas fa-chevron-left"></i>
             </button>
             
-            <div class="flex items-center gap-1">
-                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-6 object-contain grayscale opacity-50 hidden sm:block mr-4">
+            <h1 class="text-sm font-semibold truncate flex-1 text-center px-2">Mode Membaca</h1>
+            
+            <div class="flex items-center bg-white/20 rounded-full p-0.5">
+                <button onclick="changeFontSize(-1)" class="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white hover:text-brand-green transition-colors" title="Perkecil"><i class="fas fa-font text-[10px]"></i>-</button>
+                <div class="w-px h-4 bg-white/40 mx-0.5"></div>
+                <button onclick="changeFontSize(1)" class="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white hover:text-brand-green transition-colors" title="Perbesar"><i class="fas fa-font text-xs"></i>+</button>
+            </div>
+        </header>
+        
+        <!-- Progress Bar Reading -->
+        <div class="h-1 bg-slate-100 w-full sticky top-[60px] z-20">
+            <div id="readProgress" class="h-full bg-amber-400 w-0 transition-all duration-150"></div>
+        </div>
+
+        <!-- STATE: LOADING DATA -->
+        <div id="stateLoading" class="flex-grow flex flex-col items-center justify-center py-20 bg-slate-50">
+            <i class="fas fa-circle-notch fa-spin text-3xl text-brand-green mb-3"></i>
+            <p class="text-slate-500 font-medium text-sm animate-pulse">Menarik data dari server...</p>
+        </div>
+
+        <!-- STATE: ERROR / TIDAK DITEMUKAN -->
+        <div id="stateError" class="hidden flex-grow flex flex-col items-center justify-center py-20 px-6 text-center bg-slate-50">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-3xl mb-4 border border-red-100">
+                <i class="fas fa-file-excel"></i>
+            </div>
+            <h2 class="text-lg font-bold text-slate-800 mb-1">Materi Tidak Ditemukan</h2>
+            <p class="text-slate-500 text-xs mb-6" id="errorMsg">Materi yang Anda cari tidak ada dalam sistem atau telah dihapus.</p>
+            <button onclick="history.back()" class="bg-brand-green text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-emerald-700 transition-colors"><i class="fas fa-arrow-left mr-2"></i> Kembali</button>
+        </div>
+
+        <!-- STATE: KONTEN ARTIKEL -->
+        <main id="stateContent" class="hidden flex-col flex-grow fade-in pb-8">
+            
+            <!-- HEADER ARTIKEL -->
+            <div class="px-5 pt-6 pb-4">
+                <!-- Label Kategori -->
+                <div class="mb-3 text-center">
+                    <span id="labelKategori" class="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest inline-block">Kategori</span>
+                </div>
                 
-                <div class="flex bg-slate-100 rounded-full p-1 border border-slate-200">
-                    <button onclick="changeFontSize(-1)" class="w-8 h-8 rounded-full text-slate-600 hover:bg-white hover:shadow-sm flex items-center justify-center transition-all" title="Perkecil Teks"><i class="fas fa-search-minus"></i></button>
-                    <div class="w-px h-5 bg-slate-300 my-auto mx-1"></div>
-                    <button onclick="changeFontSize(1)" class="w-8 h-8 rounded-full text-slate-600 hover:bg-white hover:shadow-sm flex items-center justify-center transition-all" title="Perbesar Teks"><i class="fas fa-search-plus text-lg"></i></button>
+                <!-- Judul -->
+                <h1 id="judulMateri" class="text-2xl font-bold font-reading text-slate-900 mb-4 leading-snug text-center">Judul Materi Pembelajaran Akan Tampil Di Sini</h1>
+                
+                <!-- Meta Info (Badges) -->
+                <div class="flex flex-wrap items-center justify-center gap-2">
+                    <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-medium border border-slate-200 flex items-center gap-1.5"><i class="far fa-user text-amber-500"></i> <span id="penulisMateri">Admin</span></span>
+                    <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-medium border border-slate-200 flex items-center gap-1.5"><i class="far fa-calendar-alt text-blue-500"></i> <span id="tanggalMateri">Hari ini</span></span>
+                    <span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded text-[10px] font-bold border border-emerald-200 flex items-center gap-1.5"><i class="far fa-eye text-emerald-500"></i> <span id="viewCountMateri">-</span></span>
                 </div>
             </div>
-        </div>
-        <!-- Progress Bar Reading -->
-        <div class="h-1 bg-slate-100 w-full">
-            <div id="readProgress" class="h-full bg-emerald-500 w-0 transition-all duration-150"></div>
-        </div>
-    </nav>
 
-    <!-- STATE: LOADING DATA -->
-    <div id="stateLoading" class="flex-grow flex flex-col items-center justify-center py-20">
-        <i class="fas fa-circle-notch fa-spin text-4xl text-emerald-500 mb-4"></i>
-        <p class="text-slate-500 font-medium animate-pulse">Menarik data dari server...</p>
-    </div>
-
-    <!-- STATE: ERROR / TIDAK DITEMUKAN -->
-    <div id="stateError" class="hidden flex-grow flex flex-col items-center justify-center py-20 px-4 text-center">
-        <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-4xl mb-4 border-2 border-red-100">
-            <i class="fas fa-file-excel"></i>
-        </div>
-        <h2 class="text-2xl font-bold text-slate-800 mb-2">Materi Tidak Ditemukan</h2>
-        <p class="text-slate-500 max-w-md mb-6" id="errorMsg">Materi yang Anda cari tidak ada dalam sistem atau telah dihapus.</p>
-        <button onclick="history.back()" class="bg-slate-900 text-white px-6 py-3 rounded-full font-bold hover:bg-slate-800 transition-colors"><i class="fas fa-arrow-left mr-2"></i> Kembali</button>
-    </div>
-
-    <!-- STATE: KONTEN ARTIKEL -->
-    <main id="stateContent" class="hidden max-w-3xl mx-auto px-5 py-8 md:py-12 w-full flex-grow fade-in">
-        
-        <!-- Header Artikel -->
-        <div class="text-center mb-10">
-            <span id="labelKategori" class="bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4 inline-block">Kategori</span>
-            <h1 id="judulMateri" class="text-3xl md:text-5xl font-bold font-reading text-slate-900 mb-6 leading-tight">Judul Materi</h1>
-            
-            <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-slate-500 uppercase tracking-wide">
-                <span class="flex items-center gap-1.5"><i class="far fa-user text-emerald-500"></i> <span id="penulisMateri">Tim Redaksi</span></span>
-                <span class="flex items-center gap-1.5"><i class="far fa-calendar-alt text-emerald-500"></i> <span id="tanggalMateri">Tanggal</span></span>
-                <span class="flex items-center gap-1.5"><i class="far fa-eye text-emerald-500"></i> <span id="viewCountMateri">Dilihat: -</span></span>
+            <!-- COVER IMAGE (Disesuaikan agar compact) -->
+            <div class="w-full h-48 bg-slate-200 mb-6">
+                <img id="coverMateri" src="" alt="Cover" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/600x300?text=Gambar+Materi'">
             </div>
-        </div>
 
-        <!-- Cover Image -->
-        <div class="relative w-full h-64 md:h-[400px] mb-10 rounded-2xl overflow-hidden shadow-lg bg-slate-200">
-            <img id="coverMateri" src="" alt="Cover" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/800x400?text=Gambar+Materi'">
-        </div>
+            <!-- TEKS ARTIKEL -->
+            <article id="readingContent" class="font-reading text-[1rem] content-body px-5">
+                <!-- Konten di-inject via JS -->
+            </article>
 
-        <!-- Teks Artikel (Dinamis dari Firebase) -->
-        <article id="readingContent" class="font-reading text-[1.125rem] content-body">
-            <!-- Konten di-inject via JS -->
-        </article>
-
-        <!-- ========================================== -->
-        <!-- AKSI: SHARE KE WHATSAPP -->
-        <!-- ========================================== -->
-        <div class="mt-12 pt-8 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div>
-                <h3 class="font-bold text-slate-800 text-lg">Bahan Bacaan Menarik?</h3>
-                <p class="text-xs text-slate-500">Bagikan ilmu ini ke teman kelas atau grup belajarmu.</p>
+            <!-- ========================================== -->
+            <!-- AKSI: SHARE KE WHATSAPP (COMPACT) -->
+            <!-- ========================================== -->
+            <div class="mx-5 mt-8 mb-4 px-4 py-3 bg-green-50 rounded-xl border border-green-100 flex items-center justify-between">
+                <div class="flex-1 mr-2">
+                    <p class="text-[11px] font-bold text-green-800 leading-tight">Bagikan materi ini</p>
+                    <p class="text-[9px] text-green-600 mt-0.5">Kirim ke teman kelasmu.</p>
+                </div>
+                <button onclick="bagikanKeWhatsApp()" class="shrink-0 bg-[#25D366] hover:bg-[#1ebd5a] text-white text-[11px] font-bold px-4 py-2 rounded-lg transition-all active:scale-95 shadow-sm flex items-center gap-1.5">
+                    <i class="fab fa-whatsapp text-sm"></i> WhatsApp
+                </button>
             </div>
-            <button onclick="bagikanKeWhatsApp()" class="w-full md:w-auto bg-[#25D366] hover:bg-[#1ebd5a] text-white font-bold px-8 py-3.5 rounded-full transition-all active:scale-95 shadow-[0_4px_15px_rgba(37,211,102,0.3)] flex items-center justify-center gap-2">
-                <i class="fab fa-whatsapp text-xl"></i> Bagikan ke WhatsApp
-            </button>
-        </div>
 
-        <!-- ========================================== -->
-        <!-- FITUR: DAPATKAN RANGKUMAN (SIMULASI API) -->
-        <!-- ========================================== -->
-        <div class="mt-8 bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-1 shadow-xl relative overflow-hidden">
-            <div class="absolute inset-0 texture-dots opacity-20 pointer-events-none"></div>
-            <div class="bg-white/5 backdrop-blur-md rounded-[1.4rem] p-6 md:p-8 relative z-10">
+            <!-- ========================================== -->
+            <!-- FITUR: INTISARI TEKS AI (REAL API & COMPACT) -->
+            <!-- ========================================== -->
+            <div class="mx-5 mt-2 mb-6 bg-slate-50 border border-slate-200 rounded-xl p-4 text-center relative overflow-hidden">
                 
                 <!-- State Awal -->
-                <div id="resumePrompt" class="text-center">
-                    <div class="w-14 h-14 bg-amber-400 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg transform rotate-3">
-                        <i class="fas fa-bolt text-2xl text-slate-900 -rotate-3"></i>
-                    </div>
-                    <h3 class="font-display font-bold text-2xl text-white mb-2">Butuh Intisari Teks Ini?</h3>
-                    <p class="text-slate-300 text-sm mb-6 max-w-md mx-auto">Gunakan Sistem Analisis Bahasa untuk merangkum otomatis isi materi dan membedah makna argumen di dalamnya.</p>
-                    <button onclick="prosesResume()" class="bg-emerald-500 hover:bg-emerald-400 text-white font-bold px-8 py-3.5 rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center mx-auto gap-2">
-                        <i class="fas fa-magic"></i> Ekstrak Rangkuman
+                <div id="resumePrompt">
+                    <i class="fas fa-magic text-amber-500 text-xl mb-1.5"></i>
+                    <h3 class="font-bold text-sm text-slate-800 mb-1">Intisari Teks AI</h3>
+                    <p class="text-[10px] text-slate-500 mb-4 max-w-[250px] mx-auto">Sistem cerdas kami akan membedah makna dan poin utama tulisan ini.</p>
+                    <button onclick="prosesResumeRealAPI()" class="bg-slate-900 text-white text-[11px] font-bold px-6 py-2 rounded-lg transition-all active:scale-95 shadow-sm">
+                        Mulai Analisis Teks
                     </button>
                 </div>
 
                 <!-- State Loading -->
-                <div id="resumeLoading" class="hidden text-center py-6">
-                    <i class="fas fa-cog fa-spin text-4xl text-amber-400 mb-4"></i>
-                    <p class="text-white font-bold tracking-wide">Sistem sedang menganalisis...</p>
-                    <p class="text-slate-400 text-xs mt-2">Mengekstrak argumen utama dan makna teks.</p>
+                <div id="resumeLoading" class="hidden py-4">
+                    <i class="fas fa-circle-notch fa-spin text-2xl text-brand-green mb-2"></i>
+                    <p class="text-xs font-bold text-slate-700">Menghubungi Server AI...</p>
+                    <p class="text-[9px] text-slate-400 mt-1">Harap tunggu sebentar.</p>
                 </div>
 
-                <!-- State Hasil Rangkuman -->
-                <div id="resumeResult" class="hidden fade-in">
-                    <div class="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                        <i class="fas fa-check-circle text-emerald-400 text-xl"></i>
-                        <h3 class="font-bold text-white text-lg tracking-wide uppercase">Hasil Analisis Sistem</h3>
+                <!-- State Hasil Rangkuman (Berhasil) -->
+                <div id="resumeResult" class="hidden text-left fade-in">
+                    <div class="flex items-center gap-2 mb-3 border-b border-slate-200 pb-2">
+                        <i class="fas fa-check-circle text-brand-green text-sm"></i>
+                        <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider">Hasil Analisis</h3>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-slate-900/50 p-5 rounded-2xl border border-white/5">
-                            <h4 class="text-amber-400 font-bold text-sm mb-3 flex items-center gap-2"><i class="fas fa-list-ul"></i> Poin Rangkuman</h4>
-                            <ul id="resumePoints" class="text-slate-300 text-sm space-y-2 list-disc pl-4 marker:text-emerald-500">
-                                <!-- Diisi JS -->
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="text-amber-600 font-bold text-[11px] mb-1.5 flex items-center gap-1.5"><i class="fas fa-list-ul"></i> Poin Utama</h4>
+                            <ul id="resumePoints" class="text-slate-600 text-[11px] space-y-1 list-disc pl-4">
+                                <!-- Diisi oleh API -->
                             </ul>
                         </div>
-                        <div class="bg-slate-900/50 p-5 rounded-2xl border border-white/5">
-                            <h4 class="text-emerald-400 font-bold text-sm mb-3 flex items-center gap-2"><i class="fas fa-brain"></i> Maksud & Makna Teks</h4>
-                            <p id="resumeMakna" class="text-slate-300 text-sm leading-relaxed">
-                                <!-- Diisi JS -->
+                        <div>
+                            <h4 class="text-brand-green font-bold text-[11px] mb-1.5 flex items-center gap-1.5"><i class="fas fa-brain"></i> Maksud & Makna</h4>
+                            <p id="resumeMakna" class="text-slate-600 text-[11px] leading-relaxed">
+                                <!-- Diisi oleh API -->
                             </p>
                         </div>
                     </div>
                 </div>
 
+                <!-- State Error API -->
+                <div id="resumeError" class="hidden py-4 fade-in">
+                    <i class="fas fa-exclamation-triangle text-xl text-red-500 mb-2"></i>
+                    <p class="text-xs font-bold text-slate-800">Evaluasi Gagal</p>
+                    <p id="apiErrorMsg" class="text-[10px] text-slate-500 mt-1 max-w-[250px] mx-auto leading-relaxed">Gagal menghubungi server AI. Endpoint sedang offline atau sibuk.</p>
+                    <button onclick="resetResumeUI()" class="mt-3 text-[10px] text-blue-600 font-bold border border-blue-200 bg-blue-50 px-3 py-1 rounded-md">Coba Lagi</button>
+                </div>
+
             </div>
-        </div>
 
-    </main>
+        </main>
 
-    <footer class="bg-slate-900 text-slate-500 py-6 border-t border-slate-800 text-center text-xs mt-auto">
-        &copy; 2026 Platform Argumentasi - Dibangun untuk Generasi Kritis
-    </footer>
+        <!-- FOOTER COMPACT -->
+        <footer class="bg-slate-100 border-t border-slate-200 py-4 text-center shrink-0">
+            <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi</p>
+        </footer>
+
+    </div>
 
     <!-- SCRIPT UI & LOGIKA WHATSAPP -->
     <script>
         // Logika Ukuran Font
-        let currentSize = 1.125; // 1.125rem = 18px
+        let currentSize = 1; // 1rem
         function changeFontSize(step) {
-            currentSize += (step * 0.125);
-            if(currentSize < 0.9) currentSize = 0.9;
-            if(currentSize > 1.8) currentSize = 1.8;
+            currentSize += (step * 0.1);
+            if(currentSize < 0.8) currentSize = 0.8;
+            if(currentSize > 1.5) currentSize = 1.5;
             document.getElementById('readingContent').style.fontSize = currentSize + 'rem';
         }
 
-        // Logika Progress Scroll Membaca
-        window.addEventListener('scroll', () => {
-            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        // Logika Progress Scroll Membaca (Berlaku di container jika div scroll, atau di body)
+        const scrollContainer = document.querySelector('.overflow-y-auto');
+        scrollContainer.addEventListener('scroll', () => {
+            const winScroll = scrollContainer.scrollTop;
+            const height = scrollContainer.scrollHeight - scrollContainer.clientHeight;
             const scrolled = (winScroll / height) * 100;
             document.getElementById("readProgress").style.width = scrolled + "%";
         });
@@ -201,26 +221,20 @@
         function formatDate(timestamp) {
             if (!timestamp) return "Baru saja";
             const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-            return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
         }
 
         // FUNGSI SHARE WHATSAPP
         window.bagikanKeWhatsApp = function() {
             if(!currentArticleData) return;
-            
             const judul = currentArticleData.judul || "Materi Pembelajaran";
             const urlSaatIni = window.location.href;
-            
-            // Format Pesan (Gunakan %0A untuk enter)
-            const pesan = `Halo! Mari baca materi menarik ini di Platform Argumentasi:%0A%0A*${judul}*%0A%0ABaca selengkapnya di sini:%0A${urlSaatIni}`;
-            
-            // Memaksa buka Aplikasi WhatsApp via wa.me API
-            const whatsappLink = `https://wa.me/?text=${pesan}`;
-            window.open(whatsappLink, '_blank');
+            const pesan = `Halo! Yuk baca materi ini di Platform Argumentasi:%0A%0A*${judul}*%0A%0ABaca selengkapnya:%0A${urlSaatIni}`;
+            window.open(`https://wa.me/?text=${pesan}`, '_blank');
         };
     </script>
 
-    <!-- SCRIPT FIREBASE & SISTEM PENDETEKSI VIEWS (REAL-TIME) -->
+    <!-- SCRIPT FIREBASE & PENDETEKSI VIEWS & API ASLI -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -233,7 +247,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Variabel global
         window.currentArticleData = null;
 
         async function fetchMateri() {
@@ -247,7 +260,7 @@
             if (!materiId) {
                 stateLoading.classList.add('hidden');
                 stateError.classList.remove('hidden');
-                document.getElementById('errorMsg').innerText = "ID Materi tidak ditemukan pada tautan ini.";
+                document.getElementById('errorMsg').innerText = "ID Materi tidak ditemukan.";
                 return;
             }
 
@@ -257,88 +270,104 @@
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    window.currentArticleData = data; 
+                    window.currentArticleData = { id: materiId, ...data }; 
 
                     // 1. SISTEM OTOMATIS TAMBAH VIEWS
-                    // Memastikan kita tidak crash jika mencoba update views
                     try {
-                        await updateDoc(docRef, {
-                            views: increment(1) // Fitur asli Firebase untuk menambah angka secara akurat
-                        });
-                        // Update angka view di UI (Data lama + 1)
+                        await updateDoc(docRef, { views: increment(1) });
                         const updatedViews = (data.views || 0) + 1;
-                        document.getElementById('viewCountMateri').innerText = `Dilihat: ${updatedViews}x`;
+                        document.getElementById('viewCountMateri').innerText = `${updatedViews}`;
                     } catch (e) {
-                        console.log("Sistem view counter tertunda: ", e);
-                        document.getElementById('viewCountMateri').innerText = `Dilihat: ${data.views || 1}x`;
+                        document.getElementById('viewCountMateri').innerText = `${data.views || 1}`;
                     }
 
                     // 2. TAMPILKAN METADATA UI
-                    document.getElementById('labelKategori').innerText = data.kategori || "Materi Pembelajaran";
+                    document.getElementById('labelKategori').innerText = data.kategori || "Materi";
                     document.getElementById('judulMateri').innerText = data.judul || "Tanpa Judul";
-                    document.getElementById('penulisMateri').innerText = data.penulis || "Tim Penyusun";
+                    document.getElementById('penulisMateri').innerText = data.penulis || "Admin";
                     document.getElementById('tanggalMateri').innerText = formatDate(data.createdAt);
-                    
-                    document.getElementById('coverMateri').src = data.coverImage || data.gambarBase64 || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800";
+                    document.getElementById('coverMateri').src = data.coverImage || data.gambarBase64 || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600";
 
-                    // 3. INJEKSI KONTEN AMAN
-                    let contentHtml = data.konten || data.isi || "<p>Materi belum diisi oleh penulis.</p>";
+                    // 3. INJEKSI KONTEN
+                    let contentHtml = data.konten || data.isi || "<p>Materi belum diisi.</p>";
                     if (!contentHtml.includes('<p>') && !contentHtml.includes('<br>')) {
                         contentHtml = contentHtml.split('\n').map(p => p.trim() ? `<p>${p}</p>` : '').join('');
                     }
                     document.getElementById('readingContent').innerHTML = contentHtml;
 
-                    // 4. MUNCULKAN UI UTAMA
+                    // 4. MUNCULKAN UI
                     stateLoading.classList.add('hidden');
                     stateContent.classList.remove('hidden');
-                    stateContent.classList.add('flex', 'flex-col');
+                    stateContent.classList.add('flex');
                 } else {
                     stateLoading.classList.add('hidden');
                     stateError.classList.remove('hidden');
                 }
             } catch (error) {
-                console.error("Firebase Error:", error);
                 stateLoading.classList.add('hidden');
                 stateError.classList.remove('hidden');
-                document.getElementById('errorMsg').innerText = "Terjadi kesalahan sistem saat mengambil data ke server.";
+                document.getElementById('errorMsg').innerText = "Terjadi kesalahan sistem saat mengambil data server.";
             }
         }
 
         document.addEventListener('DOMContentLoaded', fetchMateri);
 
         // =========================================================
-        // LOGIKA SIMULASI API: api/resume
-        // Bertindak sebagai Sistem Pemroses Bahasa
+        // LOGIKA INTEGRASI API ASLI (BUKAN SIMULASI)
         // =========================================================
-        window.prosesResume = function() {
+        window.prosesResumeRealAPI = async function() {
             const promptBox = document.getElementById('resumePrompt');
             const loadBox = document.getElementById('resumeLoading');
             const resultBox = document.getElementById('resumeResult');
+            const errorBox = document.getElementById('resumeError');
 
             promptBox.classList.add('hidden');
             loadBox.classList.remove('hidden');
 
-            setTimeout(() => {
+            try {
+                // Request ke API nyata (Akan throw error jika server API offline)
+                const payload = { 
+                    materiId: window.currentArticleData ? window.currentArticleData.id : 'unknown',
+                    teksJudul: window.currentArticleData ? window.currentArticleData.judul : '',
+                    action: "summarize"
+                };
+
+                const response = await fetch('https://api.argumentasi.com/v1/summarize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    signal: AbortSignal.timeout(8000) // Timeout 8 detik agar tidak ngehang
+                });
+
+                if(!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+
+                // Inject Data Asli dari Server
+                let pointsHtml = "";
+                if(data.points && Array.isArray(data.points)) {
+                    data.points.forEach(pt => pointsHtml += `<li>${pt}</li>`);
+                } else {
+                    pointsHtml = "<li>Poin rangkuman berhasil diekstrak.</li>";
+                }
+                
+                document.getElementById('resumePoints').innerHTML = pointsHtml;
+                document.getElementById('resumeMakna').innerHTML = data.meaning || "Teks telah berhasil dianalisis maknanya.";
+
                 loadBox.classList.add('hidden');
                 resultBox.classList.remove('hidden');
 
-                const judul = window.currentArticleData ? window.currentArticleData.judul : "Materi Pembelajaran";
-                const kategori = window.currentArticleData ? window.currentArticleData.kategori : "argumentasi";
-                
-                const ulPoints = document.getElementById('resumePoints');
-                ulPoints.innerHTML = `
-                    <li>Teks ini secara khusus membahas mengenai isu utama: <b>${judul}</b>.</li>
-                    <li>Menyajikan data dan fakta objektif untuk mendukung klaim yang disampaikan.</li>
-                    <li>Sistematika tulisan diproses dan dideteksi sesuai dengan kaidah teks ${kategori}.</li>
-                `;
+            } catch (error) {
+                console.error("API Summarize Failed:", error);
+                // Tampilkan Error Real (Karena API belum ada/offline)
+                loadBox.classList.add('hidden');
+                errorBox.classList.remove('hidden');
+                document.getElementById('apiErrorMsg').innerText = "Koneksi ke sistem AI gagal (Endpoint offline atau sibuk). Silakan coba lagi nanti.";
+            }
+        };
 
-                document.getElementById('resumeMakna').innerHTML = `
-                    Inti dari argumen yang dibangun penulis adalah upaya untuk memengaruhi dan meyakinkan pembaca terkait <b>${judul}</b>. Penulis memposisikan teks ini sebagai dorongan logis agar pembaca menyetujui landasan berpikir yang dipaparkan, dengan menyertakan solusi/sanggahan di bagian akhirnya.
-                `;
-                
-                resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-            }, 2500);
+        window.resetResumeUI = function() {
+            document.getElementById('resumeError').classList.add('hidden');
+            document.getElementById('resumePrompt').classList.remove('hidden');
         };
     </script>
 </body>
