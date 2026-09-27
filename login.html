@@ -18,22 +18,22 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['Poppins', 'sans-serif'] },
-                    colors: { brand: { primary: '#f97316' /* Warna oranye identik e-commerce */ } }
+                    colors: { brand: { primary: '#10b981' /* Emerald 500 - Sesuai tema hijau */ } }
                 }
             }
         }
     </script>
 
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #ffffff; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
         
-        /* Custom Input Underline Style */
+        /* Custom Input Underline Style Ala Referensi */
         .input-underline {
             width: 100%;
             border: none;
             border-bottom: 1px solid #e5e7eb;
-            padding: 12px 12px 12px 40px;
-            font-size: 15px;
+            padding: 12px 12px 12px 35px;
+            font-size: 14px;
             color: #374151;
             background-color: transparent;
             border-radius: 0;
@@ -41,21 +41,21 @@
         }
         .input-underline:focus {
             outline: none;
-            border-bottom-color: #f97316;
+            border-bottom-color: #10b981;
         }
         .input-underline::placeholder { color: #9ca3af; }
 
         .input-icon {
             position: absolute;
-            left: 8px;
+            left: 5px;
             top: 50%;
             transform: translateY(-50%);
-            color: #6b7280;
-            font-size: 1.1rem;
+            color: #9ca3af;
+            font-size: 1rem;
             transition: color 0.2s ease;
         }
-        
-        .group-focus-within .input-icon { color: #f97316; }
+        /* Fokus pada icon saat input difokuskan */
+        .input-container:focus-within .input-icon { color: #10b981; }
 
         /* Divider ATAU */
         .divider-text {
@@ -74,16 +74,19 @@
         .divider-text::before { margin-right: 12px; }
         .divider-text::after { margin-left: 12px; }
 
-        /* Animasi Modal */
+        /* Animasi Pop-Up/Modal */
         .modal-z { z-index: 99999 !important; }
-        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        .fade-in { animation: fadeIn 0.2s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="min-h-screen flex justify-center">
+<body class="min-h-screen flex items-center justify-center">
 
-    <!-- Container Utama (Membatasi lebar maksimal di Desktop agar tetap ala Mobile) -->
-    <div class="w-full max-w-md bg-white flex flex-col relative h-screen sm:h-auto sm:min-h-screen sm:border-x sm:border-slate-100 shadow-sm">
+    <!-- Container Toast (Notifikasi) -->
+    <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="w-full max-w-md bg-white flex flex-col relative h-screen sm:h-auto sm:min-h-[600px] sm:rounded-2xl sm:shadow-2xl overflow-hidden">
         
         <!-- HEADER APP-LIKE -->
         <header class="flex items-center justify-between px-4 py-4 bg-white sticky top-0 z-20">
@@ -91,58 +94,57 @@
                 <a href="index.html" class="text-brand-primary text-xl px-2 py-1"><i class="fas fa-arrow-left"></i></a>
                 <h1 class="text-xl font-medium text-slate-800" id="headerTitle">Log In</h1>
             </div>
-            <button onclick="bukaPusatBantuan()" class="w-7 h-7 rounded-full border border-brand-primary text-brand-primary flex items-center justify-center font-bold text-sm">
+            <button onclick="bukaModal('modalBantuan')" class="w-7 h-7 rounded-full border border-brand-primary text-brand-primary flex items-center justify-center font-bold text-sm hover:bg-emerald-50 transition-colors">
                 ?
             </button>
         </header>
 
         <!-- KONTEN FORM -->
-        <div class="flex-grow flex flex-col px-6 pt-6 pb-8 overflow-y-auto">
+        <div class="flex-grow flex flex-col px-6 pt-4 pb-8 overflow-y-auto" id="mainContentArea">
             
-            <!-- Logo Centered -->
-            <div class="flex justify-center mb-10 mt-2">
-                <div class="w-16 h-16 bg-brand-primary rounded-xl flex items-center justify-center shadow-md">
-                    <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="w-10 object-contain filter brightness-0 invert" onerror="this.innerHTML='<span class=\'text-white font-bold text-3xl\'>A</span>'">
-                </div>
+            <!-- Logo Sederhana -->
+            <div class="flex justify-center mb-8">
+                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Argumentasi" class="h-12 object-contain" onerror="this.outerHTML='<span class=\'text-brand-primary font-bold text-3xl\'>A</span>'">
             </div>
 
             <!-- Form Utama -->
             <form id="authForm" onsubmit="handleAuth(event)" class="w-full relative">
                 
-                <!-- Input Nama (Hanya muncul saat Register) -->
-                <div id="groupNama" class="relative group group-focus-within hidden mb-4 transition-all opacity-0">
+                <!-- Input Nama (Register Only) -->
+                <div id="groupNama" class="input-container relative hidden mb-4">
                     <i class="far fa-id-card input-icon"></i>
-                    <input type="text" id="inputNama" class="input-underline" placeholder="Nama Lengkap / Instansi">
+                    <input type="text" id="inputNama" class="input-underline" placeholder="Nama Lengkap Guru">
                 </div>
 
                 <!-- Input Email -->
-                <div class="relative group group-focus-within mb-4" id="groupEmail">
+                <div class="input-container relative mb-4" id="groupEmail">
                     <i class="far fa-user input-icon"></i>
                     <input type="email" id="inputEmail" required class="input-underline" placeholder="No. Handphone/Email/Username">
                 </div>
 
                 <!-- Input Password -->
-                <div class="relative group group-focus-within mb-6" id="groupPassword">
-                    <i class="fas fa-lock input-icon text-slate-400"></i>
+                <div class="input-container relative mb-6" id="groupPassword">
+                    <i class="fas fa-lock input-icon"></i>
                     <input type="password" id="inputPassword" required class="input-underline pr-20" placeholder="Password">
                     
+                    <!-- Lupa Password & Toggle Mata -->
                     <div class="absolute right-0 top-1/2 transform -translate-y-1/2 flex items-center h-full">
                         <button type="button" onclick="togglePasswordVisibility()" class="text-slate-400 hover:text-slate-600 px-2 outline-none">
                             <i class="far fa-eye-slash" id="eyeIcon"></i>
                         </button>
-                        <div class="w-px h-4 bg-slate-300 mx-2" id="pwDivider"></div>
-                        <a href="#" class="text-blue-600 text-sm font-medium hover:underline pr-1" id="lupaPwText">Lupa?</a>
+                        <div class="w-px h-4 bg-slate-300 mx-1" id="pwDivider"></div>
+                        <button type="button" onclick="bukaModal('modalLupaPassword')" class="text-blue-600 text-sm font-medium hover:underline px-2" id="lupaPwText">Lupa?</button>
                     </div>
                 </div>
 
                 <!-- Tombol Submit -->
-                <button type="submit" id="btnSubmit" class="w-full bg-brand-primary/20 text-brand-primary font-bold py-3.5 rounded text-[15px] transition-all mb-4 disabled:opacity-50">
+                <button type="submit" id="btnSubmit" class="w-full bg-slate-200 text-slate-400 font-bold py-3.5 rounded text-[15px] transition-all mb-4 pointer-events-none">
                     <span id="btnText">Log In</span>
                 </button>
 
-                <!-- Tombol Alternatif -->
+                <!-- Tombol Alternatif Login -->
                 <div class="text-center mb-6" id="altLoginLink">
-                    <button type="button" class="text-blue-600 text-sm font-medium hover:underline">Log in dengan no. handphone</button>
+                    <button type="button" onclick="infoLoginHP()" class="text-blue-600 text-sm font-medium hover:underline">Log in dengan no. handphone</button>
                 </div>
             </form>
 
@@ -150,85 +152,104 @@
 
             <!-- Social Login Buttons -->
             <div class="flex flex-col gap-3 mb-8" id="socialArea">
-                <!-- Google Login -->
                 <button onclick="loginDenganGoogle()" type="button" class="w-full bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 py-3 rounded flex items-center px-4 transition-colors">
                     <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5 mr-3">
                     <span class="flex-1 text-center font-medium text-sm pr-5">Log In dengan Google</span>
                 </button>
-                
-                <!-- Opsi Lain (Visual Only sesuai referensi) -->
-                <button type="button" class="w-full bg-white border border-slate-300 text-slate-700 py-3 rounded flex items-center px-4 opacity-70 cursor-not-allowed">
-                    <i class="fab fa-facebook text-[#1877F2] text-xl mr-3 w-5 text-center"></i>
-                    <span class="flex-1 text-center font-medium text-sm pr-5">Log In dengan Facebook</span>
-                </button>
-                <button type="button" class="w-full bg-white border border-slate-300 text-slate-700 py-3 rounded flex items-center px-4 opacity-70 cursor-not-allowed">
-                    <i class="fas fa-key text-slate-500 text-lg mr-3 w-5 text-center"></i>
-                    <span class="flex-1 text-center font-medium text-sm pr-5">Log In dengan Passkey</span>
-                </button>
             </div>
 
             <!-- Teks Switcher Bawah -->
-            <div class="text-center mt-auto pb-4">
+            <div class="text-center mt-auto pt-4">
                 <p class="text-sm text-slate-600" id="switcherText">Belum punya akun? <button onclick="switchMode('register')" class="text-blue-600 font-medium hover:underline ml-1">Daftar</button></p>
             </div>
+        </div>
 
-            <!-- Tampilan Verifikasi (Hidden Default) -->
-            <div id="groupVerifikasi" class="hidden absolute inset-0 bg-white z-30 flex-col items-center justify-center p-6 text-center">
-                <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6 text-emerald-500 text-4xl border-2 border-emerald-100">
-                    <i class="fas fa-envelope-open-text"></i>
-                </div>
-                <h3 class="font-bold text-slate-800 text-xl mb-2">Cek Inbox Anda</h3>
-                <p class="text-sm text-slate-500 mb-8 max-w-xs">Kami telah mengirimkan email verifikasi. Klik tautan di dalam email tersebut lalu tekan tombol di bawah.</p>
-                <button onclick="cekStatusVerifikasi()" id="btnVerifikasi" class="w-full bg-brand-primary hover:bg-orange-600 text-white font-bold py-3.5 rounded transition-all">
-                    SAYA SUDAH VERIFIKASI
-                </button>
-                <button onclick="location.reload()" class="mt-4 text-sm text-slate-500 font-medium">Batal & Kembali</button>
+        <!-- ============================================== -->
+        <!-- STATE VERIFIKASI (MENGGANTIKAN FORM JIKA BELUM VERIFIKASI) -->
+        <!-- ============================================== -->
+        <div id="groupVerifikasi" class="hidden flex-grow flex-col items-center justify-center p-6 text-center bg-white z-30">
+            <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6 text-emerald-500 text-4xl border-2 border-emerald-100">
+                <i class="fas fa-envelope-open-text"></i>
             </div>
+            <h3 class="font-bold text-slate-800 text-xl mb-2">Cek Inbox Anda</h3>
+            <p class="text-sm text-slate-500 mb-8 max-w-xs">Kami telah mengirimkan email verifikasi. Klik tautan di dalam email tersebut lalu tekan tombol di bawah.</p>
+            
+            <button onclick="cekStatusVerifikasi()" id="btnCekVerifikasi" class="w-full bg-brand-primary hover:bg-emerald-600 text-white font-bold py-3.5 rounded transition-all shadow-md active:scale-95 mb-3">
+                SAYA SUDAH VERIFIKASI
+            </button>
+            
+            <button onclick="kirimUlangVerifikasi()" id="btnKirimUlang" class="w-full bg-white border border-slate-300 text-slate-600 font-bold py-3 rounded transition-all hover:bg-slate-50">
+                <i class="fas fa-paper-plane mr-2"></i> Kirim Ulang Email
+            </button>
 
+            <button onclick="location.reload()" class="mt-6 text-sm text-blue-600 font-medium hover:underline">Ganti Akun & Kembali</button>
         </div>
     </div>
 
-    <!-- MODAL BANTUAN -->
-    <div id="modalBantuan" class="fixed inset-0 bg-black/60 hidden modal-z flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300 pb-0 sm:pb-10">
+    <!-- ============================================== -->
+    <!-- MODAL LUPA PASSWORD -->
+    <!-- ============================================== -->
+    <div id="modalLupaPassword" class="fixed inset-0 bg-black/60 hidden modal-z flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300 pb-0 sm:pb-10" onclick="if(event.target === this) tutupModal('modalLupaPassword')">
+        <div class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 transform translate-y-full sm:translate-y-10 transition-transform duration-300 relative flex flex-col">
+            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-5 sm:hidden"></div>
+            <button onclick="tutupModal('modalLupaPassword')" class="absolute top-4 right-4 text-slate-400 hover:text-red-500"><i class="fas fa-times text-lg"></i></button>
+            
+            <h3 class="text-xl font-bold text-slate-800 mb-2">Lupa Kata Sandi?</h3>
+            <p class="text-sm text-slate-500 mb-6">Masukkan email akun Anda. Kami akan mengirimkan tautan untuk mengatur ulang kata sandi.</p>
+            
+            <input type="email" id="inputResetEmail" class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary mb-4" placeholder="Alamat Email Anda">
+            
+            <button onclick="prosesLupaPassword()" id="btnResetPw" class="w-full bg-brand-primary text-white font-bold py-3 rounded-lg hover:bg-emerald-600 transition-colors active:scale-95">
+                Kirim Link Reset
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL PUSAT BANTUAN -->
+    <!-- ============================================== -->
+    <div id="modalBantuan" class="fixed inset-0 bg-black/60 hidden modal-z flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300 pb-0 sm:pb-10" onclick="if(event.target === this) tutupModal('modalBantuan')">
         <div class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 transform translate-y-full sm:translate-y-10 transition-transform duration-300 relative flex flex-col max-h-[85vh]">
             <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-5 sm:hidden"></div>
-            <button onclick="tutupPusatBantuan()" class="absolute top-4 right-4 text-slate-400 hover:text-red-500"><i class="fas fa-times text-lg"></i></button>
+            <button onclick="tutupModal('modalBantuan')" class="absolute top-4 right-4 text-slate-400 hover:text-red-500"><i class="fas fa-times text-lg"></i></button>
             
             <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center gap-2">
                 <i class="far fa-question-circle text-brand-primary"></i> Pusat Bantuan
             </h3>
-            <p class="text-sm text-slate-500 mb-6">Pilih kendala yang Anda alami saat masuk ke portal guru.</p>
+            <p class="text-sm text-slate-500 mb-6">Pilih kendala yang Anda alami saat mencoba masuk.</p>
             
-            <div class="overflow-y-auto custom-scroll space-y-3 flex-grow pb-4">
-                <button class="w-full text-left p-4 rounded-xl border border-slate-200 hover:border-brand-primary bg-slate-50 transition-colors flex items-center justify-between group">
+            <div class="space-y-3 pb-4">
+                <button onclick="tutupModal('modalBantuan'); bukaModal('modalLupaPassword');" class="w-full text-left p-4 rounded-xl border border-slate-200 hover:border-brand-primary bg-slate-50 transition-colors flex items-center justify-between group">
                     <div>
                         <p class="font-bold text-slate-700 text-sm group-hover:text-brand-primary">Lupa Password</p>
                         <p class="text-[10px] text-slate-500 mt-0.5">Kirim link reset ke email Anda.</p>
                     </div>
                     <i class="fas fa-chevron-right text-slate-300 group-hover:text-brand-primary"></i>
                 </button>
-                <button class="w-full text-left p-4 rounded-xl border border-slate-200 hover:border-brand-primary bg-slate-50 transition-colors flex items-center justify-between group">
+                <button onclick="tutupModal('modalBantuan'); infoLoginHP();" class="w-full text-left p-4 rounded-xl border border-slate-200 hover:border-brand-primary bg-slate-50 transition-colors flex items-center justify-between group">
                     <div>
-                        <p class="font-bold text-slate-700 text-sm group-hover:text-brand-primary">Belum Terima Email Verifikasi</p>
-                        <p class="text-[10px] text-slate-500 mt-0.5">Kirim ulang tautan aktivasi.</p>
+                        <p class="font-bold text-slate-700 text-sm group-hover:text-brand-primary">Login Nomor HP / OTP</p>
+                        <p class="text-[10px] text-slate-500 mt-0.5">Panduan menggunakan nomor handphone.</p>
                     </div>
                     <i class="fas fa-chevron-right text-slate-300 group-hover:text-brand-primary"></i>
                 </button>
-                <div class="p-4 bg-blue-50 border border-blue-100 rounded-xl mt-4">
-                    <p class="text-[11px] text-blue-700 font-medium text-center">Catatan: Pendaftaran Admin (Kepala) memerlukan email institusi berakhiran <strong class="font-black">@arg.ac.id</strong>.</p>
-                </div>
+                <button onclick="tutupModal('modalBantuan'); loginDenganGoogle();" class="w-full text-left p-4 rounded-xl border border-slate-200 hover:border-brand-primary bg-slate-50 transition-colors flex items-center justify-between group">
+                    <div>
+                        <p class="font-bold text-slate-700 text-sm group-hover:text-brand-primary">Gagal Login Google</p>
+                        <p class="text-[10px] text-slate-500 mt-0.5">Coba sambungkan ulang sesi Google.</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-slate-300 group-hover:text-brand-primary"></i>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Container Toast Custom Alert -->
-    <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
-
-    <!-- SCRIPT UI SEDERHANA -->
+    <!-- SCRIPT UI DASAR -->
     <script>
         let currentMode = 'login';
         let pendingUser = { nama: '', email: '' };
 
+        // Toggle Mata Password
         function togglePasswordVisibility() {
             const input = document.getElementById('inputPassword');
             const icon = document.getElementById('eyeIcon');
@@ -241,24 +262,25 @@
             }
         }
 
-        // Interaksi Tombol Submit (Berubah warna saat ada input)
-        const inputs = document.querySelectorAll('input');
+        // Form Validation UI (Tombol Aktif/Mati berdasarkan input)
+        const inputs = document.querySelectorAll('#authForm input');
         const btnSubmit = document.getElementById('btnSubmit');
         
         inputs.forEach(input => {
             input.addEventListener('input', () => {
                 const em = document.getElementById('inputEmail').value;
                 const pw = document.getElementById('inputPassword').value;
-                if(em.length > 3 && pw.length > 3) {
-                    btnSubmit.classList.remove('bg-brand-primary/20', 'text-brand-primary');
+                if(em.length > 3 && pw.length > 5) {
+                    btnSubmit.classList.remove('bg-slate-200', 'text-slate-400', 'pointer-events-none');
                     btnSubmit.classList.add('bg-brand-primary', 'text-white', 'shadow-md');
                 } else {
-                    btnSubmit.classList.add('bg-brand-primary/20', 'text-brand-primary');
+                    btnSubmit.classList.add('bg-slate-200', 'text-slate-400', 'pointer-events-none');
                     btnSubmit.classList.remove('bg-brand-primary', 'text-white', 'shadow-md');
                 }
             });
         });
 
+        // Switcher Tab Login / Register
         window.switchMode = function(mode) {
             currentMode = mode;
             const groupNama = document.getElementById('groupNama');
@@ -266,7 +288,7 @@
             const btnText = document.getElementById('btnText');
             const switcherText = document.getElementById('switcherText');
             
-            // Elemen yang disembunyikan saat register
+            // Elemen yang di-toggle
             const altLogin = document.getElementById('altLoginLink');
             const divider = document.getElementById('dividerArea');
             const social = document.getElementById('socialArea');
@@ -274,7 +296,7 @@
             const pwDiv = document.getElementById('pwDivider');
 
             document.getElementById('authForm').reset();
-            btnSubmit.classList.add('bg-brand-primary/20', 'text-brand-primary');
+            btnSubmit.classList.add('bg-slate-200', 'text-slate-400', 'pointer-events-none');
             btnSubmit.classList.remove('bg-brand-primary', 'text-white', 'shadow-md');
 
             if (mode === 'login') {
@@ -282,7 +304,7 @@
                 btnText.innerText = "Log In";
                 switcherText.innerHTML = 'Belum punya akun? <button type="button" onclick="switchMode(\'register\')" class="text-blue-600 font-medium hover:underline ml-1">Daftar</button>';
                 
-                groupNama.classList.add('hidden', 'opacity-0');
+                groupNama.classList.add('hidden');
                 document.getElementById('inputNama').removeAttribute('required');
                 
                 altLogin.classList.remove('hidden');
@@ -296,10 +318,8 @@
                 switcherText.innerHTML = 'Sudah punya akun? <button type="button" onclick="switchMode(\'login\')" class="text-blue-600 font-medium hover:underline ml-1">Log In</button>';
                 
                 groupNama.classList.remove('hidden');
-                setTimeout(() => groupNama.classList.replace('opacity-0', 'opacity-100'), 50);
                 document.getElementById('inputNama').setAttribute('required', 'true');
                 
-                // Hide unnecessary elements for register
                 altLogin.classList.add('hidden');
                 divider.classList.add('hidden');
                 social.classList.add('hidden');
@@ -308,9 +328,9 @@
             }
         };
 
-        // Modal Bantuan Logic
-        window.bukaPusatBantuan = function() {
-            const modal = document.getElementById('modalBantuan');
+        // Modal Management Universal
+        window.bukaModal = function(id) {
+            const modal = document.getElementById(id);
             const box = modal.querySelector('div');
             modal.classList.remove('hidden');
             requestAnimationFrame(() => {
@@ -320,20 +340,25 @@
             });
         };
 
-        window.tutupPusatBantuan = function() {
-            const modal = document.getElementById('modalBantuan');
+        window.tutupModal = function(id) {
+            const modal = document.getElementById(id);
             const box = modal.querySelector('div');
             modal.classList.add('opacity-0');
             box.classList.remove('translate-y-0');
             box.classList.add('translate-y-full', 'sm:translate-y-10');
             setTimeout(() => modal.classList.add('hidden'), 300);
         };
+
+        // Info No Handphone
+        window.infoLoginHP = function() {
+            showToast("Login OTP No. HP dinonaktifkan sementara oleh Administrator Server.", true);
+        };
     </script>
 
     <!-- FIREBASE AUTH & FIRESTORE LOGIC -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // Konfigurasi Firebase Anda
@@ -356,7 +381,7 @@
             const iconClass = isError ? 'fa-exclamation-circle' : 'fa-check-circle text-emerald-400';
             
             toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-lg text-sm font-medium flex items-center gap-3 transform translate-y-[-20px] opacity-0 transition-all duration-300`;
-            toast.innerHTML = `<i class="fas ${iconClass} text-lg"></i> <span class="flex-1">${msg}</span>`;
+            toast.innerHTML = `<i class="fas ${iconClass} text-lg shrink-0"></i> <span class="flex-1">${msg}</span>`;
             
             container.appendChild(toast);
             requestAnimationFrame(() => toast.classList.remove('translate-y-[-20px]', 'opacity-0'));
@@ -366,58 +391,62 @@
             }, 3500);
         };
 
+        // Loading Toggle
         const setLoading = (isLoading) => {
             const btn = document.getElementById('btnSubmit');
             const btnTxt = document.getElementById('btnText');
             if(isLoading) {
-                btn.disabled = true;
-                btnTxt.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Memproses...';
+                btn.classList.add('pointer-events-none', 'opacity-80');
+                btnTxt.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i> Memproses...';
             } else {
-                btn.disabled = false;
+                btn.classList.remove('pointer-events-none', 'opacity-80');
                 btnTxt.innerHTML = currentMode === 'login' ? 'Log In' : 'Daftar Sekarang';
             }
         };
 
-        // LOGIN DENGAN GOOGLE
+        // ==========================================
+        // 1. LOGIN DENGAN GOOGLE (Aman & Handled)
+        // ==========================================
         window.loginDenganGoogle = async function() {
             try {
-                showToast("Menghubungkan ke Google...", false);
+                showToast("Membuka otentikasi Google...", false);
                 const result = await signInWithPopup(auth, googleProvider);
                 const user = result.user;
 
-                // Cek apakah user sudah terdaftar di Firestore
+                // Cek data di Firestore
                 const userDoc = await getDoc(doc(db, "users", user.uid));
-                
                 if (!userDoc.exists()) {
-                    // Jika belum ada, otomatis daftarkan sebagai 'Teacher'
                     await setDoc(doc(db, "users", user.uid), {
-                        namaLengkap: user.displayName || "Guru Argumentasi",
+                        namaLengkap: user.displayName || "Pengguna Baru",
                         email: user.email,
-                        role: "teacher", // Auto teacher karena masuk portal ini
+                        role: "teacher", // Auto teacher via portal ini
                         createdAt: new Date(),
                         authProvider: "google"
                     });
                 } else {
-                    const data = userDoc.data();
-                    if(data.status === 'suspended') {
-                        showToast("Akun Google ini ditangguhkan administrator.", true);
+                    if(userDoc.data().status === 'suspended') {
+                        showToast("Akses ditolak: Akun ditangguhkan.", true);
                         await auth.signOut();
                         return;
                     }
                 }
 
-                showToast("Log In Berhasil! Mengalihkan...", false);
+                showToast("Log In Berhasil! Meneruskan...", false);
                 setTimeout(() => window.location.href = "guru/index.html", 1000);
 
             } catch (error) {
-                console.error(error);
+                console.error("Google Auth Error:", error);
                 let msg = "Gagal login dengan Google.";
-                if(error.code === 'auth/popup-closed-by-user') msg = "Proses dibatalkan.";
+                if(error.code === 'auth/popup-closed-by-user') msg = "Proses otentikasi Google dibatalkan.";
+                // Edukasi jika domain belum authorized di firebase console
+                if(error.code === 'auth/unauthorized-domain') msg = "Sistem Error: Domain ini belum didaftarkan di Firebase Console.";
                 showToast(msg, true);
             }
         };
 
-        // FORM LOGIN & REGISTER BIASA
+        // ==========================================
+        // 2. FORM LOGIN & REGISTER (EMAIL/PASS)
+        // ==========================================
         window.handleAuth = async function(e) {
             e.preventDefault();
             const email = document.getElementById('inputEmail').value.trim();
@@ -425,7 +454,7 @@
 
             setLoading(true);
 
-            // MODE LOGIN
+            // --- MODE LOGIN ---
             if (currentMode === 'login') {
                 try {
                     const userCred = await signInWithEmailAndPassword(auth, email, password);
@@ -435,7 +464,6 @@
                     if (userDoc.exists()) {
                         const userData = userDoc.data();
                         
-                        // Cek Suspend
                         if (userData.status === 'suspended') {
                             showToast("Akses Ditolak! Akun ditangguhkan.", true);
                             await auth.signOut();
@@ -443,53 +471,55 @@
                             return;
                         }
 
-                        // Cek Verifikasi Email (Kecuali login google yg verified dari sana)
-                        if (!user.emailVerified && userData.authProvider !== 'google') {
-                            showToast("Email belum diverifikasi. Cek inbox Anda.", true);
-                            await auth.signOut();
+                        // BYPASS VERIFIKASI UNTUK ADMIN (@arg.ac.id)
+                        const isAdmin = userData.role === 'admin' || email.endsWith('@arg.ac.id');
+
+                        if (!isAdmin && !user.emailVerified && userData.authProvider !== 'google') {
+                            // Jika guru biasa & belum verified, tampilkan layar verifikasi
+                            pendingUser.email = email;
+                            tampilkanLayarVerifikasi();
+                            showToast("Email Anda belum diverifikasi.", true);
                             setLoading(false);
                             return;
                         }
 
                         showToast("Log In Berhasil!", false);
-                        
-                        // Redirect berdasarkan Role
                         if (userData.role === 'admin') setTimeout(() => window.location.href = "admin/index.html", 1000);
                         else setTimeout(() => window.location.href = "guru/index.html", 1000);
 
                     } else {
-                        showToast("Profil data akun tidak ditemukan.", true);
+                        showToast("Profil akun tidak ditemukan di server.", true);
                         await auth.signOut();
                         setLoading(false);
                     }
                 } catch (error) {
                     let errMsg = "Email atau password tidak sesuai.";
-                    if (error.code === 'auth/too-many-requests') errMsg = "Akses ditahan sementara, terlalu banyak percobaan.";
+                    if (error.code === 'auth/too-many-requests') errMsg = "Terlalu banyak percobaan gagal. Coba lagi nanti.";
                     showToast(errMsg, true);
                     setLoading(false);
                 }
                 return;
             }
 
-            // MODE REGISTER
+            // --- MODE REGISTER ---
             if (currentMode === 'register') {
                 const nama = document.getElementById('inputNama').value.trim();
 
-                // Admin Registration (@arg.ac.id)
+                // Registrasi Khusus Admin (Langsung Lolos Tanpa Verifikasi Email)
                 if (email.endsWith('@arg.ac.id')) {
                     try {
                         const userCred = await createUserWithEmailAndPassword(auth, email, password);
                         await setDoc(doc(db, "users", userCred.user.uid), {
                             namaLengkap: nama, email: email, role: "admin", createdAt: new Date()
                         });
-                        showToast("Akses Admin Diberikan!", false);
+                        showToast("Pendaftaran Admin Berhasil!", false);
                         setTimeout(() => window.location.href = "admin/index.html", 1000);
                     } catch (error) {
                         showToast(error.message, true);
                         setLoading(false);
                     }
                 } 
-                // Teacher Registration
+                // Registrasi Guru Biasa (WAJIB VERIFIKASI)
                 else {
                     try {
                         const userCred = await createUserWithEmailAndPassword(auth, email, password);
@@ -498,16 +528,12 @@
                         pendingUser.nama = nama; 
                         pendingUser.email = email;
 
-                        // Tampilkan UI Verifikasi
-                        document.getElementById('authForm').classList.add('hidden');
-                        document.getElementById('switcherText').parentElement.classList.add('hidden');
-                        document.getElementById('groupVerifikasi').classList.replace('hidden', 'flex');
-                        
-                        showToast("Email verifikasi telah dikirim!", false);
+                        tampilkanLayarVerifikasi();
+                        showToast("Link verifikasi berhasil dikirim ke email Anda!", false);
                     } catch (error) {
                         let errMsg = "Pendaftaran Gagal.";
-                        if(error.code === 'auth/email-already-in-use') errMsg = "Nomor/Email ini sudah terdaftar.";
-                        else if(error.code === 'auth/weak-password') errMsg = "Password terlalu lemah.";
+                        if(error.code === 'auth/email-already-in-use') errMsg = "Alamat email ini sudah terdaftar.";
+                        else if(error.code === 'auth/weak-password') errMsg = "Password terlalu lemah (min. 6 karakter).";
                         showToast(errMsg, true);
                         setLoading(false);
                     }
@@ -515,9 +541,62 @@
             }
         }
 
-        // Cek Status Verifikasi Email
+        // ==========================================
+        // 3. SISTEM VERIFIKASI EMAIL (Dengan Timer)
+        // ==========================================
+        function tampilkanLayarVerifikasi() {
+            document.getElementById('mainContentArea').classList.add('hidden');
+            document.getElementById('groupVerifikasi').classList.remove('hidden');
+            document.getElementById('groupVerifikasi').classList.add('flex');
+            document.getElementById('headerTitle').innerText = "Verifikasi Akses";
+        }
+
+        let resendTimer = 0;
+        let timerInterval;
+
+        window.kirimUlangVerifikasi = async function() {
+            if (resendTimer > 0) {
+                showToast(`Harap tunggu ${resendTimer} detik sebelum mengirim ulang.`, true);
+                return;
+            }
+
+            const btn = document.getElementById('btnKirimUlang');
+            const originalHTML = btn.innerHTML;
+            
+            try {
+                // Memastikan user masih terotentikasi di background untuk mengirim email
+                const user = auth.currentUser; 
+                if(user) {
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Mengirim...';
+                    await sendEmailVerification(user);
+                    showToast("Email verifikasi telah dikirim ulang!", false);
+                    
+                    // Set Cooldown 120 detik (2 Menit)
+                    resendTimer = 120;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                    
+                    timerInterval = setInterval(() => {
+                        resendTimer--;
+                        btn.innerHTML = `Kirim Ulang (${resendTimer}s)`;
+                        if(resendTimer <= 0) {
+                            clearInterval(timerInterval);
+                            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                            btn.innerHTML = originalHTML;
+                        }
+                    }, 1000);
+
+                } else {
+                    showToast("Sesi habis. Silakan login kembali.", true);
+                    setTimeout(() => location.reload(), 1500);
+                }
+            } catch (error) {
+                showToast("Gagal mengirim ulang email.", true);
+                btn.innerHTML = originalHTML;
+            }
+        }
+
         window.cekStatusVerifikasi = async function() {
-            const btn = document.getElementById('btnVerifikasi');
+            const btn = document.getElementById('btnCekVerifikasi');
             const originText = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengecek...';
             btn.disabled = true;
@@ -527,16 +606,17 @@
                 if (user) {
                     await user.reload(); 
                     if (user.emailVerified) {
+                        // Simpan data pendaftaran ke DB
                         await setDoc(doc(db, "users", user.uid), {
-                            namaLengkap: pendingUser.nama, 
-                            email: pendingUser.email, 
+                            namaLengkap: pendingUser.nama || "Guru Terverifikasi", 
+                            email: user.email, 
                             role: "teacher", 
                             createdAt: new Date()
                         });
-                        showToast("Verifikasi Sukses!", false);
+                        showToast("Verifikasi Sukses! Mengalihkan...", false);
                         setTimeout(() => window.location.href = "guru/index.html", 1000);
                     } else {
-                        showToast("Email belum diverifikasi.", true);
+                        showToast("Email belum diverifikasi. Cek kembali Inbox/Spam Anda.", true);
                         btn.disabled = false;
                         btn.innerHTML = originText;
                     }
@@ -547,6 +627,36 @@
                 showToast("Gangguan jaringan.", true);
                 btn.disabled = false;
                 btn.innerHTML = originText;
+            }
+        }
+
+        // ==========================================
+        // 4. LUPA PASSWORD (RESET FIREBASE)
+        // ==========================================
+        window.prosesLupaPassword = async function() {
+            const email = document.getElementById('inputResetEmail').value.trim();
+            if(!email) {
+                showToast("Harap masukkan alamat email Anda.", true);
+                return;
+            }
+
+            const btn = document.getElementById('btnResetPw');
+            const originText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Memproses...';
+            btn.disabled = true;
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                showToast("Tautan reset password berhasil dikirim ke email Anda!", false);
+                setTimeout(() => tutupModal('modalLupaPassword'), 2000);
+            } catch (error) {
+                let msg = "Gagal mengirim tautan reset.";
+                if(error.code === 'auth/user-not-found') msg = "Email tidak terdaftar di sistem kami.";
+                else if(error.code === 'auth/invalid-email') msg = "Format email tidak valid.";
+                showToast(msg, true);
+            } finally {
+                btn.innerHTML = originText;
+                btn.disabled = false;
             }
         }
     </script>
