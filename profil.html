@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Profil Saya - Argumentasi</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: { 
+                        brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } 
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        .modal-z { z-index: 99999 !important; }
+        
+        /* Hilangkan scrollbar */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .list-item-active:active { background-color: #f8fafc; }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen">
+
+    <!-- CONTAINER UTAMA (Mobile App Frame) -->
+    <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
+        
+        <!-- HEADER -->
+        <header class="bg-white flex items-center px-4 py-4 sticky top-0 z-20 shadow-sm">
+            <a href="index.html" class="text-slate-800 text-xl px-2 py-1 hover:text-brand-green transition-colors">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            <h1 class="text-lg font-bold text-slate-800 ml-4">Profil Siswa</h1>
+        </header>
+
+        <!-- MAIN KONTEN -->
+        <div class="flex-grow overflow-y-auto hide-scrollbar pb-10 pt-4 px-4">
+            
+            <!-- KARTU 1: DATA DIRI -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-6">
+                
+                <!-- Foto (Base64) -->
+                <div class="flex justify-between items-center p-4 border-b border-slate-100 cursor-pointer list-item-active transition-colors" onclick="document.getElementById('fileInput').click()">
+                    <span class="text-[14px] text-slate-700">Foto</span>
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                            <img id="profilImage" src="" alt="Foto" class="w-full h-full object-cover hidden">
+                            <i id="profilIcon" class="fas fa-user text-slate-400 text-sm"></i>
+                        </div>
+                        <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
+                    </div>
+                </div>
+                <!-- Hidden File Input untuk Base64 -->
+                <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="prosesFoto(event)">
+
+                <!-- Nama Lengkap -->
+                <div class="flex justify-between items-center p-4 border-b border-slate-100 cursor-pointer list-item-active transition-colors" onclick="bukaEditModal('nama')">
+                    <span class="text-[14px] text-slate-700">Nama Lengkap</span>
+                    <div class="flex items-center gap-3">
+                        <span id="textNama" class="text-[13px] text-slate-500 font-medium">Belum diatur</span>
+                        <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- No Handphone -->
+                <div class="flex justify-between items-center p-4 border-b border-slate-100 cursor-pointer list-item-active transition-colors" onclick="bukaEditModal('nohp')">
+                    <span class="text-[14px] text-slate-700">No. Handphone</span>
+                    <div class="flex items-center gap-3">
+                        <span id="textNohp" class="text-[13px] text-slate-500 font-medium">Belum diatur</span>
+                        <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- Tanggal Lahir -->
+                <div class="flex justify-between items-center p-4 cursor-pointer list-item-active transition-colors" onclick="bukaEditModal('tgllahir')">
+                    <span class="text-[14px] text-slate-700">Tanggal Lahir</span>
+                    <div class="flex items-center gap-3">
+                        <span id="textTglLahir" class="text-[13px] text-slate-500 font-medium">Belum diatur</span>
+                        <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KARTU 2: AKSI BAHAYA -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-red-50 transition-colors" onclick="konfirmasiHapusAkun()">
+                    <span class="text-[14px] text-red-500 font-medium">Ajukan Penghapusan Akun</span>
+                    <i class="fas fa-chevron-right text-red-300 text-xs"></i>
+                </div>
+            </div>
+
+            <p class="text-center text-[10px] text-slate-400 mt-6 px-4">
+                Data profil siswa disimpan secara aman di perangkat lokal Anda dan tidak dikirim ke server publik.
+            </p>
+
+        </div>
+    </div>
+
+    <!-- MODAL EDIT DATA -->
+    <div id="modalEdit" class="fixed inset-0 bg-black/60 hidden modal-z flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300 pb-0 sm:pb-10" onclick="if(event.target === this) tutupModal('modalEdit')">
+        <div class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 transform translate-y-full sm:translate-y-10 transition-transform duration-300 relative">
+            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-5 sm:hidden"></div>
+            
+            <h3 id="modalTitle" class="text-lg font-bold text-slate-800 mb-4">Edit Data</h3>
+            
+            <!-- Input Container (Disesuaikan via JS) -->
+            <div id="inputContainer">
+                <input type="text" id="editInput" class="w-full border-b-2 border-brand-green py-2 px-1 focus:outline-none text-slate-700 font-medium mb-6" placeholder="Ketik di sini...">
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="tutupModal('modalEdit')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition-all text-sm">Batal</button>
+                <button onclick="simpanEdit()" class="flex-1 bg-brand-green hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-95 text-sm">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container Toast -->
+    <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
+
+    <script>
+        // Variabel global untuk mengetahui field apa yang sedang diedit
+        let currentEditField = '';
+
+        // --- SISTEM PENYIMPANAN LOKAL (ANONIM) ---
+        const keys = {
+            nama: 'namaSiswaCendekia',
+            foto: 'fotoSiswaCendekia',
+            nohp: 'noHpSiswaCendekia',
+            tgllahir: 'tglLahirSiswaCendekia'
+        };
+
+        // Memuat Data saat halaman dibuka
+        document.addEventListener('DOMContentLoaded', loadProfileData);
+
+        function loadProfileData() {
+            // Load Nama
+            const nama = localStorage.getItem(keys.nama);
+            if(nama) document.getElementById('textNama').innerText = nama;
+
+            // Load No HP
+            const nohp = localStorage.getItem(keys.nohp);
+            if(nohp) document.getElementById('textNohp').innerText = nohp;
+
+            // Load Tgl Lahir
+            const tgl = localStorage.getItem(keys.tgllahir);
+            if(tgl) document.getElementById('textTglLahir').innerText = tgl;
+
+            // Load Foto Base64
+            const foto = localStorage.getItem(keys.foto);
+            if(foto) {
+                const img = document.getElementById('profilImage');
+                img.src = foto;
+                img.classList.remove('hidden');
+                document.getElementById('profilIcon').classList.add('hidden');
+            }
+        }
+
+        // --- UPLOAD FOTO KE BASE64 ---
+        function prosesFoto(event) {
+            const file = event.target.files[0];
+            if(file) {
+                // Batasi ukuran file (Misal max 2MB)
+                if(file.size > 2 * 1024 * 1024) {
+                    showToast("Ukuran foto terlalu besar. Maksimal 2MB.", true);
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const base64Data = e.target.result;
+                    
+                    // Simpan ke local storage
+                    localStorage.setItem(keys.foto, base64Data);
+                    
+                    // Update UI
+                    const img = document.getElementById('profilImage');
+                    img.src = base64Data;
+                    img.classList.remove('hidden');
+                    document.getElementById('profilIcon').classList.add('hidden');
+                    
+                    showToast("Foto profil berhasil diperbarui.");
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // --- SISTEM EDIT MODAL ---
+        function bukaEditModal(field) {
+            currentEditField = field;
+            const input = document.getElementById('editInput');
+            const title = document.getElementById('modalTitle');
+            
+            // Konfigurasi Modal berdasarkan Field
+            if(field === 'nama') {
+                title.innerText = "Ubah Nama Lengkap";
+                input.type = "text";
+                input.placeholder = "Nama Lengkap Anda";
+                input.value = localStorage.getItem(keys.nama) || '';
+            } else if(field === 'nohp') {
+                title.innerText = "Ubah No. Handphone";
+                input.type = "tel";
+                input.placeholder = "08xxxxxxxxxx";
+                input.value = localStorage.getItem(keys.nohp) || '';
+            } else if(field === 'tgllahir') {
+                title.innerText = "Ubah Tanggal Lahir";
+                input.type = "date";
+                input.value = localStorage.getItem(keys.tgllahir) || '';
+            }
+
+            bukaModal('modalEdit');
+            setTimeout(() => input.focus(), 100);
+        }
+
+        function simpanEdit() {
+            const val = document.getElementById('editInput').value.trim();
+            
+            if(currentEditField === 'nama') {
+                if(val === '') { showToast("Nama tidak boleh kosong", true); return; }
+                localStorage.setItem(keys.nama, val);
+                document.getElementById('textNama').innerText = val;
+            } 
+            else if(currentEditField === 'nohp') {
+                localStorage.setItem(keys.nohp, val);
+                document.getElementById('textNohp').innerText = val || 'Belum diatur';
+            } 
+            else if(currentEditField === 'tgllahir') {
+                localStorage.setItem(keys.tgllahir, val);
+                document.getElementById('textTglLahir').innerText = val || 'Belum diatur';
+            }
+
+            showToast("Data berhasil disimpan.");
+            tutupModal('modalEdit');
+        }
+
+        // --- SISTEM HAPUS AKUN ANONIM ---
+        function konfirmasiHapusAkun() {
+            const konfirmasi = confirm("PERINGATAN!\n\nApakah Anda yakin ingin menghapus akun? Semua data profil, skor XP, dan riwayat belajar di perangkat ini akan dihapus permanen.");
+            
+            if(konfirmasi) {
+                // Hapus spesifik key siswa agar tidak mengganggu data lain (jika ada)
+                localStorage.removeItem(keys.nama);
+                localStorage.removeItem(keys.foto);
+                localStorage.removeItem(keys.nohp);
+                localStorage.removeItem(keys.tgllahir);
+                localStorage.removeItem('latihanPointsCendekia'); // Menghapus XP Latihan
+                localStorage.removeItem('kreasiPointsArg'); // Menghapus XP Kreasi
+                localStorage.removeItem('kelasPointsArg'); // Menghapus XP Kelas
+
+                // Bawa kembali ke index
+                showToast("Akun berhasil dihapus. Mengalihkan...");
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 1000);
+            }
+        }
+
+        // --- UTILITY MODAL & TOAST ---
+        function bukaModal(id) {
+            const modal = document.getElementById(id);
+            const box = modal.querySelector('div');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                box.classList.remove('translate-y-full', 'sm:translate-y-10');
+                box.classList.add('translate-y-0');
+            });
+        }
+
+        function tutupModal(id) {
+            const modal = document.getElementById(id);
+            const box = modal.querySelector('div');
+            modal.classList.add('opacity-0');
+            box.classList.remove('translate-y-0');
+            box.classList.add('translate-y-full', 'sm:translate-y-10');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function showToast(msg, isError = false) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bgClass = isError ? 'bg-red-500' : 'bg-slate-800';
+            const iconClass = isError ? 'fa-exclamation-circle' : 'fa-check-circle text-emerald-400';
+            
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-lg text-sm font-medium flex items-center gap-3 transform translate-y-[-20px] opacity-0 transition-all duration-300`;
+            toast.innerHTML = `<i class="fas ${iconClass} text-lg"></i> <span>${msg}</span>`;
+            
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-y-[-20px]', 'opacity-0'));
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-20px]', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
