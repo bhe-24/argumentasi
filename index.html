@@ -50,9 +50,9 @@
         <header class="bg-brand-green pt-4 pb-12 px-4 relative z-10 rounded-b-[2rem]">
             <!-- Top Bar: Logo, Search, Bantuan -->
             <div class="flex items-center gap-3 mb-2">
-                <!-- Logo -->
-                <a href="index.html" class="shrink-0">
-                    <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-8 object-contain filter brightness-0 invert">
+                <!-- Logo Original -->
+                <a href="index.html" class="shrink-0 bg-white/90 p-1 rounded-lg shadow-sm">
+                    <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-6 object-contain">
                 </a>
                 
                 <!-- Search Bar -->
@@ -61,11 +61,11 @@
                     <input type="text" id="searchInput" placeholder="Cari materi, artikel..." class="w-full bg-transparent outline-none text-white text-xs px-2 placeholder-white/70" onkeypress="if(event.key === 'Enter') cariMateri()">
                 </div>
                 
-                <!-- Tombol Bantuan -->
-                <button onclick="bukaModal('modalPanduan')" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white relative">
+                <!-- Tombol Bantuan (Redirect ke panduan.html) -->
+                <a href="panduan.html" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white relative hover:bg-white/20 transition-colors">
                     <i class="far fa-question-circle text-2xl"></i>
                     <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-brand-green"></span>
-                </button>
+                </a>
             </div>
         </header>
 
@@ -109,11 +109,11 @@
         <!-- MAIN KONTEN (Scrollable) -->
         <div class="flex-grow overflow-y-auto hide-scrollbar pb-10">
             
-            <!-- MENU GRID "Pasti Gratis" -->
+            <!-- MENU GRID "Belajar Mandiri" -->
             <div class="px-4 mt-6">
                 <div class="text-center mb-3">
-                    <span class="bg-amber-100 text-amber-700 text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider">
-                        Pasti Gratis
+                    <span class="bg-brand-light text-brand-dark text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider">
+                        Belajar Mandiri
                     </span>
                 </div>
                 
@@ -164,6 +164,13 @@
                             <i class="fas fa-user-shield text-xl text-slate-700"></i>
                         </div>
                         <span class="text-[10px] text-slate-600 font-medium text-center leading-tight">Portal Guru</span>
+                    </a>
+                </div>
+
+                <!-- Tombol Profil -->
+                <div class="mt-4 px-1">
+                    <a href="profil.html" class="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm text-xs active:scale-[0.98]">
+                        <i class="fas fa-user-circle text-brand-green text-sm"></i> Buka Halaman Profil Saya
                     </a>
                 </div>
             </div>
@@ -220,7 +227,6 @@
 
         <!-- FOOTER SEDERHANA -->
         <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0">
-            <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-5 object-contain mx-auto mb-2 grayscale opacity-60">
             <p class="text-[10px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi. Hak Cipta Dilindungi.</p>
         </footer>
 
@@ -240,37 +246,6 @@
         </div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- MODAL: PANDUAN BANTUAN -->
-    <!-- ============================================== -->
-    <div id="modalPanduan" class="fixed inset-0 bg-black/60 hidden modal-z flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300 pb-0 sm:pb-10" onclick="if(event.target === this) tutupModal('modalPanduan')">
-        <div class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 transform translate-y-full sm:translate-y-10 transition-transform duration-300 relative">
-            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-5 sm:hidden"></div>
-            <button onclick="tutupModal('modalPanduan')" class="absolute top-4 right-4 text-slate-400 hover:text-red-500"><i class="fas fa-times text-lg"></i></button>
-            
-            <h3 class="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="far fa-question-circle text-brand-green"></i> Pusat Panduan</h3>
-            <p class="text-xs text-slate-500 mb-5">Pilih panduan penggunaan sistem sesuai peran Anda.</p>
-            
-            <div class="space-y-3">
-                <button onclick="alert('Panduan Siswa:\n1. Jelajahi menu Pasti Gratis.\n2. Klik bahan ajar untuk membaca.\n3. Masuk ke Ruang Latihan untuk menyelesaikan Misi.')" class="w-full text-left p-4 rounded-xl border border-slate-200 hover:border-brand-green bg-slate-50 flex items-center justify-between group">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center"><i class="fas fa-gamepad"></i></div>
-                        <div><p class="font-bold text-slate-700 text-sm">Panduan Siswa</p><p class="text-[10px] text-slate-500">Cara belajar seru.</p></div>
-                    </div>
-                    <i class="fas fa-chevron-right text-slate-300 group-hover:text-brand-green"></i>
-                </button>
-
-                <button onclick="alert('Panduan Guru:\n1. Buka Portal Guru (Menu Login).\n2. Buat Ruang Kelas & Generate Kode.\n3. Upload Materi & Artikel.\n4. Pantau Evaluasi Siswa.')" class="w-full text-left p-4 rounded-xl border border-slate-200 hover:border-brand-green bg-slate-50 flex items-center justify-between group">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center"><i class="fas fa-chalkboard-teacher"></i></div>
-                        <div><p class="font-bold text-slate-700 text-sm">Panduan Guru</p><p class="text-[10px] text-slate-500">SOP Manajemen Kelas.</p></div>
-                    </div>
-                    <i class="fas fa-chevron-right text-slate-300 group-hover:text-brand-green"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- SCRIPT UI SEDERHANA -->
     <script>
         // Tanggal & Profil Init
@@ -281,7 +256,7 @@
             if(nama) document.getElementById('displayName').innerText = nama;
         });
 
-        // Fitur Cari Sementara
+        // Fitur Cari
         function cariMateri() {
             const query = document.getElementById('searchInput').value;
             if(query.trim()) window.location.href = `materi.html?q=${encodeURIComponent(query)}`;
@@ -296,9 +271,6 @@
                 modal.classList.remove('opacity-0');
                 if(box.classList.contains('scale-95')) {
                     box.classList.replace('scale-95', 'scale-100'); // Modal Tengah
-                } else {
-                    box.classList.remove('translate-y-full', 'sm:translate-y-10');
-                    box.classList.add('translate-y-0'); // Modal Bawah (Mobile)
                 }
             });
             if(id === 'modalNama') {
@@ -313,9 +285,6 @@
             modal.classList.add('opacity-0');
             if(box.classList.contains('scale-100')) {
                 box.classList.replace('scale-100', 'scale-95');
-            } else {
-                box.classList.remove('translate-y-0');
-                box.classList.add('translate-y-full', 'sm:translate-y-10');
             }
             setTimeout(() => modal.classList.add('hidden'), 300);
         };
@@ -371,7 +340,7 @@
                 } else {
                     let htmlArg = "";
                     snapArg.forEach(doc => {
-                        htmlArg += renderHorizontalCard({ id: doc.id, ...doc.data() }, "bg-red-50 text-red-600", "Argumentasi");
+                        htmlArg += renderHorizontalCard({ id: doc.id, ...doc.data() }, "bg-emerald-50 text-emerald-600", "Argumentasi");
                     });
                     listTeks.innerHTML = htmlArg;
                 }
