@@ -34,7 +34,7 @@
         .content-body p { margin-bottom: 1.5em; color: #334155; }
         .content-body h3 { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 1.25rem; margin-top: 2em; margin-bottom: 1em; color: #0f172a; }
         .content-body ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1.5em; }
-        .content-body blockquote { border-left: 4px solid #fbbf24; padding-left: 1rem; font-style: italic; color: #475569; background: #fef3c7; padding: 1rem; border-radius: 0 0.5rem 0.5rem 0; margin-bottom: 1.5em; }
+        .content-body blockquote { border-left: 4px solid #10b981; padding-left: 1rem; font-style: italic; color: #475569; background: #ecfdf5; padding: 1rem; border-radius: 0 0.5rem 0.5rem 0; margin-bottom: 1.5em; }
         
         /* Animasi */
         .fade-in { animation: fadeIn 0.5s ease-in forwards; }
@@ -79,7 +79,7 @@
         </div>
         <h2 class="text-2xl font-bold text-slate-800 mb-2">Materi Tidak Ditemukan</h2>
         <p class="text-slate-500 max-w-md mb-6" id="errorMsg">Materi yang Anda cari tidak ada dalam sistem atau telah dihapus.</p>
-        <a href="materi.html" class="bg-slate-900 text-white px-6 py-3 rounded-full font-bold hover:bg-slate-800 transition-colors"><i class="fas fa-search mr-2"></i> Cari Materi Lain</a>
+        <button onclick="history.back()" class="bg-slate-900 text-white px-6 py-3 rounded-full font-bold hover:bg-slate-800 transition-colors"><i class="fas fa-arrow-left mr-2"></i> Kembali</button>
     </div>
 
     <!-- STATE: KONTEN ARTIKEL -->
@@ -91,9 +91,9 @@
             <h1 id="judulMateri" class="text-3xl md:text-5xl font-bold font-reading text-slate-900 mb-6 leading-tight">Judul Materi</h1>
             
             <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-slate-500 uppercase tracking-wide">
-                <span class="flex items-center gap-1.5"><i class="far fa-user text-amber-500"></i> <span id="penulisMateri">Tim Redaksi</span></span>
-                <span class="flex items-center gap-1.5"><i class="far fa-calendar-alt text-amber-500"></i> <span id="tanggalMateri">Tanggal</span></span>
-                <span class="flex items-center gap-1.5"><i class="far fa-clock text-amber-500"></i> <span id="waktuBacaMateri">0 Menit Baca</span></span>
+                <span class="flex items-center gap-1.5"><i class="far fa-user text-emerald-500"></i> <span id="penulisMateri">Tim Redaksi</span></span>
+                <span class="flex items-center gap-1.5"><i class="far fa-calendar-alt text-emerald-500"></i> <span id="tanggalMateri">Tanggal</span></span>
+                <span class="flex items-center gap-1.5"><i class="far fa-eye text-emerald-500"></i> <span id="viewCountMateri">Dilihat: -</span></span>
             </div>
         </div>
 
@@ -108,9 +108,22 @@
         </article>
 
         <!-- ========================================== -->
+        <!-- AKSI: SHARE KE WHATSAPP -->
+        <!-- ========================================== -->
+        <div class="mt-12 pt-8 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+                <h3 class="font-bold text-slate-800 text-lg">Bahan Bacaan Menarik?</h3>
+                <p class="text-xs text-slate-500">Bagikan ilmu ini ke teman kelas atau grup belajarmu.</p>
+            </div>
+            <button onclick="bagikanKeWhatsApp()" class="w-full md:w-auto bg-[#25D366] hover:bg-[#1ebd5a] text-white font-bold px-8 py-3.5 rounded-full transition-all active:scale-95 shadow-[0_4px_15px_rgba(37,211,102,0.3)] flex items-center justify-center gap-2">
+                <i class="fab fa-whatsapp text-xl"></i> Bagikan ke WhatsApp
+            </button>
+        </div>
+
+        <!-- ========================================== -->
         <!-- FITUR: DAPATKAN RANGKUMAN (SIMULASI API) -->
         <!-- ========================================== -->
-        <div class="mt-16 bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-1 shadow-xl relative overflow-hidden">
+        <div class="mt-8 bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-1 shadow-xl relative overflow-hidden">
             <div class="absolute inset-0 texture-dots opacity-20 pointer-events-none"></div>
             <div class="bg-white/5 backdrop-blur-md rounded-[1.4rem] p-6 md:p-8 relative z-10">
                 
@@ -121,8 +134,8 @@
                     </div>
                     <h3 class="font-display font-bold text-2xl text-white mb-2">Butuh Intisari Teks Ini?</h3>
                     <p class="text-slate-300 text-sm mb-6 max-w-md mx-auto">Gunakan Sistem Analisis Bahasa untuk merangkum otomatis isi materi dan membedah makna argumen di dalamnya.</p>
-                    <button onclick="prosesResume()" class="bg-emerald-500 hover:bg-emerald-400 text-white font-bold px-8 py-3.5 rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.4)]">
-                        <i class="fas fa-magic mr-2"></i> Ekstrak Rangkuman
+                    <button onclick="prosesResume()" class="bg-emerald-500 hover:bg-emerald-400 text-white font-bold px-8 py-3.5 rounded-full transition-all active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center mx-auto gap-2">
+                        <i class="fas fa-magic"></i> Ekstrak Rangkuman
                     </button>
                 </div>
 
@@ -165,10 +178,10 @@
         &copy; 2026 Platform Argumentasi - Dibangun untuk Generasi Kritis
     </footer>
 
-    <!-- SCRIPT UI -->
+    <!-- SCRIPT UI & LOGIKA WHATSAPP -->
     <script>
         // Logika Ukuran Font
-        let currentSize = 1.125; // 1.125rem = 18px (text-lg)
+        let currentSize = 1.125; // 1.125rem = 18px
         function changeFontSize(step) {
             currentSize += (step * 0.125);
             if(currentSize < 0.9) currentSize = 0.9;
@@ -184,18 +197,33 @@
             document.getElementById("readProgress").style.width = scrolled + "%";
         });
 
-        // Fomat Tanggal
+        // Format Tanggal
         function formatDate(timestamp) {
             if (!timestamp) return "Baru saja";
             const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
             return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
         }
+
+        // FUNGSI SHARE WHATSAPP
+        window.bagikanKeWhatsApp = function() {
+            if(!currentArticleData) return;
+            
+            const judul = currentArticleData.judul || "Materi Pembelajaran";
+            const urlSaatIni = window.location.href;
+            
+            // Format Pesan (Gunakan %0A untuk enter)
+            const pesan = `Halo! Mari baca materi menarik ini di Platform Argumentasi:%0A%0A*${judul}*%0A%0ABaca selengkapnya di sini:%0A${urlSaatIni}`;
+            
+            // Memaksa buka Aplikasi WhatsApp via wa.me API
+            const whatsappLink = `https://wa.me/?text=${pesan}`;
+            window.open(whatsappLink, '_blank');
+        };
     </script>
 
-    <!-- SCRIPT FIREBASE & API SIMULASI -->
+    <!-- SCRIPT FIREBASE & SISTEM PENDETEKSI VIEWS (REAL-TIME) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
@@ -205,8 +233,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Variabel global untuk menyimpan data sementara agar bisa di-resume
-        let currentArticleData = null;
+        // Variabel global
+        window.currentArticleData = null;
 
         async function fetchMateri() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -229,32 +257,42 @@
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    currentArticleData = data; // Simpan untuk fungsi resume
+                    window.currentArticleData = data; 
 
-                    // Set Metadata UI
+                    // 1. SISTEM OTOMATIS TAMBAH VIEWS
+                    // Memastikan kita tidak crash jika mencoba update views
+                    try {
+                        await updateDoc(docRef, {
+                            views: increment(1) // Fitur asli Firebase untuk menambah angka secara akurat
+                        });
+                        // Update angka view di UI (Data lama + 1)
+                        const updatedViews = (data.views || 0) + 1;
+                        document.getElementById('viewCountMateri').innerText = `Dilihat: ${updatedViews}x`;
+                    } catch (e) {
+                        console.log("Sistem view counter tertunda: ", e);
+                        document.getElementById('viewCountMateri').innerText = `Dilihat: ${data.views || 1}x`;
+                    }
+
+                    // 2. TAMPILKAN METADATA UI
                     document.getElementById('labelKategori').innerText = data.kategori || "Materi Pembelajaran";
                     document.getElementById('judulMateri').innerText = data.judul || "Tanpa Judul";
                     document.getElementById('penulisMateri').innerText = data.penulis || "Tim Penyusun";
                     document.getElementById('tanggalMateri').innerText = formatDate(data.createdAt);
-                    document.getElementById('waktuBacaMateri').innerText = data.waktuBaca || "5 Menit Baca";
                     
                     document.getElementById('coverMateri').src = data.coverImage || data.gambarBase64 || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800";
 
-                    // Format Konten HTML secara aman (jika format plain text, jadikan paragraf)
-                    let contentHtml = data.konten || data.isi || "<p>Materi belum diisi.</p>";
-                    // Simple check jika konten tidak memiliki tag HTML sama sekali
+                    // 3. INJEKSI KONTEN AMAN
+                    let contentHtml = data.konten || data.isi || "<p>Materi belum diisi oleh penulis.</p>";
                     if (!contentHtml.includes('<p>') && !contentHtml.includes('<br>')) {
                         contentHtml = contentHtml.split('\n').map(p => p.trim() ? `<p>${p}</p>` : '').join('');
                     }
-                    
                     document.getElementById('readingContent').innerHTML = contentHtml;
 
-                    // Tampilkan Konten
+                    // 4. MUNCULKAN UI UTAMA
                     stateLoading.classList.add('hidden');
                     stateContent.classList.remove('hidden');
-                    stateContent.classList.add('flex', 'flex-col'); // maintain layout
+                    stateContent.classList.add('flex', 'flex-col');
                 } else {
-                    // Dokumen tidak ada
                     stateLoading.classList.add('hidden');
                     stateError.classList.remove('hidden');
                 }
@@ -266,7 +304,6 @@
             }
         }
 
-        // Jalankan fetch saat halaman siap
         document.addEventListener('DOMContentLoaded', fetchMateri);
 
         // =========================================================
@@ -278,32 +315,27 @@
             const loadBox = document.getElementById('resumeLoading');
             const resultBox = document.getElementById('resumeResult');
 
-            // 1. Tampilkan Loading
             promptBox.classList.add('hidden');
             loadBox.classList.remove('hidden');
 
-            // 2. Simulasi Request ke API Server (Jeda 2.5 Detik)
             setTimeout(() => {
                 loadBox.classList.add('hidden');
                 resultBox.classList.remove('hidden');
 
-                // Generate Rangkuman Otomatis (Simulasi cerdas berdasarkan judul/kategori)
-                const judul = currentArticleData ? currentArticleData.judul : "Materi Pembelajaran";
-                const kategori = currentArticleData ? currentArticleData.kategori : "argumentasi";
+                const judul = window.currentArticleData ? window.currentArticleData.judul : "Materi Pembelajaran";
+                const kategori = window.currentArticleData ? window.currentArticleData.kategori : "argumentasi";
                 
-                // Menulis ke DOM
                 const ulPoints = document.getElementById('resumePoints');
                 ulPoints.innerHTML = `
-                    <li>Teks ini secara khusus membahas mengenai <b>${judul}</b>.</li>
-                    <li>Menyajikan data dan fakta objektif untuk mendukung klaim utama penulis.</li>
-                    <li>Sistematika struktur tulisan sudah sesuai dengan kaidah teks ${kategori}.</li>
+                    <li>Teks ini secara khusus membahas mengenai isu utama: <b>${judul}</b>.</li>
+                    <li>Menyajikan data dan fakta objektif untuk mendukung klaim yang disampaikan.</li>
+                    <li>Sistematika tulisan diproses dan dideteksi sesuai dengan kaidah teks ${kategori}.</li>
                 `;
 
                 document.getElementById('resumeMakna').innerHTML = `
-                    Inti dari argumen yang dibangun penulis adalah upaya untuk memengaruhi dan meyakinkan pembaca terkait isu <b>${judul}</b>. Penulis memposisikan teks ini bukan sekadar informasi, melainkan sebuah dorongan moral atau akademis agar pembaca menyetujui landasan berpikir yang dipaparkan.
+                    Inti dari argumen yang dibangun penulis adalah upaya untuk memengaruhi dan meyakinkan pembaca terkait <b>${judul}</b>. Penulis memposisikan teks ini sebagai dorongan logis agar pembaca menyetujui landasan berpikir yang dipaparkan, dengan menyertakan solusi/sanggahan di bagian akhirnya.
                 `;
                 
-                // Scroll halus ke arah hasil
                 resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
             }, 2500);
