@@ -30,7 +30,39 @@
     </script>
 
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #e2e8f0; /* Warna bg luar frame */
+            -webkit-tap-highlight-color: transparent; 
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Frame Mobile */
+        .mobile-frame {
+            width: 100%;
+            max-width: 448px; /* max-w-md */
+            height: 100vh;
+            background-color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden; /* Mencegah scroll di luar container */
+        }
+        
+        @media (min-width: 640px) {
+            .mobile-frame {
+                height: 90vh;
+                border-radius: 1.5rem; /* 24px */
+                border: 8px solid #334155; /* Simulasi bezel HP */
+            }
+        }
+
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
@@ -38,51 +70,46 @@
         .texture-dots { background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px); background-size: 16px 16px; }
         
         .modal-z { z-index: 99999 !important; }
-
-        /* Menghilangkan margin bawaan qrcode.js agar rapi di tengah */
         #qrCanvasContainer img { margin: auto; border-radius: 8px; }
+        
+        /* Skeleton Animation */
+        .skeleton-pulse { animation: skeleton-loading 1.2s ease-in-out infinite alternate; }
+        @keyframes skeleton-loading { 0% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
-<body class="flex justify-center h-screen bg-slate-900 sm:bg-slate-200">
+<body>
 
-    <!-- CONTAINER UTAMA -->
-    <div class="w-full max-w-md bg-slate-50 relative h-screen shadow-2xl flex flex-col overflow-hidden sm:border-x border-slate-300 fade-in mx-auto">
+    <!-- CONTAINER UTAMA (MOBILE FRAME) -->
+    <div class="mobile-frame fade-in">
         
-        <!-- SECURITY SHIELD -->
-        <div id="authGuard" class="absolute inset-0 bg-slate-900 z-[10000] flex flex-col items-center justify-center text-white transition-opacity duration-500">
-            <i class="fas fa-shield-alt text-6xl text-amber-500 mb-6 animate-pulse"></i>
-            <h2 class="text-xl font-bold tracking-widest uppercase">Memverifikasi</h2>
-            <p class="text-slate-400 mt-2 text-xs">Mengecek otoritas guru...</p>
-        </div>
-
-        <!-- HEADER STICKY (Diperbesar sesuai permintaan) -->
-        <header class="bg-white absolute top-0 left-0 right-0 z-50 px-4 py-2 flex items-center justify-between shadow-sm h-[75px] border-b border-slate-200">
+        <!-- HEADER STICKY -->
+        <header class="flex-shrink-0 bg-white/90 backdrop-blur-md px-4 py-2 flex items-center justify-between shadow-sm border-b border-slate-200 z-50">
             <!-- Kiri: Tombol Profil -->
             <a href="profil.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-brand-green transition-colors active:scale-95">
                 <i class="fas fa-user-circle text-[26px]"></i>
                 <span class="text-[10px] font-bold mt-1">Profil</span>
             </a>
             
-            <!-- Tengah: Logo (Diperbesar) -->
+            <!-- Tengah: Logo -->
             <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-9 object-contain absolute left-1/2 transform -translate-x-1/2">
             
-            <!-- Kanan: Tombol Keluar (Kapsul + Teks) -->
-            <button onclick="logoutGuru()" class="flex items-center gap-2 px-3 py-2 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-colors active:scale-95 shadow-sm border border-red-100" title="Keluar">
+            <!-- Kanan: Tombol Keluar -->
+            <button onclick="konfirmasiLogout()" class="flex items-center gap-2 px-3 py-2 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-colors active:scale-95 shadow-sm border border-red-100" title="Keluar">
                 <i class="fas fa-sign-out-alt text-sm"></i>
                 <span class="text-xs font-bold hidden xs:block">Keluar</span>
             </button>
         </header>
 
-        <!-- KONTEN UTAMA (Area Scroll) -->
-        <div class="flex-grow overflow-y-auto hide-scrollbar pt-[75px] pb-6 relative z-20">
+        <!-- KONTEN UTAMA (Area yang bisa discroll) -->
+        <main class="flex-grow overflow-y-auto hide-scrollbar pb-6 relative z-20">
             
             <!-- HEADER WELCOME -->
-            <div class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 px-5 pt-6 pb-8 relative overflow-hidden rounded-b-[2rem] shadow-md">
+            <div class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 px-5 pt-6 pb-8 relative overflow-hidden rounded-b-[2rem] shadow-md shrink-0">
                 <div class="absolute inset-0 texture-dots pointer-events-none opacity-20"></div>
-                <div class="relative z-10">
+                
+                <!-- KONTEN ASLI (Awalnya Sembunyi Menunggu Auth) -->
+                <div class="relative z-10 hidden" id="realWelcomeContent">
                     <p class="text-[10px] text-blue-300 font-bold uppercase tracking-widest mb-1"><i class="fas fa-check-circle text-emerald-400 mr-1"></i> Otoritas Terverifikasi</p>
-                    
-                    <!-- Area Nama Lengkap Responsif -->
                     <h2 class="text-white mb-6">Halo, <br>
                         <span id="welcomeName" class="text-2xl font-bold text-amber-400">Guru</span>
                     </h2>
@@ -100,13 +127,32 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- SKELETON WELCOME (Tampil saat auth loading) -->
+                <div class="relative z-10 block" id="skeletonWelcomeContent">
+                    <div class="w-24 h-3 bg-white/20 rounded mb-2 skeleton-pulse"></div>
+                    <div class="w-32 h-6 bg-white/20 rounded mb-1 skeleton-pulse"></div>
+                    <div class="w-48 h-8 bg-white/30 rounded mb-6 skeleton-pulse"></div>
+                    
+                    <div class="flex items-center gap-3 bg-white/5 p-4 rounded-2xl border border-white/5">
+                        <div class="flex-1 flex flex-col items-center">
+                            <div class="w-8 h-8 bg-white/20 rounded skeleton-pulse mb-2"></div>
+                            <div class="w-16 h-2 bg-white/20 rounded skeleton-pulse"></div>
+                        </div>
+                        <div class="w-px h-10 bg-white/10"></div>
+                        <div class="flex-1 flex flex-col items-center">
+                            <div class="w-8 h-8 bg-white/10 rounded skeleton-pulse mb-2"></div>
+                            <div class="w-16 h-2 bg-white/10 rounded skeleton-pulse"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
+            <!-- AREA MENU & KELAS -->
             <div class="px-4 mt-6">
                 
                 <!-- MAIN MENU -->
                 <div class="grid grid-cols-2 gap-3 mb-8">
-                    <!-- Buat Kelas -->
                     <a href="buat-kelas.html" class="col-span-2 group bg-emerald-600 rounded-2xl p-4 shadow-sm border border-emerald-500 hover:bg-emerald-700 hover:shadow-md transition-all flex items-center justify-between active:scale-95 text-white overflow-hidden relative">
                         <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-bl-full -mr-4 -mt-4 pointer-events-none"></div>
                         <div class="flex items-center gap-4 relative z-10">
@@ -121,7 +167,6 @@
                         <i class="fas fa-chevron-right text-emerald-300 relative z-10 mr-2"></i>
                     </a>
 
-                    <!-- Terbitkan Materi -->
                     <a href="upload-materi.html" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 hover:border-amber-400 transition-all text-center active:scale-95 flex flex-col items-center gap-2">
                         <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-lg">
                             <i class="fas fa-book-open"></i>
@@ -129,7 +174,6 @@
                         <h3 class="font-bold text-slate-800 text-[11px] leading-tight mt-1">Upload Materi <br>& Handout</h3>
                     </a>
 
-                    <!-- Terbitkan Artikel -->
                     <a href="upload-artikel.html" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 hover:border-blue-400 transition-all text-center active:scale-95 flex flex-col items-center gap-2">
                         <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-lg">
                             <i class="fas fa-newspaper"></i>
@@ -149,8 +193,16 @@
                     </div>
                     
                     <div id="activeClassesGrid" class="flex flex-col gap-3">
-                        <div class="p-5 text-center text-slate-400 bg-white rounded-2xl border border-slate-200 animate-pulse">
-                            Memuat daftar kelas...
+                        <!-- Skeleton Kelas (Loading State) -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div class="bg-slate-200 h-12 w-full skeleton-pulse"></div>
+                            <div class="p-4 flex flex-col gap-3">
+                                <div class="bg-slate-100 h-12 rounded-lg skeleton-pulse"></div>
+                                <div class="flex gap-2">
+                                    <div class="w-16 h-8 bg-slate-200 rounded-lg skeleton-pulse"></div>
+                                    <div class="flex-1 h-8 bg-slate-200 rounded-lg skeleton-pulse"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -176,9 +228,8 @@
                     </div>
                     
                     <div id="archivedClassesGrid" class="flex flex-col gap-3">
-                        <div class="p-5 text-center text-slate-400 bg-slate-50 rounded-2xl border border-slate-200 animate-pulse">
-                            Memuat riwayat arsip...
-                        </div>
+                        <!-- Skeleton Arsip -->
+                        <div class="bg-slate-100 h-16 rounded-2xl skeleton-pulse border border-slate-200"></div>
                     </div>
 
                     <div id="archiveEmptyState" class="hidden bg-slate-50 p-6 rounded-3xl border border-slate-200 border-dashed text-center">
@@ -187,24 +238,47 @@
                 </div>
 
             </div>
-        </div>
+        </main>
 
         <!-- FOOTER -->
-        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 z-30">
+        <footer class="flex-shrink-0 bg-white border-t border-slate-200 py-3 text-center z-30">
             <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Portal Manajemen Guru</p>
         </footer>
 
     </div>
 
     <!-- Container Toast -->
-    <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 w-11/12 max-w-md pointer-events-none"></div>
+    <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
+
+    <!-- ============================================================== -->
+    <!-- MODAL CUSTOM UNTUK KONFIRMASI -->
+    <!-- ============================================================== -->
+    <div id="modalConfirm" class="fixed inset-0 bg-black/60 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300 backdrop-blur-sm p-4" onclick="if(event.target === this) tutupModal('modalConfirm')">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 transform scale-95 transition-transform duration-300 relative flex flex-col items-center text-center shadow-2xl">
+            <!-- Ikon Dinamis -->
+            <div id="confirmIcon" class="w-16 h-16 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-3xl mb-4">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            
+            <h3 class="text-lg font-bold text-slate-800 mb-2" id="confirmTitle">Konfirmasi</h3>
+            <p class="text-sm text-slate-500 mb-6" id="confirmMessage">Apakah Anda yakin ingin melakukan tindakan ini?</p>
+            
+            <div class="flex gap-3 w-full">
+                <button onclick="tutupModal('modalConfirm')" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors active:scale-95">
+                    Batal
+                </button>
+                <button id="btnConfirmAction" class="flex-1 bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition-colors shadow-md active:scale-95">
+                    Yakin
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- ============================================================== -->
     <!-- MODAL QR CODE PREVIEW & DOWNLOAD -->
     <!-- ============================================================== -->
     <div id="modalQR" class="fixed inset-0 bg-black/70 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300 backdrop-blur-sm p-4" onclick="if(event.target === this) tutupModal('modalQR')">
         <div class="bg-white w-full max-w-sm rounded-3xl p-6 transform scale-95 transition-transform duration-300 relative flex flex-col items-center text-center shadow-2xl">
-            <!-- Tombol Silang (Tutup) -->
             <button onclick="tutupModal('modalQR')" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors">
                 <i class="fas fa-times text-lg"></i>
             </button>
@@ -212,20 +286,17 @@
             <h3 class="text-lg font-bold text-slate-800 mt-2 mb-1" id="qrNamaKelas">Nama Kelas</h3>
             <p class="text-xs text-slate-500 mb-5">Minta siswa scan QR ini untuk bergabung</p>
             
-            <!-- Area Render QR Code -->
             <div class="bg-white p-3 rounded-2xl border-4 border-emerald-100 shadow-inner mb-4 inline-block">
                 <div id="qrCanvasContainer" class="w-[200px] h-[200px] bg-slate-50 flex items-center justify-center">
-                    <!-- QR akan di-render di sini oleh JavaScript -->
+                    <!-- QR Placeholder -->
                 </div>
             </div>
 
-            <!-- Area Kode Teks -->
             <div class="bg-slate-100 px-6 py-3 rounded-xl mb-6 w-full border border-slate-200">
                 <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Kode Kelas Manual</p>
                 <p class="text-2xl font-black text-slate-800 tracking-[0.2em]" id="qrKodeTeks">------</p>
             </div>
             
-            <!-- Tombol Unduh Gambar QR -->
             <button onclick="unduhQR()" class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl hover:bg-emerald-700 transition-colors shadow-md active:scale-95 flex items-center justify-center gap-2">
                 <i class="fas fa-download"></i> Unduh Gambar QR
             </button>
@@ -238,7 +309,6 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Konfigurasi Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
             projectId: "mading-cf676",
@@ -249,8 +319,8 @@
         const db = getFirestore(app);
 
         let currentGuru = null;
-        let qrCodeInstance = null; // Menyimpan objek pembuat QR
-        let currentActiveKode = ""; // Menyimpan kode aktif untuk nama file unduhan
+        let qrCodeInstance = null;
+        let currentActiveKode = ""; 
 
         // FUNGSI TOAST NOTIFIKASI
         window.showToast = function(msg, isError = false) {
@@ -289,7 +359,28 @@
             setTimeout(() => modal.classList.add('hidden'), 300);
         };
 
-        // 1. SISTEM KEAMANAN & OTENTIKASI
+        // FUNGSI KONFIRMASI CUSTOM
+        window.showConfirm = function(title, message, iconClass, iconColorClass, btnText, btnColorClass, actionCallback) {
+            document.getElementById('confirmTitle').innerText = title;
+            document.getElementById('confirmMessage').innerText = message;
+            
+            const iconDiv = document.getElementById('confirmIcon');
+            iconDiv.className = `w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-4 ${iconColorClass}`;
+            iconDiv.innerHTML = `<i class="${iconClass}"></i>`;
+            
+            const btn = document.getElementById('btnConfirmAction');
+            btn.innerText = btnText;
+            btn.className = `flex-1 text-white font-bold py-3 rounded-xl transition-colors shadow-md active:scale-95 ${btnColorClass}`;
+            
+            btn.onclick = () => {
+                tutupModal('modalConfirm');
+                actionCallback();
+            };
+            
+            bukaModal('modalConfirm');
+        }
+
+        // 1. SISTEM KEAMANAN & OTENTIKASI (SILENT CHECK)
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 try {
@@ -297,15 +388,15 @@
                     if (userDoc.exists()) {
                         const userData = userDoc.data();
                         
+                        // Cek Role Guru
                         if (userData.role === 'teacher' || userData.role === 'admin') {
                             currentGuru = { uid: user.uid, nama: userData.namaLengkap };
                             
-                            // SETTING NAMA LENGKAP & UKURAN DINAMIS
+                            // SET NAMA & MATIKAN SKELETON
                             const namaLengkap = userData.namaLengkap || "Guru";
                             const nameEl = document.getElementById('welcomeName');
                             nameEl.innerText = namaLengkap;
 
-                            // Logika agar font mengecil jika nama panjang (mencegah layout rusak)
                             if (namaLengkap.length > 25) {
                                 nameEl.className = "text-lg font-bold text-amber-400 break-words leading-tight block";
                             } else if (namaLengkap.length > 15) {
@@ -314,12 +405,13 @@
                                 nameEl.className = "text-2xl font-bold text-amber-400 break-words block";
                             }
                             
+                            // Animasi pergantian Skeleton -> Konten Asli
+                            document.getElementById('skeletonWelcomeContent').classList.add('hidden');
+                            document.getElementById('realWelcomeContent').classList.remove('hidden');
+                            
                             // Tarik Data Kelas
                             await loadClassesData();
                             
-                            // Tutup Shield
-                            document.getElementById('authGuard').classList.add('opacity-0');
-                            setTimeout(() => document.getElementById('authGuard').classList.add('hidden'), 500);
                         } else {
                             window.location.href = '../index.html';
                         }
@@ -335,12 +427,20 @@
             }
         });
 
-        // 2. FUNGSI LOGOUT
-        window.logoutGuru = async function() {
-            if(confirm("Yakin ingin keluar dari sistem Guru?")) {
-                await signOut(auth);
-                window.location.href = '../login.html';
-            }
+        // 2. FUNGSI LOGOUT (MENGGUNAKAN CUSTOM MODAL)
+        window.konfirmasiLogout = function() {
+            window.showConfirm(
+                "Keluar dari Sistem?",
+                "Anda harus login kembali untuk mengakses panel guru.",
+                "fas fa-sign-out-alt", // icon class
+                "bg-red-50 text-red-500", // icon color class
+                "Keluar", // text tombol
+                "bg-red-600 hover:bg-red-700", // warna tombol
+                async () => {
+                    await signOut(auth);
+                    window.location.href = '../login.html';
+                }
+            );
         }
 
         // 3. TARIK DATA KELAS DARI FIREBASE
@@ -356,7 +456,7 @@
 
                 snapClass.forEach(docSnap => {
                     const data = docSnap.data();
-                    const classId = docSnap.id; // KODE
+                    const classId = docSnap.id; 
                     
                     const isSMA = (data.jenjang || '').toLowerCase() === 'sma';
                     const bgHeader = isSMA ? 'bg-blue-600' : 'bg-amber-500';
@@ -365,7 +465,6 @@
 
                     if(data.status === 'active') {
                         activeCount++;
-                        // RENDER KARTU KELAS AKTIF (Ubah onclick QR)
                         activeHtml += `
                         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative group">
                             <div class="${bgHeader} p-3 text-white flex justify-between items-center">
@@ -391,7 +490,7 @@
                                     </button>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button onclick="akhiriKelas('${classId}', '${data.namaKelas}')" class="bg-red-50 text-red-500 font-bold py-2 px-3 rounded-lg text-[10px] active:scale-95 border border-red-100 shrink-0">
+                                    <button onclick="konfirmasiAkhiriKelas('${classId}', '${data.namaKelas}')" class="bg-red-50 text-red-500 font-bold py-2 px-3 rounded-lg text-[10px] active:scale-95 border border-red-100 shrink-0">
                                         Akhiri
                                     </button>
                                     <a href="ruang-kelas.html?id=${classId}" class="flex-1 bg-slate-900 text-white font-bold py-2 rounded-lg text-center text-xs shadow-sm hover:bg-slate-800 active:scale-95 transition-all">
@@ -402,7 +501,6 @@
                         </div>`;
                     } else if(data.status === 'archived' || data.status === 'selesai') {
                         archiveCount++;
-                        // RENDER KARTU ARSIP
                         archiveHtml += `
                         <div class="bg-slate-50 rounded-2xl border border-slate-200 p-3.5 flex items-center justify-between opacity-80 hover:opacity-100 transition-opacity">
                             <div class="flex items-center gap-3">
@@ -453,41 +551,33 @@
         // 4. FITUR MODAL QR CODE & UNDUH
         // ==========================================
         window.previewQR = function(classId, namaKelas) {
-            // Set Text di UI Modal
             document.getElementById('qrNamaKelas').innerText = namaKelas;
             document.getElementById('qrKodeTeks').innerText = classId;
-            currentActiveKode = classId; // Simpan untuk nama file unduhan
+            currentActiveKode = classId; 
 
             const containerQR = document.getElementById('qrCanvasContainer');
-            containerQR.innerHTML = ""; // Bersihkan QR sebelumnya
+            containerQR.innerHTML = ""; 
 
-            // Generate QR Code menggunakan library
             qrCodeInstance = new QRCode(containerQR, {
-                text: classId, // Teks yang dijadikan QR adalah KODE KELAS
+                text: classId, 
                 width: 200,
                 height: 200,
-                colorDark : "#064e3b", // Warna hijau gelap
-                colorLight : "#f8fafc", // Warna background terang
+                colorDark : "#064e3b", 
+                colorLight : "#f8fafc", 
                 correctLevel : QRCode.CorrectLevel.H
             });
 
-            // Buka Modalnya
             bukaModal('modalQR');
         }
 
         window.unduhQR = function() {
-            // Ambil elemen canvas dari dalam container
             const canvas = document.querySelector('#qrCanvasContainer canvas');
             if(!canvas) {
                 showToast("Gambar QR belum siap, coba lagi.", true);
                 return;
             }
-
             try {
-                // Ubah canvas menjadi file gambar (Data URL)
                 const imageURL = canvas.toDataURL("image/png");
-                
-                // Buat link tak terlihat untuk memicu download
                 const downloadLink = document.createElement('a');
                 downloadLink.href = imageURL;
                 downloadLink.download = `QR_Kelas_${currentActiveKode}.png`;
@@ -500,7 +590,6 @@
                 showToast("Gagal mengunduh gambar.", true);
             }
         }
-        // ==========================================
 
         window.salinKode = function(kode) {
             navigator.clipboard.writeText(kode).then(() => {
@@ -508,30 +597,43 @@
             });
         }
 
-        window.akhiriKelas = async function(classId, namaKelas) {
-            const konfirmasi = confirm(`TINDAKAN PERMANEN!\n\nYakin ingin MENGAKHIRI kelas "${namaKelas}"? Siswa tidak akan bisa masuk lagi.`);
-            
-            if(konfirmasi) {
-                try {
-                    const classRef = doc(db, "classes", classId);
-                    await updateDoc(classRef, {
-                        status: 'archived',
-                        archivedAt: new Date()
-                    });
-                    
-                    showToast("Kelas berhasil diarsipkan!");
-                    
-                    const activeGrid = document.getElementById('activeClassesGrid');
-                    const archiveGrid = document.getElementById('archivedClassesGrid');
-                    activeGrid.innerHTML = `<div class="p-5 text-center text-slate-400 bg-white rounded-2xl border border-slate-200 animate-pulse">Memperbarui...</div>`;
-                    archiveGrid.innerHTML = `<div class="p-5 text-center text-slate-400 bg-slate-50 rounded-2xl border border-slate-200 animate-pulse">Memperbarui...</div>`;
-                    
-                    await loadClassesData();
-
-                } catch (error) {
-                    showToast("Terjadi kesalahan saat menutup kelas.", true);
+        // 5. AKHIRI KELAS (MENGGUNAKAN CUSTOM MODAL)
+        window.konfirmasiAkhiriKelas = function(classId, namaKelas) {
+            window.showConfirm(
+                "Akhiri Kelas?",
+                `Anda akan MENGAKHIRI kelas "${namaKelas}". Siswa tidak akan bisa masuk lagi ke ruang kelas ini. Tindakan ini permanen.`,
+                "fas fa-door-closed", // icon class
+                "bg-amber-50 text-amber-500", // icon color class
+                "Akhiri Kelas", // text tombol
+                "bg-amber-500 hover:bg-amber-600", // warna tombol
+                async () => {
+                    try {
+                        const classRef = doc(db, "classes", classId);
+                        await updateDoc(classRef, {
+                            status: 'archived',
+                            archivedAt: new Date()
+                        });
+                        
+                        showToast("Kelas berhasil diarsipkan!");
+                        
+                        // Render skeleton saat merefresh data
+                        const activeGrid = document.getElementById('activeClassesGrid');
+                        const archiveGrid = document.getElementById('archivedClassesGrid');
+                        activeGrid.innerHTML = `
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div class="bg-slate-200 h-12 w-full skeleton-pulse"></div>
+                            <div class="p-4 flex flex-col gap-3">
+                                <div class="bg-slate-100 h-12 rounded-lg skeleton-pulse"></div>
+                            </div>
+                        </div>`;
+                        archiveGrid.innerHTML = `<div class="bg-slate-100 h-16 rounded-2xl skeleton-pulse border border-slate-200"></div>`;
+                        
+                        await loadClassesData();
+                    } catch (error) {
+                        showToast("Terjadi kesalahan saat menutup kelas.", true);
+                    }
                 }
-            }
+            );
         }
     </script>
 </body>
