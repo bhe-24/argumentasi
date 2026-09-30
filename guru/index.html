@@ -12,6 +12,9 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- QR Code Generator Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -35,45 +38,54 @@
         .texture-dots { background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px); background-size: 16px 16px; }
         
         .modal-z { z-index: 99999 !important; }
+
+        /* Menghilangkan margin bawaan qrcode.js agar rapi di tengah */
+        #qrCanvasContainer img { margin: auto; border-radius: 8px; }
     </style>
 </head>
 <body class="flex justify-center h-screen bg-slate-900 sm:bg-slate-200">
 
-    <!-- CONTAINER UTAMA (Mobile App Frame) -->
+    <!-- CONTAINER UTAMA -->
     <div class="w-full max-w-md bg-slate-50 relative h-screen shadow-2xl flex flex-col overflow-hidden sm:border-x border-slate-300 fade-in mx-auto">
         
-        <!-- SECURITY SHIELD (Hanya menutupi frame app) -->
+        <!-- SECURITY SHIELD -->
         <div id="authGuard" class="absolute inset-0 bg-slate-900 z-[10000] flex flex-col items-center justify-center text-white transition-opacity duration-500">
             <i class="fas fa-shield-alt text-6xl text-amber-500 mb-6 animate-pulse"></i>
             <h2 class="text-xl font-bold tracking-widest uppercase">Memverifikasi</h2>
             <p class="text-slate-400 mt-2 text-xs">Mengecek otoritas guru...</p>
         </div>
 
-        <!-- HEADER STICKY (Fix di atas layar, Logo Tengah, Logout Kanan) -->
-        <header class="bg-white absolute top-0 left-0 right-0 z-50 px-4 py-3 flex items-center justify-between shadow-sm h-[60px] border-b border-slate-200">
-            <!-- Kiri: Ikon penyeimbang -->
-            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                <i class="fas fa-chalkboard-teacher text-xs"></i>
-            </div>
+        <!-- HEADER STICKY (Diperbesar sesuai permintaan) -->
+        <header class="bg-white absolute top-0 left-0 right-0 z-50 px-4 py-2 flex items-center justify-between shadow-sm h-[75px] border-b border-slate-200">
+            <!-- Kiri: Tombol Profil -->
+            <a href="profil.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-brand-green transition-colors active:scale-95">
+                <i class="fas fa-user-circle text-[26px]"></i>
+                <span class="text-[10px] font-bold mt-1">Profil</span>
+            </a>
             
-            <!-- Tengah: Logo (Absolute Center) -->
-            <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-6 object-contain absolute left-1/2 transform -translate-x-1/2">
+            <!-- Tengah: Logo (Diperbesar) -->
+            <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-9 object-contain absolute left-1/2 transform -translate-x-1/2">
             
-            <!-- Kanan: Tombol Keluar -->
-            <button onclick="logoutGuru()" class="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition-colors active:scale-95 shadow-sm" title="Keluar">
+            <!-- Kanan: Tombol Keluar (Kapsul + Teks) -->
+            <button onclick="logoutGuru()" class="flex items-center gap-2 px-3 py-2 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-colors active:scale-95 shadow-sm border border-red-100" title="Keluar">
                 <i class="fas fa-sign-out-alt text-sm"></i>
+                <span class="text-xs font-bold hidden xs:block">Keluar</span>
             </button>
         </header>
 
-        <!-- KONTEN UTAMA (Area yang bisa di-scroll) -->
-        <div class="flex-grow overflow-y-auto hide-scrollbar pt-[60px] pb-6 relative z-20">
+        <!-- KONTEN UTAMA (Area Scroll) -->
+        <div class="flex-grow overflow-y-auto hide-scrollbar pt-[75px] pb-6 relative z-20">
             
             <!-- HEADER WELCOME -->
             <div class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 px-5 pt-6 pb-8 relative overflow-hidden rounded-b-[2rem] shadow-md">
                 <div class="absolute inset-0 texture-dots pointer-events-none opacity-20"></div>
                 <div class="relative z-10">
                     <p class="text-[10px] text-blue-300 font-bold uppercase tracking-widest mb-1"><i class="fas fa-check-circle text-emerald-400 mr-1"></i> Otoritas Terverifikasi</p>
-                    <h2 class="text-2xl font-bold text-white mb-6">Halo, <span id="welcomeName" class="text-amber-400">Guru</span>!</h2>
+                    
+                    <!-- Area Nama Lengkap Responsif -->
+                    <h2 class="text-white mb-6">Halo, <br>
+                        <span id="welcomeName" class="text-2xl font-bold text-amber-400">Guru</span>
+                    </h2>
                     
                     <!-- Box Statistik -->
                     <div class="flex items-center gap-3 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
@@ -92,10 +104,9 @@
 
             <div class="px-4 mt-6">
                 
-                <!-- MAIN MENU (TOMBOL AKSI CEPAT) -->
+                <!-- MAIN MENU -->
                 <div class="grid grid-cols-2 gap-3 mb-8">
-                    
-                    <!-- Buat Kelas (Full Width Mobile) -->
+                    <!-- Buat Kelas -->
                     <a href="buat-kelas.html" class="col-span-2 group bg-emerald-600 rounded-2xl p-4 shadow-sm border border-emerald-500 hover:bg-emerald-700 hover:shadow-md transition-all flex items-center justify-between active:scale-95 text-white overflow-hidden relative">
                         <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-bl-full -mr-4 -mt-4 pointer-events-none"></div>
                         <div class="flex items-center gap-4 relative z-10">
@@ -137,15 +148,12 @@
                         </h3>
                     </div>
                     
-                    <!-- Grid Kelas Aktif -->
                     <div id="activeClassesGrid" class="flex flex-col gap-3">
-                        <!-- State Loading -->
                         <div class="p-5 text-center text-slate-400 bg-white rounded-2xl border border-slate-200 animate-pulse">
                             Memuat daftar kelas...
                         </div>
                     </div>
 
-                    <!-- Empty State Kelas Aktif -->
                     <div id="activeEmptyState" class="hidden bg-white p-6 rounded-3xl shadow-sm border border-slate-200 border-dashed text-center">
                         <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300">
                             <i class="fas fa-door-open text-xl"></i>
@@ -167,15 +175,12 @@
                         </h3>
                     </div>
                     
-                    <!-- Grid Kelas Arsip -->
                     <div id="archivedClassesGrid" class="flex flex-col gap-3">
-                        <!-- State Loading -->
                         <div class="p-5 text-center text-slate-400 bg-slate-50 rounded-2xl border border-slate-200 animate-pulse">
                             Memuat riwayat arsip...
                         </div>
                     </div>
 
-                    <!-- Empty State Arsip -->
                     <div id="archiveEmptyState" class="hidden bg-slate-50 p-6 rounded-3xl border border-slate-200 border-dashed text-center">
                         <p class="font-medium text-slate-500 text-xs"><i class="fas fa-folder-open text-slate-300 mr-1.5"></i> Belum ada arsip.</p>
                     </div>
@@ -185,14 +190,47 @@
         </div>
 
         <!-- FOOTER -->
-        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0">
+        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 z-30">
             <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Portal Manajemen Guru</p>
         </footer>
 
     </div>
 
-    <!-- Container Toast (Notifikasi Pop-up) -->
+    <!-- Container Toast -->
     <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 w-11/12 max-w-md pointer-events-none"></div>
+
+    <!-- ============================================================== -->
+    <!-- MODAL QR CODE PREVIEW & DOWNLOAD -->
+    <!-- ============================================================== -->
+    <div id="modalQR" class="fixed inset-0 bg-black/70 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300 backdrop-blur-sm p-4" onclick="if(event.target === this) tutupModal('modalQR')">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 transform scale-95 transition-transform duration-300 relative flex flex-col items-center text-center shadow-2xl">
+            <!-- Tombol Silang (Tutup) -->
+            <button onclick="tutupModal('modalQR')" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+            
+            <h3 class="text-lg font-bold text-slate-800 mt-2 mb-1" id="qrNamaKelas">Nama Kelas</h3>
+            <p class="text-xs text-slate-500 mb-5">Minta siswa scan QR ini untuk bergabung</p>
+            
+            <!-- Area Render QR Code -->
+            <div class="bg-white p-3 rounded-2xl border-4 border-emerald-100 shadow-inner mb-4 inline-block">
+                <div id="qrCanvasContainer" class="w-[200px] h-[200px] bg-slate-50 flex items-center justify-center">
+                    <!-- QR akan di-render di sini oleh JavaScript -->
+                </div>
+            </div>
+
+            <!-- Area Kode Teks -->
+            <div class="bg-slate-100 px-6 py-3 rounded-xl mb-6 w-full border border-slate-200">
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Kode Kelas Manual</p>
+                <p class="text-2xl font-black text-slate-800 tracking-[0.2em]" id="qrKodeTeks">------</p>
+            </div>
+            
+            <!-- Tombol Unduh Gambar QR -->
+            <button onclick="unduhQR()" class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl hover:bg-emerald-700 transition-colors shadow-md active:scale-95 flex items-center justify-center gap-2">
+                <i class="fas fa-download"></i> Unduh Gambar QR
+            </button>
+        </div>
+    </div>
 
     <!-- SCRIPT FIREBASE & LOGIC DASHBOARD -->
     <script type="module">
@@ -211,6 +249,8 @@
         const db = getFirestore(app);
 
         let currentGuru = null;
+        let qrCodeInstance = null; // Menyimpan objek pembuat QR
+        let currentActiveKode = ""; // Menyimpan kode aktif untuk nama file unduhan
 
         // FUNGSI TOAST NOTIFIKASI
         window.showToast = function(msg, isError = false) {
@@ -228,6 +268,27 @@
             }, 3000);
         };
 
+        // FUNGSI MODAL
+        window.bukaModal = function(id) {
+            const modal = document.getElementById(id);
+            const box = modal.querySelector('div');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                box.classList.remove('scale-95');
+                box.classList.add('scale-100');
+            });
+        };
+
+        window.tutupModal = function(id) {
+            const modal = document.getElementById(id);
+            const box = modal.querySelector('div');
+            modal.classList.add('opacity-0');
+            box.classList.remove('scale-100');
+            box.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        };
+
         // 1. SISTEM KEAMANAN & OTENTIKASI
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -236,15 +297,24 @@
                     if (userDoc.exists()) {
                         const userData = userDoc.data();
                         
-                        // Proteksi Ganda: Hanya role Teacher/Admin
                         if (userData.role === 'teacher' || userData.role === 'admin') {
                             currentGuru = { uid: user.uid, nama: userData.namaLengkap };
                             
-                            // Gunakan nama depan saja agar muat di layar HP
-                            const namaDepan = userData.namaLengkap.split(' ')[0];
-                            document.getElementById('welcomeName').innerText = namaDepan;
+                            // SETTING NAMA LENGKAP & UKURAN DINAMIS
+                            const namaLengkap = userData.namaLengkap || "Guru";
+                            const nameEl = document.getElementById('welcomeName');
+                            nameEl.innerText = namaLengkap;
+
+                            // Logika agar font mengecil jika nama panjang (mencegah layout rusak)
+                            if (namaLengkap.length > 25) {
+                                nameEl.className = "text-lg font-bold text-amber-400 break-words leading-tight block";
+                            } else if (namaLengkap.length > 15) {
+                                nameEl.className = "text-xl font-bold text-amber-400 break-words leading-tight block";
+                            } else {
+                                nameEl.className = "text-2xl font-bold text-amber-400 break-words block";
+                            }
                             
-                            // Tarik Data Kelas (Aktif & Arsip)
+                            // Tarik Data Kelas
                             await loadClassesData();
                             
                             // Tutup Shield
@@ -258,7 +328,6 @@
                         window.location.href = '../login.html';
                     }
                 } catch (error) {
-                    console.error("Auth error:", error);
                     window.location.href = '../login.html';
                 }
             } else {
@@ -274,7 +343,7 @@
             }
         }
 
-        // 3. TARIK DATA KELAS (AKTIF & ARSIP) DARI FIREBASE (MURNI TANPA DUMMY)
+        // 3. TARIK DATA KELAS DARI FIREBASE
         async function loadClassesData() {
             try {
                 const qClass = query(collection(db, "classes"), where("guruId", "==", currentGuru.uid), orderBy("createdAt", "desc"));
@@ -287,7 +356,7 @@
 
                 snapClass.forEach(docSnap => {
                     const data = docSnap.data();
-                    const classId = docSnap.id; // KODE 6 ANGKA
+                    const classId = docSnap.id; // KODE
                     
                     const isSMA = (data.jenjang || '').toLowerCase() === 'sma';
                     const bgHeader = isSMA ? 'bg-blue-600' : 'bg-amber-500';
@@ -296,7 +365,7 @@
 
                     if(data.status === 'active') {
                         activeCount++;
-                        // RENDER KARTU KELAS AKTIF 
+                        // RENDER KARTU KELAS AKTIF (Ubah onclick QR)
                         activeHtml += `
                         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative group">
                             <div class="${bgHeader} p-3 text-white flex justify-between items-center">
@@ -317,16 +386,16 @@
                                             <p class="text-xs font-black text-slate-800">${data.jumlahSiswa || 0}</p>
                                         </div>
                                     </div>
-                                    <button onclick="window.location.href='buat-kelas.html'" class="text-[9px] font-bold ${themeText} bg-white px-2 py-1 rounded border border-slate-200 shadow-sm active:scale-95">
-                                        <i class="fas fa-qrcode mr-1"></i> QR
+                                    <button onclick="previewQR('${classId}', '${data.namaKelas}')" class="text-[9px] font-bold ${themeText} bg-white px-3 py-1.5 rounded border border-slate-200 shadow-sm hover:bg-slate-50 active:scale-95 transition-colors">
+                                        <i class="fas fa-qrcode mr-1"></i> LIHAT QR
                                     </button>
                                 </div>
                                 <div class="flex gap-2">
                                     <button onclick="akhiriKelas('${classId}', '${data.namaKelas}')" class="bg-red-50 text-red-500 font-bold py-2 px-3 rounded-lg text-[10px] active:scale-95 border border-red-100 shrink-0">
                                         Akhiri
                                     </button>
-                                    <a href="ruang-kelas.html?id=${classId}" class="flex-1 bg-slate-900 text-white font-bold py-2 rounded-lg text-center text-xs shadow-sm active:scale-95 transition-all">
-                                        Buka Panel
+                                    <a href="ruang-kelas.html?id=${classId}" class="flex-1 bg-slate-900 text-white font-bold py-2 rounded-lg text-center text-xs shadow-sm hover:bg-slate-800 active:scale-95 transition-all">
+                                        Buka Panel Kelas
                                     </a>
                                 </div>
                             </div>
@@ -350,11 +419,9 @@
                     }
                 });
 
-                // Update Angka Statistik Header
                 document.getElementById('statKelasAktif').innerText = activeCount;
                 document.getElementById('statKelasArsip').innerText = archiveCount;
 
-                // Inject HTML Kelas Aktif
                 const activeGrid = document.getElementById('activeClassesGrid');
                 const activeEmpty = document.getElementById('activeEmptyState');
                 if(activeCount === 0) {
@@ -366,7 +433,6 @@
                     activeEmpty.classList.add('hidden');
                 }
 
-                // Inject HTML Arsip
                 const archiveGrid = document.getElementById('archivedClassesGrid');
                 const archiveEmpty = document.getElementById('archiveEmptyState');
                 if(archiveCount === 0) {
@@ -379,12 +445,63 @@
                 }
 
             } catch (error) {
-                console.error("Gagal load data kelas:", error);
                 showToast("Gagal menarik data kelas dari server.", true);
             }
         }
 
-        // 4. LOGIKA INTERAKSI KARTU
+        // ==========================================
+        // 4. FITUR MODAL QR CODE & UNDUH
+        // ==========================================
+        window.previewQR = function(classId, namaKelas) {
+            // Set Text di UI Modal
+            document.getElementById('qrNamaKelas').innerText = namaKelas;
+            document.getElementById('qrKodeTeks').innerText = classId;
+            currentActiveKode = classId; // Simpan untuk nama file unduhan
+
+            const containerQR = document.getElementById('qrCanvasContainer');
+            containerQR.innerHTML = ""; // Bersihkan QR sebelumnya
+
+            // Generate QR Code menggunakan library
+            qrCodeInstance = new QRCode(containerQR, {
+                text: classId, // Teks yang dijadikan QR adalah KODE KELAS
+                width: 200,
+                height: 200,
+                colorDark : "#064e3b", // Warna hijau gelap
+                colorLight : "#f8fafc", // Warna background terang
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            // Buka Modalnya
+            bukaModal('modalQR');
+        }
+
+        window.unduhQR = function() {
+            // Ambil elemen canvas dari dalam container
+            const canvas = document.querySelector('#qrCanvasContainer canvas');
+            if(!canvas) {
+                showToast("Gambar QR belum siap, coba lagi.", true);
+                return;
+            }
+
+            try {
+                // Ubah canvas menjadi file gambar (Data URL)
+                const imageURL = canvas.toDataURL("image/png");
+                
+                // Buat link tak terlihat untuk memicu download
+                const downloadLink = document.createElement('a');
+                downloadLink.href = imageURL;
+                downloadLink.download = `QR_Kelas_${currentActiveKode}.png`;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+                
+                showToast("QR Code berhasil diunduh!");
+            } catch (error) {
+                showToast("Gagal mengunduh gambar.", true);
+            }
+        }
+        // ==========================================
+
         window.salinKode = function(kode) {
             navigator.clipboard.writeText(kode).then(() => {
                 showToast(`Kode ${kode} disalin!`);
@@ -404,7 +521,6 @@
                     
                     showToast("Kelas berhasil diarsipkan!");
                     
-                    // Reload Data
                     const activeGrid = document.getElementById('activeClassesGrid');
                     const archiveGrid = document.getElementById('archivedClassesGrid');
                     activeGrid.innerHTML = `<div class="p-5 text-center text-slate-400 bg-white rounded-2xl border border-slate-200 animate-pulse">Memperbarui...</div>`;
@@ -413,7 +529,6 @@
                     await loadClassesData();
 
                 } catch (error) {
-                    console.error("Gagal arsip:", error);
                     showToast("Terjadi kesalahan saat menutup kelas.", true);
                 }
             }
