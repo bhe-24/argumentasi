@@ -33,6 +33,8 @@
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        .modal-z { z-index: 99999 !important; }
     </style>
 </head>
 <body class="flex justify-center min-h-screen">
@@ -40,8 +42,8 @@
     <!-- CONTAINER UTAMA (Mobile App Frame) -->
     <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col overflow-x-hidden sm:border-x border-slate-200 fade-in">
         
-        <!-- HEADER STICKY -->
-        <header class="bg-brand-green sticky top-0 z-50 px-4 py-3 flex items-center justify-between shadow-md">
+        <!-- HEADER STICKY (Fix di atas layar) -->
+        <header class="bg-brand-green fixed w-full max-w-md z-50 px-4 py-3 flex items-center justify-between shadow-md top-0">
             <div class="flex items-center gap-3">
                 <a href="index.html" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors">
                     <i class="fas fa-arrow-left"></i>
@@ -53,8 +55,14 @@
             </a>
         </header>
 
+        <!-- Spacer untuk Header Sticky -->
+        <div class="h-[60px] bg-brand-green"></div>
+
+        <!-- BACKGROUND LENGKUNG -->
+        <div class="bg-brand-green pb-6 px-4 relative z-10 rounded-b-[2rem] -mt-1"></div>
+
         <!-- KONTEN UTAMA (Scrollable) -->
-        <div class="flex-grow overflow-y-auto hide-scrollbar pb-12 p-4 space-y-6">
+        <div class="flex-grow overflow-y-auto hide-scrollbar pb-12 p-4 space-y-6 -mt-12 relative z-20">
             
             <!-- KARTU UTAMA: INPUT KODE KELAS -->
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 text-center relative overflow-hidden">
@@ -85,9 +93,14 @@
                 </div>
                 
                 <div id="listKelasAktif" class="space-y-3">
-                    <!-- Default Kosong -->
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 text-center shadow-sm">
-                        <p class="text-xs text-slate-400">Belum ada kelas aktif yang Anda ikuti.</p>
+                    <!-- Skeleton Loading Default -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between animate-pulse">
+                        <div>
+                            <div class="w-12 h-3 bg-slate-200 rounded mb-2"></div>
+                            <div class="w-32 h-4 bg-slate-300 rounded mb-1"></div>
+                            <div class="w-20 h-3 bg-slate-200 rounded"></div>
+                        </div>
+                        <div class="w-24 h-8 bg-slate-200 rounded-xl"></div>
                     </div>
                 </div>
             </div>
@@ -101,9 +114,14 @@
                 </div>
                 
                 <div id="listKelasArsip" class="space-y-3">
-                    <!-- Default Kosong -->
-                    <div class="bg-slate-100 p-4 rounded-2xl border border-slate-200 text-center">
-                        <p class="text-xs text-slate-400">Tidak ada riwayat arsip kelas.</p>
+                    <!-- Skeleton Loading Default -->
+                    <div class="bg-slate-100 p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between animate-pulse opacity-75">
+                        <div>
+                            <div class="w-12 h-3 bg-slate-200 rounded mb-2"></div>
+                            <div class="w-32 h-4 bg-slate-300 rounded mb-1"></div>
+                            <div class="w-20 h-3 bg-slate-200 rounded"></div>
+                        </div>
+                        <div class="w-20 h-8 bg-slate-200 rounded-lg"></div>
                     </div>
                 </div>
             </div>
@@ -117,17 +135,30 @@
 
     </div>
 
-    <!-- Container Toast -->
+    <!-- Container Toast (Notifikasi Pop-up) -->
     <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
 
     <!-- SCRIPT UI & LOCAL STORAGE -->
     <script>
-        window.showToast = function(msg, isError = false) {
+        // Fungsi Pop-up/Toast Dinamis
+        window.showToast = function(msg, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            const bgClass = isError ? 'bg-red-500' : 'bg-slate-800';
-            const iconClass = isError ? 'fa-exclamation-circle' : 'fa-check-circle text-emerald-400';
             
+            let bgClass = 'bg-slate-800';
+            let iconClass = 'fa-info-circle text-blue-400';
+            
+            if (type === 'error') {
+                bgClass = 'bg-red-500';
+                iconClass = 'fa-exclamation-triangle text-white';
+            } else if (type === 'success') {
+                bgClass = 'bg-emerald-600';
+                iconClass = 'fa-check-circle text-white';
+            } else if (type === 'warning') {
+                bgClass = 'bg-amber-500';
+                iconClass = 'fa-exclamation-circle text-white';
+            }
+
             toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-lg text-sm font-medium flex items-center gap-3 transform translate-y-[-20px] opacity-0 transition-all duration-300`;
             toast.innerHTML = `<i class="fas ${iconClass} text-lg shrink-0"></i> <span class="flex-1">${msg}</span>`;
             
@@ -136,10 +167,10 @@
             setTimeout(() => {
                 toast.classList.add('translate-y-[-20px]', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            }, 3500);
         };
 
-        // Otomatis tangkap parameter URL jika diarahkan dari QR Scan (misal: class.html?id=839201)
+        // Otomatis tangkap parameter URL jika diarahkan dari QR Scan
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const classIdFromUrl = urlParams.get('id');
@@ -156,7 +187,7 @@
     <!-- FIREBASE & LOGIKA KELAS -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, collection, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" };
         const app = initializeApp(firebaseConfig);
@@ -167,17 +198,19 @@
             e.preventDefault();
             const kode = document.getElementById('inputKode').value.trim().toUpperCase();
             if(kode.length < 5) {
-                showToast("Kode kelas tidak valid. Minimal 5-6 karakter.", true);
+                showToast("Kode kelas tidak valid. Pastikan Anda memasukkan 5-6 digit dengan benar.", 'error');
                 return;
             }
             await verifikasiDanMasukKelas(kode);
         };
 
-        async function verifikasiDanMasukKelas(kode) {
+        // Verifikasi Kode ke Firestore
+        window.verifikasiDanMasukKelas = async function(kode) {
             const btn = document.getElementById('btnGabung');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Memeriksa Kelas...';
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Mencari Kelas...';
             btn.disabled = true;
+            btn.classList.add('opacity-80');
 
             try {
                 // Cek apakah kelas ada di database Firestore
@@ -185,23 +218,25 @@
                 const classSnap = await getDoc(classRef);
 
                 if (!classSnap.exists()) {
-                    showToast("Kelas dengan kode tersebut tidak ditemukan di sistem.", true);
+                    showToast("Kelas tidak ditemukan. Periksa kembali kode yang diberikan oleh guru Anda.", 'error');
                     btn.innerHTML = originalText;
                     btn.disabled = false;
+                    btn.classList.remove('opacity-80');
                     return;
                 }
 
                 const dataKelas = classSnap.data();
 
                 // Cek apakah kelas sudah diarsipkan oleh guru
-                if (dataKelas.status === 'archived') {
-                    showToast("Maaf, kelas ini telah ditutup/diarsipkan oleh Guru.", true);
+                if (dataKelas.status === 'archived' || dataKelas.status === 'selesai') {
+                    showToast(`Akses Ditolak: Ruang kelas "${dataKelas.namaKelas}" telah ditutup atau diarsipkan.`, 'warning');
                     btn.innerHTML = originalText;
                     btn.disabled = false;
+                    btn.classList.remove('opacity-80');
                     return;
                 }
 
-                // Daftarkan siswa ke sub-koleksi 'students' di kelas tersebut secara anonim (menggunakan nama di localStorage)
+                // Daftarkan siswa ke sub-koleksi 'students' secara anonim
                 const namaSiswa = localStorage.getItem('namaSiswaCendekia') || "Siswa Anonim";
                 const studentId = 'student_' + Math.random().toString(36.substring(2, 9));
                 
@@ -211,22 +246,23 @@
                     joinedAt: new Date()
                 }, { merge: true });
 
-                // Simpan ke riwayat lokal perangkat (localStorage)
-                simpanKeRiwayatLokal(kode, dataKelas.namaKelas || "Kelas Pembelajaran", dataKelas.status || 'active');
+                // Simpan ke riwayat lokal perangkat
+                simpanKeRiwayatLokal(kode, dataKelas.namaKelas || "Kelas Pembelajaran", 'active');
 
-                showToast("Berhasil bergabung! Mengalihkan ke ruang kelas...");
+                showToast("Berhasil bergabung! Mengalihkan...", 'success');
                 setTimeout(() => {
-                    // Arahkan ke file tempat belajar di kelas (Misal diarahkan ke file tampilan belajar live siswa)
+                    // Arahkan ke file tempat belajar di kelas
                     window.location.href = `ruang_belajar_siswa.html?id=${kode}`;
                 }, 1000);
 
             } catch (error) {
                 console.error("Error gabung kelas:", error);
-                showToast("Terjadi gangguan jaringan saat menghubungkan ke server.", true);
+                showToast("Gangguan jaringan. Gagal memverifikasi kode ke server.", 'error');
                 btn.innerHTML = originalText;
                 btn.disabled = false;
+                btn.classList.remove('opacity-80');
             }
-        }
+        };
 
         function simpanKeRiwayatLokal(id, nama, status) {
             let history = [];
@@ -235,13 +271,13 @@
                 if(existing) history = JSON.parse(existing);
             } catch(e){}
 
-            // Cek apakah sudah ada, jika belum masukkan ke urutan pertama
+            // Buang entri lama yang sama, taruh entri baru di atas
             const filtered = history.filter(item => item.id !== id);
             filtered.unshift({ id, nama, status });
             localStorage.setItem('riwayatKelasArg', JSON.stringify(filtered));
         }
 
-        // Render Riwayat Kelas (Aktif & Arsip) dari LocalStorage
+        // Render Riwayat Kelas dari LocalStorage & sinkron dengan Firebase
         async function renderRiwayatLokal() {
             const containerAktif = document.getElementById('listKelasAktif');
             const containerArsip = document.getElementById('listKelasArsip');
@@ -252,14 +288,24 @@
                 if(existing) history = JSON.parse(existing);
             } catch(e){}
 
-            if(history.length === 0) return;
+            if(history.length === 0) {
+                containerAktif.innerHTML = `
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 text-center shadow-sm">
+                        <p class="text-xs text-slate-400">Belum ada kelas aktif yang Anda ikuti.</p>
+                    </div>`;
+                containerArsip.innerHTML = `
+                    <div class="bg-slate-100 p-4 rounded-2xl border border-slate-200 text-center">
+                        <p class="text-xs text-slate-400">Tidak ada riwayat arsip kelas.</p>
+                    </div>`;
+                return;
+            }
 
             let htmlAktif = "";
             let htmlArsip = "";
             let adaAktif = false;
             let adaArsip = false;
 
-            // Verifikasi status terkini ke Firebase untuk setiap riwayat lokal
+            // Verifikasi status terkini ke Firebase
             for (const cls of history) {
                 try {
                     const ref = doc(db, "classes", cls.id);
@@ -272,49 +318,57 @@
                         namaKelas = snap.data().namaKelas || cls.nama;
                     }
 
-                    if (status === 'archived') {
+                    if (status === 'archived' || status === 'selesai') {
                         adaArsip = true;
                         htmlArsip += `
-                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between opacity-75">
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between opacity-80 hover:opacity-100 transition-opacity">
                             <div>
                                 <span class="bg-slate-200 text-slate-600 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Selesai</span>
-                                <h3 class="font-bold text-slate-700 text-sm mt-1">${namaKelas}</h3>
+                                <h3 class="font-bold text-slate-700 text-sm mt-1 truncate max-w-[180px]">${namaKelas}</h3>
                                 <p class="text-[10px] text-slate-400">Kode: ${cls.id}</p>
                             </div>
-                            <a href="ruang_belajar_siswa.html?id=${cls.id}" class="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors">
+                            <a href="ruang_belajar_siswa.html?id=${cls.id}" class="bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors shadow-sm shrink-0">
                                 Lihat Nilai
                             </a>
                         </div>`;
                     } else {
                         adaAktif = true;
                         htmlAktif += `
-                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between group hover:border-brand-green transition-colors">
                             <div>
                                 <span class="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Berjalan</span>
-                                <h3 class="font-bold text-slate-800 text-sm mt-1">${namaKelas}</h3>
+                                <h3 class="font-bold text-slate-800 text-sm mt-1 truncate max-w-[180px]">${namaKelas}</h3>
                                 <p class="text-[10px] text-slate-400">Kode: ${cls.id}</p>
                             </div>
-                            <a href="ruang_belajar_siswa.html?id=${cls.id}" class="bg-brand-green text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm">
-                                Masuk Kelas
+                            <a href="ruang_belajar_siswa.html?id=${cls.id}" class="bg-brand-green text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm shrink-0">
+                                Masuk
                             </a>
                         </div>`;
                     }
                 } catch(e) {
-                    // Fallback jika offline/gagal fetch
+                    // Fallback jika offline
                     adaAktif = true;
                     htmlAktif += `
                     <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                         <div>
-                            <h3 class="font-bold text-slate-800 text-sm">${cls.nama}</h3>
+                            <span class="bg-slate-100 text-slate-500 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Offline</span>
+                            <h3 class="font-bold text-slate-800 text-sm mt-1 truncate max-w-[180px]">${cls.nama}</h3>
                             <p class="text-[10px] text-slate-400">Kode: ${cls.id}</p>
                         </div>
-                        <a href="ruang_belajar_siswa.html?id=${cls.id}" class="bg-brand-green text-white px-4 py-2 rounded-xl text-xs font-bold">Masuk</a>
+                        <a href="ruang_belajar_siswa.html?id=${cls.id}" class="bg-brand-green text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0">Masuk</a>
                     </div>`;
                 }
             }
 
-            if(adaAktif) containerAktif.innerHTML = htmlAktif;
-            if(adaArsip) containerArsip.innerHTML = htmlArsip;
+            containerAktif.innerHTML = adaAktif ? htmlAktif : `
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 text-center shadow-sm">
+                    <p class="text-xs text-slate-400">Belum ada kelas aktif yang Anda ikuti.</p>
+                </div>`;
+            
+            containerArsip.innerHTML = adaArsip ? htmlArsip : `
+                <div class="bg-slate-100 p-4 rounded-2xl border border-slate-200 text-center">
+                    <p class="text-xs text-slate-400">Tidak ada riwayat arsip kelas.</p>
+                </div>`;
         }
 
         document.addEventListener('DOMContentLoaded', renderRiwayatLokal);
