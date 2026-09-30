@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buat Ruang Kelas - Platform Argumentasi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Buat Ruang Kelas - Argumentasi</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -12,6 +12,8 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -20,6 +22,9 @@
                     fontFamily: {
                         sans: ['Poppins', 'sans-serif'],
                         display: ['Playfair Display', 'serif'],
+                    },
+                    colors: { 
+                        brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } 
                     }
                 }
             }
@@ -27,21 +32,53 @@
     </script>
 
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
+        /* Base Styling Mobile First */
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #e2e8f0; 
+            -webkit-tap-highlight-color: transparent; 
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Frame Mobile */
+        .mobile-frame {
+            width: 100%;
+            max-width: 448px; 
+            height: 100vh;
+            background-color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden; 
+        }
+        
+        @media (min-width: 640px) {
+            .mobile-frame {
+                height: 90vh;
+                border-radius: 1.5rem; 
+                border: 8px solid #334155; 
+            }
+        }
+
         .font-display { font-family: 'Playfair Display', serif; }
         .texture-dots { background-image: radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px); background-size: 16px 16px; }
         
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Sembunyikan scrollbar tapi tetap bisa scroll */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Custom Radio Buttons untuk Pilihan Jenjang */
+        /* Custom Radio Buttons */
         .jenjang-radio:checked + div {
-            border-color: #10b981; /* emerald-500 */
-            background-color: #ecfdf5; /* emerald-50 */
+            border-color: #10b981; 
+            background-color: #ecfdf5; 
         }
         .jenjang-radio:checked + div .check-icon {
             opacity: 1;
@@ -49,232 +86,220 @@
         }
     </style>
 </head>
-<body class="flex flex-col min-h-screen">
+<body>
 
-    <!-- SECURITY SHIELD -->
-    <div id="authGuard" class="fixed inset-0 bg-slate-900 z-[10000] flex flex-col items-center justify-center text-white transition-opacity duration-500">
-        <i class="fas fa-shield-alt text-6xl text-amber-500 mb-6 animate-pulse"></i>
-        <h2 class="text-2xl font-bold font-display tracking-widest uppercase">Memverifikasi Otoritas</h2>
-        <p class="text-slate-400 mt-2 text-sm">Mengecek kredensial sesi Anda...</p>
+    <!-- CONTAINER UTAMA (MOBILE FRAME) -->
+    <div class="mobile-frame fade-in">
+        
+        <!-- SECURITY SHIELD -->
+        <div id="authGuard" class="absolute inset-0 bg-slate-900 z-[10000] flex flex-col items-center justify-center text-white transition-opacity duration-500">
+            <i class="fas fa-shield-alt text-6xl text-amber-500 mb-6 animate-pulse"></i>
+            <h2 class="text-xl font-bold tracking-widest uppercase text-center">Memverifikasi</h2>
+            <p class="text-slate-400 mt-2 text-xs">Mengecek otoritas guru...</p>
+        </div>
+
+        <!-- NAVBAR GURU -->
+        <header class="flex-shrink-0 bg-white px-4 py-3 flex items-center justify-between shadow-sm border-b border-slate-200 z-40">
+            <a href="index.html" class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-colors active:scale-95">
+                <i class="fas fa-arrow-left text-sm"></i>
+            </a>
+            
+            <div class="flex items-center gap-3 text-right">
+                <div>
+                    <!-- Nama Guru (Dinamis dari Firebase) -->
+                    <p class="text-[11px] font-bold text-slate-700 leading-none truncate max-w-[140px]" id="navTeacherName">Memuat...</p>
+                    <p class="text-[9px] text-emerald-600 font-bold uppercase tracking-widest mt-1">Konfigurasi Kelas</p>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-600 font-bold shadow-sm">
+                    <i class="fas fa-chalkboard-teacher text-xs"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- KONTEN UTAMA: WIZARD FORM -->
+        <main class="flex-grow overflow-y-auto hide-scrollbar relative z-20 flex flex-col" id="mainContainer">
+            
+            <div class="p-4 flex-grow flex flex-col">
+                <!-- Progress Bar -->
+                <div class="mb-6 shrink-0" id="stepperHeader">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest" id="stepLabel">Langkah 1 dari 3</span>
+                        <span class="text-[10px] font-bold text-slate-400" id="stepTitleText">Identitas & Kurikulum</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-1.5">
+                        <div class="bg-emerald-500 h-1.5 rounded-full transition-all duration-500 ease-out w-1/3" id="progressBar"></div>
+                    </div>
+                </div>
+
+                <!-- FORM CONTAINER -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative flex-grow flex flex-col" id="formWrapper">
+                    
+                    <form id="createClassForm" onsubmit="preventSubmit(event)" class="flex flex-col flex-grow">
+                        
+                        <!-- ========================================== -->
+                        <!-- STEP 1: IDENTITAS KELAS & JENJANG -->
+                        <!-- ========================================== -->
+                        <div id="step1" class="p-5 fade-in flex-grow flex flex-col">
+                            <div class="flex items-center gap-3 mb-6 shrink-0">
+                                <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-lg shadow-inner border border-blue-100"><i class="fas fa-school"></i></div>
+                                <div>
+                                    <h2 class="text-lg font-bold font-display text-slate-800 leading-tight">Identitas Kelas</h2>
+                                    <p class="text-[10px] text-slate-500">Tentukan profil kelas yang diampu.</p>
+                                </div>
+                            </div>
+
+                            <div class="mb-5 shrink-0">
+                                <label class="block text-slate-700 text-[10px] font-bold uppercase tracking-wider mb-2">Pilih Jenjang</label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <label class="relative cursor-pointer group">
+                                        <input type="radio" name="jenjang" value="SMP" class="peer sr-only jenjang-radio" onchange="checkStep1()">
+                                        <div class="border border-slate-200 rounded-xl p-3 transition-all hover:border-emerald-300 relative overflow-hidden flex flex-col items-center text-center">
+                                            <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-2">
+                                                <i class="fas fa-child text-sm"></i>
+                                            </div>
+                                            <h3 class="font-bold text-slate-800 text-xs">SMP / MTs</h3>
+                                            <i class="fas fa-check-circle absolute top-2 right-2 text-emerald-500 text-sm opacity-0 transform scale-50 transition-all check-icon"></i>
+                                        </div>
+                                    </label>
+                                    
+                                    <label class="relative cursor-pointer group">
+                                        <input type="radio" name="jenjang" value="SMA" class="peer sr-only jenjang-radio" onchange="checkStep1()">
+                                        <div class="border border-slate-200 rounded-xl p-3 transition-all hover:border-emerald-300 relative overflow-hidden flex flex-col items-center text-center">
+                                            <div class="w-8 h-8 bg-slate-800 text-amber-400 rounded-full flex items-center justify-center mb-2 shadow-inner">
+                                                <i class="fas fa-user-graduate text-sm"></i>
+                                            </div>
+                                            <h3 class="font-bold text-slate-800 text-xs">SMA / SMK</h3>
+                                            <i class="fas fa-check-circle absolute top-2 right-2 text-emerald-500 text-sm opacity-0 transform scale-50 transition-all check-icon"></i>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="mb-2 shrink-0">
+                                <label class="block text-slate-700 text-[10px] font-bold uppercase tracking-wider mb-2">Nama Ruang Kelas</label>
+                                <input type="text" id="inputNamaKelas" required class="w-full border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all font-bold text-slate-700 text-sm placeholder-slate-300" placeholder="Cth: X MIPA 1 - Bhs. Indo" onkeyup="checkStep1()">
+                            </div>
+                        </div>
+
+                        <!-- ========================================== -->
+                        <!-- STEP 2: KURIKULUM (CP & TP) -->
+                        <!-- ========================================== -->
+                        <div id="step2" class="p-5 fade-in hidden flex-grow flex flex-col">
+                            <div class="flex items-center gap-3 mb-6 shrink-0">
+                                <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-lg shadow-inner border border-amber-100"><i class="fas fa-book"></i></div>
+                                <div>
+                                    <h2 class="text-lg font-bold font-display text-slate-800 leading-tight">Target Kurikulum</h2>
+                                    <p class="text-[10px] text-slate-500">Sistem menyesuaikan rubrik berdasar TP ini.</p>
+                                </div>
+                            </div>
+
+                            <div class="mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100 shrink-0">
+                                <label class="block text-slate-800 text-xs font-bold mb-1">Capaian Pembelajaran (CP)</label>
+                                <textarea id="inputCP" rows="3" class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 transition-all text-xs font-medium text-slate-700 bg-white resize-none" placeholder="Cth: Peserta didik mampu menyusun argumen..."></textarea>
+                            </div>
+
+                            <div class="mb-2 bg-slate-50 p-4 rounded-xl border border-slate-100 shrink-0">
+                                <label class="block text-slate-800 text-xs font-bold mb-1">Tujuan Pembelajaran (TP)</label>
+                                <textarea id="inputTP" rows="3" class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 transition-all text-xs font-medium text-slate-700 bg-white resize-none" placeholder="1. Mampu mengidentifikasi tesis...&#10;2. Mampu merumuskan fakta..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- ========================================== -->
+                        <!-- STEP 3: UPLOAD MODUL -->
+                        <!-- ========================================== -->
+                        <div id="step3" class="p-5 fade-in hidden flex-grow flex flex-col">
+                            <div class="flex items-center gap-3 mb-6 shrink-0">
+                                <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-lg shadow-inner border border-purple-100"><i class="fas fa-file-pdf"></i></div>
+                                <div>
+                                    <h2 class="text-lg font-bold font-display text-slate-800 leading-tight">Modul Ajar</h2>
+                                    <p class="text-[10px] text-slate-500">Ekstraksi otomatis menjadi materi interaktif.</p>
+                                </div>
+                            </div>
+
+                            <!-- Area Upload -->
+                            <div id="uploadArea" class="border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center hover:bg-slate-50 hover:border-purple-400 transition-all cursor-pointer bg-white relative flex-grow flex flex-col items-center justify-center min-h-[200px]">
+                                <input type="file" id="filePdf" accept=".pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileUpload(event)">
+                                
+                                <div class="w-14 h-14 bg-purple-100 text-purple-500 rounded-full flex items-center justify-center mb-3 shadow-sm border border-purple-200">
+                                    <i class="fas fa-cloud-upload-alt text-2xl"></i>
+                                </div>
+                                <h3 class="font-bold text-slate-700 text-sm mb-1">Pilih File PDF</h3>
+                                <p class="text-[10px] text-slate-500 max-w-[200px] mx-auto">Maks 10MB. Otomatis dikonversi oleh sistem.</p>
+                                <button type="button" class="mt-4 bg-slate-900 text-white px-5 py-2 rounded-full text-xs font-bold shadow-md pointer-events-none">Cari File</button>
+                            </div>
+
+                            <!-- Animasi Proses -->
+                            <div id="processingArea" class="hidden bg-slate-900 text-white rounded-2xl p-6 text-center border-b-4 border-amber-500 relative overflow-hidden flex-grow flex flex-col justify-center min-h-[200px]">
+                                <div class="absolute inset-0 texture-dots opacity-20 pointer-events-none"></div>
+                                <div class="relative w-16 h-16 mx-auto mb-4">
+                                    <div class="absolute inset-0 border-[3px] border-slate-700 rounded-full"></div>
+                                    <div class="absolute inset-0 border-[3px] border-amber-400 rounded-full border-t-transparent animate-spin"></div>
+                                    <i class="fas fa-microchip absolute inset-0 flex items-center justify-center text-xl text-amber-400"></i>
+                                </div>
+                                <h3 class="font-bold text-sm mb-1 font-display">Sistem Bekerja...</h3>
+                                <p class="text-slate-400 text-[10px] mb-4" id="processText">Memindai PDF...</p>
+                                
+                                <div class="w-full bg-slate-800 rounded-full h-1.5">
+                                    <div class="bg-gradient-to-r from-amber-400 to-emerald-400 h-1.5 rounded-full transition-all duration-[3000ms] ease-linear" style="width: 0%" id="processBarLine"></div>
+                                </div>
+                            </div>
+
+                            <!-- Sukses -->
+                            <div id="successUploadArea" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
+                                <div class="w-10 h-10 bg-emerald-500 text-white rounded-lg flex items-center justify-center text-lg shrink-0 shadow-sm"><i class="fas fa-check"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-emerald-900 text-xs">Sukses Diekstrak</h4>
+                                    <p class="text-[10px] text-emerald-700 truncate max-w-[200px]" id="fileNameDisplay">materi.pdf</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- NAVIGASI BAWAH -->
+                        <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center mt-auto shrink-0" id="bottomNav">
+                            <button type="button" id="btnPrev" onclick="prevStep()" class="text-slate-500 hover:text-slate-800 font-bold px-4 py-2.5 rounded-xl transition-colors invisible text-xs">
+                                <i class="fas fa-arrow-left mr-1"></i> Batal
+                            </button>
+                            <button type="button" id="btnNext" onclick="nextStep()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-xs">
+                                Lanjut <i class="fas fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- SUCCESS STATE: GENERATE KODE KELAS (FULL SCREEN) -->
+            <!-- ========================================== -->
+            <div id="finalSuccessState" class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center p-6 text-center z-50 fade-in border-t-4 border-emerald-500">
+                <div class="absolute inset-0 texture-dots pointer-events-none opacity-20"></div>
+                
+                <div class="w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-200 z-10"><i class="fas fa-check-double text-4xl"></i></div>
+                
+                <h2 class="text-2xl font-bold font-display text-slate-800 mb-2 z-10">Kelas Dibuat!</h2>
+                <p class="text-[11px] text-slate-500 mb-6 max-w-[250px] mx-auto z-10">Sistem telah menyiapkan rubrik & materi. Bagikan kode numerik ini ke siswa.</p>
+                
+                <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-[0_10px_30px_rgba(0,0,0,0.15)] mb-6 relative w-full z-10">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Kode Akses Kelas</p>
+                    <div class="flex justify-center items-center">
+                        <div class="text-amber-400 font-black text-5xl tracking-[0.2em] font-display" id="finalClassCode">000000</div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 w-full z-10">
+                    <button onclick="salinKodeFinal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 rounded-xl transition-all border border-slate-200 active:scale-95 text-xs">
+                        <i class="fas fa-copy mr-1"></i> Salin
+                    </button>
+                    <a href="index.html" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-1 text-xs">
+                        Masuk Kelas <i class="fas fa-door-open"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Notifikasi Toast (Diletakkan di dalam container agar rapi di desktop) -->
+            <div id="toastContainer" class="absolute bottom-5 left-1/2 transform -translate-x-1/2 w-[90%] z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+        </main>
     </div>
-
-    <!-- NAVBAR GURU -->
-    <nav class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-40">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <a href="index.html" class="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors font-bold">
-                    <i class="fas fa-arrow-left"></i> <span class="hidden sm:inline">Kembali ke Dashboard</span>
-                </a>
-                
-                <div class="flex items-center gap-3">
-                    <div class="text-right hidden sm:block">
-                        <p class="text-sm font-bold text-slate-700 leading-none" id="navTeacherName">Memuat...</p>
-                        <p class="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Mode Konfigurasi Kelas</p>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-emerald-100 border-2 border-emerald-200 flex items-center justify-center text-emerald-600 font-bold shadow-sm">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- KONTEN UTAMA: WIZARD FORM -->
-    <main class="flex-grow max-w-3xl w-full mx-auto px-4 py-8 relative z-20">
-
-        <!-- Progress Bar -->
-        <div class="mb-8" id="stepperHeader">
-            <div class="flex justify-between mb-2">
-                <span class="text-xs font-bold text-emerald-600 uppercase tracking-widest" id="stepLabel">Langkah 1 dari 3</span>
-                <span class="text-xs font-bold text-slate-400" id="stepTitleText">Identitas & Kurikulum</span>
-            </div>
-            <div class="w-full bg-slate-200 rounded-full h-2">
-                <div class="bg-emerald-500 h-2 rounded-full transition-all duration-500 ease-out w-1/3" id="progressBar"></div>
-            </div>
-        </div>
-
-        <!-- FORM CONTAINER -->
-        <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-200 overflow-hidden relative min-h-[400px]">
-            
-            <form id="createClassForm" onsubmit="preventSubmit(event)">
-                
-                <!-- ========================================== -->
-                <!-- STEP 1: IDENTITAS KELAS & JENJANG -->
-                <!-- ========================================== -->
-                <div id="step1" class="p-6 md:p-10 fade-in block">
-                    <div class="flex items-center gap-4 mb-8">
-                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl shadow-inner border border-blue-100"><i class="fas fa-school"></i></div>
-                        <div>
-                            <h2 class="text-2xl font-bold font-display text-slate-800">Identitas Kelas</h2>
-                            <p class="text-sm text-slate-500">Tentukan profil kelas yang akan Anda ampu.</p>
-                        </div>
-                    </div>
-
-                    <div class="mb-6">
-                        <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-3">Pilih Jenjang Pendidikan</label>
-                        <div class="grid grid-cols-2 gap-4">
-                            <!-- Label SMP -->
-                            <label class="relative cursor-pointer group">
-                                <input type="radio" name="jenjang" value="SMP" class="peer sr-only jenjang-radio" onchange="checkStep1()">
-                                <div class="border-2 border-slate-200 rounded-2xl p-4 transition-all hover:border-emerald-300 relative overflow-hidden">
-                                    <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-3">
-                                        <i class="fas fa-child text-lg"></i>
-                                    </div>
-                                    <h3 class="font-bold text-slate-800">SMP / MTs</h3>
-                                    <p class="text-[10px] text-slate-500 mt-1">Sistem evaluasi disesuaikan untuk tingkat menengah pertama.</p>
-                                    
-                                    <i class="fas fa-check-circle absolute top-4 right-4 text-emerald-500 text-xl opacity-0 transform scale-50 transition-all check-icon"></i>
-                                </div>
-                            </label>
-                            
-                            <!-- Label SMA -->
-                            <label class="relative cursor-pointer group">
-                                <input type="radio" name="jenjang" value="SMA" class="peer sr-only jenjang-radio" onchange="checkStep1()">
-                                <div class="border-2 border-slate-200 rounded-2xl p-4 transition-all hover:border-emerald-300 relative overflow-hidden">
-                                    <div class="w-10 h-10 bg-slate-800 text-amber-400 rounded-full flex items-center justify-center mb-3 shadow-inner">
-                                        <i class="fas fa-user-graduate text-lg"></i>
-                                    </div>
-                                    <h3 class="font-bold text-slate-800">SMA / SMK</h3>
-                                    <p class="text-[10px] text-slate-500 mt-1">Sistem evaluasi dirancang lebih kritis dan mendalam.</p>
-                                    
-                                    <i class="fas fa-check-circle absolute top-4 right-4 text-emerald-500 text-xl opacity-0 transform scale-50 transition-all check-icon"></i>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">Nama Ruang Kelas</label>
-                        <input type="text" id="inputNamaKelas" required class="w-full border-2 border-slate-200 rounded-xl p-4 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition-all font-bold text-slate-700 text-lg placeholder-slate-300" placeholder="Contoh: X MIPA 1 - Bahasa Indonesia" onkeyup="checkStep1()">
-                    </div>
-                </div>
-
-                <!-- ========================================== -->
-                <!-- STEP 2: KURIKULUM (CP & TP) -->
-                <!-- ========================================== -->
-                <div id="step2" class="p-6 md:p-10 fade-in hidden">
-                    <div class="flex items-center gap-4 mb-8">
-                        <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-2xl shadow-inner border border-amber-100"><i class="fas fa-book"></i></div>
-                        <div>
-                            <h2 class="text-2xl font-bold font-display text-slate-800">Target Kurikulum</h2>
-                            <p class="text-sm text-slate-500">Sistem akan menyesuaikan rubrik berdasarkan CP & TP ini.</p>
-                        </div>
-                    </div>
-
-                    <div class="mb-5 bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                        <label class="block text-slate-800 font-bold mb-1 flex items-center gap-2">
-                            Capaian Pembelajaran (CP)
-                        </label>
-                        <p class="text-[10px] text-slate-500 mb-3">Tuliskan kompetensi utama yang diharapkan dari fase ini.</p>
-                        <textarea id="inputCP" rows="3" class="w-full border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 transition-all text-sm font-medium text-slate-700 bg-white resize-none" placeholder="Contoh: Peserta didik mampu mengevaluasi informasi dan menyusun teks argumentasi secara logis dan kritis..."></textarea>
-                    </div>
-
-                    <div class="mb-2 bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                        <label class="block text-slate-800 font-bold mb-1 flex items-center gap-2">
-                            Tujuan Pembelajaran (TP)
-                        </label>
-                        <p class="text-[10px] text-slate-500 mb-3">Tuliskan indikator spesifik untuk materi yang akan diajarkan.</p>
-                        <textarea id="inputTP" rows="3" class="w-full border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 transition-all text-sm font-medium text-slate-700 bg-white resize-none" placeholder="1. Mampu mengidentifikasi tesis dan argumen.&#10;2. Mampu merumuskan paragraf pendukung dengan fakta..."></textarea>
-                    </div>
-                </div>
-
-                <!-- ========================================== -->
-                <!-- STEP 3: UPLOAD MODUL & EKSTRAKSI SISTEM -->
-                <!-- ========================================== -->
-                <div id="step3" class="p-6 md:p-10 fade-in hidden">
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center text-2xl shadow-inner border border-purple-100"><i class="fas fa-file-pdf"></i></div>
-                        <div>
-                            <h2 class="text-2xl font-bold font-display text-slate-800">Modul Pembelajaran</h2>
-                            <p class="text-sm text-slate-500">Unggah bahan ajar. Sistem akan mengekstraknya otomatis.</p>
-                        </div>
-                    </div>
-
-                    <!-- Area Upload -->
-                    <div id="uploadArea" class="border-2 border-dashed border-slate-300 rounded-3xl p-10 text-center hover:bg-slate-50 hover:border-purple-400 transition-all cursor-pointer bg-white relative">
-                        <input type="file" id="filePdf" accept=".pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileUpload(event)">
-                        
-                        <div class="w-20 h-20 bg-purple-100 text-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-purple-200">
-                            <i class="fas fa-cloud-upload-alt text-3xl"></i>
-                        </div>
-                        <h3 class="font-bold text-slate-700 text-lg mb-1">Pilih File PDF Materi</h3>
-                        <p class="text-xs text-slate-500 max-w-xs mx-auto">Maksimal 10MB. File akan diproses dan diubah menjadi modul digital interaktif oleh sistem.</p>
-                        <button type="button" class="mt-5 bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-md pointer-events-none">Cari File</button>
-                    </div>
-
-                    <!-- Animasi Pemrosesan (Sistem Ekstraksi) -->
-                    <div id="processingArea" class="hidden bg-slate-900 text-white rounded-3xl p-8 text-center border-b-4 border-amber-500 relative overflow-hidden">
-                        <div class="absolute inset-0 texture-dots opacity-20 pointer-events-none"></div>
-                        <div class="relative w-24 h-24 mx-auto mb-6">
-                            <div class="absolute inset-0 border-4 border-slate-700 rounded-full"></div>
-                            <div class="absolute inset-0 border-4 border-amber-400 rounded-full border-t-transparent animate-spin"></div>
-                            <i class="fas fa-microchip absolute inset-0 flex items-center justify-center text-3xl text-amber-400"></i>
-                        </div>
-                        <h3 class="font-bold text-xl mb-2 font-display">Mesin Ekstraksi Bekerja...</h3>
-                        <p class="text-slate-400 text-sm mb-6" id="processText">Memindai halaman dokumen PDF...</p>
-                        
-                        <div class="w-full bg-slate-800 rounded-full h-2 mb-2">
-                            <div class="bg-gradient-to-r from-amber-400 to-emerald-400 h-2 rounded-full transition-all duration-[3000ms] ease-linear" style="width: 0%" id="processBarLine"></div>
-                        </div>
-                    </div>
-
-                    <!-- Status Selesai Ekstrak -->
-                    <div id="successUploadArea" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex items-center gap-4">
-                        <div class="w-12 h-12 bg-emerald-500 text-white rounded-xl flex items-center justify-center text-xl shrink-0 shadow-sm"><i class="fas fa-check"></i></div>
-                        <div>
-                            <h4 class="font-bold text-emerald-900">Dokumen Berhasil Diekstrak</h4>
-                            <p class="text-xs text-emerald-700" id="fileNameDisplay">materi_kelas.pdf</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ========================================== -->
-                <!-- NAVIGASI BAWAH -->
-                <!-- ========================================== -->
-                <div class="p-6 md:px-10 md:py-6 bg-slate-50 border-t border-slate-200 flex justify-between items-center mt-auto" id="bottomNav">
-                    <button type="button" id="btnPrev" onclick="prevStep()" class="text-slate-500 hover:text-slate-800 font-bold px-6 py-3 rounded-xl transition-colors invisible">
-                        <i class="fas fa-arrow-left mr-2"></i> Kembali
-                    </button>
-                    <button type="button" id="btnNext" onclick="nextStep()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3.5 rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                        Lanjut ke Kurikulum <i class="fas fa-arrow-right ml-2"></i>
-                    </button>
-                </div>
-            </form>
-
-        </div>
-
-        <!-- ========================================== -->
-        <!-- SUCCESS STATE: GENERATE KODE KELAS (FULL SCREEN) -->
-        <!-- ========================================== -->
-        <div id="finalSuccessState" class="hidden absolute inset-0 bg-white rounded-3xl shadow-2xl flex flex-col items-center justify-center p-8 text-center z-50 fade-in border-4 border-emerald-500">
-            <div class="absolute inset-0 texture-dots pointer-events-none opacity-20"></div>
-            
-            <div class="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-emerald-200"><i class="fas fa-check-double text-5xl"></i></div>
-            
-            <h2 class="text-3xl font-bold font-display text-slate-800 mb-2">Ruang Kelas Terbuka!</h2>
-            <p class="text-slate-500 mb-8 max-w-md mx-auto">Sistem telah menyiapkan rubrik, ruang materi, dan papan peringkat. Bagikan kode numerik ini kepada siswa Anda.</p>
-            
-            <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-[0_10px_40px_rgba(0,0,0,0.2)] mb-8 relative w-full max-w-sm">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Kode Akses Kelas</p>
-                <div class="flex justify-center items-center gap-3">
-                    <div class="text-amber-400 font-black text-6xl tracking-widest font-display" id="finalClassCode">000000</div>
-                </div>
-            </div>
-
-            <div class="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
-                <button onclick="salinKodeFinal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 rounded-xl transition-all border border-slate-200 active:scale-95">
-                    <i class="fas fa-copy mr-2"></i> Salin Kode
-                </button>
-                <a href="index.html" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
-                    Masuk Kelas <i class="fas fa-door-open"></i>
-                </a>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- Notifikasi Toast -->
-    <div id="toastContainer" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-3 pointer-events-none"></div>
 
     <!-- LOGIC UI STEPPER & FILE UPLOAD -->
     <script>
@@ -282,18 +307,20 @@
         let isFileProcessed = false;
         let generatedCode = "";
 
-        // Fungsi Toast
+        // Fungsi Custom Toast dalam Mobile Frame
         function showToast(msg, isError = false) {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             const bg = isError ? 'bg-red-600' : 'bg-slate-800';
-            toast.className = `${bg} text-white px-6 py-3 rounded-xl shadow-2xl text-sm font-bold flex items-center gap-3 transform translate-y-10 opacity-0 transition-all duration-300 pointer-events-auto`;
-            toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${msg}`;
+            
+            toast.className = `${bg} text-white px-4 py-3 rounded-lg shadow-xl text-xs font-bold flex items-center justify-center gap-2 transform translate-y-5 opacity-0 transition-all duration-300 pointer-events-auto w-full text-center`;
+            toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle text-emerald-400'}"></i> ${msg}`;
+            
             container.appendChild(toast);
             
-            requestAnimationFrame(() => toast.classList.remove('translate-y-10', 'opacity-0'));
+            requestAnimationFrame(() => toast.classList.remove('translate-y-5', 'opacity-0'));
             setTimeout(() => {
-                toast.classList.add('translate-y-10', 'opacity-0');
+                toast.classList.add('translate-y-5', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
@@ -303,7 +330,7 @@
             e.preventDefault();
         }
 
-        // Validasi Step 1 (Harus pilih jenjang & isi nama kelas)
+        // Validasi Step 1
         function checkStep1() {
             const jenjang = document.querySelector('input[name="jenjang"]:checked');
             const namaKelas = document.getElementById('inputNamaKelas').value.trim();
@@ -328,7 +355,7 @@
                 document.getElementById('stepTitleText').innerText = 'Data Kurikulum';
                 
                 document.getElementById('btnPrev').classList.remove('invisible');
-                document.getElementById('btnNext').innerHTML = 'Lanjut ke Modul <i class="fas fa-arrow-right ml-2"></i>';
+                document.getElementById('btnNext').innerHTML = 'Lanjut <i class="fas fa-arrow-right ml-1"></i>';
                 currentStep = 2;
             } 
             else if(currentStep === 2) {
@@ -336,7 +363,7 @@
                 const tp = document.getElementById('inputTP').value.trim();
                 
                 if(!cp || !tp) {
-                    showToast("Harap isi Capaian & Tujuan Pembelajaran untuk struktur rubrik sistem.", true);
+                    showToast("Harap isi Capaian & Tujuan Pembelajaran.", true);
                     return;
                 }
 
@@ -348,18 +375,17 @@
                 document.getElementById('stepLabel').innerText = 'Langkah 3 dari 3';
                 document.getElementById('stepTitleText').innerText = 'Upload Modul';
                 
-                document.getElementById('btnNext').innerHTML = '<i class="fas fa-magic mr-2"></i> Bangun Kelas Sekarang';
+                document.getElementById('btnNext').innerHTML = '<i class="fas fa-magic mr-1"></i> Bangun Kelas';
                 document.getElementById('btnNext').classList.replace('bg-emerald-600', 'bg-amber-500');
                 document.getElementById('btnNext').classList.replace('hover:bg-emerald-700', 'hover:bg-amber-600');
                 currentStep = 3;
             }
             else if(currentStep === 3) {
                 if(!isFileProcessed) {
-                    showToast("Harap unggah modul pembelajaran (PDF) terlebih dahulu.", true);
+                    showToast("Harap unggah PDF materi terlebih dahulu.", true);
                     return;
                 }
-                
-                // FINAL SUBMIT KE FIREBASE
+                // FINAL SUBMIT
                 submitKeFirebase();
             }
         }
@@ -374,7 +400,7 @@
                 document.getElementById('stepTitleText').innerText = 'Identitas Kelas';
                 
                 document.getElementById('btnPrev').classList.add('invisible');
-                document.getElementById('btnNext').innerHTML = 'Lanjut ke Kurikulum <i class="fas fa-arrow-right ml-2"></i>';
+                document.getElementById('btnNext').innerHTML = 'Lanjut <i class="fas fa-arrow-right ml-1"></i>';
                 currentStep = 1;
             }
             else if(currentStep === 3) {
@@ -385,20 +411,20 @@
                 document.getElementById('stepLabel').innerText = 'Langkah 2 dari 3';
                 document.getElementById('stepTitleText').innerText = 'Data Kurikulum';
                 
-                document.getElementById('btnNext').innerHTML = 'Lanjut ke Modul <i class="fas fa-arrow-right ml-2"></i>';
+                document.getElementById('btnNext').innerHTML = 'Lanjut <i class="fas fa-arrow-right ml-1"></i>';
                 document.getElementById('btnNext').classList.replace('bg-amber-500', 'bg-emerald-600');
                 document.getElementById('btnNext').classList.replace('hover:bg-amber-600', 'hover:bg-emerald-700');
                 currentStep = 2;
             }
         }
 
-        // Handle File Upload & Fake Extraction Processing
+        // Upload & Fake Loading Animasi
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if(!file) return;
 
             if(file.type !== "application/pdf") {
-                showToast("Sistem hanya menerima file berformat PDF.", true);
+                showToast("Sistem hanya menerima file PDF.", true);
                 return;
             }
 
@@ -409,19 +435,17 @@
             document.getElementById('btnNext').disabled = true;
             document.getElementById('btnPrev').classList.add('invisible');
 
-            // Simulasi Animasi Pemrosesan (Mesin Ekstraksi)
             const textStates = [
-                "Mengunggah file ke server aman...",
-                "Menganalisis struktur dokumen PDF...",
-                "Mengekstrak teks menjadi modul interaktif...",
-                "Menyelaraskan materi dengan Kurikulum...",
-                "Finalisasi pembuatan rubrik evaluasi..."
+                "Mengunggah file ke server...",
+                "Menganalisis dokumen...",
+                "Mengekstrak teks menjadi modul...",
+                "Finalisasi pembuatan rubrik..."
             ];
             
             const processText = document.getElementById('processText');
             const progressBar = document.getElementById('processBarLine');
             
-            progressBar.style.width = '100%'; // CSS transition will animate this over 3s
+            progressBar.style.width = '100%';
 
             let tIdx = 0;
             const interval = setInterval(() => {
@@ -429,9 +453,8 @@
                     processText.innerText = textStates[tIdx];
                     tIdx++;
                 }
-            }, 600); // Ganti teks tiap 0.6 detik
+            }, 750); 
 
-            // Setelah 3 detik, selesai.
             setTimeout(() => {
                 clearInterval(interval);
                 processingArea.classList.add('hidden');
@@ -443,24 +466,22 @@
                 isFileProcessed = true;
                 document.getElementById('btnNext').disabled = false;
                 document.getElementById('btnPrev').classList.remove('invisible');
-                showToast("Modul berhasil dikonversi oleh sistem.");
-            }, 3200);
+                showToast("Modul berhasil dikonversi.");
+            }, 3000);
         }
 
-        // Salin Kode
-        window.salinKodeFinal = function() {
+        function salinKodeFinal() {
             navigator.clipboard.writeText(generatedCode).then(() => {
                 showToast(`Kode Kelas ${generatedCode} disalin!`);
             });
         }
 
-        // Init: Lock Next Button di awal
         document.addEventListener('DOMContentLoaded', () => {
             checkStep1();
         });
     </script>
 
-    <!-- FIREBASE & AUTH LOGIC -->
+    <!-- FIREBASE LOGIC -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -477,7 +498,6 @@
 
         let currentGuru = null;
 
-        // Cek Auth (Hanya Guru/Admin)
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 try {
@@ -486,7 +506,7 @@
                         const userData = userDoc.data();
                         if (userData.role === 'teacher' || userData.role === 'admin') {
                             currentGuru = { uid: user.uid, nama: userData.namaLengkap };
-                            document.getElementById('navTeacherName').innerText = userData.namaLengkap;
+                            document.getElementById('navTeacherName').innerText = "Oleh: " + userData.namaLengkap;
                             
                             document.getElementById('authGuard').classList.add('opacity-0');
                             setTimeout(() => document.getElementById('authGuard').classList.add('hidden'), 500);
@@ -519,7 +539,7 @@
             btnNext.disabled = true;
 
             try {
-                // Generate 6 DIGIT ANGKA (Murni Angka, Cth: 839102)
+                // Generate 6 DIGIT ANGKA
                 generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
                 
                 await setDoc(doc(db, "classes", generatedCode), {
@@ -534,21 +554,26 @@
                     createdAt: new Date()
                 });
 
-                // Tampilkan Layar Sukses Akhir
-                document.getElementById('createClassForm').classList.add('hidden');
+                // Transisi Tampilan UI
+                document.getElementById('formWrapper').classList.add('hidden');
                 document.getElementById('stepperHeader').classList.add('hidden');
                 
                 const successState = document.getElementById('finalSuccessState');
                 successState.classList.remove('hidden');
                 document.getElementById('finalClassCode').innerText = generatedCode;
                 
-                // Confetti Selebrasi
+                // Panggil Confetti dari Library yg sudah di-import
                 setTimeout(() => {
-                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#10b981', '#fbbf24', '#ffffff'] });
+                    confetti({ 
+                        particleCount: 150, 
+                        spread: 80, 
+                        origin: { y: 0.6 }, 
+                        colors: ['#10b981', '#fbbf24', '#3b82f6'],
+                        zIndex: 9999
+                    });
                 }, 300);
 
             } catch (error) {
-                console.error("Gagal buat kelas:", error);
                 showToast("Terjadi kesalahan jaringan saat membangun kelas.", true);
                 btnNext.innerHTML = originalText;
                 btnNext.disabled = false;
