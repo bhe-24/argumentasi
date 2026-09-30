@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Editor Level - Argumentasi</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], display: ['Playfair Display', 'serif'] } } }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #e2e8f0; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .mobile-frame { width: 100%; max-width: 448px; height: 100vh; background-color: #f8fafc; display: flex; flex-direction: column; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden; }
+        @media (min-width: 640px) { .mobile-frame { height: 90vh; border-radius: 1.5rem; border: 8px solid #334155; } }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .skeleton-pulse { animation: skeleton-loading 1.2s ease-in-out infinite alternate; }
+        @keyframes skeleton-loading { 0% { opacity: 0.5; } 100% { opacity: 1; } }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <!-- MOBILE FRAME CONTAINER -->
+    <div class="mobile-frame fade-in">
+
+        <!-- HEADER STICKY -->
+        <header class="flex-shrink-0 bg-white px-4 py-3 flex items-center justify-between shadow-sm border-b border-slate-200 z-50">
+            <a href="#" id="btnBackToClass" class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-colors active:scale-95">
+                <i class="fas fa-arrow-left text-sm"></i>
+            </a>
+            
+            <div class="flex flex-col items-center flex-1 overflow-hidden px-2">
+                <!-- Skeleton Header -->
+                <div id="skeletonHeaderTitle" class="w-24 h-4 bg-slate-200 rounded skeleton-pulse"></div>
+                <!-- Real Header -->
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 hidden" id="typeLabel">Memuat Tipe...</span>
+                <h1 class="font-bold text-slate-800 text-sm tracking-wide leading-tight truncate w-full text-center hidden" id="navNodeTitle">Memuat Level...</h1>
+            </div>
+
+            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400" id="headerIcon">
+                <i class="fas fa-layer-group text-xs"></i>
+            </div>
+        </header>
+
+        <!-- KONTEN UTAMA: SCROLLABLE -->
+        <main class="flex-grow overflow-y-auto hide-scrollbar relative z-20 flex flex-col bg-slate-50">
+            
+            <!-- Skeleton Form State -->
+            <div id="skeletonState" class="p-4 space-y-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="w-full h-8 bg-slate-200 rounded skeleton-pulse mb-3"></div>
+                    <div class="w-full h-32 bg-slate-100 rounded skeleton-pulse"></div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="w-1/2 h-4 bg-slate-200 rounded skeleton-pulse mb-3"></div>
+                    <div class="w-full h-12 bg-slate-100 rounded skeleton-pulse"></div>
+                </div>
+            </div>
+
+            <!-- EDITOR: MODE MEMBACA -->
+            <div id="editorMembaca" class="hidden flex-grow flex-col">
+                <div class="p-4 flex-grow flex flex-col gap-4">
+                    <!-- Text Area Materi -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 shrink-0">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2">Materi Bacaan Teks</label>
+                        <textarea id="txtContent" rows="7" class="w-full border-2 border-slate-100 rounded-xl p-3 text-xs focus:outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all resize-none" placeholder="Ketikkan teks materi yang harus dibaca siswa di sini..."></textarea>
+                    </div>
+
+                    <!-- Upload Gambar -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 shrink-0">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex justify-between items-center">
+                            <span>Gambar Pendukung</span> <i class="fas fa-image text-slate-300"></i>
+                        </label>
+                        <input type="file" accept="image/*" onchange="convertToBase64(event)" class="block w-full text-[10px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-blue-50 file:text-blue-600">
+                        <input type="hidden" id="b64Data">
+                        <img id="imgPreview" src="" class="hidden mt-3 w-full max-h-32 rounded-lg border border-slate-200 object-cover">
+                    </div>
+
+                    <!-- Analitik Membaca Realtime -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden shrink-0 mb-6">
+                        <div class="bg-slate-800 p-3 flex justify-between items-center">
+                            <h4 class="font-bold text-[10px] text-white flex items-center gap-1.5 uppercase tracking-wider"><i class="fas fa-chart-pie text-blue-400"></i> Pantauan Progres Siswa</h4>
+                        </div>
+                        <div class="max-h-48 overflow-y-auto bg-slate-50 hide-scrollbar p-2" id="readAnalyticsList">
+                            <!-- Injeksi JS -->
+                            <div class="text-center text-[10px] text-slate-400 p-4">Memuat data pembaca...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EDITOR: MODE MENULIS (TUGAS) -->
+            <div id="editorMenulis" class="hidden flex-grow flex-col">
+                <div class="p-4 flex-grow flex flex-col gap-4">
+                    
+                    <!-- Text Area Prompt Soal -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 shrink-0">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2">Instruksi Soal / Tugas</label>
+                        <textarea id="txtPrompt" rows="4" class="w-full border-2 border-slate-100 rounded-xl p-3 text-xs focus:outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-50 transition-all resize-none" placeholder="Tulis instruksi bagi siswa (cth: Temukan kelemahan argumen)..."></textarea>
+                    </div>
+
+                    <!-- Kotak Pengumpulan & Tabel Evaluasi API -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-grow flex flex-col mb-6">
+                        <div class="bg-slate-800 p-3 flex justify-between items-center flex-wrap gap-2 shrink-0">
+                            <h4 class="font-bold text-[10px] text-white flex items-center gap-1.5 uppercase tracking-wider"><i class="fas fa-inbox text-amber-400"></i> Jawaban Siswa</h4>
+                            <button onclick="nilaiSemuaDenganAPI()" id="btnEvaluasiAPI" class="text-[9px] font-bold bg-indigo-500 hover:bg-indigo-600 text-white px-2.5 py-1.5 rounded-lg shadow-sm transition-colors flex items-center gap-1 active:scale-95">
+                                <i class="fas fa-microchip"></i> Evaluasi Massal (API)
+                            </button>
+                        </div>
+                        <div class="flex-grow overflow-y-auto bg-slate-50 hide-scrollbar p-2 space-y-2 min-h-[150px]" id="writeSubmissionsList">
+                            <!-- Injeksi JS -->
+                            <div class="text-center text-[10px] text-slate-400 p-4">Memuat jawaban siswa...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- FOOTER STICKY (Tombol Simpan) -->
+        <footer class="flex-shrink-0 bg-white border-t border-slate-200 p-4 z-40" id="footerAction" style="display: none;">
+            <button id="btnSimpan" onclick="simpanPerubahan()" class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl hover:bg-emerald-700 transition-colors shadow-md active:scale-95 text-xs flex items-center justify-center gap-2">
+                <i class="fas fa-save"></i> Simpan Perubahan
+            </button>
+        </footer>
+    </div>
+
+    <!-- Container Toast -->
+    <div id="toastContainer" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none w-[90%] max-w-sm"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, query, orderBy, onSnapshot, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let classIdGlobal = null;
+        let levelIdGlobal = null;
+        let classDataGlobal = null;
+        let currentNodeData = null;
+        let nodeIndexGlobal = -1;
+
+        // CUSTOM TOAST (MOBILE FRIENDLY)
+        window.showToast = function(msg, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bgClass = type === 'error' ? 'bg-red-600' : (type === 'info' ? 'bg-blue-600' : 'bg-slate-800');
+            const iconClass = type === 'error' ? 'fa-exclamation-circle' : (type === 'info' ? 'fa-info-circle' : 'fa-check-circle text-emerald-400');
+            
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-xl shadow-xl text-[11px] font-bold flex items-center justify-center gap-2 transform translate-y-5 opacity-0 transition-all duration-300 pointer-events-auto w-full text-center`;
+            toast.innerHTML = `<i class="fas ${iconClass}"></i> ${msg}`;
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => toast.classList.remove('translate-y-5', 'opacity-0'));
+            setTimeout(() => {
+                toast.classList.add('translate-y-5', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        // 1. INIT & AUTH (SKELETON -> KONTEN)
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const urlParams = new URLSearchParams(window.location.search);
+                classIdGlobal = urlParams.get('id');
+                levelIdGlobal = urlParams.get('lvl');
+
+                if(!classIdGlobal || !levelIdGlobal) {
+                    window.location.href = "index.html"; return;
+                }
+
+                // Dinamis Back Button
+                document.getElementById('btnBackToClass').href = `ruang-kelas.html?id=${classIdGlobal}`;
+
+                const docRef = doc(db, "classes", classIdGlobal);
+                const docSnap = await getDoc(docRef);
+
+                if(docSnap.exists()) {
+                    classDataGlobal = docSnap.data();
+                    
+                    // Cari Node yang di-klik
+                    const nodes = classDataGlobal.alurNodes || [];
+                    nodeIndexGlobal = nodes.findIndex(n => n.id === levelIdGlobal);
+                    
+                    if(nodeIndexGlobal === -1) {
+                        showToast("Level tidak ditemukan.", "error");
+                        setTimeout(() => window.location.href = `ruang-kelas.html?id=${classIdGlobal}`, 1500);
+                        return;
+                    }
+
+                    currentNodeData = nodes[nodeIndexGlobal];
+                    
+                    // Render UI Header & Matikan Skeleton
+                    document.getElementById('skeletonHeaderTitle').classList.add('hidden');
+                    document.getElementById('skeletonState').classList.add('hidden');
+                    
+                    document.getElementById('typeLabel').innerText = `Misi ${currentNodeData.type}`;
+                    document.getElementById('typeLabel').classList.remove('hidden');
+                    
+                    document.getElementById('navNodeTitle').innerText = currentNodeData.title;
+                    document.getElementById('navNodeTitle').classList.remove('hidden');
+
+                    const iconH = document.getElementById('headerIcon');
+                    iconH.innerHTML = currentNodeData.type === 'membaca' ? `<i class="fas fa-book-reader text-blue-500 text-xs"></i>` : `<i class="fas fa-pen-nib text-amber-500 text-xs"></i>`;
+
+                    document.getElementById('footerAction').style.display = 'block';
+
+                    // Tampilkan Konten Berdasarkan Tipe
+                    if(currentNodeData.type === 'membaca') {
+                        document.getElementById('editorMembaca').classList.remove('hidden');
+                        document.getElementById('editorMembaca').classList.add('flex');
+                        
+                        // Populate Data
+                        document.getElementById('txtContent').value = currentNodeData.content || '';
+                        if(currentNodeData.imageBase64) {
+                            document.getElementById('b64Data').value = currentNodeData.imageBase64;
+                            const imgPrev = document.getElementById('imgPreview');
+                            imgPrev.src = currentNodeData.imageBase64;
+                            imgPrev.classList.remove('hidden');
+                        }
+                        
+                        mulaiAnalitikMembaca();
+                    } else {
+                        document.getElementById('editorMenulis').classList.remove('hidden');
+                        document.getElementById('editorMenulis').classList.add('flex');
+                        
+                        // Populate Data
+                        document.getElementById('txtPrompt').value = currentNodeData.prompt || '';
+                        
+                        mulaiAnalitikMenulis();
+                    }
+                } else {
+                    window.location.href = "index.html";
+                }
+            } else {
+                window.location.href = '../login.html';
+            }
+        });
+
+        // UTIL: Convert Image
+        window.convertToBase64 = function(e) {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    document.getElementById('b64Data').value = evt.target.result;
+                    const img = document.getElementById('imgPreview');
+                    img.src = evt.target.result;
+                    img.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // 2. SIMPAN DATA KE FIREBASE
+        window.simpanPerubahan = async function() {
+            const btn = document.getElementById('btnSimpan');
+            const originHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+            btn.disabled = true;
+
+            try {
+                if(currentNodeData.type === 'membaca') {
+                    const content = document.getElementById('txtContent').value;
+                    const b64 = document.getElementById('b64Data').value;
+                    const wordCount = content.trim().split(/\s+/).filter(w => w.length > 0).length;
+
+                    classDataGlobal.alurNodes[nodeIndexGlobal].content = content;
+                    classDataGlobal.alurNodes[nodeIndexGlobal].imageBase64 = b64;
+                    classDataGlobal.alurNodes[nodeIndexGlobal].wordCount = wordCount;
+                } else {
+                    const prompt = document.getElementById('txtPrompt').value;
+                    classDataGlobal.alurNodes[nodeIndexGlobal].prompt = prompt;
+                }
+
+                await updateDoc(doc(db, "classes", classIdGlobal), {
+                    alurNodes: classDataGlobal.alurNodes
+                });
+
+                showToast("Perubahan berhasil disimpan!");
+            } catch (error) {
+                showToast("Gagal menyimpan ke server.", "error");
+            } finally {
+                btn.innerHTML = originHtml;
+                btn.disabled = false;
+            }
+        };
+
+        // 3. REALTIME LISTENER: MEMBACA
+        function mulaiAnalitikMembaca() {
+            const qRead = query(collection(db, `classes/${classIdGlobal}/readingLogs`), where("levelId", "==", levelIdGlobal), orderBy("timestamp", "desc"));
+            onSnapshot(qRead, (snapshot) => {
+                const container = document.getElementById('readAnalyticsList');
+                if(snapshot.empty) {
+                    container.innerHTML = `<div class="text-center text-[10px] text-slate-400 p-4">Belum ada aktivitas membaca.</div>`;
+                    return;
+                }
+                let html = "";
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    const percentColor = d.percent >= 80 ? 'emerald' : (d.percent >= 40 ? 'amber' : 'red');
+                    html += `
+                    <div class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-100 shadow-sm mb-2">
+                        <div class="flex-1 truncate">
+                            <p class="text-[11px] font-bold text-slate-700 truncate">${d.studentName}</p>
+                            <p class="text-[9px] text-slate-400"><i class="far fa-clock"></i> Durasi aktual: ${d.duration} detik</p>
+                        </div>
+                        <div class="bg-${percentColor}-100 text-${percentColor}-700 px-2 py-1 rounded text-[10px] font-black shrink-0">
+                            ${d.percent}%
+                        </div>
+                    </div>`;
+                });
+                container.innerHTML = html;
+            });
+        }
+
+        // 4. REALTIME LISTENER: MENULIS (TUGAS)
+        function mulaiAnalitikMenulis() {
+            const qWrite = query(collection(db, `classes/${classIdGlobal}/submissions`), where("levelId", "==", levelIdGlobal), orderBy("timestamp", "desc"));
+            onSnapshot(qWrite, (snapshot) => {
+                const container = document.getElementById('writeSubmissionsList');
+                if(snapshot.empty) {
+                    container.innerHTML = `<div class="text-center text-[10px] text-slate-400 p-4">Belum ada jawaban dari siswa.</div>`;
+                    return;
+                }
+                let html = "";
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    const scoreDisplay = d.score ? `<span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-[9px] font-black shrink-0">${d.score} Pts</span>` : `<span class="bg-slate-200 text-slate-500 px-2 py-1 rounded text-[9px] font-bold shrink-0">Blm Dinilai</span>`;
+                    
+                    html += `
+                    <div class="bg-white p-3 rounded-lg border border-slate-100 shadow-sm mb-2 flex flex-col gap-2">
+                        <div class="flex justify-between items-center">
+                            <p class="text-[11px] font-bold text-slate-800"><i class="fas fa-user-circle text-slate-300 mr-1"></i> ${d.studentName}</p>
+                            ${scoreDisplay}
+                        </div>
+                        <div class="bg-slate-50 p-2 rounded border border-slate-100">
+                            <p class="text-[10px] text-slate-500 italic line-clamp-3">"${d.answerText}"</p>
+                        </div>
+                    </div>`;
+                });
+                container.innerHTML = html;
+            });
+        }
+
+        // 5. EVALUASI MASSAL API
+        window.nilaiSemuaDenganAPI = async function() {
+            const btn = document.getElementById('btnEvaluasiAPI');
+            const originHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses API...';
+            btn.disabled = true;
+
+            showToast("Memanggil sistem Evaluator (API)...", 'info');
+            
+            try {
+                const prompt = document.getElementById('txtPrompt').value;
+                const payload = {
+                    classId: classIdGlobal,
+                    levelId: levelIdGlobal,
+                    prompt: prompt,
+                    action: "batch_grade"
+                };
+
+                // Request ke API nyata (Timeout 8s agar tidak menggantung)
+                const response = await fetch('https://api.argumentasi.com/v1/evaluate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    signal: AbortSignal.timeout(8000) 
+                });
+
+                if(!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                showToast("Evaluasi Otomatis Berhasil.");
+
+            } catch (error) {
+                console.error("API Error:", error);
+                showToast("Koneksi API Gagal / Sedang Offline.", "error");
+            } finally {
+                btn.innerHTML = originHtml;
+                btn.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>
