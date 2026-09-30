@@ -75,6 +75,10 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* Skeleton Animation */
+        .skeleton-pulse { animation: skeleton-loading 1.2s ease-in-out infinite alternate; }
+        @keyframes skeleton-loading { 0% { opacity: 0.5; } 100% { opacity: 1; } }
+
         /* Custom Radio Buttons */
         .jenjang-radio:checked + div {
             border-color: #10b981; 
@@ -91,37 +95,36 @@
     <!-- CONTAINER UTAMA (MOBILE FRAME) -->
     <div class="mobile-frame fade-in">
         
-        <!-- SECURITY SHIELD -->
-        <div id="authGuard" class="absolute inset-0 bg-slate-900 z-[10000] flex flex-col items-center justify-center text-white transition-opacity duration-500">
-            <i class="fas fa-shield-alt text-6xl text-amber-500 mb-6 animate-pulse"></i>
-            <h2 class="text-xl font-bold tracking-widest uppercase text-center">Memverifikasi</h2>
-            <p class="text-slate-400 mt-2 text-xs">Mengecek otoritas guru...</p>
-        </div>
-
-        <!-- NAVBAR GURU -->
-        <header class="flex-shrink-0 bg-white px-4 py-3 flex items-center justify-between shadow-sm border-b border-slate-200 z-40">
+        <!-- HEADER STICKY (Kokoh di atas) -->
+        <header class="flex-shrink-0 bg-white px-4 py-3 flex items-center justify-between shadow-sm border-b border-slate-200 z-50">
             <a href="index.html" class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-colors active:scale-95">
                 <i class="fas fa-arrow-left text-sm"></i>
             </a>
             
-            <div class="flex items-center gap-3 text-right">
-                <div>
-                    <!-- Nama Guru (Dinamis dari Firebase) -->
-                    <p class="text-[11px] font-bold text-slate-700 leading-none truncate max-w-[140px]" id="navTeacherName">Memuat...</p>
+            <div class="flex items-center gap-3 text-right overflow-hidden flex-1 justify-end ml-4">
+                <div class="flex flex-col items-end overflow-hidden w-full">
+                    <!-- Skeleton Nama Guru -->
+                    <div id="skeletonHeaderName" class="w-24 h-3 bg-slate-200 rounded skeleton-pulse mb-1"></div>
+                    
+                    <!-- Nama Guru (Dinamis) -->
+                    <p class="font-bold text-slate-700 leading-none truncate w-full text-right hidden" id="navTeacherName">Memuat...</p>
+                    
                     <p class="text-[9px] text-emerald-600 font-bold uppercase tracking-widest mt-1">Konfigurasi Kelas</p>
                 </div>
-                <div class="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-600 font-bold shadow-sm">
+                <div class="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-600 font-bold shadow-sm shrink-0">
                     <i class="fas fa-chalkboard-teacher text-xs"></i>
                 </div>
             </div>
         </header>
 
-        <!-- KONTEN UTAMA: WIZARD FORM -->
-        <main class="flex-grow overflow-y-auto hide-scrollbar relative z-20 flex flex-col" id="mainContainer">
+        <!-- KONTEN UTAMA: WIZARD FORM (Area Scrollable) -->
+        <main class="flex-grow overflow-y-auto hide-scrollbar relative z-20 flex flex-col bg-slate-50" id="mainContainer">
             
+            <!-- Area Wrapper Form (Beri padding) -->
             <div class="p-4 flex-grow flex flex-col">
+                
                 <!-- Progress Bar -->
-                <div class="mb-6 shrink-0" id="stepperHeader">
+                <div class="mb-5 shrink-0" id="stepperHeader">
                     <div class="flex justify-between mb-2">
                         <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest" id="stepLabel">Langkah 1 dari 3</span>
                         <span class="text-[10px] font-bold text-slate-400" id="stepTitleText">Identitas & Kurikulum</span>
@@ -131,7 +134,7 @@
                     </div>
                 </div>
 
-                <!-- FORM CONTAINER -->
+                <!-- FORM CONTAINER PUTIH -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative flex-grow flex flex-col" id="formWrapper">
                     
                     <form id="createClassForm" onsubmit="preventSubmit(event)" class="flex flex-col flex-grow">
@@ -193,12 +196,12 @@
                                 </div>
                             </div>
 
-                            <div class="mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100 shrink-0">
+                            <div class="mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100 shrink-0 flex flex-col">
                                 <label class="block text-slate-800 text-xs font-bold mb-1">Capaian Pembelajaran (CP)</label>
                                 <textarea id="inputCP" rows="3" class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 transition-all text-xs font-medium text-slate-700 bg-white resize-none" placeholder="Cth: Peserta didik mampu menyusun argumen..."></textarea>
                             </div>
 
-                            <div class="mb-2 bg-slate-50 p-4 rounded-xl border border-slate-100 shrink-0">
+                            <div class="mb-2 bg-slate-50 p-4 rounded-xl border border-slate-100 shrink-0 flex flex-col">
                                 <label class="block text-slate-800 text-xs font-bold mb-1">Tujuan Pembelajaran (TP)</label>
                                 <textarea id="inputTP" rows="3" class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 transition-all text-xs font-medium text-slate-700 bg-white resize-none" placeholder="1. Mampu mengidentifikasi tesis...&#10;2. Mampu merumuskan fakta..."></textarea>
                             </div>
@@ -217,7 +220,7 @@
                             </div>
 
                             <!-- Area Upload -->
-                            <div id="uploadArea" class="border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center hover:bg-slate-50 hover:border-purple-400 transition-all cursor-pointer bg-white relative flex-grow flex flex-col items-center justify-center min-h-[200px]">
+                            <div id="uploadArea" class="border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center hover:bg-slate-50 hover:border-purple-400 transition-all cursor-pointer bg-white relative flex-grow flex flex-col items-center justify-center min-h-[180px]">
                                 <input type="file" id="filePdf" accept=".pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileUpload(event)">
                                 
                                 <div class="w-14 h-14 bg-purple-100 text-purple-500 rounded-full flex items-center justify-center mb-3 shadow-sm border border-purple-200">
@@ -229,7 +232,7 @@
                             </div>
 
                             <!-- Animasi Proses -->
-                            <div id="processingArea" class="hidden bg-slate-900 text-white rounded-2xl p-6 text-center border-b-4 border-amber-500 relative overflow-hidden flex-grow flex flex-col justify-center min-h-[200px]">
+                            <div id="processingArea" class="hidden bg-slate-900 text-white rounded-2xl p-6 text-center border-b-4 border-amber-500 relative overflow-hidden flex-grow flex flex-col justify-center min-h-[180px]">
                                 <div class="absolute inset-0 texture-dots opacity-20 pointer-events-none"></div>
                                 <div class="relative w-16 h-16 mx-auto mb-4">
                                     <div class="absolute inset-0 border-[3px] border-slate-700 rounded-full"></div>
@@ -245,7 +248,7 @@
                             </div>
 
                             <!-- Sukses -->
-                            <div id="successUploadArea" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
+                            <div id="successUploadArea" class="hidden mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
                                 <div class="w-10 h-10 bg-emerald-500 text-white rounded-lg flex items-center justify-center text-lg shrink-0 shadow-sm"><i class="fas fa-check"></i></div>
                                 <div>
                                     <h4 class="font-bold text-emerald-900 text-xs">Sukses Diekstrak</h4>
@@ -290,12 +293,12 @@
                         <i class="fas fa-copy mr-1"></i> Salin
                     </button>
                     <a href="index.html" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-1 text-xs">
-                        Masuk Kelas <i class="fas fa-door-open"></i>
+                        Tutup <i class="fas fa-door-open"></i>
                     </a>
                 </div>
             </div>
             
-            <!-- Notifikasi Toast (Diletakkan di dalam container agar rapi di desktop) -->
+            <!-- Notifikasi Toast (Dalam frame agar rapi) -->
             <div id="toastContainer" class="absolute bottom-5 left-1/2 transform -translate-x-1/2 w-[90%] z-[100] flex flex-col gap-2 pointer-events-none"></div>
 
         </main>
@@ -307,7 +310,6 @@
         let isFileProcessed = false;
         let generatedCode = "";
 
-        // Fungsi Custom Toast dalam Mobile Frame
         function showToast(msg, isError = false) {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -325,12 +327,10 @@
             }, 3000);
         }
 
-        // Cegah Form Submit Enter
         function preventSubmit(e) {
             e.preventDefault();
         }
 
-        // Validasi Step 1
         function checkStep1() {
             const jenjang = document.querySelector('input[name="jenjang"]:checked');
             const namaKelas = document.getElementById('inputNamaKelas').value.trim();
@@ -343,7 +343,6 @@
             }
         }
 
-        // Navigasi Langkah
         function nextStep() {
             if(currentStep === 1) {
                 document.getElementById('step1').classList.add('hidden');
@@ -385,7 +384,6 @@
                     showToast("Harap unggah PDF materi terlebih dahulu.", true);
                     return;
                 }
-                // FINAL SUBMIT
                 submitKeFirebase();
             }
         }
@@ -418,7 +416,6 @@
             }
         }
 
-        // Upload & Fake Loading Animasi
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if(!file) return;
@@ -498,6 +495,7 @@
 
         let currentGuru = null;
 
+        // AUTHENTICATION CHECK (SILENT & SKELETON)
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 try {
@@ -506,10 +504,20 @@
                         const userData = userDoc.data();
                         if (userData.role === 'teacher' || userData.role === 'admin') {
                             currentGuru = { uid: user.uid, nama: userData.namaLengkap };
-                            document.getElementById('navTeacherName').innerText = "Oleh: " + userData.namaLengkap;
                             
-                            document.getElementById('authGuard').classList.add('opacity-0');
-                            setTimeout(() => document.getElementById('authGuard').classList.add('hidden'), 500);
+                            const nameEl = document.getElementById('navTeacherName');
+                            const nama = "Oleh: " + userData.namaLengkap;
+                            nameEl.innerText = nama;
+                            nameEl.classList.remove('hidden');
+                            
+                            // Sesuaikan ukuran font jika terlalu panjang
+                            if(nama.length > 20) {
+                                nameEl.classList.replace('text-[11px]', 'text-[9px]');
+                            }
+
+                            // Sembunyikan Skeleton
+                            document.getElementById('skeletonHeaderName').classList.add('hidden');
+                            
                         } else {
                             window.location.href = '../index.html';
                         }
@@ -525,7 +533,7 @@
             }
         });
 
-        // Submit ke Firebase
+        // Submit Data Kelas ke Firestore Firebase
         window.submitKeFirebase = async function() {
             const jenjang = document.querySelector('input[name="jenjang"]:checked').value;
             const namaKelas = document.getElementById('inputNamaKelas').value.trim();
@@ -539,7 +547,7 @@
             btnNext.disabled = true;
 
             try {
-                // Generate 6 DIGIT ANGKA
+                // Generate 6 DIGIT ANGKA Random
                 generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
                 
                 await setDoc(doc(db, "classes", generatedCode), {
@@ -554,7 +562,7 @@
                     createdAt: new Date()
                 });
 
-                // Transisi Tampilan UI
+                // Transisi Tampilan UI (Ke Halaman Sukses)
                 document.getElementById('formWrapper').classList.add('hidden');
                 document.getElementById('stepperHeader').classList.add('hidden');
                 
@@ -562,7 +570,7 @@
                 successState.classList.remove('hidden');
                 document.getElementById('finalClassCode').innerText = generatedCode;
                 
-                // Panggil Confetti dari Library yg sudah di-import
+                // Efek Kembang Api Confetti
                 setTimeout(() => {
                     confetti({ 
                         particleCount: 150, 
