@@ -32,7 +32,7 @@
             width: 100%;
             border: none;
             border-bottom: 1px solid #e5e7eb;
-            padding: 10px 12px 10px 32px; /* Dikecilkan sedikit agar muat di HP */
+            padding: 10px 12px 10px 32px;
             font-size: 14px;
             color: #374151;
             background-color: transparent;
@@ -63,7 +63,7 @@
             text-align: center;
             color: #9ca3af;
             font-size: 12px;
-            margin: 16px 0; /* Margin dikecilkan */
+            margin: 16px 0;
         }
         .divider-text::before, .divider-text::after {
             content: '';
@@ -75,8 +75,6 @@
 
         /* Animasi Pop-Up/Modal */
         .modal-z { z-index: 99999 !important; }
-        .fade-in { animation: fadeIn 0.2s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="min-h-[100dvh] flex items-center justify-center">
@@ -85,13 +83,12 @@
     <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
 
     <!-- MAIN CONTAINER -->
-    <!-- h-[100dvh] memastikan tinggi sesuai layar HP, overflow-hidden memastikan tidak ada scroll ganda -->
     <div class="w-full max-w-md bg-white flex flex-col relative h-[100dvh] sm:h-auto sm:min-h-[600px] sm:rounded-2xl sm:shadow-2xl overflow-hidden">
         
-        <!-- HEADER APP-LIKE (Dibuat flex-shrink-0 agar tidak ikut terscroll) -->
+        <!-- HEADER APP-LIKE -->
         <header class="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-white border-b border-slate-100 z-20">
             <div class="flex items-center gap-4">
-                <a href="index.html" class="text-brand-primary text-xl px-2 py-1"><i class="fas fa-arrow-left"></i></a>
+                <a href="/index.html" class="text-brand-primary text-xl px-2 py-1"><i class="fas fa-arrow-left"></i></a>
                 <h1 class="text-lg font-medium text-slate-800" id="headerTitle">Log In</h1>
             </div>
             <button onclick="bukaModal('modalBantuan')" class="w-7 h-7 rounded-full border border-brand-primary text-brand-primary flex items-center justify-center font-bold text-sm hover:bg-emerald-50 transition-colors">
@@ -99,7 +96,7 @@
             </button>
         </header>
 
-        <!-- KONTEN FORM (Dibuat flex-1 dan overflow-y-auto agar hanya bagian ini yang scroll jika perlu) -->
+        <!-- KONTEN FORM -->
         <div class="flex-1 flex flex-col px-6 pt-4 pb-6 overflow-y-auto" id="mainContentArea">
             
             <!-- Logo Sederhana -->
@@ -110,24 +107,20 @@
             <!-- Form Utama -->
             <form id="authForm" onsubmit="handleAuth(event)" class="w-full relative">
                 
-                <!-- Input Nama (Register Only) -->
                 <div id="groupNama" class="input-container relative hidden mb-3">
                     <i class="far fa-id-card input-icon"></i>
                     <input type="text" id="inputNama" class="input-underline" placeholder="Nama Lengkap Guru">
                 </div>
 
-                <!-- Input Email -->
                 <div class="input-container relative mb-3" id="groupEmail">
                     <i class="far fa-user input-icon"></i>
-                    <input type="email" id="inputEmail" required class="input-underline" placeholder="No. Handphone/Email/Username">
+                    <input type="email" id="inputEmail" required class="input-underline" placeholder="Email / Username">
                 </div>
 
-                <!-- Input Password -->
                 <div class="input-container relative mb-5" id="groupPassword">
                     <i class="fas fa-lock input-icon"></i>
                     <input type="password" id="inputPassword" required class="input-underline pr-20" placeholder="Password">
                     
-                    <!-- Lupa Password & Toggle Mata -->
                     <div class="absolute right-0 top-1/2 transform -translate-y-1/2 flex items-center h-full">
                         <button type="button" onclick="togglePasswordVisibility()" class="text-slate-400 hover:text-slate-600 px-2 outline-none">
                             <i class="far fa-eye-slash" id="eyeIcon"></i>
@@ -137,7 +130,6 @@
                     </div>
                 </div>
 
-                <!-- Tombol Submit -->
                 <button type="submit" id="btnSubmit" class="w-full bg-slate-200 text-slate-400 font-bold py-3 rounded text-sm transition-all mb-3 pointer-events-none">
                     <span id="btnText">Log In</span>
                 </button>
@@ -165,7 +157,7 @@
         </div>
 
         <!-- ============================================== -->
-        <!-- STATE VERIFIKASI (MENGGANTIKAN FORM JIKA BELUM VERIFIKASI) -->
+        <!-- STATE VERIFIKASI -->
         <!-- ============================================== -->
         <div id="groupVerifikasi" class="hidden flex-1 flex-col items-center justify-center p-6 text-center bg-white z-30">
             <div class="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-4 text-emerald-500 text-3xl border-2 border-emerald-100">
@@ -203,6 +195,37 @@
         </div>
     </div>
 
+    <!-- MODAL LOGIN NOMOR HP -->
+    <div id="modalLoginHP" class="fixed inset-0 bg-black/60 hidden modal-z flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300 pb-0 sm:pb-10" onclick="if(event.target === this) tutupModal('modalLoginHP')">
+        <div class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 transform translate-y-full sm:translate-y-10 transition-transform duration-300 relative flex flex-col">
+            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-5 sm:hidden"></div>
+            <button onclick="tutupModal('modalLoginHP')" class="absolute top-4 right-4 text-slate-400 hover:text-red-500"><i class="fas fa-times text-lg"></i></button>
+            
+            <h3 class="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+                <i class="fas fa-mobile-alt text-brand-primary"></i> Login via Nomor HP
+            </h3>
+            <p class="text-sm text-slate-500 mb-4" id="teksInfoHP">Gunakan kode negara (contoh: +628123...)</p>
+            
+            <!-- Tahap 1: Nomor HP & Recaptcha -->
+            <div id="tahapInputNoHP">
+                <input type="tel" id="inputNoHP" class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary mb-4" placeholder="+628123456789">
+                <div id="recaptcha-container" class="mb-4 w-full flex justify-center"></div>
+                <button onclick="kirimOTP()" id="btnKirimOTP" class="w-full bg-brand-primary text-white font-bold py-3 rounded-lg hover:bg-emerald-600 transition-colors active:scale-95">
+                    Kirim OTP via SMS
+                </button>
+            </div>
+
+            <!-- Tahap 2: Input OTP -->
+            <div id="tahapInputOTP" class="hidden">
+                <input type="number" id="inputOTP" class="w-full border border-slate-300 rounded-lg p-3 text-2xl tracking-[0.75em] text-center focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary mb-4" placeholder="••••••">
+                <button onclick="verifikasiOTP()" id="btnVerifikasiOTP" class="w-full bg-brand-primary text-white font-bold py-3 rounded-lg hover:bg-emerald-600 transition-colors active:scale-95">
+                    Verifikasi OTP
+                </button>
+                <button onclick="resetLoginHP()" class="w-full mt-4 text-sm text-slate-500 font-medium hover:text-slate-700 underline">Ganti Nomor HP</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL PUSAT BANTUAN -->
     <div id="modalBantuan" class="fixed inset-0 bg-black/60 hidden modal-z flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300 pb-0 sm:pb-10" onclick="if(event.target === this) tutupModal('modalBantuan')">
         <div class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 transform translate-y-full sm:translate-y-10 transition-transform duration-300 relative flex flex-col max-h-[85vh]">
@@ -225,7 +248,7 @@
                 <button onclick="tutupModal('modalBantuan'); infoLoginHP();" class="w-full text-left p-4 rounded-xl border border-slate-200 hover:border-brand-primary bg-slate-50 transition-colors flex items-center justify-between group">
                     <div>
                         <p class="font-bold text-slate-700 text-sm group-hover:text-brand-primary">Login Nomor HP / OTP</p>
-                        <p class="text-[10px] text-slate-500 mt-0.5">Panduan menggunakan nomor handphone.</p>
+                        <p class="text-[10px] text-slate-500 mt-0.5">Gunakan SMS untuk memverifikasi nomor.</p>
                     </div>
                     <i class="fas fa-chevron-right text-slate-300 group-hover:text-brand-primary"></i>
                 </button>
@@ -339,16 +362,13 @@
             box.classList.add('translate-y-full', 'sm:translate-y-10');
             setTimeout(() => modal.classList.add('hidden'), 300);
         };
-
-        window.infoLoginHP = function() {
-            showToast("Login OTP No. HP dinonaktifkan sementara oleh Administrator.", true);
-        };
     </script>
 
     <!-- FIREBASE AUTH & FIRESTORE LOGIC -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        // Tambahkan RecaptchaVerifier dan signInWithPhoneNumber
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signInWithPopup, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -391,6 +411,122 @@
             }
         };
 
+        // ==========================================
+        // FITUR LOGIN NOMOR HP / OTP
+        // ==========================================
+        let confirmationResult = null;
+        let recaptchaVerifier = null;
+
+        window.infoLoginHP = function() {
+            bukaModal('modalLoginHP');
+            window.resetLoginHP();
+            // Inisialisasi Captcha setelah modal terbuka (Beri delay agar DOM siap)
+            setTimeout(() => {
+                if (!recaptchaVerifier) {
+                    try {
+                        recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                            'size': 'normal',
+                            'callback': (response) => {
+                                // reCAPTCHA berhasil diselesaikan pengguna
+                            }
+                        });
+                        recaptchaVerifier.render();
+                    } catch(e) {
+                        console.log("Recaptcha error:", e);
+                    }
+                }
+            }, 500);
+        };
+
+        window.resetLoginHP = function() {
+            document.getElementById('tahapInputNoHP').classList.remove('hidden');
+            document.getElementById('tahapInputOTP').classList.add('hidden');
+            document.getElementById('teksInfoHP').innerText = "Gunakan kode negara (contoh: +628123...)";
+            document.getElementById('inputNoHP').value = "";
+            document.getElementById('inputOTP').value = "";
+        };
+
+        window.kirimOTP = async function() {
+            const noHP = document.getElementById('inputNoHP').value.trim();
+            if(!noHP.startsWith('+62') && !noHP.startsWith('+')) {
+                showToast("Nomor HP harus diawali dengan kode negara (+62).", true);
+                return;
+            }
+
+            const btn = document.getElementById('btnKirimOTP');
+            const originText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Mengirim...';
+            btn.disabled = true;
+
+            try {
+                // Meminta OTP dari Firebase menggunakan recaptchaVerifier
+                confirmationResult = await signInWithPhoneNumber(auth, noHP, recaptchaVerifier);
+                showToast("Kode OTP berhasil dikirim ke SMS!", false);
+                
+                document.getElementById('tahapInputNoHP').classList.add('hidden');
+                document.getElementById('tahapInputOTP').classList.remove('hidden');
+                document.getElementById('teksInfoHP').innerText = `Masukkan 6 digit kode OTP yang dikirim ke ${noHP}`;
+            } catch (error) {
+                console.error(error);
+                showToast("Gagal mengirim OTP. Pastikan Captcha diselesaikan.", true);
+            } finally {
+                btn.innerHTML = originText;
+                btn.disabled = false;
+            }
+        };
+
+        window.verifikasiOTP = async function() {
+            const otp = document.getElementById('inputOTP').value.trim();
+            if(otp.length < 6) {
+                showToast("Masukkan 6 digit kode OTP.", true);
+                return;
+            }
+
+            const btn = document.getElementById('btnVerifikasiOTP');
+            const originText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Memverifikasi...';
+            btn.disabled = true;
+
+            try {
+                const result = await confirmationResult.confirm(otp);
+                const user = result.user;
+
+                // Cek data di Firestore
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (!userDoc.exists()) {
+                    await setDoc(doc(db, "users", user.uid), {
+                        namaLengkap: "Pengguna No. HP",
+                        email: user.phoneNumber, 
+                        role: "teacher", // Auto teacher
+                        createdAt: new Date(),
+                        authProvider: "phone"
+                    });
+                } else {
+                    if(userDoc.data().status === 'suspended') {
+                        showToast("Akses ditolak: Akun ditangguhkan.", true);
+                        await auth.signOut();
+                        btn.innerHTML = originText;
+                        btn.disabled = false;
+                        return;
+                    }
+                }
+
+                showToast("Log In Berhasil!", false);
+                tutupModal('modalLoginHP');
+                // Path Absolut untuk menghindari bug di Vercel
+                setTimeout(() => window.location.href = "/guru/index.html", 1000);
+
+            } catch (error) {
+                console.error(error);
+                showToast("Kode OTP salah atau sudah kedaluwarsa.", true);
+            } finally {
+                btn.innerHTML = originText;
+                btn.disabled = false;
+            }
+        };
+        // ==========================================
+
+
         window.loginDenganGoogle = async function() {
             try {
                 showToast("Membuka otentikasi Google...", false);
@@ -415,7 +551,7 @@
                 }
 
                 showToast("Log In Berhasil! Meneruskan...", false);
-                setTimeout(() => window.location.href = "guru/index.html", 1000);
+                setTimeout(() => window.location.href = "/guru/index.html", 1000);
 
             } catch (error) {
                 console.error("Google Auth Error:", error);
@@ -460,8 +596,8 @@
                         }
 
                         showToast("Log In Berhasil!", false);
-                        if (userData.role === 'admin') setTimeout(() => window.location.href = "admin/index.html", 1000);
-                        else setTimeout(() => window.location.href = "guru/index.html", 1000);
+                        if (userData.role === 'admin') setTimeout(() => window.location.href = "/admin/index.html", 1000);
+                        else setTimeout(() => window.location.href = "/guru/index.html", 1000);
 
                     } else {
                         showToast("Profil akun tidak ditemukan di server.", true);
@@ -487,7 +623,7 @@
                             namaLengkap: nama, email: email, role: "admin", createdAt: new Date()
                         });
                         showToast("Pendaftaran Admin Berhasil!", false);
-                        setTimeout(() => window.location.href = "admin/index.html", 1000);
+                        setTimeout(() => window.location.href = "/admin/index.html", 1000);
                     } catch (error) {
                         showToast(error.message, true);
                         setLoading(false);
@@ -581,7 +717,7 @@
                             createdAt: new Date()
                         });
                         showToast("Verifikasi Sukses! Mengalihkan...", false);
-                        setTimeout(() => window.location.href = "guru/index.html", 1000);
+                        setTimeout(() => window.location.href = "/guru/index.html", 1000);
                     } else {
                         showToast("Email belum diverifikasi. Cek kembali Inbox/Spam.", true);
                         btn.disabled = false;
