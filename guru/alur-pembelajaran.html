@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Setup Alur Kelas - Argumentasi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], display: ['Playfair Display', 'serif'] } } } }
+    </script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #e2e8f0; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .mobile-frame { width: 100%; max-width: 448px; height: 100vh; background-color: #0f172a; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; overflow: hidden; }
+        @media (min-width: 640px) { .mobile-frame { height: 90vh; border-radius: 1.5rem; border: 8px solid #334155; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); } }
+        .texture-dots { background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 16px 16px; }
+    </style>
+</head>
+<body>
+    <div class="mobile-frame text-white text-center px-6">
+        <div class="absolute inset-0 texture-dots opacity-20 pointer-events-none"></div>
+        <div class="relative z-10 w-20 h-20 mx-auto mb-6">
+            <div class="absolute inset-0 border-4 border-slate-700 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-emerald-400 rounded-full border-t-transparent animate-spin"></div>
+            <i class="fas fa-cogs absolute inset-0 flex items-center justify-center text-2xl text-emerald-400"></i>
+        </div>
+        <h2 class="text-2xl font-bold font-display tracking-wide mb-2 relative z-10">Merakit Peta Level</h2>
+        <p class="text-xs text-slate-400 max-w-[250px] mx-auto relative z-10">Sistem sedang menyiapkan struktur rubrik dan analitik kelas Anda...</p>
+    </div>
+
+    <!-- Script Pemrosesan Cepat -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function jalankanSetup() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const classId = urlParams.get('id');
+            const tipe = urlParams.get('type');
+
+            if(!classId || !tipe) { window.location.href = 'index.html'; return; }
+
+            let nodes = [];
+            if(tipe === 'baca_tulis') {
+                nodes = [
+                    { id: 'lvl1', type: 'membaca', title: 'Level 1: Literasi Teks', content: '', imageBase64: '', wordCount: 0 },
+                    { id: 'lvl2', type: 'menulis', title: 'Level 2: Sintesis Gagasan', prompt: '' },
+                    { id: 'lvl3', type: 'membaca', title: 'Level 3: Teks Lanjutan', content: '', imageBase64: '', wordCount: 0 },
+                    { id: 'lvl4', type: 'menulis', title: 'Level 4: Uji Argumen Akhir', prompt: '' }
+                ];
+            } else {
+                nodes = [
+                    { id: 'lvl1', type: 'membaca', title: 'Level 1: Bacaan Kritis', content: '', imageBase64: '', wordCount: 0 },
+                    { id: 'lvl2', type: 'menulis', title: 'Level 2: Uji Struktur Teks', prompt: '' },
+                    { id: 'lvl3', type: 'menulis', title: 'Level 3: Evaluasi Bias & Fakta', prompt: '' }
+                ];
+            }
+
+            try {
+                // Beri jeda animasi sedikit agar elegan (1.5 detik)
+                setTimeout(async () => {
+                    await updateDoc(doc(db, "classes", classId), {
+                        alurSetup: true, alurType: tipe, alurNodes: nodes
+                    });
+                    // Redirect kembali ke ruang kelas
+                    window.location.href = `ruang-kelas.html?id=${classId}`;
+                }, 1500);
+            } catch (error) {
+                alert("Gagal merakit kelas.");
+                window.location.href = `ruang-kelas.html?id=${classId}`;
+            }
+        }
+        jalankanSetup();
+    </script>
+</body>
+</html>
