@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
             ? `Judul: "${teksJudul}"\n\nIsi teks:\n${teksIsi.slice(0, 6000)}`
             : `Topik: "${teksJudul}"`;
 
-        const promptText = `Kamu adalah asisten akademik. Berdasarkan teks berikut, berikan 3 poin rangkuman dan 1 paragraf singkat yang menjelaskan makna bacaan. Gunakan Bahasa Indonesia.
+        const promptText = `Kamu adalah guru akademik yang ahli dalam bidang teks argumentasi. Berdasarkan teks berikut, berikan minimal 4 poin rangkuman yang menjelaskan apa isi dari teks tersebut, dan mengapa teks terseubut bisa dikatakan teks argumentasi atau artikel dan minimal 2 paragraf singkat yang menjelaskan makna bacaan. Gunakan Bahasa Indonesia yang mudah dipahami bagi siswa jenjang SMP dan SMA.
 
 ${sumber}
 
