@@ -4,491 +4,369 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Misi Pembelajaran - Argumentasi</title>
-    
-    <!-- Tailwind CSS -->
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Confetti Library untuk Selebrasi -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Poppins', 'sans-serif'],
-                        display: ['Playfair Display', 'serif'],
-                        article: ['Georgia', 'serif'], // Font nyaman untuk membaca
-                    },
-                    colors: { 
-                        brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } 
-                    }
+                    fontFamily: { sans: ['Poppins', 'sans-serif'], display: ['Playfair Display', 'serif'], article: ['Georgia', 'serif'] },
+                    colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } }
                 }
             }
         }
     </script>
 
     <style>
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            background-color: #e2e8f0; 
-            -webkit-tap-highlight-color: transparent; 
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
+        body { font-family: 'Poppins', sans-serif; background-color: #e2e8f0; -webkit-tap-highlight-color: transparent; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; min-height: 100dvh; }
 
-        .mobile-frame {
-            width: 100%;
-            max-width: 448px; 
-            height: 100vh;
-            background-color: #f8fafc;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            overflow: hidden; 
-        }
-        
-        @media (min-width: 640px) {
-            .mobile-frame {
-                height: 90vh;
-                border-radius: 1.5rem; 
-                border: 8px solid #334155; 
-            }
-        }
+        .mobile-frame { width: 100%; max-width: 448px; height: 100vh; height: 100dvh; background: #f8fafc; display: flex; flex-direction: column; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,.25); overflow: hidden; }
+        @media (min-width: 640px) { .mobile-frame { height: 90vh; border-radius: 1.5rem; border: 8px solid #334155; } }
 
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .modal-z { z-index: 99999; }
+        .fade-in { animation: fadeIn .35s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        /* Skeleton shimmer (sama dengan halaman lain) */
+        .sk { position: relative; overflow: hidden; background: #e2e8f0; border-radius: .5rem; color: transparent !important; }
+        .sk-light { background: rgba(255,255,255,.28); }
+        .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent); animation: shimmer 1.4s infinite; }
+        @keyframes shimmer { 100% { transform: translateX(100%); } }
 
-        .skeleton-pulse { animation: skeleton-loading 1.2s ease-in-out infinite alternate; }
-        @keyframes skeleton-loading { 0% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        /* Style Teks Bacaan (Menyerupai Artikel Medium) */
-        .article-content {
-            font-family: 'Georgia', serif;
-            font-size: 1.05rem;
-            line-height: 1.7;
-            color: #334155;
-            text-align: justify;
-        }
+        .article-content { font-family: 'Georgia', serif; font-size: 1.05rem; line-height: 1.7; color: #334155; text-align: justify; }
     </style>
 </head>
 <body>
 
-    <!-- MOBILE FRAME -->
-    <div class="mobile-frame fade-in">
+    <div class="mobile-frame">
 
-        <!-- SECURITY SHIELD / SKELETON LOADING PUSAT -->
-        <div id="authGuard" class="absolute inset-0 bg-slate-900 z-[10000] flex flex-col items-center justify-center text-white transition-opacity duration-500">
-            <i class="fas fa-satellite-dish text-5xl text-emerald-400 mb-6 animate-pulse"></i>
-            <h2 class="text-xl font-bold tracking-widest uppercase text-center font-display">Mengunduh Misi</h2>
-            <p class="text-slate-400 mt-2 text-xs">Mengambil data dari pusat komando...</p>
-        </div>
-
-        <!-- HEADER STICKY -->
-        <header class="flex-shrink-0 bg-white px-4 py-3 flex items-center justify-between shadow-sm border-b border-slate-200 z-40">
-            <button onclick="konfirmasiKeluar()" class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors active:scale-95">
+        <!-- HEADER (tinggi tetap 64px, sama dengan Ruang Belajar) -->
+        <header class="shrink-0 h-16 bg-brand-green text-white px-4 grid grid-cols-[40px_1fr_40px] items-center gap-2 shadow-md relative z-40">
+            <button onclick="konfirmasiKeluar()" class="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center active:scale-95 transition" aria-label="Tutup">
                 <i class="fas fa-times text-sm"></i>
             </button>
-            
-            <div class="flex flex-col items-center flex-1 overflow-hidden px-2 text-center">
-                <span class="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mb-0.5" id="headerTypeLabel">Memuat Tipe...</span>
-                <h1 class="font-bold text-slate-800 text-sm tracking-wide leading-tight truncate w-full" id="headerTitleLabel">Memuat Level...</h1>
+
+            <div class="min-w-0 text-center">
+                <p id="headerTypeLabel" class="sk sk-light mx-auto h-3 w-20 text-[9px] font-bold uppercase tracking-widest leading-3 text-emerald-100">Memuat</p>
+                <h1 id="headerTitleLabel" class="sk sk-light mx-auto mt-1 h-5 w-32 text-sm font-bold leading-5 truncate">Memuat</h1>
             </div>
 
-            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400" id="headerIcon">
-                <i class="fas fa-circle-notch fa-spin text-xs"></i>
-            </div>
+            <div id="headerIcon" class="sk sk-light w-9 h-9 rounded-full flex items-center justify-center text-sm"></div>
         </header>
 
-        <!-- KONTEN UTAMA: SCROLLABLE -->
-        <main class="flex-grow overflow-y-auto hide-scrollbar relative z-20 flex flex-col bg-white" id="mainContainer">
-            
-            <!-- STATE: MEMBACA -->
-            <div id="misiMembaca" class="hidden flex-col">
-                <!-- Gambar Sampul -->
+        <!-- ISI -->
+        <main class="flex-1 overflow-y-auto hide-scrollbar bg-white flex flex-col" id="mainContainer">
+
+            <!-- SKELETON -->
+            <div id="skeletonState" class="p-6" aria-busy="true">
+                <div class="sk h-7 w-4/5 mb-3"></div>
+                <div class="sk h-7 w-2/5 mb-8"></div>
+                <div class="space-y-3">
+                    <div class="sk h-3.5 w-full"></div><div class="sk h-3.5 w-full"></div><div class="sk h-3.5 w-11/12"></div>
+                    <div class="sk h-3.5 w-full"></div><div class="sk h-3.5 w-4/5"></div>
+                    <div class="h-3"></div>
+                    <div class="sk h-3.5 w-full"></div><div class="sk h-3.5 w-full"></div><div class="sk h-3.5 w-10/12"></div>
+                    <div class="sk h-3.5 w-2/3"></div>
+                </div>
+            </div>
+
+            <!-- ERROR -->
+            <div id="errorState" class="hidden fade-in flex-1 flex flex-col items-center justify-center text-center p-6">
+                <div class="w-24 h-24 bg-red-50 text-red-400 rounded-full flex items-center justify-center mb-4 text-4xl border border-red-100"><i class="fas fa-wifi"></i></div>
+                <h3 class="font-display font-bold text-xl text-slate-800 mb-2">Gagal Memuat Misi</h3>
+                <p class="text-xs text-slate-500 max-w-[250px] mb-5" id="errorText">Periksa koneksi internet Anda lalu coba lagi.</p>
+                <button onclick="location.reload()" class="bg-brand-green text-white text-xs font-bold px-6 py-2.5 rounded-full active:scale-95 transition">Coba Lagi</button>
+            </div>
+
+            <!-- MEMBACA -->
+            <div id="misiMembaca" class="hidden flex-col fade-in">
                 <div id="imgCoverContainer" class="w-full h-48 bg-slate-100 hidden relative">
                     <img id="materiImg" src="" alt="Cover Materi" class="w-full h-full object-cover">
                     <div class="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent"></div>
                 </div>
-
-                <div class="p-6 pb-24">
-                    <h2 class="text-2xl font-bold font-display text-slate-800 mb-6 leading-tight" id="materiTitle">Judul Materi</h2>
-                    <div class="article-content whitespace-pre-wrap" id="materiContent">
-                        <!-- Teks Artikel akan dimuat di sini -->
-                    </div>
+                <div class="p-6 pb-10">
+                    <h2 class="text-2xl font-bold font-display text-slate-800 mb-6 leading-tight" id="materiTitle"></h2>
+                    <div class="article-content whitespace-pre-wrap" id="materiContent"></div>
                 </div>
             </div>
 
-            <!-- STATE: MENULIS -->
-            <div id="misiMenulis" class="hidden flex-col flex-grow bg-slate-50">
-                <div class="p-5 flex-grow flex flex-col gap-4">
-                    
-                    <!-- Kartu Pertanyaan -->
+            <!-- MENULIS -->
+            <div id="misiMenulis" class="hidden flex-col flex-1 bg-slate-50 fade-in">
+                <div class="p-5 flex-1 flex flex-col gap-4">
                     <div class="bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl p-5 shadow-md relative overflow-hidden shrink-0 text-white">
                         <i class="fas fa-quote-right absolute -bottom-4 -right-2 text-6xl text-white/20"></i>
                         <h3 class="text-[10px] font-black uppercase tracking-widest text-amber-100 mb-2 flex items-center gap-2"><i class="fas fa-scroll"></i> Instruksi Misi</h3>
-                        <p class="font-medium text-sm leading-relaxed relative z-10" id="materiPrompt">
-                            <!-- Prompt dimuat di sini -->
-                        </p>
+                        <p class="font-medium text-sm leading-relaxed relative z-10" id="materiPrompt"></p>
                     </div>
-
-                    <!-- Kartu Jawaban -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex-grow flex flex-col relative overflow-hidden">
-                        <div class="bg-slate-100 px-4 py-2 border-b border-slate-200 flex justify-between items-center shrink-0">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex-1 min-h-[220px] flex flex-col overflow-hidden">
+                        <div class="bg-slate-100 px-4 py-2 border-b border-slate-200 shrink-0">
                             <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest"><i class="fas fa-pen-nib mr-1"></i> Lembar Jawaban</span>
                         </div>
-                        <textarea id="studentAnswerText" class="w-full flex-grow p-4 text-sm font-medium text-slate-700 focus:outline-none resize-none hide-scrollbar" placeholder="Ketik jawaban Anda di sini dengan jelas dan terstruktur..."></textarea>
+                        <textarea id="studentAnswerText" class="w-full flex-1 p-4 text-sm font-medium text-slate-700 focus:outline-none resize-none hide-scrollbar" placeholder="Ketik jawaban Anda di sini dengan jelas dan terstruktur..."></textarea>
                     </div>
-
                 </div>
             </div>
-
         </main>
 
-        <!-- FOOTER STICKY (TOMBOL AKSI) -->
-        <footer class="flex-shrink-0 bg-white border-t border-slate-200 p-4 z-40 hidden" id="footerAction">
-            <!-- Tombol Selesai Membaca -->
-            <button id="btnSelesaiMembaca" onclick="submitMembaca()" class="hidden w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition-colors shadow-md active:scale-95 text-xs flex items-center justify-center gap-2">
+        <!-- FOOTER (selalu tampil: tombol aksi + hak cipta) -->
+        <footer class="shrink-0 bg-white border-t border-slate-200 px-4 pt-3 pb-2 z-40" id="footerAction">
+            <div id="btnSkeleton" class="sk h-12 w-full !rounded-xl"></div>
+
+            <button id="btnSelesaiMembaca" onclick="submitMembaca()" class="hidden w-full h-12 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-md active:scale-95 text-xs items-center justify-center gap-2">
                 <i class="fas fa-check-circle"></i> Selesai Membaca
             </button>
-
-            <!-- Tombol Kirim Jawaban -->
-            <button id="btnKirimJawaban" onclick="konfirmasiKirimTulisan()" class="hidden w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl hover:bg-emerald-700 transition-colors shadow-md active:scale-95 text-xs flex items-center justify-center gap-2">
+            <button id="btnKirimJawaban" onclick="konfirmasiKirimTulisan()" class="hidden w-full h-12 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-md active:scale-95 text-xs items-center justify-center gap-2">
                 <i class="fas fa-paper-plane"></i> Kirim Jawaban Misi
             </button>
-        </footer>
 
+            <p class="text-center text-[10px] text-slate-400 font-medium tracking-wide mt-2">&copy; 2026 Argumentasi</p>
+        </footer>
     </div>
 
-    <!-- CUSTOM TOAST -->
-    <div id="toastContainer" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none w-[90%] max-w-sm"></div>
+    <div id="toastContainer" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none w-[90%] max-w-sm"></div>
 
-    <!-- MODAL KONFIRMASI UMUM -->
+    <!-- MODAL KONFIRMASI -->
     <div id="modalConfirm" class="fixed inset-0 bg-black/60 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300 backdrop-blur-sm p-4" onclick="if(event.target === this) tutupModal('modalConfirm')">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-6 transform scale-95 transition-transform duration-300 relative flex flex-col items-center text-center shadow-2xl">
-            <div id="confirmIcon" class="w-16 h-16 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-3xl mb-4">
-                <i class="fas fa-question"></i>
-            </div>
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 transform scale-95 transition-transform duration-300 flex flex-col items-center text-center shadow-2xl">
+            <div id="confirmIcon" class="w-16 h-16 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-3xl mb-4"><i class="fas fa-question"></i></div>
             <h3 class="text-lg font-bold text-slate-800 mb-2" id="confirmTitle">Konfirmasi</h3>
             <p class="text-sm text-slate-500 mb-6" id="confirmMessage">Apakah Anda yakin?</p>
-            
             <div class="flex gap-3 w-full">
-                <button onclick="tutupModal('modalConfirm')" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors active:scale-95 text-xs">
-                    Batal
-                </button>
-                <button id="btnConfirmAction" class="flex-1 text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 text-xs">
-                    Ya, Lanjutkan
-                </button>
+                <button onclick="tutupModal('modalConfirm')" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors active:scale-95 text-xs">Batal</button>
+                <button id="btnConfirmAction" class="flex-1 text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 text-xs">Ya, Lanjutkan</button>
             </div>
         </div>
     </div>
 
-    <!-- FIREBASE LOGIC -->
+    <!-- Tanpa Firebase Auth: halaman publik, siswa dikenali lewat ID siswa (sid) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" };
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+        const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" });
         const db = getFirestore(app);
 
-        // State Variabel
-        let classIdGlobal = null;
-        let levelIdGlobal = null;
-        let currentNodeData = null;
-        let currentUserGlobal = null;
-        let studentProfile = null;
-        
-        // Tracking Waktu Membaca
+        const $ = (id) => document.getElementById(id);
+        const params = new URLSearchParams(window.location.search);
+        const classId = params.get('id');
+        const levelId = params.get('lvl');
+
+        let currentNode = null;
+        let studentName = 'Siswa';
         let waktuMulaiMembaca = 0;
 
-        // --- FUNGSI UI UTILITAS ---
+        // ID siswa: URL (?sid=) -> tersimpan saat bergabung -> buat ID lokal sebagai cadangan
+        function ambilStudentId() {
+            let sid = params.get('sid');
+            try {
+                sid = sid || localStorage.getItem('siswa_' + classId) || localStorage.getItem('studentId');
+                if (!sid) {
+                    sid = 'anon_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+                    localStorage.setItem('siswa_' + classId, sid);
+                }
+            } catch (e) { sid = sid || 'anon_' + Math.random().toString(36).slice(2, 12); }
+            return sid;
+        }
+        const studentId = classId ? ambilStudentId() : null;
+        const urlPeta = () => `ruang_belajar_siswa.html?id=${encodeURIComponent(classId)}&sid=${encodeURIComponent(studentId)}`;
+
+        // Ganti skeleton teks tanpa mengubah ukuran
+        function isiTeks(id, teks) {
+            const el = $(id);
+            el.textContent = teks;
+            el.classList.remove('sk', 'sk-light', 'w-20', 'w-32');
+        }
+
+        // ---- UI util ----
         window.showToast = function(msg, type = 'success') {
-            const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            const bgClass = type === 'error' ? 'bg-red-600' : (type === 'info' ? 'bg-blue-600' : 'bg-slate-800');
-            const iconClass = type === 'error' ? 'fa-exclamation-circle' : (type === 'info' ? 'fa-info-circle' : 'fa-check-circle text-emerald-400');
-            
-            toast.className = `${bgClass} text-white px-4 py-3 rounded-xl shadow-xl text-[11px] font-bold flex items-center justify-center gap-2 transform translate-y-5 opacity-0 transition-all duration-300 pointer-events-auto w-full text-center`;
-            toast.innerHTML = `<i class="fas ${iconClass}"></i> ${msg}`;
-            container.appendChild(toast);
-            
+            const bg = type === 'error' ? 'bg-red-600' : (type === 'info' ? 'bg-blue-600' : 'bg-slate-800');
+            const ic = type === 'error' ? 'fa-exclamation-circle' : (type === 'info' ? 'fa-info-circle' : 'fa-check-circle text-emerald-400');
+            toast.className = `${bg} text-white px-4 py-3 rounded-xl shadow-xl text-[11px] font-bold flex items-center justify-center gap-2 translate-y-5 opacity-0 transition-all duration-300 w-full text-center`;
+            const i = document.createElement('i'); i.className = `fas ${ic}`;
+            toast.append(i, document.createTextNode(' ' + msg));
+            $('toastContainer').appendChild(toast);
             requestAnimationFrame(() => toast.classList.remove('translate-y-5', 'opacity-0'));
-            setTimeout(() => {
-                toast.classList.add('translate-y-5', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            setTimeout(() => { toast.classList.add('translate-y-5', 'opacity-0'); setTimeout(() => toast.remove(), 300); }, 3000);
         };
 
         window.bukaModal = function(id) {
-            const modal = document.getElementById(id);
-            const box = modal.querySelector('div');
+            const modal = $(id), box = modal.querySelector('div');
             modal.classList.remove('hidden');
-            requestAnimationFrame(() => {
-                modal.classList.remove('opacity-0');
-                box.classList.remove('scale-95');
-                box.classList.add('scale-100');
-            });
+            requestAnimationFrame(() => { modal.classList.remove('opacity-0'); box.classList.remove('scale-95'); box.classList.add('scale-100'); });
         };
-
         window.tutupModal = function(id) {
-            const modal = document.getElementById(id);
-            const box = modal.querySelector('div');
-            modal.classList.add('opacity-0');
-            box.classList.remove('scale-100');
-            box.classList.add('scale-95');
+            const modal = $(id), box = modal.querySelector('div');
+            modal.classList.add('opacity-0'); box.classList.remove('scale-100'); box.classList.add('scale-95');
             setTimeout(() => modal.classList.add('hidden'), 300);
         };
 
         window.showConfirm = function(title, message, iconClass, iconColorClass, btnText, btnColorClass, actionCallback) {
-            document.getElementById('confirmTitle').innerText = title;
-            document.getElementById('confirmMessage').innerText = message;
-            
-            const iconDiv = document.getElementById('confirmIcon');
+            $('confirmTitle').innerText = title;
+            $('confirmMessage').innerText = message;
+            const iconDiv = $('confirmIcon');
             iconDiv.className = `w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-4 ${iconColorClass}`;
             iconDiv.innerHTML = `<i class="${iconClass}"></i>`;
-            
-            const btn = document.getElementById('btnConfirmAction');
+            const btn = $('btnConfirmAction');
             btn.innerText = btnText;
             btn.className = `flex-1 text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 text-xs ${btnColorClass}`;
-            
-            btn.onclick = () => {
-                tutupModal('modalConfirm');
-                actionCallback();
-            };
-            
+            btn.onclick = () => { tutupModal('modalConfirm'); actionCallback(); };
             bukaModal('modalConfirm');
-        }
+        };
 
         window.konfirmasiKeluar = function() {
-            window.showConfirm(
-                "Tinggalkan Misi?",
+            showConfirm("Tinggalkan Misi?",
                 "Progres di halaman ini belum tersimpan jika Anda belum menekan tombol selesai/kirim.",
                 "fas fa-door-open", "bg-slate-100 text-slate-500",
                 "Ya, Keluar", "bg-slate-800 hover:bg-slate-900",
-                () => { window.location.href = `ruang_belajar_siswa.html?id=${classIdGlobal}`; }
-            );
+                () => { window.location.href = urlPeta(); });
+        };
+
+        function tampilkanError(pesan) {
+            $('skeletonState').classList.add('hidden');
+            $('btnSkeleton').classList.add('hidden');
+            if (pesan) $('errorText').textContent = pesan;
+            $('errorState').classList.remove('hidden');
+            isiTeks('headerTypeLabel', 'Misi');
+            isiTeks('headerTitleLabel', 'Gagal memuat');
+            $('headerIcon').classList.remove('sk', 'sk-light');
         }
 
-        // --- INIT DATA FIREBASE ---
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUserGlobal = user;
-                const urlParams = new URLSearchParams(window.location.search);
-                classIdGlobal = urlParams.get('id');
-                levelIdGlobal = urlParams.get('lvl');
-
-                if(!classIdGlobal || !levelIdGlobal) {
-                    window.location.href = "index.html"; return;
-                }
-
-                try {
-                    // Ambil Profil Siswa (untuk nama)
-                    const userDoc = await getDoc(doc(db, "users", user.uid));
-                    studentProfile = userDoc.exists() ? userDoc.data() : { namaLengkap: "Siswa Tanpa Nama" };
-
-                    // Ambil Data Kelas dan Temukan Node Misi
-                    const classDoc = await getDoc(doc(db, "classes", classIdGlobal));
-                    if(classDoc.exists()) {
-                        const classData = classDoc.data();
-                        const nodes = classData.alurNodes || [];
-                        currentNodeData = nodes.find(n => n.id === levelIdGlobal);
-
-                        if(!currentNodeData) {
-                            showToast("Misi tidak ditemukan.", "error");
-                            setTimeout(() => window.location.href = `ruang_belajar_siswa.html?id=${classIdGlobal}`, 1500);
-                            return;
-                        }
-
-                        // SET UI HEADER
-                        document.getElementById('headerTypeLabel').innerText = `Misi ${currentNodeData.type}`;
-                        document.getElementById('headerTitleLabel').innerText = currentNodeData.title;
-                        const iconH = document.getElementById('headerIcon');
-                        
-                        document.getElementById('footerAction').style.display = 'block';
-
-                        // RENDER SESUAI TIPE MISI
-                        if(currentNodeData.type === 'membaca') {
-                            iconH.innerHTML = `<i class="fas fa-book-reader text-blue-500 text-xs"></i>`;
-                            
-                            document.getElementById('misiMembaca').classList.remove('hidden');
-                            document.getElementById('misiMembaca').classList.add('flex');
-                            document.getElementById('btnSelesaiMembaca').classList.remove('hidden');
-                            
-                            document.getElementById('materiTitle').innerText = currentNodeData.title;
-                            document.getElementById('materiContent').innerText = currentNodeData.content || "Teks materi belum ditambahkan oleh guru.";
-                            
-                            if(currentNodeData.imageBase64) {
-                                document.getElementById('imgCoverContainer').classList.remove('hidden');
-                                document.getElementById('materiImg').src = currentNodeData.imageBase64;
-                            }
-
-                            // Mulai hitung mundur durasi (sederhana)
-                            waktuMulaiMembaca = Date.now();
-
-                        } else {
-                            iconH.innerHTML = `<i class="fas fa-pen-nib text-amber-500 text-xs"></i>`;
-                            
-                            document.getElementById('misiMenulis').classList.remove('hidden');
-                            document.getElementById('misiMenulis').classList.add('flex');
-                            document.getElementById('btnKirimJawaban').classList.remove('hidden');
-
-                            document.getElementById('materiPrompt').innerText = currentNodeData.prompt || "Instruksi soal belum ditambahkan oleh guru.";
-                        }
-
-                        // Matikan Layar Loading
-                        document.getElementById('authGuard').classList.add('opacity-0');
-                        setTimeout(() => document.getElementById('authGuard').classList.add('hidden'), 500);
-
-                    } else {
-                        window.location.href = "index.html";
-                    }
-                } catch (error) {
-                    window.location.href = "index.html";
-                }
-            } else {
-                window.location.href = '../login.html';
-            }
-        });
-
-        // --- SUBMIT MISI MEMBACA ---
-        window.submitMembaca = async function() {
-            const btn = document.getElementById('btnSelesaiMembaca');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
-            btn.disabled = true;
+        // ---- Load data ----
+        async function init() {
+            if (!classId || !levelId) { window.location.href = 'index.html'; return; }
 
             try {
-                // Hitung durasi (dalam detik)
-                const waktuSelesai = Date.now();
-                const durasiDetik = Math.floor((waktuSelesai - waktuMulaiMembaca) / 1000);
-                
-                // Set persentase baca (Asumsi 100% jika diklik selesai. Di sistem nyata butuh track scroll)
-                const percent = 100;
-                const xpGain = 50; // XP Misi Membaca
+                const classSnap = await getDoc(doc(db, 'classes', classId));
+                if (!classSnap.exists()) { window.location.href = 'index.html'; return; }
 
-                // 1. Simpan Log Membaca
-                const logRef = doc(db, `classes/${classIdGlobal}/readingLogs`, `${currentUserGlobal.uid}_${levelIdGlobal}`);
-                await setDoc(logRef, {
-                    studentId: currentUserGlobal.uid,
-                    studentName: studentProfile.namaLengkap,
-                    levelId: levelIdGlobal,
-                    duration: durasiDetik,
-                    percent: percent,
-                    timestamp: new Date()
+                currentNode = (classSnap.data().alurNodes || []).find(n => n.id === levelId);
+                if (!currentNode) {
+                    showToast("Misi tidak ditemukan.", "error");
+                    setTimeout(() => { window.location.href = urlPeta(); }, 1500);
+                    return;
+                }
+
+                // Nama siswa (opsional, jika dokumen siswa bisa dibaca)
+                try {
+                    const s = await getDoc(doc(db, `classes/${classId}/students`, studentId));
+                    if (s.exists()) studentName = s.data().nama || s.data().namaLengkap || 'Siswa';
+                } catch (e) {}
+
+                isiTeks('headerTypeLabel', `Misi ${currentNode.type}`);
+                isiTeks('headerTitleLabel', currentNode.title);
+                const iconH = $('headerIcon');
+                iconH.classList.remove('sk', 'sk-light');
+                iconH.classList.add('bg-white/15', 'border', 'border-white/20');
+
+                $('skeletonState').classList.add('hidden');
+                $('btnSkeleton').classList.add('hidden');
+
+                if (currentNode.type === 'membaca') {
+                    iconH.innerHTML = `<i class="fas fa-book-reader text-white text-xs"></i>`;
+                    $('misiMembaca').classList.remove('hidden'); $('misiMembaca').classList.add('flex');
+                    $('btnSelesaiMembaca').classList.remove('hidden'); $('btnSelesaiMembaca').classList.add('flex');
+                    $('materiTitle').textContent = currentNode.title;
+                    $('materiContent').textContent = currentNode.content || "Teks materi belum ditambahkan oleh guru.";
+                    if (currentNode.imageBase64) {
+                        $('imgCoverContainer').classList.remove('hidden');
+                        $('materiImg').src = currentNode.imageBase64;
+                    }
+                    waktuMulaiMembaca = Date.now();
+                } else {
+                    iconH.innerHTML = `<i class="fas fa-pen-nib text-white text-xs"></i>`;
+                    $('misiMenulis').classList.remove('hidden'); $('misiMenulis').classList.add('flex');
+                    $('btnKirimJawaban').classList.remove('hidden'); $('btnKirimJawaban').classList.add('flex');
+                    $('materiPrompt').textContent = currentNode.prompt || "Instruksi soal belum ditambahkan oleh guru.";
+                }
+            } catch (err) {
+                console.error(err);
+                tampilkanError(err.code === 'permission-denied'
+                    ? 'Akses ditolak oleh server. Hubungi guru Anda.'
+                    : 'Periksa koneksi internet Anda lalu coba lagi.');
+            }
+        }
+        init();
+
+        // ---- XP (atomic, tidak perlu baca dulu) ----
+        async function updateXPSiswa(xpGain) {
+            await setDoc(doc(db, `classes/${classId}/students`, studentId),
+                { xp: increment(xpGain), nama: studentName }, { merge: true });
+        }
+
+        // ---- Submit membaca ----
+        window.submitMembaca = async function() {
+            const btn = $('btnSelesaiMembaca');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+            btn.disabled = true;
+            try {
+                const durasiDetik = Math.floor((Date.now() - waktuMulaiMembaca) / 1000);
+                const xpGain = 50;
+                await setDoc(doc(db, `classes/${classId}/readingLogs`, `${studentId}_${levelId}`), {
+                    studentId, studentName, levelId, duration: durasiDetik, percent: 100, timestamp: new Date()
                 });
-
-                // 2. Tambah XP ke Profil Siswa di Kelas
                 await updateXPSiswa(xpGain);
-
-                // 3. Tampilkan Selebrasi Sukses
                 selebrasiSukses("Misi Selesai!", `Hebat! Anda mendapatkan +${xpGain} XP.`);
-
-            } catch(e) {
+            } catch (e) {
+                console.error(e);
                 showToast("Gagal menyimpan progres.", "error");
                 btn.innerHTML = '<i class="fas fa-check-circle"></i> Selesai Membaca';
                 btn.disabled = false;
             }
-        }
+        };
 
-        // --- SUBMIT MISI MENULIS ---
+        // ---- Submit menulis ----
         window.konfirmasiKirimTulisan = function() {
-            const teks = document.getElementById('studentAnswerText').value.trim();
-            if(teks.length < 10) {
-                showToast("Jawaban terlalu singkat. Tulis argumen yang lebih lengkap.", "error");
-                return;
-            }
+            const teks = $('studentAnswerText').value.trim();
+            if (teks.length < 10) { showToast("Jawaban terlalu singkat. Tulis argumen yang lebih lengkap.", "error"); return; }
 
-            window.showConfirm(
-                "Kirim Jawaban?",
+            showConfirm("Kirim Jawaban?",
                 "Jawaban Anda akan dikirim ke guru dan dievaluasi oleh sistem.",
                 "fas fa-paper-plane", "bg-emerald-100 text-emerald-500",
                 "Kirim Sekarang", "bg-emerald-600 hover:bg-emerald-700",
                 async () => {
-                    const btn = document.getElementById('btnKirimJawaban');
+                    const btn = $('btnKirimJawaban');
                     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
                     btn.disabled = true;
-
                     try {
-                        const xpGain = 100; // XP Misi Menulis
-                        
-                        // 1. Simpan Jawaban
-                        const subRef = doc(db, `classes/${classIdGlobal}/submissions`, `${currentUserGlobal.uid}_${levelIdGlobal}`);
-                        await setDoc(subRef, {
-                            studentId: currentUserGlobal.uid,
-                            studentName: studentProfile.namaLengkap,
-                            levelId: levelIdGlobal,
-                            answerText: teks,
-                            score: null, // Menunggu evaluasi API/Guru
-                            timestamp: new Date()
+                        const xpGain = 100;
+                        await setDoc(doc(db, `classes/${classId}/submissions`, `${studentId}_${levelId}`), {
+                            studentId, studentName, levelId, answerText: teks, score: null, timestamp: new Date()
                         });
-
-                        // 2. Tambah XP
                         await updateXPSiswa(xpGain);
-
-                        // 3. Selebrasi
                         selebrasiSukses("Jawaban Terkirim!", `Tugas berhasil diselesaikan. Anda mendapat +${xpGain} XP.`);
-                    } catch(e) {
+                    } catch (e) {
+                        console.error(e);
                         showToast("Gagal mengirim jawaban.", "error");
                         btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Jawaban Misi';
                         btn.disabled = false;
                     }
-                }
-            );
-        }
-
-        // --- FUNGSI UPDATE XP ---
-        async function updateXPSiswa(xpGain) {
-            const studentRef = doc(db, `classes/${classIdGlobal}/students`, currentUserGlobal.uid);
-            const studentSnap = await getDoc(studentRef);
-            
-            if(studentSnap.exists()) {
-                const currentXP = studentSnap.data().xp || 0;
-                await setDoc(studentRef, { xp: currentXP + xpGain }, { merge: true });
-            } else {
-                // Jika belum pernah buat dokumen siswa di kelas ini
-                await setDoc(studentRef, {
-                    nama: studentProfile.namaLengkap,
-                    xp: xpGain,
-                    joinedAt: new Date()
                 });
-            }
-        }
+        };
 
-        // --- FUNGSI SELEBRASI DAN KEMBALI ---
+        // ---- Selebrasi ----
         function selebrasiSukses(title, message) {
-            // Animasi Confetti
             confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#10b981', '#fbbf24', '#ffffff'], zIndex: 99999 });
-            
-            // Ubah konten utama menjadi ucapan sukses
-            document.getElementById('mainContainer').innerHTML = `
-                <div class="flex-grow flex flex-col items-center justify-center p-6 text-center fade-in">
+            $('mainContainer').innerHTML = `
+                <div class="flex-1 flex flex-col items-center justify-center p-6 text-center fade-in">
                     <div class="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-emerald-200"><i class="fas fa-check-double text-4xl"></i></div>
                     <h2 class="text-3xl font-bold font-display text-slate-800 mb-2">${title}</h2>
                     <p class="text-sm text-slate-500 mb-8 max-w-[250px] mx-auto">${message}</p>
-                    
-                    <a href="ruang_belajar_siswa.html?id=${classIdGlobal}" class="w-full max-w-[200px] bg-slate-900 text-white font-bold py-3.5 rounded-xl transition-all shadow-md active:scale-95 text-xs inline-flex items-center justify-center gap-2">
+                    <a href="${urlPeta()}" class="w-full max-w-[200px] bg-slate-900 text-white font-bold py-3.5 rounded-xl transition-all shadow-md active:scale-95 text-xs inline-flex items-center justify-center gap-2">
                         <i class="fas fa-map-signs"></i> Kembali ke Peta
                     </a>
-                </div>
-            `;
-            
-            // Sembunyikan Footer Tombol Aksi
-            document.getElementById('footerAction').style.display = 'none';
+                </div>`;
+            // Footer tetap ada (hanya hak cipta), tombol aksi disembunyikan
+            $('btnSelesaiMembaca').classList.add('hidden');
+            $('btnKirimJawaban').classList.add('hidden');
+            $('btnSkeleton').classList.add('hidden');
         }
     </script>
 </body>
