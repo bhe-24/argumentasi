@@ -50,7 +50,7 @@
 
     <div class="mobile-frame">
 
-        <!-- HEADER (tinggi tetap 64px, 3 kolom agar judul selalu di tengah & tidak bergeser) -->
+        <!-- HEADER -->
         <header class="shrink-0 h-16 bg-brand-green text-white px-4 grid grid-cols-[40px_1fr_auto] items-center gap-2 shadow-md relative z-40">
             <button onclick="konfirmasiKeluar()" class="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center active:scale-95 transition" aria-label="Kembali">
                 <i class="fas fa-chevron-left text-sm"></i>
@@ -72,8 +72,9 @@
 
             <!-- Profil singkat (tinggi tetap 80px) -->
             <section class="shrink-0 h-20 bg-white border-b border-slate-200 px-4 flex items-center gap-3">
-                <div class="w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 border-2 border-white shadow flex items-center justify-center text-white text-xl">
-                    <i class="fas fa-user-astronaut"></i>
+                <div id="avatarContainer" class="w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 border-2 border-white shadow flex items-center justify-center text-white text-xl overflow-hidden relative">
+                    <img id="avatarImage" src="" alt="Foto Siswa" class="w-full h-full object-cover hidden absolute inset-0 z-10">
+                    <i id="avatarIcon" class="fas fa-user-astronaut relative z-0"></i>
                 </div>
                 <div class="min-w-0 flex-1">
                     <h2 id="studentNameDisplay" class="sk h-5 w-32 text-sm font-bold text-slate-800 leading-5 truncate">Memuat</h2>
@@ -155,7 +156,7 @@
         const $ = (id) => document.getElementById(id);
         const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
-        // Ganti skeleton pada elemen teks tanpa mengubah tinggi (tidak ada layout shift)
+        // Ganti skeleton pada elemen teks
         function isiTeks(id, teks) {
             const el = $(id);
             el.textContent = teks;
@@ -191,7 +192,6 @@
         const params = new URLSearchParams(window.location.search);
         const classId = params.get('id');
 
-        // ID siswa (dokumen di classes/{id}/students): dari URL (?sid=) atau tersimpan saat siswa bergabung
         function ambilStudentId() {
             let sid = params.get('sid');
             try { sid = sid || localStorage.getItem('siswa_' + classId) || localStorage.getItem('studentId'); } catch (e) {}
@@ -226,6 +226,50 @@
             }).join('');
         }
 
+        // Fungsi baru untuk memuat profil lokal dan mengatur warna avatar bervariasi
+        function loadLocalProfile(namaDariFirebase) {
+            // Ambil data lokal (pastikan key ini cocok dengan yang di profil.html)
+            const namaLokal = localStorage.getItem('namaSiswaCendekia');
+            const fotoLokal = localStorage.getItem('fotoSiswaCendekia');
+
+            // Prioritas: Nama Profil Lokal > Nama Firebase > Default 'Siswa'
+            const namaFinal = namaLokal || namaDariFirebase || 'Siswa';
+            isiTeks('studentNameDisplay', namaFinal);
+
+            const avatarContainer = $('avatarContainer');
+            const avatarImage = $('avatarImage');
+            const avatarIcon = $('avatarIcon');
+
+            if (fotoLokal) {
+                // Tampilkan foto dari Base64
+                avatarImage.src = fotoLokal;
+                avatarImage.classList.remove('hidden');
+                avatarIcon.classList.add('hidden');
+            } else {
+                // Tampilkan ikon dan setel warna background variatif
+                avatarImage.classList.add('hidden');
+                avatarIcon.classList.remove('hidden');
+
+                const colors = [
+                    'from-blue-400 to-blue-600',
+                    'from-purple-400 to-purple-600',
+                    'from-pink-400 to-pink-600',
+                    'from-orange-400 to-orange-600',
+                    'from-teal-400 to-teal-600',
+                    'from-indigo-400 to-indigo-600',
+                    'from-emerald-400 to-emerald-600'
+                ];
+                
+                // Menentukan warna tetap berdasarkan huruf-huruf pada nama agar konsisten
+                const charSum = namaFinal.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+                const chosenColor = colors[charSum % colors.length];
+
+                // Hapus warna gradient lama, masukkan yang baru
+                avatarContainer.className = avatarContainer.className.replace(/from-\w+-\d+ to-\w+-\d+/g, '');
+                avatarContainer.className = avatarContainer.className + ' ' + chosenColor;
+            }
+        }
+
         async function init() {
             if (!classId) { window.location.href = 'index.html'; return; }
 
@@ -240,16 +284,23 @@
                 isiTeks('navClassName', kelas.namaKelas || 'Kelas');
                 isiTeks('teacherNameDisplay', `Guru: ${kelas.namaGuru || '-'}`);
 
-                // Data siswa (opsional): nama & XP realtime
                 const sid = ambilStudentId();
                 if (sid) {
                     onSnapshot(doc(db, `classes/${classId}/students`, sid), (snap) => {
                         const d = snap.exists() ? snap.data() : null;
-                        isiTeks('studentNameDisplay', (d && (d.nama || d.namaLengkap)) || 'Siswa');
+                        const namaFirebase = d ? (d.nama || d.namaLengkap) : null;
+                        
+                        // Eksekusi pemanggilan profil lokal
+                        loadLocalProfile(namaFirebase);
+                        
                         $('studentXpDisplay').textContent = (d && d.xp) || 0;
-                    }, () => { isiTeks('studentNameDisplay', 'Siswa'); });
+                    }, () => { 
+                        // Fallback jika listener gagal/ditolak
+                        loadLocalProfile(null); 
+                    });
                 } else {
-                    isiTeks('studentNameDisplay', 'Siswa');
+                    // Fallback jika tidak ada id siswa (misal hanya pengunjung URL langsung)
+                    loadLocalProfile(null);
                 }
 
                 $('skeletonState').classList.add('hidden');
@@ -262,7 +313,7 @@
             } catch (err) {
                 console.error(err);
                 isiTeks('navClassName', 'Kelas');
-                isiTeks('studentNameDisplay', 'Siswa');
+                loadLocalProfile(null); // Jalankan ini agar teks tetap ter-render
                 isiTeks('teacherNameDisplay', 'Guru: -');
                 tampilkanError(err.code === 'permission-denied'
                     ? 'Akses ditolak oleh server. Hubungi guru Anda.'
