@@ -12,6 +12,9 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Cropper.js CSS (Untuk fitur Crop Foto) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 
     <script>
         tailwind.config = {
@@ -56,8 +59,8 @@
             <!-- KARTU 1: DATA DIRI -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-6">
                 
-                <!-- Foto (Base64) -->
-                <div class="flex justify-between items-center p-4 border-b border-slate-100 cursor-pointer list-item-active transition-colors" onclick="document.getElementById('fileInput').click()">
+                <!-- Foto (Base64) - DIUBAH KLIKNYA KE PREVIEW -->
+                <div class="flex justify-between items-center p-4 border-b border-slate-100 cursor-pointer list-item-active transition-colors" onclick="bukaPreviewModal()">
                     <span class="text-[14px] text-slate-700">Foto</span>
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
@@ -113,14 +116,13 @@
         </div>
     </div>
 
-    <!-- MODAL EDIT DATA -->
+    <!-- MODAL EDIT DATA (Teks) -->
     <div id="modalEdit" class="fixed inset-0 bg-black/60 hidden modal-z flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300 pb-0 sm:pb-10" onclick="if(event.target === this) tutupModal('modalEdit')">
         <div class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 transform translate-y-full sm:translate-y-10 transition-transform duration-300 relative">
             <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-5 sm:hidden"></div>
             
             <h3 id="modalTitle" class="text-lg font-bold text-slate-800 mb-4">Edit Data</h3>
             
-            <!-- Input Container (Disesuaikan via JS) -->
             <div id="inputContainer">
                 <input type="text" id="editInput" class="w-full border-b-2 border-brand-green py-2 px-1 focus:outline-none text-slate-700 font-medium mb-6" placeholder="Ketik di sini...">
             </div>
@@ -132,12 +134,59 @@
         </div>
     </div>
 
+    <!-- MODAL PREVIEW FOTO UTUH -->
+    <div id="modalPreviewFoto" class="fixed inset-0 bg-black/80 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300" onclick="if(event.target === this) tutupModal('modalPreviewFoto')">
+        <div class="w-full max-w-sm flex flex-col items-center transform scale-95 transition-transform duration-300 relative p-4">
+            
+            <button onclick="tutupModal('modalPreviewFoto')" class="absolute -top-12 right-4 text-white text-3xl opacity-80 hover:opacity-100">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <!-- Tampilan Foto Utuh -->
+            <div class="w-64 h-64 sm:w-72 sm:h-72 rounded-full bg-slate-200 border-4 border-white overflow-hidden shadow-2xl flex items-center justify-center mb-8 relative">
+                <img id="previewLargeImage" src="" class="w-full h-full object-cover hidden">
+                <i id="previewLargeIcon" class="fas fa-user text-slate-400 text-7xl"></i>
+            </div>
+            
+            <button onclick="document.getElementById('fileInput').click()" class="bg-white text-slate-800 font-bold py-3.5 px-8 rounded-full shadow-lg hover:bg-slate-100 transition-colors active:scale-95 flex items-center gap-3 text-sm">
+                <i class="fas fa-camera text-brand-green"></i> Ganti Foto Profil
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL CROP FOTO -->
+    <div id="modalCrop" class="fixed inset-0 bg-black/95 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="w-full h-full sm:max-w-md sm:h-[85vh] sm:rounded-2xl bg-slate-900 flex flex-col transform scale-95 transition-transform duration-300 overflow-hidden">
+            
+            <!-- Header Crop -->
+            <div class="flex justify-between items-center px-4 py-4 bg-slate-800 text-white shrink-0">
+                <h3 class="font-bold">Sesuaikan Foto</h3>
+                <button onclick="tutupModalCrop()" class="text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+
+            <!-- Area Cropper -->
+            <div class="flex-grow relative bg-black flex items-center justify-center overflow-hidden">
+                <img id="imageToCrop" src="" class="max-w-full max-h-full block">
+            </div>
+
+            <!-- Footer Crop -->
+            <div class="p-4 bg-slate-800 shrink-0 flex gap-3">
+                <button onclick="tutupModalCrop()" class="flex-1 bg-slate-700 text-white font-bold py-3.5 rounded-xl hover:bg-slate-600 transition-colors active:scale-95 text-sm">Batal</button>
+                <button onclick="simpanCrop()" class="flex-1 bg-brand-green text-white font-bold py-3.5 rounded-xl hover:bg-emerald-600 transition-colors active:scale-95 text-sm">Simpan</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Container Toast -->
-    <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
+    <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
+
+    <!-- Cropper.js JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
     <script>
-        // Variabel global untuk mengetahui field apa yang sedang diedit
+        // Variabel global
         let currentEditField = '';
+        let cropper = null; // Menyimpan instansi Cropper.js
 
         // --- SISTEM PENYIMPANAN LOKAL (ANONIM) ---
         const keys = {
@@ -173,42 +222,118 @@
             }
         }
 
-        // --- UPLOAD FOTO KE BASE64 ---
+        // --- SISTEM PREVIEW & CROP FOTO ---
+        
+        // 1. Tampilkan modal preview sebelum ganti foto
+        function bukaPreviewModal() {
+            const foto = localStorage.getItem(keys.foto);
+            const imgEl = document.getElementById('previewLargeImage');
+            const iconEl = document.getElementById('previewLargeIcon');
+
+            if(foto) {
+                imgEl.src = foto;
+                imgEl.classList.remove('hidden');
+                iconEl.classList.add('hidden');
+            } else {
+                imgEl.classList.add('hidden');
+                iconEl.classList.remove('hidden');
+            }
+            
+            bukaModal('modalPreviewFoto');
+        }
+
+        // 2. Saat file foto dipilih
         function prosesFoto(event) {
             const file = event.target.files[0];
             if(file) {
-                // Batasi ukuran file (Misal max 2MB)
-                if(file.size > 2 * 1024 * 1024) {
-                    showToast("Ukuran foto terlalu besar. Maksimal 2MB.", true);
+                // Batasi max 5MB (diperbesar karena proses crop biasanya mengecilkan ukuran)
+                if(file.size > 5 * 1024 * 1024) {
+                    showToast("Ukuran foto terlalu besar. Maksimal 5MB.", true);
                     return;
                 }
 
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const base64Data = e.target.result;
-                    
-                    // Simpan ke local storage
-                    localStorage.setItem(keys.foto, base64Data);
-                    
-                    // Update UI
-                    const img = document.getElementById('profilImage');
-                    img.src = base64Data;
-                    img.classList.remove('hidden');
-                    document.getElementById('profilIcon').classList.add('hidden');
-                    
-                    showToast("Foto profil berhasil diperbarui.");
+                    // Tutup modal preview dengan cepat secara paksa
+                    document.getElementById('modalPreviewFoto').classList.add('opacity-0');
+                    setTimeout(() => document.getElementById('modalPreviewFoto').classList.add('hidden'), 100);
+
+                    // Siapkan gambar untuk di crop
+                    const imageToCrop = document.getElementById('imageToCrop');
+                    imageToCrop.src = e.target.result;
+
+                    // Buka modal crop
+                    bukaModal('modalCrop');
+
+                    // Inisialisasi Cropper setelah modal dirender
+                    setTimeout(() => {
+                        if (cropper) cropper.destroy(); // Hapus sisa cropper lama jika ada
+                        
+                        cropper = new Cropper(imageToCrop, {
+                            aspectRatio: 1, // Memaksa kotak crop 1:1 (Persegi)
+                            viewMode: 1,    // Membatasi crop box agar tidak keluar dari gambar
+                            dragMode: 'move', // Menggeser gambar
+                            autoCropArea: 0.9,
+                            restore: false,
+                            guides: true,
+                            center: true,
+                            highlight: false,
+                            cropBoxMovable: true,
+                            cropBoxResizable: true,
+                            toggleDragModeOnDblclick: false,
+                        });
+                    }, 300);
                 };
                 reader.readAsDataURL(file);
             }
         }
 
-        // --- SISTEM EDIT MODAL ---
+        // 3. Saat klik Simpan di modal crop
+        function simpanCrop() {
+            if (!cropper) return;
+
+            // Dapatkan hasil gambar yang ter-crop dengan ukuran wajar agar performa tetap baik
+            const canvas = cropper.getCroppedCanvas({
+                width: 500,
+                height: 500,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+
+            // Ubah menjadi Base64 (Format JPEG, kualitas 80% untuk menghemat storage lokal)
+            const base64Data = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Simpan ke local storage
+            localStorage.setItem(keys.foto, base64Data);
+            
+            // Update UI di list profil utama
+            const img = document.getElementById('profilImage');
+            img.src = base64Data;
+            img.classList.remove('hidden');
+            document.getElementById('profilIcon').classList.add('hidden');
+            
+            showToast("Foto profil berhasil diperbarui.");
+            tutupModalCrop();
+        }
+
+        // Khusus untuk menutup modal crop dan menghancurkan memory cropper
+        function tutupModalCrop() {
+            tutupModal('modalCrop');
+            setTimeout(() => {
+                if (cropper) {
+                    cropper.destroy();
+                    cropper = null;
+                }
+                document.getElementById('fileInput').value = ''; // Reset file input
+            }, 300);
+        }
+
+        // --- SISTEM EDIT MODAL TEKS ---
         function bukaEditModal(field) {
             currentEditField = field;
             const input = document.getElementById('editInput');
             const title = document.getElementById('modalTitle');
             
-            // Konfigurasi Modal berdasarkan Field
             if(field === 'nama') {
                 title.innerText = "Ubah Nama Lengkap";
                 input.type = "text";
@@ -255,16 +380,14 @@
             const konfirmasi = confirm("PERINGATAN!\n\nApakah Anda yakin ingin menghapus akun? Semua data profil, skor XP, dan riwayat belajar di perangkat ini akan dihapus permanen.");
             
             if(konfirmasi) {
-                // Hapus spesifik key siswa agar tidak mengganggu data lain (jika ada)
                 localStorage.removeItem(keys.nama);
                 localStorage.removeItem(keys.foto);
                 localStorage.removeItem(keys.nohp);
                 localStorage.removeItem(keys.tgllahir);
-                localStorage.removeItem('latihanPointsCendekia'); // Menghapus XP Latihan
-                localStorage.removeItem('kreasiPointsArg'); // Menghapus XP Kreasi
-                localStorage.removeItem('kelasPointsArg'); // Menghapus XP Kelas
+                localStorage.removeItem('latihanPointsCendekia');
+                localStorage.removeItem('kreasiPointsArg'); 
+                localStorage.removeItem('kelasPointsArg');
 
-                // Bawa kembali ke index
                 showToast("Akun berhasil dihapus. Mengalihkan...");
                 setTimeout(() => {
                     window.location.href = "index.html";
@@ -279,8 +402,14 @@
             modal.classList.remove('hidden');
             requestAnimationFrame(() => {
                 modal.classList.remove('opacity-0');
-                box.classList.remove('translate-y-full', 'sm:translate-y-10');
-                box.classList.add('translate-y-0');
+                // Support animasi dari bawah (modalEdit) dan animasi skala (modalCrop/modalPreviewFoto)
+                if (box.classList.contains('translate-y-full')) {
+                    box.classList.remove('translate-y-full', 'sm:translate-y-10');
+                    box.classList.add('translate-y-0');
+                } else if (box.classList.contains('scale-95')) {
+                    box.classList.remove('scale-95');
+                    box.classList.add('scale-100');
+                }
             });
         }
 
@@ -288,8 +417,15 @@
             const modal = document.getElementById(id);
             const box = modal.querySelector('div');
             modal.classList.add('opacity-0');
-            box.classList.remove('translate-y-0');
-            box.classList.add('translate-y-full', 'sm:translate-y-10');
+            
+            if (box.classList.contains('translate-y-0')) {
+                box.classList.remove('translate-y-0');
+                box.classList.add('translate-y-full', 'sm:translate-y-10');
+            } else if (box.classList.contains('scale-100')) {
+                box.classList.remove('scale-100');
+                box.classList.add('scale-95');
+            }
+            
             setTimeout(() => modal.classList.add('hidden'), 300);
         }
 
