@@ -3,16 +3,6 @@ const Groq = require('groq-sdk');
 // Inisialisasi Groq (Otomatis membaca process.env.GROQ_API_KEY di Vercel)
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// Helper Ekstrak JSON
-function extractJSON(text) {
-    try {
-        const cleanText = text.replace(/```json/gi, '').replace(/```/gi, '').trim();
-        return JSON.parse(cleanText);
-    } catch (e) {
-        throw new Error("Gagal parsing output AI");
-    }
-}
-
 // Handler Vercel Serverless
 module.exports = async function handler(req, res) {
     // Penanganan CORS untuk Vercel
@@ -39,7 +29,7 @@ module.exports = async function handler(req, res) {
 
     const promptText = `Kamu adalah asisten akademik. Berikan 3 poin rangkuman dan 1 paragraf singkat yang menjelaskan makna dari topik berikut: "${teksJudul}".
     
-ATURAN WAJIB: Balas HANYA dengan format JSON murni tanpa tambahan teks apapun di awal atau akhir.
+ATURAN WAJIB: Keluarkan HANYA output format JSON yang valid.
 Format JSON yang diwajibkan:
 {
   "points": ["Poin 1...", "Poin 2...", "Poin 3..."],
@@ -48,17 +38,31 @@ Format JSON yang diwajibkan:
 
     try {
         const chatCompletion = await groq.chat.completions.create({
-            messages: [{ role: 'user', content: promptText }],
-            model: 'qwen-2.5-32b',
-            temperature: 0.3, 
+            messages: [
+                { role: 'system', content: 'You are a helpful assistant that always outputs valid JSON.' },
+                { role: 'user', content: promptText }
+            ],
+            // PENTING: Gunakan ID Model yang benar untuk Groq (ada tambahan -it)
+            model: 'qwen-2.5-32b-it',
+            temperature: 0.3,
+            // PENTING: Memaksa Groq API agar HANYA mengeluarkan JSON murni
+            response_format: { type: "json_object" } 
         });
 
         const aiResponse = chatCompletion.choices[0]?.message?.content || "{}";
-        const resultJSON = extractJSON(aiResponse);
+        
+        // Karena sudah dipaksa JSON oleh API Groq, kita bisa langsung parse
+        const resultJSON = JSON.parse(aiResponse);
 
         return res.status(200).json(resultJSON);
     } catch (error) {
-        console.error("Error summarize:", error.message);
-        return res.status(500).json({ error: "Gagal menghubungi server AI." });
+        // Log detail error ke Vercel agar mudah di-debug jika terjadi masalah
+        console.error("Error Groq API Detail:", error);
+        
+        // Kirimkan pesan error ke HTML
+        return res.status(500).json({ 
+            error: "Gagal memproses data AI.", 
+            detail: error.message 
+        });
     }
 };
