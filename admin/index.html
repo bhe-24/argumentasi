@@ -2,11 +2,14 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dashboard Admin - Argumentasi</title>
 
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
@@ -15,221 +18,165 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['Poppins', 'sans-serif'] },
-                    colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } }
+                    colors: { 
+                        brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } 
+                    }
                 }
             }
         }
     </script>
 
     <style>
-        body { font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .sidebar-transition { transition: transform .3s ease-in-out; }
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-        .fade-in { animation: fadeIn .35s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        
+        /* Hide Scrollbar */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Skeleton shimmer (seragam di seluruh platform) */
+        /* Skeleton shimmer */
         .sk { position: relative; overflow: hidden; background: #e2e8f0; border-radius: .5rem; color: transparent !important; }
         .sk-light { background: rgba(255,255,255,.28); }
         .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent); animation: shimmer 1.4s infinite; }
         @keyframes shimmer { 100% { transform: translateX(100%); } }
     </style>
 </head>
-<body class="bg-slate-100 font-sans flex h-screen overflow-hidden text-slate-800" style="height:100vh;height:100dvh">
+<body class="flex justify-center min-h-screen">
 
-    <!-- Backdrop sidebar (mobile) -->
-    <div id="sidebarBackdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
-
-    <!-- SIDEBAR -->
-    <aside id="sidebar" class="bg-brand-dark text-emerald-100/80 w-64 shrink-0 fixed md:relative h-full z-40 transform -translate-x-full md:translate-x-0 sidebar-transition flex flex-col shadow-2xl">
-        <div class="h-16 shrink-0 px-6 border-b border-white/10 flex items-center justify-center">
-            <span class="bg-white/90 p-1.5 rounded-lg shadow-sm">
-                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-7 object-contain" onerror="this.outerHTML='<b class=\'text-brand-green px-2\'>Argumentasi</b>'">
-            </span>
-        </div>
-
-        <div class="flex-1 p-4 overflow-y-auto custom-scroll">
-            <p class="text-[10px] text-emerald-200/50 font-bold uppercase tracking-widest mb-3 pl-2">Menu Kontrol</p>
-            <nav class="space-y-1.5">
-                <a href="index.html" class="flex items-center gap-3 bg-white/10 text-white border border-white/10 px-4 py-3 rounded-xl font-semibold text-sm">
-                    <i class="fas fa-tachometer-alt w-5 text-center text-amber-300"></i><span>Dashboard</span>
+    <!-- CONTAINER UTAMA (Mobile App Frame) -->
+    <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col overflow-x-hidden sm:border-x border-slate-200">
+        
+        <!-- HEADER STICKY -->
+        <header class="bg-brand-green fixed w-full max-w-md z-50 px-4 py-3 flex items-center justify-between shadow-md" id="topHeader">
+            <div class="flex items-center gap-3">
+                <a href="../index.html" class="shrink-0 bg-white/90 p-1 rounded-lg shadow-sm">
+                    <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-6 object-contain" onerror="this.outerHTML='<i class=\'fas fa-shield-alt text-brand-green px-1\'></i>'">
                 </a>
-                <a href="materi.html" class="flex items-center gap-3 hover:bg-white/10 hover:text-white px-4 py-3 rounded-xl font-medium text-sm transition group">
-                    <i class="fas fa-book-open w-5 text-center group-hover:text-amber-300 transition-colors"></i><span>Manajemen Materi</span>
-                </a>
-                <a href="budaya.html" class="flex items-center gap-3 hover:bg-white/10 hover:text-white px-4 py-3 rounded-xl font-medium text-sm transition group">
-                    <i class="fas fa-landmark w-5 text-center group-hover:text-amber-300 transition-colors"></i><span>Eksplorasi Budaya</span>
-                </a>
-                <a href="pengguna.html" class="flex items-center gap-3 hover:bg-white/10 hover:text-white px-4 py-3 rounded-xl font-medium text-sm transition group">
-                    <i class="fas fa-users w-5 text-center group-hover:text-amber-300 transition-colors"></i><span>Data Pengguna</span>
-                </a>
-            </nav>
-
-            <p class="text-[10px] text-emerald-200/50 font-bold uppercase tracking-widest mt-8 mb-3 pl-2">Sistem</p>
-            <nav class="space-y-1.5">
-                <a href="pengaturan.html" class="flex items-center gap-3 hover:bg-white/10 hover:text-white px-4 py-3 rounded-xl font-medium text-sm transition group">
-                    <i class="fas fa-cog w-5 text-center group-hover:text-amber-300 transition-colors"></i><span>Pengaturan</span>
-                </a>
-            </nav>
-        </div>
-
-        <div class="p-4 border-t border-white/10">
-            <button onclick="keluarSistem()" class="flex items-center gap-3 text-red-300 hover:bg-red-500/10 hover:text-red-200 w-full px-4 py-3 rounded-xl font-medium text-sm transition group">
-                <i class="fas fa-sign-out-alt w-5 text-center group-hover:scale-110 transition-transform"></i><span>Keluar Sistem</span>
+                <h1 class="text-white font-bold text-sm tracking-wide">Pusat Kendali</h1>
+            </div>
+            
+            <!-- Tombol Keluar / Logout -->
+            <button onclick="keluarSistem()" class="w-8 h-8 rounded-full bg-red-500/20 text-red-100 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors border border-red-500/30" title="Keluar Sistem">
+                <i class="fas fa-sign-out-alt text-sm"></i>
             </button>
-        </div>
-    </aside>
-
-    <!-- KONTEN -->
-    <div class="flex-1 min-w-0 flex flex-col h-full overflow-hidden bg-slate-50">
-
-        <!-- TOPBAR (tinggi tetap 64px, sama dengan header halaman lain) -->
-        <header class="shrink-0 h-16 bg-brand-green text-white px-4 md:px-6 flex justify-between items-center shadow-md z-30">
-            <div class="flex items-center gap-3 min-w-0">
-                <button onclick="toggleSidebar()" class="md:hidden w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center active:scale-95 transition" aria-label="Menu">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1 class="font-bold text-base md:text-lg tracking-tight truncate">Pusat Kendali Admin</h1>
-            </div>
-
-            <div class="flex items-center gap-3 shrink-0">
-                <div class="text-right hidden sm:block">
-                    <p id="adminNameDisplay" class="sk sk-light h-4 w-28 ml-auto text-sm font-bold leading-4">Memuat</p>
-                    <p class="text-[10px] text-emerald-100 font-bold uppercase tracking-wide leading-3 mt-1">Super Administrator</p>
-                </div>
-                <div class="w-10 h-10 bg-white/15 border border-white/25 rounded-full flex items-center justify-center">
-                    <i class="fas fa-user-shield text-lg"></i>
-                </div>
-            </div>
         </header>
 
-        <!-- ISI -->
-        <main class="flex-1 overflow-x-hidden overflow-y-auto custom-scroll flex flex-col">
-            <div class="flex-1 p-4 md:p-6">
+        <!-- PENGGANTI RUANG HEADER STICKY -->
+        <div class="h-[60px] bg-brand-green shrink-0"></div>
 
-                <!-- Breadcrumb -->
-                <div class="flex items-center gap-2 text-slate-400 text-xs mb-5 font-medium">
-                    <span>Home</span><i class="fas fa-chevron-right text-[9px]"></i><span class="text-slate-800 font-bold">Dashboard</span>
-                </div>
+        <!-- BACKGROUND LENGKUNG -->
+        <div class="bg-brand-green pb-10 px-4 relative z-10 rounded-b-[2rem] -mt-1 shrink-0"></div>
 
-                <!-- STATISTIK -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-6">
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between h-[88px]">
-                        <div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Guru Aktif</p><h3 id="statGuru" class="sk h-8 w-12 text-2xl font-extrabold leading-8">0</h3></div>
-                        <div class="w-11 h-11 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600"><i class="fas fa-chalkboard-teacher text-lg"></i></div>
+        <!-- KARTU INFORMASI ADMIN -->
+        <div class="px-4 -mt-10 relative z-20">
+            <div class="bg-white rounded-2xl shadow-md p-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 bg-brand-light text-brand-green rounded-full flex items-center justify-center shrink-0 border border-emerald-200">
+                        <i class="fas fa-user-shield text-lg"></i>
                     </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between h-[88px]">
-                        <div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Siswa</p><h3 id="statSiswa" class="sk h-8 w-12 text-2xl font-extrabold leading-8">0</h3></div>
-                        <div class="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600"><i class="fas fa-user-graduate text-lg"></i></div>
-                    </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between h-[88px]">
-                        <div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Materi</p><h3 id="statMateri" class="sk h-8 w-12 text-2xl font-extrabold leading-8">0</h3></div>
-                        <div class="w-11 h-11 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600"><i class="fas fa-book-open text-lg"></i></div>
-                    </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between h-[88px]">
-                        <div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Kelas</p><h3 id="statKelas" class="sk h-8 w-12 text-2xl font-extrabold leading-8">0</h3></div>
-                        <div class="w-11 h-11 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600"><i class="fas fa-door-open text-lg"></i></div>
+                    <div class="overflow-hidden">
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Super Administrator</p>
+                        <h3 class="text-sm font-bold text-slate-800 truncate sk sk-light w-28 h-5 mt-0.5" id="adminNameDisplay">Memuat...</h3>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- MENU CEPAT (gaya "Belajar Mandiri" di beranda) -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-5 mb-6">
-                    <div class="text-center mb-4">
-                        <span class="bg-brand-light text-brand-dark text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider">Menu Cepat</span>
+        <!-- MAIN KONTEN (Scrollable) -->
+        <div class="flex-grow overflow-y-auto hide-scrollbar pb-10 fade-in">
+            
+            <!-- STATISTIK SISTEM -->
+            <div class="px-4 mt-6">
+                <h2 class="font-bold text-slate-800 text-sm mb-3">Statistik Platform</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- Guru -->
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
+                        <div class="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600 shrink-0"><i class="fas fa-chalkboard-teacher"></i></div>
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Guru Aktif</p>
+                            <h3 id="statGuru" class="sk h-6 w-8 text-lg font-bold leading-none mt-1">0</h3>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-4 gap-y-4 gap-x-2 max-w-xl mx-auto">
-                        <a href="materi.html" class="flex flex-col items-center group active:scale-95 transition-transform">
-                            <div class="w-11 h-11 bg-white border border-slate-100 shadow-sm rounded-xl flex items-center justify-center mb-1 group-hover:border-brand-green"><i class="fas fa-book-open text-xl text-emerald-500"></i></div>
-                            <span class="text-[10px] text-slate-600 font-medium text-center leading-tight">Kelola Materi</span>
-                        </a>
-                        <a href="budaya.html" class="flex flex-col items-center group active:scale-95 transition-transform">
-                            <div class="w-11 h-11 bg-white border border-slate-100 shadow-sm rounded-xl flex items-center justify-center mb-1 group-hover:border-amber-400"><i class="fas fa-landmark text-xl text-amber-500"></i></div>
-                            <span class="text-[10px] text-slate-600 font-medium text-center leading-tight">Eksplorasi Budaya</span>
-                        </a>
-                        <a href="pengguna.html" class="flex flex-col items-center group active:scale-95 transition-transform">
-                            <div class="w-11 h-11 bg-white border border-slate-100 shadow-sm rounded-xl flex items-center justify-center mb-1 group-hover:border-blue-400"><i class="fas fa-users text-xl text-blue-500"></i></div>
-                            <span class="text-[10px] text-slate-600 font-medium text-center leading-tight">Data Pengguna</span>
-                        </a>
-                        <a href="pengaturan.html" class="flex flex-col items-center group active:scale-95 transition-transform">
-                            <div class="w-11 h-11 bg-white border border-slate-100 shadow-sm rounded-xl flex items-center justify-center mb-1 group-hover:border-slate-800"><i class="fas fa-cog text-xl text-slate-700"></i></div>
-                            <span class="text-[10px] text-slate-600 font-medium text-center leading-tight">Pengaturan</span>
-                        </a>
-                        <a href="materi.html?action=create" class="flex flex-col items-center group active:scale-95 transition-transform">
-                            <div class="w-11 h-11 bg-white border border-slate-100 shadow-sm rounded-xl flex items-center justify-center mb-1 group-hover:border-purple-400"><i class="fas fa-plus-circle text-xl text-purple-500"></i></div>
-                            <span class="text-[10px] text-slate-600 font-medium text-center leading-tight">Tambah Materi</span>
-                        </a>
-                        <a href="budaya.html?action=create" class="flex flex-col items-center group active:scale-95 transition-transform">
-                            <div class="w-11 h-11 bg-white border border-slate-100 shadow-sm rounded-xl flex items-center justify-center mb-1 group-hover:border-rose-400"><i class="fas fa-camera text-xl text-rose-500"></i></div>
-                            <span class="text-[10px] text-slate-600 font-medium text-center leading-tight">Upload Budaya</span>
-                        </a>
-                        <a href="../index.html" class="flex flex-col items-center group active:scale-95 transition-transform">
-                            <div class="w-11 h-11 bg-white border border-slate-100 shadow-sm rounded-xl flex items-center justify-center mb-1 group-hover:border-cyan-400"><i class="fas fa-home text-xl text-cyan-500"></i></div>
-                            <span class="text-[10px] text-slate-600 font-medium text-center leading-tight">Lihat Beranda</span>
-                        </a>
-                        <a href="../guru/index.html" class="flex flex-col items-center group active:scale-95 transition-transform">
-                            <div class="w-11 h-11 bg-white border border-slate-100 shadow-sm rounded-xl flex items-center justify-center mb-1 group-hover:border-indigo-400"><i class="fas fa-user-shield text-xl text-indigo-500"></i></div>
-                            <span class="text-[10px] text-slate-600 font-medium text-center leading-tight">Portal Guru</span>
-                        </a>
+                    <!-- Siswa -->
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 shrink-0"><i class="fas fa-user-graduate"></i></div>
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Total Siswa</p>
+                            <h3 id="statSiswa" class="sk h-6 w-8 text-lg font-bold leading-none mt-1">0</h3>
+                        </div>
                     </div>
-                </div>
-
-                <!-- DUA DAFTAR KONTEN -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 xl:gap-6">
-
-                    <!-- MATERI -->
-                    <section class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-                        <div class="p-5 flex justify-between items-center gap-3">
-                            <div class="min-w-0">
-                                <h2 class="font-bold text-slate-800 text-sm flex items-center gap-2"><i class="fas fa-book text-emerald-600"></i> Teks Argumentasi</h2>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Kelola konten materi pembelajaran</p>
-                            </div>
-                            <a href="materi.html?action=create" class="shrink-0 bg-brand-green hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-sm transition active:scale-95 flex items-center gap-1.5"><i class="fas fa-plus"></i> Tambah</a>
+                    <!-- Materi -->
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
+                        <div class="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600 shrink-0"><i class="fas fa-book-open"></i></div>
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Total Materi</p>
+                            <h3 id="statMateri" class="sk h-6 w-8 text-lg font-bold leading-none mt-1">0</h3>
                         </div>
-                        <div class="px-5 flex gap-6 border-b border-slate-100">
-                            <button onclick="switchTab('materi','draft')" id="tab-materi-draft" class="text-xs font-bold pb-3 border-b-2 transition text-emerald-600 border-emerald-600">Draft</button>
-                            <button onclick="switchTab('materi','published')" id="tab-materi-published" class="text-xs font-bold pb-3 border-b-2 transition text-slate-400 border-transparent hover:text-slate-600">Terbit</button>
-                            <button onclick="switchTab('materi','archived')" id="tab-materi-archived" class="text-xs font-bold pb-3 border-b-2 transition text-slate-400 border-transparent hover:text-slate-600">Arsip</button>
+                    </div>
+                    <!-- Kelas -->
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
+                        <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-purple-600 shrink-0"><i class="fas fa-door-open"></i></div>
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Total Kelas</p>
+                            <h3 id="statKelas" class="sk h-6 w-8 text-lg font-bold leading-none mt-1">0</h3>
                         </div>
-                        <div class="p-5 flex-1 min-h-[260px]"><div id="list-materi-container" class="space-y-3"></div></div>
-                        <a href="materi.html" class="border-t border-slate-100 py-3 text-center text-xs font-medium text-brand-green hover:bg-slate-50 transition">Lihat Semua <i class="fas fa-chevron-right text-[10px] ml-1"></i></a>
-                    </section>
-
-                    <!-- BUDAYA -->
-                    <section class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-                        <div class="p-5 flex justify-between items-center gap-3">
-                            <div class="min-w-0">
-                                <h2 class="font-bold text-slate-800 text-sm flex items-center gap-2"><i class="fas fa-landmark text-amber-600"></i> Eksplorasi Budaya</h2>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Artikel budaya Temanggung</p>
-                            </div>
-                            <a href="budaya.html?action=create" class="shrink-0 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-sm transition active:scale-95 flex items-center gap-1.5"><i class="fas fa-camera"></i> Upload</a>
-                        </div>
-                        <div class="px-5 flex gap-6 border-b border-slate-100">
-                            <button onclick="switchTab('budaya','draft')" id="tab-budaya-draft" class="text-xs font-bold pb-3 border-b-2 transition text-amber-600 border-amber-600">Draft</button>
-                            <button onclick="switchTab('budaya','published')" id="tab-budaya-published" class="text-xs font-bold pb-3 border-b-2 transition text-slate-400 border-transparent hover:text-slate-600">Terbit</button>
-                            <button onclick="switchTab('budaya','archived')" id="tab-budaya-archived" class="text-xs font-bold pb-3 border-b-2 transition text-slate-400 border-transparent hover:text-slate-600">Arsip</button>
-                        </div>
-                        <div class="p-5 flex-1 min-h-[260px]"><div id="list-budaya-container" class="space-y-3"></div></div>
-                        <a href="budaya.html" class="border-t border-slate-100 py-3 text-center text-xs font-medium text-brand-green hover:bg-slate-50 transition">Lihat Semua <i class="fas fa-chevron-right text-[10px] ml-1"></i></a>
-                    </section>
+                    </div>
                 </div>
             </div>
 
-            <!-- FOOTER -->
-            <footer class="shrink-0 bg-white border-t border-slate-200 py-4 text-center">
-                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50" onerror="this.remove()">
-                <p class="text-[10px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
-            </footer>
-        </main>
+            <div class="h-2 bg-slate-100 w-full mt-6"></div>
+
+            <!-- MENU UTAMA (4 SECTION) -->
+            <div class="px-4 mt-6">
+                <h2 class="font-bold text-slate-800 text-sm mb-3">Menu Utama</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    
+                    <a href="materi.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-emerald-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
+                        <div class="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-emerald-100 transition-all"><i class="fas fa-book-open"></i></div>
+                        <h3 class="text-xs font-bold text-slate-700">Kelola Materi</h3>
+                        <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Teks & Artikel</p>
+                    </a>
+                    
+                    <a href="budaya.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-amber-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
+                        <div class="w-12 h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-amber-100 transition-all"><i class="fas fa-landmark"></i></div>
+                        <h3 class="text-xs font-bold text-slate-700">Budaya</h3>
+                        <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Eksplorasi Lokal</p>
+                    </a>
+
+                    <a href="pengguna.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-blue-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
+                        <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-blue-100 transition-all"><i class="fas fa-users"></i></div>
+                        <h3 class="text-xs font-bold text-slate-700">Pengguna</h3>
+                        <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Data Siswa & Guru</p>
+                    </a>
+
+                    <a href="../index.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-indigo-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
+                        <div class="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-indigo-100 transition-all"><i class="fas fa-home"></i></div>
+                        <h3 class="text-xs font-bold text-slate-700">Beranda</h3>
+                        <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Lihat Halaman Depan</p>
+                    </a>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0">
+            <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50" onerror="this.remove()">
+            <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi Admin.</p>
+        </footer>
+
     </div>
 
+    <!-- FIREBASE & LOGIKA APLIKASI -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, query, where, getCountFromServer, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, query, where, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        // Konfigurasi Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
             authDomain: "mading-cf676.firebaseapp.com",
@@ -243,32 +190,19 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const $ = (id) => document.getElementById(id);
-        const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-
-        // Konfigurasi dua daftar (query dan sistem tidak diubah)
-        const CFG = {
-            materi: { kategori: 'argumentasi', container: 'list-materi-container', page: 'materi.html', hover: 'hover:border-emerald-300', label: 'materi', active: ['text-emerald-600', 'border-emerald-600'] },
-            budaya: { kategori: 'artikel',     container: 'list-budaya-container', page: 'budaya.html', hover: 'hover:border-amber-300',   label: 'artikel', active: ['text-amber-600', 'border-amber-600'] }
-        };
-        const status = { materi: 'draft', budaya: 'draft' };
-
-        // ---- Skeleton bernilai sama dengan item asli (tinggi 74px) ----
-        function renderSkeleton(containerId) {
-            $(containerId).innerHTML = [1, 2, 3].map(() => `<div class="sk h-[74px] w-full !rounded-xl"></div>`).join('');
-        }
-
-        // ---- AUTH GUARD ----
+        // ---- AUTH GUARD (Cek Login Admin) ----
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = "../login.html"; return; }
             try {
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists() && userDoc.data().role === 'admin') {
-                    const el = $('adminNameDisplay');
-                    el.textContent = userDoc.data().namaLengkap || 'Admin';
+                    // Berhasil Login sebagai Admin
+                    const el = document.getElementById('adminNameDisplay');
+                    el.textContent = userDoc.data().namaLengkap || 'Admin Argumentasi';
                     el.classList.remove('sk', 'sk-light', 'w-28');
+                    
+                    // Muat Data Statistik
                     muatStatistik();
-                    fetchList('materi'); fetchList('budaya');
                 } else {
                     alert("Akses Ditolak! Area ini khusus Administrator.");
                     await signOut(auth);
@@ -280,10 +214,7 @@
             }
         });
 
-        // Skeleton awal untuk dua daftar
-        renderSkeleton(CFG.materi.container);
-        renderSkeleton(CFG.budaya.container);
-
+        // ---- LOGOUT ----
         window.keluarSistem = async function() {
             if (confirm("Apakah Anda yakin ingin keluar dari sistem Admin?")) {
                 await signOut(auth);
@@ -291,89 +222,28 @@
             }
         };
 
-        window.toggleSidebar = function() {
-            $('sidebar').classList.toggle('-translate-x-full');
-            $('sidebarBackdrop').classList.toggle('hidden');
-        };
-
-        // ---- STATISTIK ----
+        // ---- FUNGSI HITUNG STATISTIK ----
         function isiStat(id, n) {
-            const el = $(id);
+            const el = document.getElementById(id);
             el.textContent = n;
-            el.classList.remove('sk', 'w-12');
+            el.classList.remove('sk', 'w-8');
         }
+
         async function hitung(q, id) {
-            try { isiStat(id, (await getCountFromServer(q)).data().count); }
-            catch (e) { console.error("Statistik gagal:", id, e); isiStat(id, '-'); }
+            try { 
+                isiStat(id, (await getCountFromServer(q)).data().count); 
+            } catch (e) { 
+                console.error("Statistik gagal:", id, e); 
+                isiStat(id, '-'); 
+            }
         }
+
         function muatStatistik() {
             hitung(query(collection(db, "users"), where("role", "==", "teacher")), 'statGuru');
             hitung(query(collection(db, "users"), where("role", "==", "student")), 'statSiswa');
             hitung(collection(db, "materials"), 'statMateri');
             hitung(collection(db, "classes"), 'statKelas');
         }
-
-        // ---- DAFTAR KONTEN ----
-        async function fetchList(type) {
-            const c = CFG[type], st = status[type], container = $(c.container);
-            renderSkeleton(c.container);
-
-            try {
-                const q = query(
-                    collection(db, "materials"),
-                    where("kategori", "==", c.kategori),
-                    where("status", "==", st),
-                    orderBy("createdAt", "desc"),
-                    limit(5)
-                );
-                const snap = await getDocs(q);
-
-                if (snap.empty) {
-                    container.innerHTML = `
-                        <div class="fade-in flex flex-col items-center justify-center py-10 text-slate-400">
-                            <i class="fas fa-inbox text-3xl mb-2"></i>
-                            <p class="text-xs">Tidak ada ${c.label} status "${esc(st)}"</p>
-                        </div>`;
-                    return;
-                }
-
-                let badgeClass = "bg-slate-100 text-slate-500", badgeText = esc(st.toUpperCase());
-                if (st === 'published') { badgeClass = "bg-green-100 text-green-700"; badgeText = "<i class='fas fa-check-circle mr-1'></i>LIVE"; }
-                if (st === 'draft') badgeClass = "bg-amber-100 text-amber-700";
-
-                container.innerHTML = snap.docs.map((d) => {
-                    const data = d.data();
-                    const dateStr = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : 'Baru';
-                    const img = esc(data.coverImage || "https://via.placeholder.com/100");
-                    return `
-                    <a href="${c.page}?action=edit&id=${encodeURIComponent(d.id)}" class="fade-in h-[74px] group flex items-center justify-between gap-3 px-4 bg-white border border-slate-200 rounded-xl ${c.hover} hover:shadow-md transition-all">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-10 h-10 shrink-0 rounded-lg bg-slate-100 bg-cover bg-center border border-slate-100" style="background-image:url('${img}')"></div>
-                            <div class="min-w-0">
-                                <h4 class="font-bold text-slate-700 text-sm line-clamp-1">${esc(data.judul)}</h4>
-                                <p class="text-[11px] text-slate-400">Update: ${dateStr}</p>
-                            </div>
-                        </div>
-                        <span class="${badgeClass} shrink-0 text-[10px] font-bold px-2 py-1 rounded-md">${badgeText}</span>
-                    </a>`;
-                }).join('');
-            } catch (error) {
-                console.error(`Error fetching ${type}:`, error);
-                container.innerHTML = `<p class="text-xs text-red-500 text-center py-10">Gagal memuat data.</p>`;
-            }
-        }
-
-        // ---- TAB ----
-        window.switchTab = function(type, st) {
-            status[type] = st;
-            ['draft', 'published', 'archived'].forEach((s) => {
-                const btn = $(`tab-${type}-${s}`);
-                const on = s === st;
-                btn.className = 'text-xs font-bold pb-3 border-b-2 transition ' +
-                    (on ? CFG[type].active.join(' ') : 'text-slate-400 border-transparent hover:text-slate-600');
-            });
-            fetchList(type);
-        };
     </script>
 </body>
 </html>
