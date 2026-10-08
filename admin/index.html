@@ -51,14 +51,14 @@
         <!-- HEADER STICKY -->
         <header class="bg-brand-green fixed w-full max-w-md z-50 px-4 py-3 flex items-center justify-between shadow-md" id="topHeader">
             <div class="flex items-center gap-3">
-                <a href="../index.html" class="shrink-0 bg-white/90 p-1 rounded-lg shadow-sm">
+                <a href="../index.html" class="shrink-0 bg-white/90 p-1 rounded-lg shadow-sm active:scale-95 transition-transform">
                     <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-6 object-contain" onerror="this.outerHTML='<i class=\'fas fa-shield-alt text-brand-green px-1\'></i>'">
                 </a>
                 <h1 class="text-white font-bold text-sm tracking-wide">Pusat Kendali</h1>
             </div>
             
             <!-- Tombol Keluar / Logout -->
-            <button onclick="keluarSistem()" class="w-8 h-8 rounded-full bg-red-500/20 text-red-100 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors border border-red-500/30" title="Keluar Sistem">
+            <button onclick="keluarSistem()" class="w-8 h-8 rounded-full bg-red-500/20 text-red-100 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors border border-red-500/30 active:scale-95" title="Keluar Sistem">
                 <i class="fas fa-sign-out-alt text-sm"></i>
             </button>
         </header>
@@ -71,17 +71,19 @@
 
         <!-- KARTU INFORMASI ADMIN -->
         <div class="px-4 -mt-10 relative z-20">
-            <div class="bg-white rounded-2xl shadow-md p-4 flex items-center justify-between">
+            <a href="profil.html" class="block bg-white rounded-2xl shadow-md p-4 flex items-center justify-between active:scale-[0.98] transition-transform group border border-slate-100 hover:border-brand-green">
                 <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 bg-brand-light text-brand-green rounded-full flex items-center justify-center shrink-0 border border-emerald-200">
-                        <i class="fas fa-user-shield text-lg"></i>
+                    <div class="w-12 h-12 bg-brand-light text-brand-green rounded-full flex items-center justify-center shrink-0 border border-emerald-200 overflow-hidden relative">
+                        <i id="adminIcon" class="fas fa-user-shield text-xl z-0"></i>
+                        <img id="adminPhoto" src="" class="absolute inset-0 w-full h-full object-cover hidden z-10">
                     </div>
                     <div class="overflow-hidden">
-                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Super Administrator</p>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider group-hover:text-brand-green transition-colors">Super Administrator</p>
                         <h3 class="text-sm font-bold text-slate-800 truncate sk sk-light w-28 h-5 mt-0.5" id="adminNameDisplay">Memuat...</h3>
                     </div>
                 </div>
-            </div>
+                <i class="fas fa-chevron-right text-slate-300 group-hover:text-brand-green transition-colors"></i>
+            </a>
         </div>
 
         <!-- MAIN KONTEN (Scrollable) -->
@@ -128,9 +130,9 @@
 
             <div class="h-2 bg-slate-100 w-full mt-6"></div>
 
-            <!-- MENU UTAMA (4 SECTION) -->
+            <!-- MENU UTAMA (6 SECTION) -->
             <div class="px-4 mt-6">
-                <h2 class="font-bold text-slate-800 text-sm mb-3">Menu Utama</h2>
+                <h2 class="font-bold text-slate-800 text-sm mb-3">Navigasi Utama</h2>
                 <div class="grid grid-cols-2 gap-3">
                     
                     <a href="materi.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-emerald-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
@@ -151,10 +153,22 @@
                         <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Data Siswa & Guru</p>
                     </a>
 
+                    <a href="develop.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-purple-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
+                        <div class="w-12 h-12 bg-purple-50 text-purple-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-purple-100 transition-all"><i class="fas fa-code"></i></div>
+                        <h3 class="text-xs font-bold text-slate-700">Tim Developer</h3>
+                        <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Kelola Pengembang</p>
+                    </a>
+
+                    <a href="profil.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-rose-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
+                        <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-rose-100 transition-all"><i class="fas fa-user-edit"></i></div>
+                        <h3 class="text-xs font-bold text-slate-700">Profil Saya</h3>
+                        <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Ubah Foto & Data</p>
+                    </a>
+
                     <a href="../index.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-indigo-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
                         <div class="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-indigo-100 transition-all"><i class="fas fa-home"></i></div>
                         <h3 class="text-xs font-bold text-slate-700">Beranda</h3>
-                        <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Lihat Halaman Depan</p>
+                        <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Halaman Publik</p>
                     </a>
 
                 </div>
@@ -190,15 +204,35 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // ---- CEK PROFIL LOKAL (Memuat Foto Admin Jika Ada) ----
+        function loadLocalProfile() {
+            // Sesuai dengan sistem lokal yang kamu minta di form profil admin
+            const localName = localStorage.getItem('namaAdminCendekia');
+            const localPhoto = localStorage.getItem('fotoAdminCendekia');
+
+            if(localPhoto) {
+                const imgEl = document.getElementById('adminPhoto');
+                imgEl.src = localPhoto;
+                imgEl.classList.remove('hidden');
+                document.getElementById('adminIcon').classList.add('hidden');
+            }
+
+            return localName;
+        }
+
         // ---- AUTH GUARD (Cek Login Admin) ----
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = "../login.html"; return; }
             try {
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists() && userDoc.data().role === 'admin') {
-                    // Berhasil Login sebagai Admin
+                    
+                    const localName = loadLocalProfile();
+                    
+                    // Prioritaskan Nama Lokal (jika admin pernah edit), jika tidak pakai Firebase
+                    const finalName = localName || userDoc.data().namaLengkap || 'Admin Argumentasi';
                     const el = document.getElementById('adminNameDisplay');
-                    el.textContent = userDoc.data().namaLengkap || 'Admin Argumentasi';
+                    el.textContent = finalName;
                     el.classList.remove('sk', 'sk-light', 'w-28');
                     
                     // Muat Data Statistik
