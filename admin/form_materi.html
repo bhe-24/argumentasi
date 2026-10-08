@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Formulir Materi - Argumentasi Admin</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Quill Customization */
+        #editor-container { height: 350px; font-family: 'Poppins', sans-serif; font-size: 14px; border-radius: 0 0 12px 12px; background: white;}
+        .ql-toolbar.ql-snow { border-radius: 12px 12px 0 0; background: #f8fafc; border-color: #e2e8f0; padding: 12px; }
+        .ql-container.ql-snow { border-color: #e2e8f0; }
+        .ql-editor { padding: 16px; }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen">
+
+    <div id="loadingOverlay" class="fixed inset-0 bg-white/90 backdrop-blur-sm z-[100] flex flex-col items-center justify-center hidden">
+        <div class="w-14 h-14 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-3"></div>
+        <h2 class="text-sm font-bold text-slate-800 tracking-wide" id="loadingText">Menyimpan Data...</h2>
+    </div>
+
+    <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
+        
+        <header class="bg-emerald-600 fixed w-full max-w-md z-50 px-4 py-3 flex items-center justify-between shadow-md">
+            <div class="flex items-center gap-3">
+                <a href="materi.html" class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors active:scale-95">
+                    <i class="fas fa-arrow-left text-sm"></i>
+                </a>
+                <h1 class="text-white font-bold text-sm tracking-wide" id="headerTitle">Tulis Materi</h1>
+            </div>
+            <button id="btnHapus" onclick="hapusMateri()" class="hidden bg-red-500 hover:bg-red-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors items-center gap-1.5 shadow-sm active:scale-95">
+                <i class="fas fa-trash-alt"></i> Hapus
+            </button>
+        </header>
+
+        <div class="h-[60px] bg-emerald-600 shrink-0"></div>
+        <div class="bg-emerald-600 h-6 px-4 relative z-10 rounded-b-[2rem] -mt-1 shrink-0"></div>
+
+        <main class="flex-grow overflow-y-auto hide-scrollbar p-4 relative z-20 -mt-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                
+                <form id="materiForm" onsubmit="handleSave(event)">
+                    
+                    <div class="bg-slate-50 border-b border-slate-100 p-4 flex justify-between items-center">
+                        <h2 class="font-bold text-slate-700 text-xs"><i class="fas fa-cog text-emerald-600 mr-1.5"></i> Pengaturan Publikasi</h2>
+                        <select id="inputStatus" class="text-xs font-bold border border-slate-200 text-slate-700 bg-white rounded-lg shadow-sm px-3 py-2 outline-none">
+                            <option value="draft">Simpan Draft</option>
+                            <option value="published">Terbitkan Publik</option>
+                        </select>
+                    </div>
+
+                    <div class="p-5 space-y-5">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Judul Materi</label>
+                            <input type="text" id="inputJudul" required class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-sm font-semibold text-slate-800 bg-slate-50" placeholder="Ketik judul di sini...">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Kategori</label>
+                                <select id="inputKategori" class="w-full border border-slate-200 rounded-xl px-3 py-3 outline-none text-xs font-medium text-slate-700 bg-slate-50">
+                                    <option value="argumentasi">Argumentasi</option>
+                                    <option value="artikel">Artikel Berita</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Tagar (Maks 3)</label>
+                                <input type="text" id="inputTags" class="w-full border border-slate-200 rounded-xl px-3 py-3 focus:border-emerald-500 outline-none text-xs font-medium text-slate-800 bg-slate-50" placeholder="Opini, Sosial...">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Gambar Cover</label>
+                            <div class="border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:bg-slate-50 hover:border-emerald-400 transition cursor-pointer relative group mb-2 bg-slate-50/50" id="dropArea">
+                                <input type="file" id="inputCoverImage" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onchange="previewImage(this)">
+                                
+                                <div id="previewContainer" class="hidden flex flex-col items-center">
+                                    <img id="imgPreview" src="" class="h-32 object-contain rounded-lg shadow-sm mb-2">
+                                    <span class="text-[9px] font-bold text-slate-500 bg-white border border-slate-200 px-3 py-1 rounded-full">Ganti Gambar</span>
+                                </div>
+                                
+                                <div id="uploadPlaceholder" class="flex flex-col items-center">
+                                    <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform"><i class="fas fa-image"></i></div>
+                                    <p class="text-xs font-bold text-slate-600">Ketuk untuk unggah sampul</p>
+                                    <p class="text-[9px] text-slate-400 mt-0.5">Otomatis diresize & kompres</p>
+                                </div>
+                            </div>
+                            <input type="hidden" id="base64Image">
+                            <input type="text" id="inputSumberGambar" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:border-emerald-500 outline-none text-[11px] font-medium text-slate-700 bg-slate-50" placeholder="Sumber gambar (Freepik, Unsplash, dll)...">
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Isi Materi</label>
+                            <div id="editor-container" class="shadow-sm"></div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Referensi / Pustaka</label>
+                            <textarea id="inputReferensi" rows="3" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:border-emerald-500 outline-none text-[11px] font-medium text-slate-700 bg-slate-50 leading-relaxed" placeholder="Tuliskan daftar pustaka atau link rujukan di sini..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="p-4 border-t border-slate-100 bg-white flex gap-3 rounded-b-2xl sticky bottom-0">
+                        <button type="button" onclick="window.location.href='materi.html'" class="flex-1 py-3 rounded-xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition text-xs">Batal</button>
+                        <button type="submit" id="btnSave" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 text-xs">
+                            <i class="fas fa-save"></i> Simpan
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- INISIALISASI QUILL ---
+        var quill = new Quill('#editor-container', {
+            theme: 'snow',
+            placeholder: 'Mulai menulis di sini...',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['link', 'image']
+                ]
+            }
+        });
+
+        // --- PREVIEW & COMPRESS IMAGE ---
+        window.previewImage = function(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        const maxWidth = 800; // Standar untuk mobile
+                        let width = img.width; let height = img.height;
+                        if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+
+                        canvas.width = width; canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        
+                        document.getElementById('imgPreview').src = compressedDataUrl;
+                        document.getElementById('previewContainer').classList.remove('hidden');
+                        document.getElementById('uploadPlaceholder').classList.add('hidden');
+                        document.getElementById('base64Image').value = compressedDataUrl;
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // --- CEK EDIT ATAU BARU ---
+        let editDocId = null;
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get('action');
+        const id = urlParams.get('id');
+
+        if (action === 'edit' && id) {
+            editDocId = id;
+            document.getElementById('headerTitle').innerText = "Edit Materi";
+            document.getElementById('btnHapus').classList.remove('hidden');
+            document.getElementById('btnHapus').classList.add('flex');
+            
+            // Fetch dari Firebase
+            getDoc(doc(db, "materials", id)).then((docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('inputJudul').value = data.judul || "";
+                    document.getElementById('inputStatus').value = data.status || "draft";
+                    document.getElementById('inputKategori').value = data.kategori || "argumentasi";
+                    document.getElementById('inputSumberGambar').value = data.sumberGambar || "";
+                    document.getElementById('inputReferensi').value = data.daftarPustaka || "";
+                    
+                    if (data.tags && Array.isArray(data.tags)) {
+                        document.getElementById('inputTags').value = data.tags.join(', ');
+                    }
+
+                    if(data.coverImage) {
+                        document.getElementById('imgPreview').src = data.coverImage;
+                        document.getElementById('previewContainer').classList.remove('hidden');
+                        document.getElementById('uploadPlaceholder').classList.add('hidden');
+                        document.getElementById('base64Image').value = data.coverImage;
+                    }
+
+                    quill.root.innerHTML = data.isi || data.konten || "";
+                }
+            });
+        }
+
+        // --- FUNGSI HAPUS MATERI ---
+        window.hapusMateri = async function() {
+            if(!editDocId) return;
+            const konfirmasi = confirm("Yakin ingin menghapus materi ini? Data tidak bisa dikembalikan.");
+            if(konfirmasi) {
+                const overlay = document.getElementById('loadingOverlay');
+                document.getElementById('loadingText').innerText = "Menghapus...";
+                overlay.classList.remove('hidden');
+                
+                try {
+                    await deleteDoc(doc(db, "materials", editDocId));
+                    window.location.replace("materi.html"); // Balik ke list
+                } catch(err) {
+                    console.error(err);
+                    alert("Gagal menghapus: " + err.message);
+                    overlay.classList.add('hidden');
+                }
+            }
+        };
+
+        // --- FUNGSI SIMPAN MATERI ---
+        window.handleSave = async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('btnSave');
+            const overlay = document.getElementById('loadingOverlay');
+            
+            btn.disabled = true;
+            document.getElementById('loadingText').innerText = "Menyimpan Data...";
+            overlay.classList.remove('hidden');
+
+            const judul = document.getElementById('inputJudul').value.trim();
+            const status = document.getElementById('inputStatus').value;
+            const kategori = document.getElementById('inputKategori').value;
+            const sumberGambar = document.getElementById('inputSumberGambar').value.trim();
+            const daftarPustaka = document.getElementById('inputReferensi').value.trim();
+            const coverImage = document.getElementById('base64Image').value; 
+            const isi = quill.root.innerHTML; 
+            
+            // Proses Array Tagar
+            const tagsRaw = document.getElementById('inputTags').value;
+            let tagsArray = tagsRaw.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
+
+            if(!judul || judul === '<p><br></p>') {
+                alert("Judul tidak boleh kosong!");
+                overlay.classList.add('hidden');
+                btn.disabled = false;
+                return;
+            }
+
+            const dataToSave = {
+                judul: judul,
+                kategori: kategori,
+                status: status,
+                tags: tagsArray,
+                sumberGambar: sumberGambar,
+                daftarPustaka: daftarPustaka,
+                coverImage: coverImage,
+                isi: isi,
+                updatedAt: serverTimestamp()
+            };
+
+            try {
+                let savedId = editDocId;
+                if (editDocId) {
+                    await updateDoc(doc(db, "materials", editDocId), dataToSave);
+                } else {
+                    dataToSave.createdAt = serverTimestamp();
+                    dataToSave.views = 0;
+                    dataToSave.penulis = "Administrator";
+                    const newDocRef = await addDoc(collection(db, "materials"), dataToSave);
+                    savedId = newDocRef.id;
+                }
+                
+                // Jika diterbitkan, buka halaman baca.html dan redirect tab ini kembali ke list
+                if (status === 'published') {
+                    window.open(`../baca.html?id=${savedId}`, '_blank');
+                }
+                window.location.replace("materi.html");
+
+            } catch (error) {
+                console.error(error);
+                alert("Terjadi masalah saat menyimpan data. Coba lagi.");
+                btn.disabled = false;
+                overlay.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
