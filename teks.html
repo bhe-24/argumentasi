@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Galeri Teks Argumentasi - Argumentasi</title>
+    <title>Teks Argumentasi - Argumentasi</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -37,8 +37,10 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        /* Desain Tab Custom */
         .tab-active { border-bottom: 3px solid #059669; color: #059669; font-weight: 700; }
-        .tab-inactive { border-bottom: 3px solid transparent; color: #64748b; font-weight: 500; }
+        .tab-inactive { border-bottom: 3px solid transparent; color: #64748b; font-weight: 500; hover:color: #059669; }
     </style>
 </head>
 <body class="flex justify-center min-h-screen">
@@ -46,64 +48,82 @@
     <!-- CONTAINER UTAMA (Mobile App Frame) -->
     <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col overflow-hidden sm:border-x border-slate-200">
         
-        <!-- HEADER ALA APLIKASI (Emerald Green) -->
-        <header class="bg-brand-green pt-4 pb-3 px-4 relative z-20 shadow-sm">
-            <!-- Top Bar -->
-            <div class="flex items-center gap-3 mb-4">
-                <a href="index.html" class="text-white text-lg px-2 py-1 hover:bg-white/20 rounded-full transition-colors"><i class="fas fa-chevron-left"></i></a>
-                <h1 class="text-lg font-semibold text-white flex-1 truncate">Teks Argumentasi</h1>
-                <a href="profil.html" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white border border-white/30 hover:bg-white/30 transition-colors">
-                    <i class="fas fa-user text-sm"></i>
-                </a>
+        <!-- HEADER STICKY (Sistem Index) -->
+        <header class="bg-brand-green fixed w-full max-w-md z-50 px-4 py-3 flex items-center gap-3 shadow-md" id="topHeader">
+            <!-- Tombol Kembali -->
+            <a href="index.html" class="shrink-0 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors active:scale-95">
+                <i class="fas fa-chevron-left text-sm"></i>
+            </a>
+            
+            <!-- Search Bar yang diarahkan ke search.html -->
+            <div class="flex-1 bg-white/20 hover:bg-white/30 transition-colors rounded-full flex items-center px-3 py-1.5 border border-white/30 backdrop-blur-sm">
+                <i class="fas fa-search text-white text-sm"></i>
+                <input type="text" id="searchInput" placeholder="Cari teks argumentasi..." class="w-full bg-transparent outline-none text-white text-xs px-2 placeholder-white/70" onkeypress="if(event.key === 'Enter') alihkanKeSearch()">
             </div>
             
-            <!-- Search Bar -->
-            <div class="bg-white rounded-xl flex items-center px-3 py-2 shadow-sm border border-emerald-400">
-                <i class="fas fa-search text-slate-400 text-sm mr-2"></i>
-                <input type="text" id="searchInput" placeholder="Cari judul materi argumen..." class="w-full bg-transparent outline-none text-slate-700 text-sm placeholder-slate-400" oninput="filterPencarian()">
-            </div>
+            <!-- Ikon User -->
+            <a href="profil.html" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white relative hover:bg-white/20 transition-colors">
+                <i class="fas fa-user text-sm"></i>
+            </a>
         </header>
 
-        <!-- TABS NAVIGASI (Sticky) -->
-        <div class="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm px-2">
-            <div class="flex overflow-x-auto hide-scrollbar">
-                <button onclick="ubahTab('terbaru', this)" class="tab-btn tab-active flex-1 min-w-[100px] py-3.5 text-center text-[11px] uppercase tracking-wider transition-all whitespace-nowrap">
+        <!-- PENGGANTI RUANG HEADER STICKY -->
+        <div class="h-[60px] bg-brand-green shrink-0"></div>
+
+        <!-- TABS NAVIGASI (Sticky setelah header) -->
+        <div class="bg-white border-b border-slate-200 z-40 relative shadow-sm">
+            <!-- Background lengkung hijau (biar nyambung dgn header) -->
+            <div class="absolute inset-x-0 top-0 h-4 bg-brand-green rounded-b-2xl -z-10"></div>
+            
+            <!-- Konten Tab -->
+            <div class="flex overflow-x-auto hide-scrollbar px-2 bg-white rounded-t-2xl pt-2">
+                <button onclick="ubahTab('terbaru', this)" class="tab-btn tab-active flex-1 min-w-[100px] py-3 text-center text-[10px] uppercase tracking-wider transition-all whitespace-nowrap">
                     ✨ Terbaru
                 </button>
-                <button onclick="ubahTab('populer', this)" class="tab-btn tab-inactive flex-1 min-w-[100px] py-3.5 text-center text-[11px] uppercase tracking-wider transition-all whitespace-nowrap">
-                    🔥 Paling Ramai
+                <button onclick="ubahTab('populer', this)" class="tab-btn tab-inactive flex-1 min-w-[100px] py-3 text-center text-[10px] uppercase tracking-wider transition-all whitespace-nowrap">
+                    🔥 Populer
                 </button>
-                <button onclick="ubahTab('terbaik', this)" class="tab-btn tab-inactive flex-1 min-w-[100px] py-3.5 text-center text-[11px] uppercase tracking-wider transition-all whitespace-nowrap">
+                <button onclick="ubahTab('terbaik', this)" class="tab-btn tab-inactive flex-1 min-w-[100px] py-3 text-center text-[10px] uppercase tracking-wider transition-all whitespace-nowrap">
                     🏆 Terbaik
                 </button>
             </div>
         </div>
 
         <!-- MAIN KONTEN (Scrollable List) -->
-        <div class="flex-grow overflow-y-auto hide-scrollbar p-4 relative bg-slate-50">
+        <div class="flex-grow overflow-y-auto hide-scrollbar p-4 relative z-10">
             
+            <!-- TITLE HALAMAN -->
+            <div class="mb-4 text-center">
+                <span class="bg-emerald-100 text-emerald-700 text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider border border-emerald-200">
+                    Koleksi Argumentasi
+                </span>
+            </div>
+
             <!-- STATE: LOADING -->
-            <div id="loadingState" class="flex flex-col items-center justify-center py-20">
-                <i class="fas fa-circle-notch fa-spin text-3xl text-emerald-500 mb-3"></i>
-                <h3 class="font-bold text-slate-700 text-sm">Memuat Koleksi...</h3>
+            <div id="loadingState" class="flex flex-col items-center justify-center py-10 mt-10">
+                <div class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 animate-pulse w-full max-w-sm mx-auto">
+                    <div class="w-24 h-24 bg-slate-200 rounded-lg shrink-0"></div>
+                    <div class="flex-1 flex flex-col justify-between py-1">
+                        <div><div class="h-3 bg-slate-200 w-16 rounded mb-2"></div><div class="h-4 bg-slate-200 w-full rounded mb-1"></div><div class="h-4 bg-slate-200 w-3/4 rounded"></div></div>
+                    </div>
+                </div>
             </div>
 
             <!-- STATE: EMPTY / ERROR -->
-            <div id="emptyState" class="hidden flex-col items-center justify-center py-16 text-center">
-                <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-4xl mb-4 text-slate-300">
+            <div id="emptyState" class="hidden flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-slate-100 shadow-sm mt-4">
+                <div class="w-16 h-16 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center text-3xl mb-3 text-slate-300 shadow-inner">
                     <i class="fas fa-folder-open"></i>
                 </div>
-                <h3 class="font-bold text-slate-700 text-base mb-1">Data Tidak Ditemukan</h3>
-                <p class="text-xs text-slate-500 max-w-[250px] mx-auto" id="emptyMsg">Belum ada teks argumentasi yang dipublikasikan di kategori ini.</p>
+                <h3 class="font-bold text-slate-700 text-sm mb-1">Belum Ada Teks</h3>
+                <p class="text-[11px] text-slate-500 max-w-[200px] mx-auto" id="emptyMsg">Teks argumentasi publik belum tersedia untuk saat ini.</p>
             </div>
 
             <!-- LIST CONTAINER -->
-            <div id="listContainer" class="flex flex-col gap-3 fade-in hidden">
+            <div id="listContainer" class="flex flex-col gap-3 fade-in hidden pb-6">
                 <!-- Card Data akan diinjeksi ke sini oleh JS -->
             </div>
 
         </div>
-
     </div>
 
     <!-- Container Toast -->
@@ -111,8 +131,16 @@
 
     <!-- SCRIPT UI DASAR & LOGIKA FILTER -->
     <script>
-        let allDataTexts = []; // Menyimpan semua data mentah dari Firebase
+        let allDataTexts = []; // Menyimpan data asli dari Firebase
         let currentFilter = 'terbaru'; // Tab aktif
+
+        // Alihkan pencarian spesifik ke search.html
+        function alihkanKeSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if(query) {
+                window.location.href = `search.html?q=${encodeURIComponent(query)}`;
+            }
+        }
 
         // Logic Ganti Tab
         function ubahTab(jenis, btnElement) {
@@ -126,26 +154,8 @@
             btnElement.classList.remove('tab-inactive');
             btnElement.classList.add('tab-active');
 
-            // Reset Pencarian
-            document.getElementById('searchInput').value = '';
-
-            // Terapkan Pengurutan/Filter
+            // Render ulang list
             renderListByFilter();
-        }
-
-        // Logic Pencarian Realtime
-        function filterPencarian() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const filteredData = allDataTexts.filter(item => item.judul.toLowerCase().includes(query) || item.deskripsi.toLowerCase().includes(query));
-            
-            renderHTML(filteredData);
-            
-            if(filteredData.length === 0) {
-                document.getElementById('emptyState').classList.remove('hidden');
-                document.getElementById('emptyMsg').innerText = "Pencarian tidak menemukan hasil yang cocok.";
-            } else {
-                document.getElementById('emptyState').classList.add('hidden');
-            }
         }
 
         // Logic Pengurutan Data
@@ -153,79 +163,84 @@
             let sortedData = [...allDataTexts];
 
             if (currentFilter === 'terbaru') {
-                // Urut berdasarkan waktu terbaru (Firebase createdAt)
                 sortedData.sort((a, b) => b.timestamp - a.timestamp);
             } 
             else if (currentFilter === 'populer') {
-                // Urut berdasarkan penayangan/kunjungan tertinggi
-                // Jika field 'views' tidak ada di DB, kita gunakan fallback panjang deskripsi sebagai simulasi "popularitas" sementara agar tidak error
-                sortedData.sort((a, b) => (b.views || b.deskripsi.length) - (a.views || a.deskripsi.length));
+                // Urut berdasarkan penayangan tertinggi (jika tidak ada, fallback ke view buatan)
+                sortedData.sort((a, b) => b.views - a.views);
             } 
             else if (currentFilter === 'terbaik') {
-                // Urut berdasarkan rating sistematika terbaik
-                sortedData.sort((a, b) => (b.rating || b.judul.length) - (a.rating || a.judul.length));
+                // Urut berdasarkan rating tertinggi (jika tidak ada, fallback ke rating buatan)
+                sortedData.sort((a, b) => b.rating - a.rating);
             }
 
             renderHTML(sortedData);
         }
 
-        // Logic Render HTML ke Layar
+        // Logic Render HTML Horizontal Card (Mengikuti gaya Index)
         function renderHTML(dataArray) {
             const container = document.getElementById('listContainer');
             let html = "";
 
             dataArray.forEach((data, index) => {
-                // Tambahkan ranking/badge spesial untuk tab populer & terbaik
+                
+                // Tambahkan lencana (badge) ranking untuk tab khusus
                 let rankBadge = '';
                 if (currentFilter === 'populer' && index < 3) {
-                    rankBadge = `<div class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10"><i class="fas fa-fire"></i></div>`;
+                    rankBadge = `<div class="absolute -top-2 -left-2 w-6 h-6 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md z-10"><i class="fas fa-fire"></i></div>`;
                 } else if (currentFilter === 'terbaik' && index < 3) {
-                    rankBadge = `<div class="absolute -top-2 -right-2 w-6 h-6 bg-amber-400 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10"><i class="fas fa-star"></i></div>`;
+                    rankBadge = `<div class="absolute -top-2 -left-2 w-6 h-6 bg-amber-400 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md z-10"><i class="fas fa-star"></i></div>`;
+                }
+
+                // Render Tagar (Maksimal 2 tag)
+                let tagsHtml = "";
+                if (data.tags && Array.isArray(data.tags)) {
+                    tagsHtml = data.tags.slice(0, 2).map(tag => `<span class="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[8px] mr-1 mt-1">#${tag}</span>`).join('');
                 }
 
                 html += `
-                <a href="baca.html?id=${data.id}" class="flex gap-3 bg-white p-3 rounded-2xl shadow-sm border border-slate-100 hover:border-emerald-400 transition-colors active:scale-[0.98] relative">
-                    <div class="relative shrink-0">
-                        ${rankBadge}
-                        <img src="${data.img}" alt="${data.judul}" class="w-24 h-24 object-cover rounded-xl bg-slate-100">
-                    </div>
-                    <div class="flex-1 flex flex-col justify-between py-1 min-w-0">
-                        <div>
-                            <div class="flex justify-between items-start mb-1">
-                                <span class="text-[9px] font-bold bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded uppercase tracking-widest border border-emerald-100">Argumentasi</span>
-                                ${currentFilter === 'populer' ? `<span class="text-[10px] text-slate-400 font-medium"><i class="far fa-eye text-red-400"></i> ${data.views || '1.2k'}</span>` : ''}
+                <div class="relative">
+                    ${rankBadge}
+                    <a href="baca.html?id=${data.id}" class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 hover:border-brand-green transition-colors active:scale-[0.98]">
+                        <img src="${data.img}" alt="${data.judul}" class="w-24 h-24 object-cover rounded-lg shrink-0 bg-slate-100">
+                        
+                        <div class="flex-1 flex flex-col justify-between py-1 min-w-0">
+                            <div>
+                                <span class="text-[9px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 px-1.5 py-0.5 rounded uppercase tracking-widest">Argumentasi</span>
+                                <h3 class="font-bold text-sm text-slate-800 line-clamp-2 mt-1.5 leading-snug">${data.judul}</h3>
+                                <div class="flex flex-wrap">${tagsHtml}</div>
                             </div>
-                            <h3 class="font-bold text-[13px] text-slate-800 line-clamp-2 leading-snug truncate whitespace-normal">${data.judul}</h3>
-                            <p class="text-[10px] text-slate-500 mt-1 line-clamp-1">${data.deskripsi}</p>
+                            <div class="flex justify-between items-end mt-2">
+                                <span class="text-[10px] text-slate-400"><i class="far fa-clock"></i> ${data.waktuBaca || '5 Min'}</span>
+                                <span class="text-[11px] font-bold text-brand-green">Mulai <i class="fas fa-chevron-right text-[9px] ml-0.5"></i></span>
+                            </div>
                         </div>
-                        <div class="flex justify-between items-end mt-2">
-                            <span class="text-[10px] text-slate-400 font-medium"><i class="far fa-clock"></i> ${data.waktuBaca || '5 Min'}</span>
-                            <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">Baca <i class="fas fa-chevron-right text-[8px] ml-0.5"></i></span>
-                        </div>
-                    </div>
-                </a>`;
+                    </a>
+                </div>`;
             });
 
-            container.innerHTML = html;
-            
-            // Animasi refresh list
-            container.classList.remove('fade-in');
-            void container.offsetWidth; // trigger reflow
-            container.classList.add('fade-in');
+            if (dataArray.length === 0) {
+                document.getElementById('emptyState').classList.remove('hidden');
+                container.classList.add('hidden');
+            } else {
+                document.getElementById('emptyState').classList.add('hidden');
+                container.innerHTML = html;
+                
+                // Trigger animasi fade-in
+                container.classList.remove('hidden');
+                container.classList.remove('fade-in');
+                void container.offsetWidth; 
+                container.classList.add('fade-in');
+            }
         }
     </script>
 
-    <!-- FIREBASE FETCH DATA (Real Data) -->
+    <!-- FIREBASE FETCH DATA LOGIC -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Konfigurasi Firebase Anda
-        const firebaseConfig = {
-            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
-            projectId: "mading-cf676",
-        };
-
+        const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
@@ -235,7 +250,7 @@
             const listContainer = document.getElementById('listContainer');
 
             try {
-                // Menarik SEMUA data dengan kategori argumentasi
+                // Hanya menarik data Teks Argumentasi
                 const q = query(collection(db, "materials"), where("kategori", "==", "argumentasi"));
                 const snap = await getDocs(q);
 
@@ -246,40 +261,48 @@
                     return;
                 }
 
-                // Masukkan data ke array global agar bisa disortir/filter secara in-memory (sangat cepat & mulus)
                 allDataTexts = [];
                 snap.forEach(doc => {
                     const d = doc.data();
-                    // Tangkap timestamp untuk pengurutan "Terbaru"
+                    
+                    // JANGAN masukkan data jika statusnya Draft atau Dihapus
+                    if (d.status === 'draft' || d.status === 'dihapus') return;
+
+                    // Mengatur Time Stamp untuk Sort Terbaru
                     let timeVal = 0;
                     if (d.createdAt && d.createdAt.toMillis) timeVal = d.createdAt.toMillis();
                     else if (d.createdAt) timeVal = new Date(d.createdAt).getTime();
 
+                    // Simpan data bersih untuk render UI
                     allDataTexts.push({
                         id: doc.id,
                         judul: d.judul || "Tanpa Judul",
-                        deskripsi: d.cuplikan || d.deskripsiSingkat || "Klik untuk membaca argumen selengkapnya...",
-                        img: d.coverImage || d.gambarBase64 || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=500",
+                        img: d.coverImage || d.gambarBase64 || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=300",
                         waktuBaca: d.waktuBaca || "5 Min",
+                        tags: d.tags || [],
                         timestamp: timeVal,
-                        views: d.views || Math.floor(Math.random() * 500) + 50, // Fallback ke random jika DB blm punya fitur views
-                        rating: d.rating || Math.floor(Math.random() * 100)      // Fallback ke random jika DB blm punya fitur rating
+                        views: d.views || Math.floor(Math.random() * 500) + 50, 
+                        rating: d.rating || Math.floor(Math.random() * 100) 
                     });
                 });
 
-                // Tampilkan list untuk pertama kali (Mode 'Terbaru')
-                listContainer.classList.remove('hidden');
+                // Cek ulang array setelah penyaringan draft
+                if (allDataTexts.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                // Tampilkan list mode Terbaru secara otomatis
                 renderListByFilter();
 
             } catch (error) {
                 console.error("Firebase Error:", error);
                 loadingState.classList.add('hidden');
                 emptyState.classList.remove('hidden');
-                document.getElementById('emptyMsg').innerText = "Terjadi gangguan jaringan saat memuat data. Silakan muat ulang.";
+                document.getElementById('emptyMsg').innerText = "Terjadi gangguan server. Silakan periksa koneksi internet Anda.";
             }
         }
 
-        // Panggil fungsi saat DOM selesai di-load
         document.addEventListener('DOMContentLoaded', fetchDataServer);
     </script>
 </body>
