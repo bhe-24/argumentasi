@@ -58,6 +58,7 @@
             <!-- Search Bar -->
             <div class="flex-1 bg-white/20 hover:bg-white/30 transition-colors rounded-full flex items-center px-3 py-1.5 border border-white/30 backdrop-blur-sm">
                 <i class="fas fa-search text-white text-sm"></i>
+                <!-- Pencarian sekarang dihubungkan ke search.html -->
                 <input type="text" id="searchInput" placeholder="Cari materi, artikel..." class="w-full bg-transparent outline-none text-white text-xs px-2 placeholder-white/70" onkeypress="if(event.key === 'Enter') cariMateri()">
             </div>
             
@@ -242,7 +243,7 @@
             <div class="px-4 mt-6 mb-2">
                 <div class="flex justify-between items-center mb-3">
                     <h2 class="font-bold text-slate-800 text-sm">Tim Pengembang</h2>
-                    <a href="develop.html" class="text-[10px] text-slate-400">Lihat Semua</a>
+                    <!-- Tulisan Lihat Semua ke develop.html sudah dihapus -->
                 </div>
                 
                 <!-- Wrapper Slider -->
@@ -332,10 +333,10 @@
             muatArsipKelas();
         });
 
-        // Fitur Cari
+        // Fitur Cari (Sudah diubah diarahkan ke search.html)
         function cariMateri() {
             const query = document.getElementById('searchInput').value;
-            if(query.trim()) window.location.href = `materi.html?q=${encodeURIComponent(query)}`;
+            if(query.trim()) window.location.href = `search.html?q=${encodeURIComponent(query)}`;
         }
 
         // Fungsi Toast
@@ -430,9 +431,16 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // 1. FUNGSI FETCH MATERI / ARTIKEL (Sama seperti sebelumnya)
+        // 1. FUNGSI FETCH MATERI / ARTIKEL
         function renderHorizontalCard(data, typeClass, typeLabel) {
             const imgUrl = data.coverImage || data.gambarBase64 || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=300";
+            
+            // Persiapan Tagar/Hashtag
+            let tagsHtml = "";
+            if (data.tags && Array.isArray(data.tags)) {
+                tagsHtml = data.tags.slice(0, 2).map(tag => `<span class="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[8px] mr-1 mt-1">#${tag}</span>`).join('');
+            }
+
             return `
             <a href="baca.html?id=${data.id}" class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 hover:border-brand-green transition-colors active:scale-[0.98]">
                 <img src="${imgUrl}" alt="${data.judul}" class="w-24 h-24 object-cover rounded-lg shrink-0 bg-slate-100">
@@ -440,6 +448,7 @@
                     <div>
                         <span class="text-[9px] font-bold ${typeClass} px-1.5 py-0.5 rounded uppercase tracking-widest">${typeLabel}</span>
                         <h3 class="font-bold text-sm text-slate-800 line-clamp-2 mt-1.5 leading-snug">${data.judul}</h3>
+                        <div class="flex flex-wrap">${tagsHtml}</div>
                     </div>
                     <div class="flex justify-between items-end mt-2">
                         <span class="text-[10px] text-slate-400"><i class="far fa-clock"></i> ${data.waktuBaca || '5 Min'}</span>
@@ -454,26 +463,42 @@
             const listArtikel = document.getElementById('listArtikel');
 
             try {
-                // Fetch Argumentasi
-                const qArg = query(collection(db, "materials"), where("kategori", "==", "argumentasi"), orderBy("createdAt", "desc"), limit(5));
+                // Fetch Argumentasi (Lebihkan limit ke 10 untuk jaga-jaga filter client-side)
+                const qArg = query(collection(db, "materials"), where("kategori", "==", "argumentasi"), orderBy("createdAt", "desc"), limit(10));
                 const snapArg = await getDocs(qArg);
                 if(snapArg.empty) {
                     listTeks.innerHTML = '<p class="text-xs text-center text-slate-400 py-4">Belum ada teks argumentasi.</p>';
                 } else {
                     let htmlArg = "";
-                    snapArg.forEach(doc => { htmlArg += renderHorizontalCard({ id: doc.id, ...doc.data() }, "bg-emerald-50 text-emerald-600 border border-emerald-100", "Argumentasi"); });
-                    listTeks.innerHTML = htmlArg;
+                    let countArg = 0;
+                    snapArg.forEach(doc => { 
+                        const data = doc.data();
+                        // Filter agar draft atau yang dihapus tidak muncul
+                        if(data.status !== 'draft' && data.status !== 'dihapus' && countArg < 5) {
+                            htmlArg += renderHorizontalCard({ id: doc.id, ...data }, "bg-emerald-50 text-emerald-600 border border-emerald-100", "Argumentasi");
+                            countArg++;
+                        }
+                    });
+                    listTeks.innerHTML = htmlArg || '<p class="text-xs text-center text-slate-400 py-4">Belum ada teks argumentasi yang dipublikasikan.</p>';
                 }
 
                 // Fetch Artikel
-                const qArt = query(collection(db, "materials"), where("kategori", "==", "artikel"), orderBy("createdAt", "desc"), limit(5));
+                const qArt = query(collection(db, "materials"), where("kategori", "==", "artikel"), orderBy("createdAt", "desc"), limit(10));
                 const snapArt = await getDocs(qArt);
                 if(snapArt.empty) {
                     listArtikel.innerHTML = '<p class="text-xs text-center text-slate-400 py-4">Belum ada artikel berita.</p>';
                 } else {
                     let htmlArt = "";
-                    snapArt.forEach(doc => { htmlArt += renderHorizontalCard({ id: doc.id, ...doc.data() }, "bg-blue-50 text-blue-600 border border-blue-100", "Artikel Berita"); });
-                    listArtikel.innerHTML = htmlArt;
+                    let countArt = 0;
+                    snapArt.forEach(doc => { 
+                        const data = doc.data();
+                        // Filter agar draft atau yang dihapus tidak muncul
+                        if(data.status !== 'draft' && data.status !== 'dihapus' && countArt < 5) {
+                            htmlArt += renderHorizontalCard({ id: doc.id, ...data }, "bg-blue-50 text-blue-600 border border-blue-100", "Artikel Berita");
+                            countArt++;
+                        }
+                    });
+                    listArtikel.innerHTML = htmlArt || '<p class="text-xs text-center text-slate-400 py-4">Belum ada artikel berita yang dipublikasikan.</p>';
                 }
             } catch (error) {
                 console.error("Firebase Error:", error);
