@@ -368,13 +368,6 @@
         }
 
         /* ========== TIM PENGEMBANG ========== */
-        // Field tambahan opsional (muncul otomatis jika ada di data Firestore)
-        const EXTRA_FIELDS = [
-            [['nim'], 'NIM'], [['nip'], 'NIP'], [['nidn', 'nipdn'], 'NIDN'], [['nuptk'], 'NUPTK'],
-            [['kelas', 'jurusan', 'prodi'], 'Prodi'], [['instansi', 'sekolah', 'kampus', 'asal'], 'Instansi']
-        ];
-        const pick = (dev, keys) => { for (const k of keys) if (dev[k] != null && String(dev[k]).trim() !== '') return dev[k]; return null; };
-
         function renderDevCard(dev, i, total) {
             const nama = dev.nama || 'Pengembang';
             const imgUrl = dev.foto || dev.gambarBase64 || "https://ui-avatars.com/api/?background=059669&color=fff&bold=true&name=" + encodeURIComponent(nama);
@@ -383,14 +376,17 @@
             const katStyle = kat === 'dosen' ? 'bg-blue-50 text-blue-600 border-blue-100'
                            : kat === 'mahasiswa' ? 'bg-amber-50 text-amber-600 border-amber-100'
                            : 'bg-slate-100 text-slate-600 border-slate-200';
-            const idLabel = kat === 'dosen' ? 'NIP/NIDN' : kat === 'mahasiswa' ? 'NIM' : 'ID';
+            const idLabel = kat === 'dosen' ? 'NIP/NIDN' : kat === 'mahasiswa' ? 'NPM/NIM' : 'ID';
 
             const items = [];
             if (dev.identitas && String(dev.identitas).trim() !== '' && dev.identitas !== '-') items.push([idLabel, dev.identitas]);
-            EXTRA_FIELDS.forEach(([keys, label]) => { const v = pick(dev, keys); if (v) items.push([label, v]); });
-
-            const chips = items.slice(0, 3).map(([l, v]) =>
+            
+            if (dev.instansi && String(dev.instansi).trim()) items.push(['Instansi', dev.instansi]);
+            const chips = items.map(([l, v]) =>
                 `<span class="dev-chip rounded-md px-1.5 py-0.5 text-[9px] text-slate-600 max-w-full truncate"><b class="text-emerald-700">${esc(l)}</b> ${esc(v)}</span>`).join('');
+
+            const ik = (href, icon, fa) => `<a href="${esc(href)}" target="_blank" rel="noopener" class="w-5 h-5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center text-[9px]"><i class="${fa || 'fas'} ${icon}"></i></a>`;
+            const kontak = (dev.email ? ik('mailto:' + dev.email, 'fa-envelope') : '') + (dev.instagram ? ik('https://instagram.com/' + String(dev.instagram).replace('@', ''), 'fa-instagram', 'fab') : '');
 
             return `
             <div class="w-full flex-shrink-0">
@@ -408,7 +404,7 @@
                             <p class="text-emerald-600 text-[10px] font-semibold truncate mt-0.5"><i class="fas fa-star text-amber-400 text-[8px] mr-1"></i>${esc(dev.jabatan || 'Anggota Tim')}</p>
                         </div>
                     </div>
-                    ${chips ? `<div class="flex flex-wrap gap-1.5 mt-2.5">${chips}</div>` : ''}
+                    ${(chips || kontak) ? `<div class="flex flex-wrap items-center gap-1.5 mt-2.5">${chips}${kontak}</div>` : ''}
                     ${dev.deskripsi ? `<p class="text-[10px] text-slate-500 line-clamp-2 leading-snug mt-2">${esc(dev.deskripsi)}</p>` : ''}
                 </div>
               </div>
