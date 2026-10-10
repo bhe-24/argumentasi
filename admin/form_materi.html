@@ -407,7 +407,7 @@
             const btn = document.getElementById('btnSave'), ov = document.getElementById('loadingOverlay');
             const judul = document.getElementById('inputJudul').value.trim();
             const status = document.getElementById('inputStatus').value;
-            const isi = quill.getSemanticHTML();
+            const isi = quill.getSemanticHTML().replace(/&nbsp;/g, ' ');
             if (!judul) return alert("Judul tidak boleh kosong!");
             if (new Blob([isi]).size > 900 * 1024) return alert("Isi materi terlalu besar (maks ±900 KB). Kurangi jumlah/ukuran gambar di dalam teks.");
 
