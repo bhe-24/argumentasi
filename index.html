@@ -19,17 +19,11 @@
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .slide-transition { transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        /* ===== KARTU TIM PENGEMBANG ===== */
-        .dev-card { height: 258px; }
-        .dev-banner {
-            background: linear-gradient(135deg, #064e3b 0%, #059669 60%, #34d399 100%);
-            position: relative; overflow: hidden;
-        }
-        .dev-banner::before, .dev-banner::after { content: ''; position: absolute; border-radius: 9999px; background: rgba(255,255,255,.12); }
-        .dev-banner::before { width: 110px; height: 110px; top: -45px; right: -25px; }
-        .dev-banner::after { width: 70px; height: 70px; bottom: -35px; left: 20px; }
-        .dev-avatar { box-shadow: 0 0 0 3px #fff, 0 6px 14px rgba(5,150,105,.35); }
-        .dev-chip { background: #f8fafc; border: 1px solid #e2e8f0; }
+        /* ===== KARTU TIM PENGEMBANG (kompak, mobile) ===== */
+        .dev-card { height: 100%; min-height: 104px; }
+        .dev-accent { background: linear-gradient(180deg, #34d399, #059669 55%, #064e3b); }
+        .dev-avatar { box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px #a7f3d0; }
+        .dev-chip { background: #f0fdf4; border: 1px solid #d1fae5; }
         .dot { width: 6px; height: 6px; border-radius: 9999px; background: #cbd5e1; transition: all .3s; }
         .dot.active { width: 18px; background: #059669; }
     </style>
@@ -374,59 +368,49 @@
         }
 
         /* ========== TIM PENGEMBANG ========== */
-        // [kemungkinan nama field di Firestore], label, ikon
-        const ID_FIELDS = [
-            [['nim'], 'NIM', 'fa-id-card'],
-            [['nip'], 'NIP', 'fa-id-badge'],
-            [['nidn', 'nipdn', 'nipDn'], 'NIDN', 'fa-user-graduate'],
-            [['nuptk'], 'NUPTK', 'fa-address-card'],
-            [['npsn'], 'NPSN', 'fa-school'],
-            [['kelas', 'jurusan', 'prodi'], 'Kelas/Prodi', 'fa-graduation-cap'],
-            [['instansi', 'sekolah', 'kampus', 'asal'], 'Instansi', 'fa-building-columns']
+        // Field tambahan opsional (muncul otomatis jika ada di data Firestore)
+        const EXTRA_FIELDS = [
+            [['nim'], 'NIM'], [['nip'], 'NIP'], [['nidn', 'nipdn'], 'NIDN'], [['nuptk'], 'NUPTK'],
+            [['kelas', 'jurusan', 'prodi'], 'Prodi'], [['instansi', 'sekolah', 'kampus', 'asal'], 'Instansi']
         ];
-
-        function pickField(dev, keys) {
-            for (const k of keys) if (dev[k] !== undefined && dev[k] !== null && String(dev[k]).trim() !== '') return dev[k];
-            return null;
-        }
+        const pick = (dev, keys) => { for (const k of keys) if (dev[k] != null && String(dev[k]).trim() !== '') return dev[k]; return null; };
 
         function renderDevCard(dev, i, total) {
             const nama = dev.nama || 'Pengembang';
             const imgUrl = dev.foto || dev.gambarBase64 || "https://ui-avatars.com/api/?background=059669&color=fff&bold=true&name=" + encodeURIComponent(nama);
 
-            const chips = ID_FIELDS.map(([keys, label, icon]) => {
-                const v = pickField(dev, keys);
-                return v ? `<div class="dev-chip rounded-lg px-2 py-1 min-w-0">
-                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-wider leading-none"><i class="fas ${icon} text-emerald-500 mr-1"></i>${label}</p>
-                    <p class="text-[11px] font-semibold text-slate-700 truncate mt-0.5">${esc(v)}</p>
-                </div>` : '';
-            }).filter(Boolean).slice(0, 4).join('');
+            const kat = (dev.kategori || '').toLowerCase();
+            const katStyle = kat === 'dosen' ? 'bg-blue-50 text-blue-600 border-blue-100'
+                           : kat === 'mahasiswa' ? 'bg-amber-50 text-amber-600 border-amber-100'
+                           : 'bg-slate-100 text-slate-600 border-slate-200';
+            const idLabel = kat === 'dosen' ? 'NIP/NIDN' : kat === 'mahasiswa' ? 'NIM' : 'ID';
 
-            const sosial = [
-                [dev.email, 'fa-envelope', v => `mailto:${v}`],
-                [dev.instagram, 'fa-instagram', v => `https://instagram.com/${String(v).replace('@','')}`, 'fab'],
-                [dev.whatsapp || dev.wa, 'fa-whatsapp', v => `https://wa.me/${String(v).replace(/\D/g,'')}`, 'fab'],
-                [dev.github, 'fa-github', v => `https://github.com/${v}`, 'fab']
-            ].filter(s => s[0]).map(s => `<a href="${esc(s[2](s[0]))}" target="_blank" rel="noopener" class="w-6 h-6 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center text-[11px]"><i class="${s[3] || 'fas'} ${s[1]}"></i></a>`).join('');
+            const items = [];
+            if (dev.identitas && String(dev.identitas).trim() !== '' && dev.identitas !== '-') items.push([idLabel, dev.identitas]);
+            EXTRA_FIELDS.forEach(([keys, label]) => { const v = pick(dev, keys); if (v) items.push([label, v]); });
+
+            const chips = items.slice(0, 3).map(([l, v]) =>
+                `<span class="dev-chip rounded-md px-1.5 py-0.5 text-[9px] text-slate-600 max-w-full truncate"><b class="text-emerald-700">${esc(l)}</b> ${esc(v)}</span>`).join('');
 
             return `
             <div class="w-full flex-shrink-0">
-              <div class="dev-card bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                <div class="dev-banner h-[58px] shrink-0 px-3 pt-2 flex justify-between items-start">
-                    <span class="relative z-10 text-[9px] font-bold text-white/90 bg-white/20 px-2 py-0.5 rounded-full"><i class="fas fa-code mr-1"></i>${i + 1}/${total}</span>
-                    <div class="relative z-10 flex gap-1.5">${sosial}</div>
-                </div>
-                <div class="px-4 -mt-8 flex items-end gap-3 shrink-0">
-                    <img src="${imgUrl}" alt="${esc(nama)}" class="dev-avatar w-16 h-16 rounded-full object-cover bg-slate-100 shrink-0">
-                    <div class="min-w-0 pb-0.5">
-                        <h4 class="text-slate-800 font-extrabold text-[13px] leading-tight truncate pt-9">${esc(nama)}</h4>
+              <div class="dev-card bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex">
+                <div class="dev-accent w-1.5 shrink-0"></div>
+                <div class="flex-1 min-w-0 p-3">
+                    <div class="flex items-center gap-3">
+                        <img src="${imgUrl}" alt="${esc(nama)}" class="dev-avatar w-14 h-14 rounded-full object-cover bg-slate-100 shrink-0">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center justify-between gap-2 mb-0.5">
+                                <span class="text-[8px] font-bold ${katStyle} border px-1.5 py-0.5 rounded uppercase tracking-widest">${esc(dev.kategori || 'Tim')}</span>
+                                <span class="text-[9px] font-semibold text-slate-300">${i + 1}/${total}</span>
+                            </div>
+                            <h4 class="text-slate-800 font-bold text-[13px] leading-tight line-clamp-2">${esc(nama)}</h4>
+                            <p class="text-emerald-600 text-[10px] font-semibold truncate mt-0.5"><i class="fas fa-star text-amber-400 text-[8px] mr-1"></i>${esc(dev.jabatan || 'Anggota Tim')}</p>
+                        </div>
                     </div>
+                    ${chips ? `<div class="flex flex-wrap gap-1.5 mt-2.5">${chips}</div>` : ''}
+                    ${dev.deskripsi ? `<p class="text-[10px] text-slate-500 line-clamp-2 leading-snug mt-2">${esc(dev.deskripsi)}</p>` : ''}
                 </div>
-                <div class="px-4 mt-1.5 shrink-0">
-                    <span class="inline-block text-[9px] font-bold uppercase tracking-widest text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full max-w-full truncate"><i class="fas fa-star text-[8px] mr-1"></i>${esc(dev.jabatan || 'Anggota Tim')}</span>
-                </div>
-                <div class="px-4 mt-2 grid grid-cols-2 gap-1.5 shrink-0">${chips}</div>
-                <p class="px-4 mt-2 text-[10px] text-slate-500 line-clamp-2 leading-snug">${esc(dev.deskripsi || '')}</p>
               </div>
             </div>`;
         }
