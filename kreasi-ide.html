@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kreasi Ide - Ruang Kreasi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }
+    </script>
+    <!-- Logika bersama Ruang Kreasi disematkan agar halaman ini berdiri sendiri -->
+    <script>
+/* kreasi-core.js — logika bersama seluruh halaman Ruang Kreasi (profil, XP, draf, arsip, API, UI umum) */
+(function () {
+    const rd = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
+    const wr = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const day = d => d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+    const TITLES = ['Penulis Pemula', 'Penulis Muda', 'Penalar Cermat', 'Debater Handal', 'Maestro Argumen'];
+    const BADGES = { ide: ['Pencari Ide', 'fa-lightbulb'], naskah: ['Naskah Perdana', 'fa-scroll'], revisi: ['Rajin Revisi', 'fa-pen-nib'], skor80: ['Nilai 80+', 'fa-star'], streak3: ['Api 3 Hari', 'fa-fire'] };
+
+    document.head.insertAdjacentHTML('beforeend', `<style>
+        body{font-family:'Poppins',sans-serif;background:#f1f5f9;-webkit-tap-highlight-color:transparent}
+        .hide-scrollbar::-webkit-scrollbar{display:none}.hide-scrollbar{scrollbar-width:none}
+        .fade-in{animation:kf .35s ease-out both}@keyframes kf{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+        .line-clamp-1{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}.line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.lc2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .sk{position:relative;overflow:hidden;background:#e2e8f0;border-radius:.6rem}.sk::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:sh 1.3s infinite}@keyframes sh{100%{transform:translateX(100%)}}
+        .btn{display:flex;align-items:center;justify-content:center;gap:.5rem;font-weight:700;border-radius:.85rem;transition:transform .15s}.btn:active{transform:scale(.96)}.btn:disabled{opacity:.45}
+        .fld{width:100%;border:1px solid #e2e8f0;border-radius:.85rem;padding:.7rem .9rem;font-size:13px;background:#f8fafc;outline:none}.fld:focus{border-color:#059669;box-shadow:0 0 0 4px rgba(5,150,105,.12)}
+    </style>`);
+
+    const K = {
+        esc,
+        profile() {
+            const p = rd('kreasi_profile', null) || { xp: parseInt(localStorage.getItem('kreasiPointsArg') || '0'), streak: 0, last: '', badges: [], level: 'smp' };
+            return p;
+        },
+        saveProfile(p) { wr('kreasi_profile', p); },
+        level(xp) {
+            const lv = Math.floor(xp / 150) + 1, cur = xp % 150;
+            return { lv, title: TITLES[Math.min(TITLES.length - 1, lv - 1)], cur, next: 150, pct: Math.round(cur / 150 * 100) };
+        },
+        touch() {
+            const p = K.profile(), now = new Date(), y = new Date(now.getTime() - 864e5);
+            if (p.last !== day(now)) { p.streak = p.last === day(y) ? p.streak + 1 : 1; p.last = day(now); K.saveProfile(p); if (p.streak >= 3) K.badge('streak3'); }
+        },
+        addXP(n, why) {
+            const p = K.profile(), before = K.level(p.xp).lv;
+            p.xp += n; K.saveProfile(p); localStorage.setItem('kreasiPointsArg', p.xp);
+            const el = document.getElementById('kXp'); if (el) el.textContent = p.xp;
+            K.toast(`+${n} XP${why ? ' · ' + why : ''}`);
+            const after = K.level(p.xp);
+            if (after.lv > before) setTimeout(() => { K.toast(`Naik ke Level ${after.lv}: ${after.title}!`); K.beep('success'); window.confetti && confetti({ particleCount: 90, spread: 70, origin: { y: .6 }, zIndex: 100000 }); }, 900);
+        },
+        badge(id) {
+            const p = K.profile(); if (p.badges.includes(id) || !BADGES[id]) return;
+            p.badges.push(id); K.saveProfile(p); setTimeout(() => K.toast(`Lencana baru: ${BADGES[id][0]}!`), 1400);
+        },
+        BADGES,
+        draft: () => rd('kreasi_draft', null),
+        setDraft(patch, replace) { const d = replace ? patch : Object.assign(rd('kreasi_draft', {}) || {}, patch); wr('kreasi_draft', d); return d; },
+        clearDraft: () => localStorage.removeItem('kreasi_draft'),
+        karya: () => rd('kreasi_karya', []),
+        addKarya(k) { const a = K.karya(); a.unshift(k); wr('kreasi_karya', a.slice(0, 30)); },
+        words: t => String(t || '').trim().split(/\s+/).filter(Boolean).length,
+
+        async api(action, payload = {}) {
+            const res = await fetch('/api/all-kreasi', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, level: K.profile().level, ...payload }), signal: AbortSignal.timeout(30000) });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.detail_error || 'Server error');
+            return data;
+        },
+
+        toast(msg, err) {
+            let c = document.getElementById('kToast');
+            if (!c) { c = document.createElement('div'); c.id = 'kToast'; c.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none'; document.body.appendChild(c); }
+            const t = document.createElement('div');
+            t.className = `${err ? 'bg-red-500' : 'bg-slate-800'} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 transition-all duration-300 opacity-0 -translate-y-3`;
+            t.innerHTML = `<i class="fas ${err ? 'fa-exclamation-circle' : 'fa-circle-check text-emerald-400'}"></i><span class="flex-1">${esc(msg)}</span>`;
+            c.appendChild(t); requestAnimationFrame(() => t.classList.remove('opacity-0', '-translate-y-3'));
+            setTimeout(() => { t.classList.add('opacity-0', '-translate-y-3'); setTimeout(() => t.remove(), 300); }, 2800);
+        },
+        beep(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)(), o = ctx.createOscillator(), g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                if (type === 'success') { o.type = 'sine'; o.frequency.setValueAtTime(523, ctx.currentTime); o.frequency.exponentialRampToValueAtTime(1046, ctx.currentTime + .1); }
+                else { o.type = 'sawtooth'; o.frequency.setValueAtTime(150, ctx.currentTime); }
+                g.gain.setValueAtTime(.08, ctx.currentTime); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .4); o.start(); o.stop(ctx.currentTime + .4);
+            } catch (e) {}
+        },
+
+        mountHeader(title, back) {
+            const p = K.profile();
+            document.getElementById('hdr').innerHTML = `
+            <header class="bg-brand-green fixed w-full max-w-md z-50 px-4 py-3 flex items-center gap-3 shadow-md">
+                <a href="${back}" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors active:scale-95"><i class="fas fa-chevron-left"></i></a>
+                <h1 class="flex-1 text-white font-bold text-sm tracking-wide truncate">${title}</h1>
+                <span class="bg-white/20 border border-white/30 text-white px-2.5 py-1 rounded-full text-[11px] font-bold backdrop-blur-sm"><i class="fas fa-fire text-amber-300"></i> ${p.streak}</span>
+                <span class="bg-white/20 border border-white/30 text-white px-2.5 py-1 rounded-full text-[11px] font-bold backdrop-blur-sm flex items-center gap-1"><i class="fas fa-pen-fancy text-[10px]"></i><span id="kXp">${p.xp}</span> XP</span>
+            </header>
+            <div class="h-[60px] bg-brand-green"></div>
+            <div class="bg-brand-green pb-10 px-4 relative z-10 rounded-b-[2rem] -mt-1"></div>`;
+        },
+        mountSteps(n) {
+            const S = ['Pilih Ide', 'Tulis & Revisi', 'Naskah Jadi'];
+            document.getElementById('steps').innerHTML = `<div class="px-4 -mt-10 relative z-20"><div class="bg-white rounded-2xl shadow-md p-4"><div class="flex items-center">${S.map((s, i) => `
+                <div class="flex items-center ${i < 2 ? 'flex-1' : ''}"><div class="flex flex-col items-center"><div class="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold ${i + 1 < n ? 'bg-emerald-500 text-white' : i + 1 === n ? 'bg-brand-green text-white ring-4 ring-brand-light' : 'bg-slate-100 text-slate-400'}">${i + 1 < n ? '<i class="fas fa-check"></i>' : i + 1}</div><span class="text-[9px] font-semibold mt-1 ${i + 1 === n ? 'text-brand-dark' : 'text-slate-400'}">${s}</span></div>${i < 2 ? `<div class="flex-1 h-0.5 mx-2 mb-4 ${i + 1 < n ? 'bg-emerald-400' : 'bg-slate-200'}"></div>` : ''}</div>`).join('')}</div></div></div>`;
+        }
+    };
+    window.K = K; K.touch();
+})();
+
+    </script>
+    <style>
+        .tabs-scroll::-webkit-scrollbar { display: none; } .tabs-scroll { scrollbar-width: none; }
+        .item { animation: kf .35s ease-out both; }
+        details > summary { list-style: none; } details > summary::-webkit-details-marker { display: none; }
+        details[open] .chev { transform: rotate(180deg); } .chev { transition: transform .2s; }
+        .sheet { animation: kf .25s ease-out both; }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen">
+
+<div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
+
+    <!-- HEADER STICKY -->
+    <header class="sticky top-0 z-50 bg-brand-green h-14 px-4 flex items-center gap-3 shadow-md">
+        <a href="kreasi.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
+        <div class="flex-1 min-w-0">
+            <h1 class="text-white font-bold text-sm leading-tight truncate">Kreasi Ide</h1>
+            <p class="text-white/70 text-[10px] leading-tight truncate">Langkah 1 · Pilih topik & bahan informasi</p>
+        </div>
+        <span class="shrink-0 bg-white/20 border border-white/30 text-white px-2 py-1 rounded-full text-[11px] font-bold"><i class="fas fa-fire text-amber-300"></i> <span id="hStreak">0</span></span>
+        <span class="shrink-0 bg-white/20 border border-white/30 text-white px-2 py-1 rounded-full text-[11px] font-bold"><i class="fas fa-pen-fancy text-[10px]"></i> <span id="hXp">0</span> XP</span>
+    </header>
+
+    <!-- LANGKAH -->
+    <section class="bg-brand-green px-4 pb-5 pt-1 rounded-b-3xl">
+        <div class="bg-white/15 border border-white/20 rounded-2xl p-3.5 backdrop-blur-sm flex items-center">
+            <div class="flex flex-col items-center"><div class="w-7 h-7 rounded-full bg-white text-brand-green flex items-center justify-center text-[11px] font-bold ring-4 ring-white/25">1</div><span class="text-[9px] font-semibold text-white mt-1">Pilih Ide</span></div>
+            <div class="flex-1 h-0.5 bg-white/30 mx-2 mb-4"></div>
+            <div class="flex flex-col items-center"><div class="w-7 h-7 rounded-full bg-white/20 text-white/80 flex items-center justify-center text-[11px] font-bold">2</div><span class="text-[9px] font-semibold text-white/70 mt-1">Tulis & Revisi</span></div>
+            <div class="flex-1 h-0.5 bg-white/30 mx-2 mb-4"></div>
+            <div class="flex flex-col items-center"><div class="w-7 h-7 rounded-full bg-white/20 text-white/80 flex items-center justify-center text-[11px] font-bold">3</div><span class="text-[9px] font-semibold text-white/70 mt-1">Naskah Jadi</span></div>
+        </div>
+    </section>
+
+    <!-- MODE (STICKY) -->
+    <div class="sticky top-14 z-40 bg-slate-50/95 backdrop-blur border-b border-slate-200 mt-5">
+        <div class="px-4 py-2.5 flex gap-2">
+            <button id="mAi" onclick="setMode('ai')" class="flex-1 py-2 rounded-full text-xs font-semibold border transition"><i class="fas fa-wand-magic-sparkles mr-1"></i> Ide dari AI</button>
+            <button id="mOwn" onclick="setMode('own')" class="flex-1 py-2 rounded-full text-xs font-semibold border transition"><i class="fas fa-pen mr-1"></i> Ide Sendiri</button>
+        </div>
+    </div>
+
+    <main class="flex-grow pb-8">
+
+        <!-- DRAF AKTIF -->
+        <section id="secDraf" class="px-4 mt-4 hidden"></section>
+
+        <!-- JENJANG -->
+        <section class="px-4 mt-4">
+            <div class="flex items-center justify-between bg-white border border-slate-100 rounded-xl px-3.5 py-2.5 shadow-sm">
+                <div><p class="text-[11px] font-bold text-slate-700"><i class="fas fa-graduation-cap text-brand-green mr-1.5"></i>Jenjang</p><p class="text-[10px] text-slate-400">Menyesuaikan bahasa & tingkat kesulitan</p></div>
+                <div class="flex bg-slate-100 rounded-full p-0.5"><button id="lSmp" onclick="setLevel('smp')" class="px-3.5 py-1 rounded-full text-[11px] font-bold transition">SMP</button><button id="lSma" onclick="setLevel('sma')" class="px-3.5 py-1 rounded-full text-[11px] font-bold transition">SMA</button></div>
+            </div>
+        </section>
+
+        <!-- PANEL AI -->
+        <section id="paneAi" class="px-4 mt-5">
+            <div class="flex justify-between items-center mb-3"><h2 class="font-bold text-slate-800 text-sm">Pilih Tema</h2><span class="text-[10px] text-slate-400">Boleh dikosongkan</span></div>
+            <div id="temaChips" class="flex flex-wrap gap-2"></div>
+            <button id="btnCari" onclick="cariIde()" class="w-full mt-4 bg-brand-green text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 transition flex items-center justify-center gap-2 text-sm disabled:opacity-50"><i class="fas fa-wand-magic-sparkles text-amber-300"></i> <span id="btnCariTxt">Carikan Ide</span></button>
+        </section>
+
+        <!-- PANEL IDE SENDIRI -->
+        <section id="paneOwn" class="px-4 mt-5 hidden">
+            <div class="flex justify-between items-center mb-3"><h2 class="font-bold text-slate-800 text-sm">Topik Argumenmu</h2><span id="jmlHuruf" class="text-[10px] text-slate-400">0/150</span></div>
+            <textarea id="inJudul" rows="2" maxlength="150" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 outline-none focus:border-brand-green focus:ring-2 focus:ring-emerald-100 resize-none" placeholder="Contoh: Pentingnya literasi digital bagi pelajar"></textarea>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-3 mb-2">Butuh contoh?</p>
+            <div id="contohChips" class="flex flex-col gap-1.5"></div>
+            <button id="btnOwn" onclick="siapkanOwn()" class="w-full mt-4 bg-brand-green text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 transition flex items-center justify-center gap-2 text-sm disabled:opacity-50"><i class="fas fa-book-open"></i> <span id="btnOwnTxt">Siapkan Bahan Informasi</span></button>
+        </section>
+
+        <!-- HASIL -->
+        <section class="px-4 mt-6">
+            <div id="hasilHead" class="flex justify-between items-center mb-3 hidden"><h2 class="font-bold text-slate-800 text-sm" id="hasilJudul">Ide untukmu</h2><span class="text-[10px] text-slate-400" id="hasilInfo"></span></div>
+            <div id="hasil" class="flex flex-col gap-4"></div>
+        </section>
+
+        <!-- TIPS -->
+        <div class="h-2 bg-slate-100 w-full mt-7"></div>
+        <section class="px-4 mt-6">
+            <h2 class="font-bold text-slate-800 text-sm mb-3">Tips Memilih Ide</h2>
+            <div class="bg-white rounded-xl border border-slate-100 shadow-sm divide-y divide-slate-100">
+                <div class="flex gap-3 p-3.5"><div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center shrink-0"><i class="fas fa-heart"></i></div><p class="text-[11px] text-slate-600 leading-relaxed"><b>Pilih yang kamu pedulikan.</b> Argumen terasa lebih meyakinkan kalau kamu benar-benar punya pendapat.</p></div>
+                <div class="flex gap-3 p-3.5"><div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center shrink-0"><i class="fas fa-scale-balanced"></i></div><p class="text-[11px] text-slate-600 leading-relaxed"><b>Cari topik yang bisa diperdebatkan.</b> Ada pihak yang setuju dan tidak setuju, bukan sekadar fakta.</p></div>
+                <div class="flex gap-3 p-3.5"><div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0"><i class="fas fa-lightbulb"></i></div><p class="text-[11px] text-slate-600 leading-relaxed"><b>Manfaatkan bahan informasi.</b> Di langkah menulis, kamu bisa menyisipkannya sebagai bukti, lalu mengolahnya dengan kalimatmu sendiri.</p></div>
+            </div>
+            <p class="text-[10px] text-slate-400 text-center mt-5 leading-relaxed"><i class="fas fa-circle-info"></i> Informasi dari AI hanyalah bahan awal. Periksa kembali sebelum dipakai untuk tugas resmi.</p>
+        </section>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0">
+        <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
+        <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
+    </footer>
+</div>
+
+<!-- MODAL KONFIRMASI -->
+<div id="modal" class="fixed inset-0 bg-slate-900/60 z-[99999] hidden items-end sm:items-center justify-center" onclick="if(event.target===this) tutup(false)">
+    <div class="sheet bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5">
+        <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-4 sm:hidden"></div>
+        <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-xl mx-auto mb-3"><i class="fas fa-triangle-exclamation"></i></div>
+        <h3 class="font-bold text-slate-800 text-center text-sm">Ganti draf yang sedang dikerjakan?</h3>
+        <p class="text-[11px] text-slate-500 text-center mt-1.5 leading-relaxed">Tulisanmu pada draf sebelumnya akan dihapus dan diganti dengan ide baru ini.</p>
+        <div class="grid grid-cols-2 gap-2 mt-5"><button onclick="tutup(false)" class="py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs">Batal</button><button onclick="tutup(true)" class="py-3 rounded-xl bg-brand-green text-white font-bold text-xs">Ya, Ganti</button></div>
+    </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const hariIni = () => { const n = new Date(); return n.getFullYear() + '-' + (n.getMonth() + 1) + '-' + n.getDate(); };
+const TEMA = [['Teknologi', 'fa-microchip'], ['Lingkungan', 'fa-leaf'], ['Pendidikan', 'fa-book-open'], ['Kesehatan', 'fa-heart-pulse'], ['Sosial', 'fa-people-group'], ['Budaya', 'fa-masks-theater'], ['Acak', 'fa-dice']];
+const CONTOH = ['Pentingnya literasi digital bagi pelajar', 'Kantin sekolah sebaiknya hanya menjual makanan sehat', 'Seragam sekolah perlu dipertahankan'];
+const CACHE = 'kreasi_ide_cache';
+let mode = 'ai', tema = null, ideas = [], busy = false, resolveKonfirm = null;
+const qs = new URLSearchParams(location.search);
+
+/* ---------- Header ---------- */
+const prof = K.profile(); $('hStreak').textContent = prof.streak; $('hXp').textContent = prof.xp;
+
+/* ---------- Draf aktif ---------- */
+const draf = K.draft(), drafAktif = !!(draf && draf.ide && !draf.result && (draf.tesis || draf.argumen || draf.kesimpulan));
+if (draf && draf.ide && !draf.result) {
+    $('secDraf').classList.remove('hidden');
+    $('secDraf').innerHTML = `<a href="kreasi-tulis.html" class="flex items-center gap-3 bg-white border-2 border-brand-green rounded-xl p-3 shadow-sm active:scale-[0.98] transition">
+        <div class="w-10 h-10 rounded-lg bg-brand-light text-brand-green flex items-center justify-center shrink-0"><i class="fas fa-pen-nib"></i></div>
+        <div class="flex-1 min-w-0"><p class="text-[9px] font-bold text-brand-dark uppercase tracking-widest">Draf sedang dikerjakan</p><p class="text-xs font-bold text-slate-800 truncate">${K.esc(draf.ide.judul)}</p></div>
+        <span class="text-[11px] font-bold text-brand-green shrink-0">Lanjut <i class="fas fa-arrow-right text-[9px]"></i></span></a>`;
+}
+
+/* ---------- Tampilan kontrol ---------- */
+function paint() {
+    const on = 'bg-brand-green text-white border-brand-green shadow-sm', off = 'bg-white text-slate-600 border-slate-200';
+    $('mAi').className = 'flex-1 py-2 rounded-full text-xs font-semibold border transition ' + (mode === 'ai' ? on : off);
+    $('mOwn').className = 'flex-1 py-2 rounded-full text-xs font-semibold border transition ' + (mode === 'own' ? on : off);
+    $('paneAi').classList.toggle('hidden', mode !== 'ai'); $('paneOwn').classList.toggle('hidden', mode !== 'own');
+    const lv = K.profile().level || 'smp';
+    $('lSmp').className = 'px-3.5 py-1 rounded-full text-[11px] font-bold transition ' + (lv === 'smp' ? 'bg-brand-green text-white shadow-sm' : 'text-slate-500');
+    $('lSma').className = 'px-3.5 py-1 rounded-full text-[11px] font-bold transition ' + (lv === 'sma' ? 'bg-brand-green text-white shadow-sm' : 'text-slate-500');
+    $('temaChips').innerHTML = TEMA.map(([t, i]) => `<button onclick="pilihTema('${t}')" class="px-3 py-2 rounded-xl text-[11px] font-semibold border transition active:scale-95 ${tema === t ? 'bg-brand-light text-brand-dark border-brand-green' : 'bg-white text-slate-600 border-slate-200'}"><i class="fas ${i} mr-1.5 ${tema === t ? 'text-brand-green' : 'text-slate-400'}"></i>${t}</button>`).join('');
+}
+$('contohChips').innerHTML = CONTOH.map((c, i) => `<button onclick="isiContoh(${i})" class="text-left text-[11px] text-slate-600 bg-white border border-slate-200 rounded-lg px-3 py-2 active:scale-[0.98] hover:border-brand-green transition"><i class="far fa-lightbulb text-amber-500 mr-1.5"></i>${c}</button>`).join('');
+window.setMode = m => { mode = m; tampil(); paint(); };
+window.setLevel = l => { const p = K.profile(); p.level = l; K.saveProfile(p); paint(); };
+window.pilihTema = t => { tema = tema === t ? null : t; paint(); };
+window.isiContoh = i => { $('inJudul').value = CONTOH[i]; $('inJudul').dispatchEvent(new Event('input')); };
+$('inJudul').addEventListener('input', e => $('jmlHuruf').textContent = e.target.value.length + '/150');
+
+/* ---------- Render ide ---------- */
+const skel = () => { $('hasilHead').classList.add('hidden'); $('hasil').innerHTML = [1, 2, 3].map(() => '<div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm"><div class="sk h-3 w-14 mb-3"></div><div class="sk h-4 w-3/4 mb-2"></div><div class="sk h-3 w-full mb-1.5"></div><div class="sk h-3 w-5/6 mb-4"></div><div class="sk h-14 w-full"></div></div>').join(''); };
+function kartu(i, idx) {
+    return `<article class="item bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden" style="animation-delay:${idx * 80}ms">
+        <div class="p-4">
+            <span class="text-[9px] font-bold text-brand-dark bg-brand-light border border-emerald-200 px-2 py-0.5 rounded uppercase tracking-widest">${ideas.filter(x => x._mode === i._mode).length > 1 ? 'Ide ' + (idx + 1) : 'Topikmu'}</span>
+            <h3 class="font-bold text-slate-800 text-[14px] leading-snug mt-2">${K.esc(i.judul)}</h3>
+            ${i.pertanyaan ? `<p class="text-[11px] text-slate-500 italic mt-1.5 leading-relaxed"><i class="fas fa-quote-left text-slate-300 mr-1 text-[9px]"></i>${K.esc(i.pertanyaan)}</p>` : ''}
+            ${i.sudut ? `<div class="mt-3 bg-emerald-50 border border-emerald-100 rounded-xl p-3"><p class="text-[9px] font-bold text-emerald-700 uppercase tracking-wider mb-0.5"><i class="fas fa-compass mr-1"></i>Sudut pandang yang bisa kamu ambil</p><p class="text-[11px] text-slate-700 leading-relaxed">${K.esc(i.sudut)}</p></div>` : ''}
+            <details class="mt-3" ${idx === 0 ? 'open' : ''}>
+                <summary class="flex items-center justify-between cursor-pointer bg-slate-50 border border-slate-100 rounded-lg px-3 py-2"><span class="text-[11px] font-bold text-slate-700"><i class="fas fa-lightbulb text-amber-500 mr-1.5"></i>Bahan informasi (${i.info.length})</span><i class="fas fa-chevron-down text-slate-400 text-[10px] chev"></i></summary>
+                <ul class="mt-2.5 space-y-2 px-1">${i.info.map((x, n) => `<li class="flex gap-2.5 text-[11px] text-slate-600 leading-relaxed"><span class="w-4 h-4 rounded-full bg-amber-50 text-amber-600 text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">${n + 1}</span><span>${K.esc(x)}</span></li>`).join('')}</ul>
+            </details>
+        </div>
+        <button onclick="pilih(${idx})" class="w-full bg-brand-green text-white font-bold py-3 text-xs flex items-center justify-center gap-2 active:bg-brand-dark transition">Pilih Ide Ini & Mulai Menulis <i class="fas fa-arrow-right text-[10px]"></i></button>
+    </article>`;
+}
+function tampil() {
+    const arr = ideas.filter(i => i._mode === mode);
+    if (!arr.length) { $('hasilHead').classList.add('hidden'); $('hasil').innerHTML = ''; return; }
+    $('hasilHead').classList.remove('hidden');
+    $('hasilJudul').textContent = mode === 'ai' ? 'Ide untukmu' : 'Bahan informasimu';
+    $('hasilInfo').textContent = mode === 'ai' ? 'Pilih satu untuk mulai' : '';
+    $('hasil').innerHTML = arr.map(kartu).join('') + (mode === 'ai' ? `<button onclick="cariIde()" class="w-full bg-white border border-slate-200 text-slate-600 font-semibold py-3 rounded-xl text-xs active:scale-95 transition"><i class="fas fa-rotate mr-1.5"></i> Cari Ide Lain</button>` : '');
+}
+function galat(fn) {
+    $('hasilHead').classList.add('hidden');
+    $('hasil').innerHTML = `<div class="bg-white border border-red-100 rounded-xl p-5 text-center"><i class="fas fa-cloud-bolt text-red-400 text-2xl mb-2"></i><p class="text-xs font-bold text-slate-700">AI sedang sibuk</p><p class="text-[11px] text-slate-500 mt-1">Tidak ada yang hilang. Coba lagi sebentar.</p><button onclick="${fn}()" class="mt-3 bg-brand-green text-white text-[11px] font-bold px-4 py-2 rounded-full active:scale-95">Coba Lagi</button></div>`;
+}
+const simpan = () => { try { sessionStorage.setItem(CACHE, JSON.stringify({ ideas, tema, inJudul: $('inJudul').value })); } catch (e) {} };
+
+/* ---------- Panggil AI ---------- */
+window.cariIde = async () => {
+    if (busy) return; busy = true; $('btnCari').disabled = true; $('btnCariTxt').textContent = 'Mencari ide…'; skel();
+    try {
+        const r = await K.api('ideas', { tema: (!tema || tema === 'Acak') ? '' : tema });
+        ideas = ideas.filter(i => i._mode !== 'ai').concat(r.ideas.map(i => ({ ...i, _mode: 'ai' })));
+        mode = 'ai'; simpan(); paint(); tampil();
+        $('hasil').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) { console.error(e); K.beep('error'); galat('cariIde'); }
+    finally { busy = false; $('btnCari').disabled = false; $('btnCariTxt').textContent = ideas.some(i => i._mode === 'ai') ? 'Cari Ide Baru' : 'Carikan Ide'; }
+};
+window.siapkanOwn = async () => {
+    const j = $('inJudul').value.trim();
+    if (j.length < 5) { K.toast('Tulis topik minimal 5 huruf ya.', true); K.beep('error'); return; }
+    if (busy) return; busy = true; $('btnOwn').disabled = true; $('btnOwnTxt').textContent = 'Menyiapkan bahan…'; skel();
+    try {
+        const r = await K.api('infopack', { judul: j });
+        ideas = ideas.filter(i => i._mode !== 'own').concat([{ judul: r.judul, pertanyaan: r.pertanyaan, sudut: r.sudut, info: r.info, _mode: 'own' }]);
+        mode = 'own'; simpan(); paint(); tampil();
+        $('hasil').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) { console.error(e); K.beep('error'); galat('siapkanOwn'); }
+    finally { busy = false; $('btnOwn').disabled = false; $('btnOwnTxt').textContent = 'Siapkan Bahan Informasi'; }
+};
+
+/* ---------- Pilih ide ---------- */
+const konfirmasi = () => new Promise(res => { resolveKonfirm = res; $('modal').classList.replace('hidden', 'flex'); });
+window.tutup = v => { $('modal').classList.replace('flex', 'hidden'); if (resolveKonfirm) { resolveKonfirm(v); resolveKonfirm = null; } };
+window.pilih = async idx => {
+    const arr = ideas.filter(i => i._mode === mode), ide = arr[idx]; if (!ide) return;
+    if (drafAktif && !(await konfirmasi())) return;
+    const { _mode, ...bersih } = ide;
+    K.setDraft({ ide: bersih, tesis: '', argumen: '', kesimpulan: '', hints: 3, best: {}, level: K.profile().level, start: Date.now() }, true);
+    const p = K.profile();
+    if (p.ideDay !== hariIni()) { p.ideDay = hariIni(); K.saveProfile(p); K.addXP(10, 'Ide dipilih'); } else K.toast('Ide dipilih. Selamat menulis!');
+    K.badge('ide'); K.beep('success'); sessionStorage.removeItem(CACHE);
+    setTimeout(() => location.href = 'kreasi-tulis.html', 900);
+};
+
+/* ---------- Inisialisasi ---------- */
+try { const c = JSON.parse(sessionStorage.getItem(CACHE) || 'null'); if (c) { ideas = c.ideas || []; tema = c.tema || null; if (c.inJudul) $('inJudul').value = c.inJudul; } } catch (e) {}
+if (qs.get('tema')) tema = qs.get('tema');
+if (qs.get('judul')) { mode = 'own'; $('inJudul').value = qs.get('judul'); }
+$('inJudul').dispatchEvent(new Event('input'));
+if (!qs.get('judul') && ideas.length) mode = ideas.some(i => i._mode === 'ai') ? 'ai' : ideas[0]._mode;
+paint(); tampil();
+</script>
+</body>
+</html>
