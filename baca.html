@@ -4,71 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Membaca Materi - Argumentasi</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] },
-                    colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } }
-                }
-            }
-        }
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }
     </script>
-
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent;
+               -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+        img { -webkit-user-drag: none; }
+        @media print { body { display: none !important; } }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Styling Rich Text Konten */
-        .content-body { word-wrap: break-word; overflow-wrap: break-word; color: #334155; }
-        .content-body p { margin-bottom: 1.25em; line-height: 1.8; }
-        .content-body h1, .content-body h2, .content-body h3, .content-body h4 { font-family: 'Poppins', sans-serif; font-weight: 700; color: #0f172a; margin-top: 1.5em; margin-bottom: 0.75em; line-height: 1.4; }
-        .content-body h1 { font-size: 1.4rem; }
-        .content-body h2 { font-size: 1.25rem; }
-        .content-body h3 { font-size: 1.1rem; }
-        .content-body ul, .content-body ol { padding-left: 1.5em; margin-bottom: 1.25em; }
-        .content-body ul { list-style-type: disc; }
-        .content-body ol { list-style-type: decimal; }
-        .content-body blockquote { border-left: 3px solid #10b981; font-style: italic; background: #ecfdf5; padding: 0.75rem 1rem; border-radius: 0 0.5rem 0.5rem 0; margin-bottom: 1.25em; font-size: 0.95em; color: #475569; }
+        /* ===== Isi bacaan: rapat & rapi ===== */
+        .content-body { word-wrap: break-word; overflow-wrap: break-word; color: #334155; line-height: 1.7; }
+        .content-body p { margin: 0 0 .7em; line-height: 1.7; text-align: left; }
+        .content-body h1, .content-body h2, .content-body h3, .content-body h4 { font-family: 'Poppins', sans-serif; font-weight: 700; color: #0f172a; margin: 1.1em 0 .45em; line-height: 1.35; }
+        .content-body h1 { font-size: 1.3rem; } .content-body h2 { font-size: 1.15rem; } .content-body h3 { font-size: 1.05rem; }
+        .content-body ul, .content-body ol { padding-left: 1.4em; margin: 0 0 .8em; }
+        .content-body ul { list-style: disc; } .content-body ol { list-style: decimal; }
+        .content-body li { margin-bottom: .25em; }
+        .content-body blockquote { border-left: 3px solid #10b981; font-style: italic; background: #ecfdf5; padding: .6rem .9rem; border-radius: 0 .5rem .5rem 0; margin: 0 0 .8em; font-size: .95em; color: #475569; }
         .content-body strong, .content-body b { font-weight: 700; color: #0f172a; }
-        .content-body em, .content-body i { font-style: italic; }
-        .content-body a { color: #059669; text-decoration: underline; font-weight: 500;}
-        .content-body img { max-width: 100%; height: auto; border-radius: 0.5rem; margin-bottom: 1.25em; display: block; }
-        
-        .fade-in { animation: fadeIn 0.4s ease-in forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .content-body a { color: #059669; text-decoration: underline; font-weight: 500; }
+        .content-body img { max-width: 100%; height: auto; border-radius: .5rem; margin: .4em 0 .8em; display: block; }
+        .yt-wrap { position: relative; padding-top: 56.25%; margin: .5em 0 1em; border-radius: .75rem; overflow: hidden; background: #000; box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+        .yt-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
-        /* Skeleton shimmer */
-        .sk { position: relative; overflow: hidden; background: #e2e8f0; border-radius: 0.5rem; }
+        .fade-in { animation: fadeIn .4s ease-in forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .sk { position: relative; overflow: hidden; background: #e2e8f0; border-radius: .5rem; }
         .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent); animation: shimmer 1.4s infinite; }
         @keyframes shimmer { 100% { transform: translateX(100%); } }
-
-        /* Truncate multi-line CSS */
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     </style>
 </head>
 <body class="flex justify-center bg-slate-900 sm:bg-slate-200" style="height:100vh;height:100dvh">
 
-    <!-- FRAME APLIKASI -->
     <div class="w-full max-w-md bg-white relative h-full shadow-2xl overflow-hidden sm:border-x border-slate-200 flex flex-col">
 
-        <!-- Progress bar membaca -->
-        <div class="absolute top-0 left-0 right-0 h-[3px] bg-slate-200/60 z-50">
-            <div id="readProgress" class="h-full bg-amber-400 w-0 transition-all duration-150"></div>
-        </div>
+        <div class="absolute top-0 left-0 right-0 h-[3px] bg-slate-200/60 z-50"><div id="readProgress" class="h-full bg-amber-400 w-0 transition-all duration-150"></div></div>
 
-        <!-- HEADER (sticky) -->
         <header id="topHeader" class="bg-brand-green px-4 py-3 flex justify-between items-center text-white h-[60px] shrink-0 z-40 shadow-md transition-transform duration-300 ease-out will-change-transform relative">
-            <button onclick="history.back()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors active:scale-95">
-                <i class="fas fa-chevron-left"></i>
-            </button>
+            <button onclick="history.back()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors active:scale-95"><i class="fas fa-chevron-left"></i></button>
             <h1 class="text-sm font-semibold truncate flex-1 text-center px-2">Mode Membaca</h1>
             <div class="flex items-center bg-white/20 rounded-full p-0.5">
                 <button onclick="changeFontSize(-1)" class="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white hover:text-brand-green transition-colors"><i class="fas fa-font text-[10px]"></i>-</button>
@@ -77,28 +58,14 @@
             </div>
         </header>
 
-        <!-- AREA SCROLL UTAMA -->
         <div id="scrollableArea" class="flex-grow overflow-y-auto hide-scrollbar bg-white" style="overscroll-behavior:contain">
 
-            <!-- STATE: LOADING -->
             <div id="stateLoading" class="bg-white" aria-busy="true">
-                <div class="px-5 pt-8 pb-4 flex flex-col items-center">
-                    <div class="sk h-4 w-20 mb-4"></div>
-                    <div class="sk h-6 w-full mb-2"></div>
-                    <div class="sk h-6 w-3/4 mb-5"></div>
-                    <div class="flex gap-2">
-                        <div class="sk h-6 w-20 !rounded-full"></div>
-                        <div class="sk h-6 w-24 !rounded-full"></div>
-                    </div>
-                </div>
-                <div class="px-4 mb-8"><div class="sk h-48 w-full !rounded-2xl"></div></div>
-                <div class="px-5 space-y-3 pb-10">
-                    <div class="sk h-3 w-full"></div><div class="sk h-3 w-full"></div><div class="sk h-3 w-11/12"></div>
-                    <div class="sk h-3 w-full"></div><div class="sk h-3 w-4/5"></div>
-                </div>
+                <div class="px-5 pt-8 pb-4 flex flex-col items-center"><div class="sk h-4 w-20 mb-4"></div><div class="sk h-6 w-full mb-2"></div><div class="sk h-6 w-3/4 mb-5"></div></div>
+                <div class="px-4 mb-6"><div class="sk h-48 w-full !rounded-2xl"></div></div>
+                <div class="px-5 space-y-3 pb-10"><div class="sk h-3 w-full"></div><div class="sk h-3 w-full"></div><div class="sk h-3 w-11/12"></div><div class="sk h-3 w-4/5"></div></div>
             </div>
 
-            <!-- STATE: ERROR -->
             <div id="stateError" class="hidden flex-col items-center justify-center py-32 px-6 text-center bg-white">
                 <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-3xl mb-4 border border-red-100"><i class="fas fa-file-excel"></i></div>
                 <h2 class="text-lg font-bold text-slate-800 mb-1">Materi Tidak Ditemukan</h2>
@@ -106,19 +73,12 @@
                 <button onclick="history.back()" class="bg-brand-green text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-sm active:scale-95"><i class="fas fa-arrow-left mr-2"></i> Kembali</button>
             </div>
 
-            <!-- STATE: KONTEN ARTIKEL -->
             <main id="stateContent" class="hidden flex-col fade-in pb-6">
 
-                <!-- Judul & Metadata -->
-                <div class="px-5 pt-8 pb-4">
-                    <div class="mb-3 text-center">
-                        <span id="labelKategori" class="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest inline-block">Kategori</span>
-                    </div>
-                    <h1 id="judulMateri" class="text-2xl font-bold font-reading text-slate-900 mb-4 leading-snug text-center">Memuat Judul...</h1>
-                    
-                    <!-- Area Tagar (Dengan Link Aktif) -->
-                    <div id="tagsContainer" class="flex flex-wrap items-center justify-center gap-1.5 mb-5"></div>
-
+                <div class="px-5 pt-7 pb-3">
+                    <div class="mb-3 text-center"><span id="labelKategori" class="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest inline-block">Kategori</span></div>
+                    <h1 id="judulMateri" class="text-2xl font-bold font-reading text-slate-900 mb-3 leading-snug text-center">Memuat Judul...</h1>
+                    <div id="tagsContainer" class="flex flex-wrap items-center justify-center gap-1.5 mb-4"></div>
                     <div class="flex flex-wrap items-center justify-center gap-2">
                         <span class="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full text-[10px] font-medium border border-slate-200"><i class="far fa-user text-amber-500 mr-1"></i><span id="penulisMateri">Admin</span></span>
                         <span class="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full text-[10px] font-medium border border-slate-200"><i class="far fa-calendar-alt text-blue-500 mr-1"></i><span id="tanggalMateri">-</span></span>
@@ -126,332 +86,305 @@
                     </div>
                 </div>
 
-                <!-- Gambar Cover -->
-                <div class="mb-5 w-full px-4">
-                    <div class="w-full h-48 bg-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                        <img id="coverMateri" src="" alt="Cover" class="w-full h-full object-cover">
-                    </div>
-                    <!-- Sumber Gambar yang dinamis -->
-                    <p id="sumberGambar" class="text-[9px] text-slate-400 text-center mt-2 italic px-2 hidden"></p>
+                <div class="mb-4 w-full px-4">
+                    <div class="w-full h-48 bg-slate-200 rounded-2xl overflow-hidden shadow-sm"><img id="coverMateri" src="" alt="Cover" class="w-full h-full object-cover" draggable="false"></div>
+                    <p id="sumberGambar" class="text-[9px] text-slate-400 text-center mt-2 italic px-2">Sumber Foto: -</p>
                 </div>
 
-                <!-- VIDEO YOUTUBE (Muncul Jika Admin Mengisinya) -->
-                <div id="youtubeContainer" class="mb-8 w-full px-4 hidden">
-                    <div class="w-full rounded-2xl overflow-hidden shadow-md bg-black relative" style="padding-top: 56.25%;">
-                        <iframe id="youtubeIframe" class="absolute top-0 left-0 w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                    </div>
+                <div id="youtubeContainer" class="mb-5 w-full px-4 hidden">
+                    <div class="yt-wrap !my-0"><iframe id="youtubeIframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
                     <p class="text-[9px] text-slate-400 text-center mt-2 px-2"><i class="fab fa-youtube text-red-500 mr-1"></i> Video Referensi Materi</p>
                 </div>
 
-                <!-- Isi Artikel / Materi -->
                 <article id="readingContent" class="font-reading text-[1rem] content-body px-5"></article>
 
-                <!-- DAFTAR PUSTAKA -->
-                <div id="daftarPustakaContainer" class="px-5 mt-8 pt-6 border-t border-slate-200 hidden">
-                    <h3 class="font-bold text-slate-800 text-sm mb-3 flex items-center gap-2"><i class="fas fa-book text-slate-400"></i> Referensi / Daftar Pustaka</h3>
-                    <div id="daftarPustakaText" class="text-[10px] text-slate-500 leading-relaxed font-reading bg-slate-50 p-4 rounded-xl border border-slate-100"></div>
+                <!-- DAFTAR PUSTAKA (selalu tampil) -->
+                <div class="px-5 mt-6 pt-5 border-t border-slate-200">
+                    <h3 class="font-bold text-slate-800 text-sm mb-2.5 flex items-center gap-2"><i class="fas fa-book text-slate-400"></i> Referensi / Daftar Pustaka</h3>
+                    <div id="daftarPustakaText" class="text-[10px] text-slate-500 leading-relaxed font-reading bg-slate-50 p-3.5 rounded-xl border border-slate-100">-</div>
                 </div>
 
-                <!-- SHARE WHATSAPP -->
-                <div class="mx-5 mt-8 mb-4 px-4 py-3 bg-green-50 rounded-xl border border-green-100 flex items-center justify-between shadow-sm">
-                    <div class="flex-1 mr-2">
-                        <p class="text-[11px] font-bold text-green-800 leading-tight">Bagikan materi ini</p>
-                        <p class="text-[9px] text-green-600 mt-0.5">Kirim ke teman atau grup belajar.</p>
+                <!-- BAGIKAN -->
+                <div class="mx-5 mt-5 px-4 py-3 bg-green-50 rounded-xl border border-green-100 flex items-center justify-between shadow-sm">
+                    <div class="flex-1 mr-2"><p class="text-[11px] font-bold text-green-800 leading-tight">Bagikan materi ini</p><p class="text-[9px] text-green-600 mt-0.5">Kirim ke teman atau grup belajar.</p></div>
+                    <button onclick="bagikanKeWhatsApp()" class="shrink-0 bg-[#25D366] hover:bg-[#1ebd5a] text-white text-[11px] font-bold px-4 py-2 rounded-lg transition-all active:scale-95 shadow flex items-center gap-1.5"><i class="fab fa-whatsapp text-sm"></i> WhatsApp</button>
+                </div>
+
+                <!-- INTISARI: hasil di atas, tombol di bawah (gaya sama dengan Bagikan) -->
+                <div class="mx-5 mt-3">
+                    <div id="resumeResult" class="hidden mb-3 bg-amber-50/60 border border-amber-100 rounded-xl p-4 fade-in">
+                        <div class="flex items-center gap-2 mb-2.5 pb-2 border-b border-amber-100">
+                            <i class="fas fa-check-circle text-emerald-600 text-sm"></i>
+                            <h3 class="font-bold text-slate-800 text-[11px] uppercase tracking-wider flex-1">Hasil Ringkasan AI</h3>
+                            <span id="resumeInfo" class="text-[8px] text-slate-400"></span>
+                        </div>
+                        <h4 class="text-amber-600 font-bold text-[11px] mb-1 flex items-center gap-1.5"><i class="fas fa-list-ul"></i> Poin Utama</h4>
+                        <ul id="resumePoints" class="text-slate-600 text-[11px] space-y-1 list-disc pl-4 leading-relaxed marker:text-emerald-500 mb-3"></ul>
+                        <h4 class="text-brand-green font-bold text-[11px] mb-1 flex items-center gap-1.5"><i class="fas fa-info-circle"></i> Makna Bacaan</h4>
+                        <p id="resumeMakna" class="text-slate-600 text-[11px] leading-relaxed bg-white p-3 border border-slate-100 rounded-lg"></p>
                     </div>
-                    <button onclick="bagikanKeWhatsApp()" class="shrink-0 bg-[#25D366] hover:bg-[#1ebd5a] text-white text-[11px] font-bold px-4 py-2 rounded-lg transition-all active:scale-95 shadow flex items-center gap-1.5 cursor-pointer">
-                        <i class="fab fa-whatsapp text-sm"></i> WhatsApp
-                    </button>
+                    <div id="resumeLoading" class="hidden mb-3 bg-slate-50 border border-slate-200 rounded-xl p-4">
+                        <p class="text-xs font-bold text-slate-700 mb-3 flex items-center gap-2"><i class="fas fa-circle-notch fa-spin text-emerald-600"></i> Sedang meringkas...</p>
+                        <div class="space-y-2"><div class="sk h-3 w-full"></div><div class="sk h-3 w-5/6"></div><div class="sk h-3 w-4/6"></div></div>
+                    </div>
+                    <p id="resumeError" class="hidden mb-3 text-[11px] text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5"><i class="fas fa-exclamation-triangle mr-1"></i> Gagal meringkas. Silakan coba lagi.</p>
+
+                    <div class="px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between shadow-sm">
+                        <div class="flex-1 mr-2"><p class="text-[11px] font-bold text-slate-800 leading-tight">Intisari Teks AI</p><p class="text-[9px] text-slate-500 mt-0.5">Ringkas poin penting bacaan ini.</p></div>
+                        <button id="btnResume" onclick="prosesResumeRealAPI()" class="shrink-0 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold px-4 py-2 rounded-lg transition-all active:scale-95 shadow flex items-center gap-1.5"><i class="fas fa-bolt text-amber-400 text-sm"></i> <span id="btnResumeLabel">Ringkas</span></button>
+                    </div>
                 </div>
 
-                <!-- BACA JUGA (Rekomendasi) -->
-                <div class="px-5 mt-6 pt-6 border-t border-slate-200">
-                    <h3 class="font-bold text-slate-800 text-sm mb-4">Mungkin Anda Juga Suka</h3>
+                <!-- TAG + MUNGKIN ANDA SUKA -->
+                <div class="px-5 mt-6 pt-5 border-t border-slate-200">
+                    <h3 class="font-bold text-slate-800 text-xs mb-2 flex items-center gap-2"><i class="fas fa-tags text-emerald-500"></i> Tag</h3>
+                    <div id="tagsBawah" class="flex flex-wrap gap-1.5 mb-5"><span class="text-[10px] text-slate-400">-</span></div>
+                    <h3 class="font-bold text-slate-800 text-sm">Mungkin Anda Suka</h3>
+                    <p id="rekomInfo" class="text-[10px] text-slate-400 mt-0.5 mb-3"></p>
                     <div id="rekomendasiList" class="flex flex-col gap-3">
-                        <!-- Skeleton saat mencari -->
                         <div class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 animate-pulse"><div class="w-16 h-16 bg-slate-200 rounded-lg shrink-0"></div><div class="flex-1 py-1"><div class="h-3 bg-slate-200 w-16 mb-2"></div><div class="h-3 bg-slate-200 w-full mb-1"></div><div class="h-3 bg-slate-200 w-3/4"></div></div></div>
                     </div>
                 </div>
-
-                <!-- INTISARI TEKS AI -->
-                <div class="mx-5 mt-6 mb-2 bg-slate-50 border border-slate-200 rounded-xl p-4 text-center relative overflow-hidden shadow-sm">
-                    <div id="resumePrompt">
-                        <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-2"><i class="fas fa-bolt text-lg"></i></div>
-                        <h3 class="font-bold text-sm text-slate-800 mb-1">Intisari Teks AI</h3>
-                        <p class="text-[10px] text-slate-500 mb-4 max-w-[250px] mx-auto leading-relaxed">Sistem akan mengekstrak poin penting dari bacaan ini untuk mempermudah belajar.</p>
-                        <button onclick="prosesResumeRealAPI()" class="bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold px-6 py-2.5 rounded-lg transition-all active:scale-95 shadow-md flex items-center justify-center mx-auto gap-2">Ringkas Teks</button>
-                    </div>
-
-                    <div id="resumeLoading" class="hidden text-left">
-                        <p class="text-xs font-bold text-slate-700 mb-3 flex items-center gap-2"><i class="fas fa-circle-notch fa-spin text-emerald-600"></i> Sedang meringkas...</p>
-                        <div class="space-y-2">
-                            <div class="sk h-3 w-full"></div><div class="sk h-3 w-5/6"></div><div class="sk h-3 w-4/6"></div>
-                        </div>
-                    </div>
-
-                    <div id="resumeResult" class="hidden text-left fade-in">
-                        <div class="flex items-center gap-2 mb-3 border-b border-slate-200 pb-2">
-                            <i class="fas fa-check-circle text-emerald-600 text-sm"></i>
-                            <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider">Hasil Ringkasan AI</h3>
-                        </div>
-                        <div class="space-y-4">
-                            <div>
-                                <h4 class="text-amber-600 font-bold text-[11px] mb-1.5 flex items-center gap-1.5"><i class="fas fa-list-ul"></i> Poin Utama</h4>
-                                <ul id="resumePoints" class="text-slate-600 text-[11px] space-y-1 list-disc pl-4 leading-relaxed marker:text-emerald-500"></ul>
-                            </div>
-                            <div>
-                                <h4 class="text-brand-green font-bold text-[11px] mb-1.5 flex items-center gap-1.5"><i class="fas fa-info-circle"></i> Makna Bacaan</h4>
-                                <p id="resumeMakna" class="text-slate-600 text-[11px] leading-relaxed bg-white p-3 border border-slate-100 rounded-lg"></p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="resumeError" class="hidden py-4 fade-in">
-                        <i class="fas fa-exclamation-triangle text-2xl text-red-500 mb-2"></i>
-                        <p class="text-xs font-bold text-slate-800">Gagal Meringkas</p>
-                        <button onclick="resetResumeUI()" class="mt-4 text-[10px] text-slate-600 font-bold border border-slate-300 bg-white px-4 py-1.5 rounded-lg active:scale-95 shadow-sm">Coba Lagi</button>
-                    </div>
-                </div>
-
             </main>
 
-            <!-- FOOTER -->
-            <footer class="border-t border-slate-200 bg-slate-50 px-5 py-5 text-center mt-auto shrink-0">
-                <p class="text-[10px] text-slate-400 font-medium tracking-wide">&copy; 2026 Argumentasi</p>
-            </footer>
+            <footer class="border-t border-slate-200 bg-slate-50 px-5 py-5 text-center mt-auto shrink-0"><p class="text-[10px] text-slate-400 font-medium tracking-wide">&copy; 2026 Argumentasi</p></footer>
         </div>
     </div>
 
-    <!-- UI Logics (Font Size, Scroll Header, WA) -->
     <script>
+        /* ===== Proteksi salin ===== */
+        ['copy', 'cut', 'contextmenu', 'dragstart', 'selectstart'].forEach(ev => document.addEventListener(ev, e => e.preventDefault()));
+        document.addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && ['c', 'x', 'a', 'p', 's', 'u'].includes(e.key.toLowerCase())) e.preventDefault();
+        });
+
+        /* ===== UI ===== */
         let currentSize = 1;
         function changeFontSize(step) {
             currentSize = Math.min(1.6, Math.max(0.8, currentSize + step * 0.1));
             document.getElementById('readingContent').style.fontSize = currentSize + 'rem';
         }
-
         const scrollContainer = document.getElementById('scrollableArea');
         scrollContainer.addEventListener('scroll', () => {
-            const height = scrollContainer.scrollHeight - scrollContainer.clientHeight;
-            const scrolled = height > 0 ? (scrollContainer.scrollTop / height) * 100 : 0;
-            document.getElementById('readProgress').style.width = scrolled + '%';
+            const h = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+            document.getElementById('readProgress').style.width = (h > 0 ? scrollContainer.scrollTop / h * 100 : 0) + '%';
         }, { passive: true });
-
         const topHeader = document.getElementById('topHeader');
         let headerHidden = false;
-        scrollContainer.addEventListener('click', (e) => {
+        scrollContainer.addEventListener('click', e => {
             if (e.target.closest('button, a, input, textarea, select, iframe, summary, label')) return;
-            const sel = window.getSelection();
-            if (sel && sel.toString().length > 0) return;
             headerHidden = !headerHidden;
             topHeader.style.transform = headerHidden ? 'translateY(-100%)' : 'translateY(0)';
         });
-
         window.bagikanKeWhatsApp = function() {
             if (!window.currentArticleData) return;
             const judul = window.currentArticleData.judul || "Materi Pembelajaran";
-            const pesan = encodeURIComponent(`Halo! Yuk baca artikel ini:\n\n*${judul}*\n\nBaca selengkapnya di sini:\n${window.location.href}`);
-            window.open(`https://wa.me/?text=${pesan}`, '_blank');
+            window.open(`https://wa.me/?text=${encodeURIComponent(`Halo! Yuk baca artikel ini:\n\n*${judul}*\n\nBaca selengkapnya di sini:\n${window.location.href}`)}`, '_blank');
         };
 
-        // Fungsi Helper untuk format link YouTube agar bisa di-embed
-        function formatYoutubeEmbed(url) {
-            if(!url) return null;
-            let videoId = "";
-            // Cek format youtu.be/ID
-            if (url.includes('youtu.be/')) {
-                videoId = url.split('youtu.be/')[1].split('?')[0];
-            } 
-            // Cek format youtube.com/watch?v=ID
-            else if (url.includes('youtube.com/watch')) {
-                const urlParams = new URLSearchParams(url.split('?')[1]);
-                videoId = urlParams.get('v');
-            }
-            return videoId ? `https://www.youtube.com/embed/${videoId}?rel=0` : null;
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+        /* ===== YouTube ===== */
+        function youtubeId(url) {
+            if (!url) return null;
+            const m = String(url).trim().match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtube-nocookie\.com\/embed\/)([\w-]{11})/);
+            return m ? m[1] : null;
+        }
+        function formatYoutubeEmbed(url) { const id = youtubeId(url); return id ? `https://www.youtube.com/embed/${id}?rel=0` : null; }
+        function buatYT(id) {
+            const w = document.createElement('div'); w.className = 'yt-wrap';
+            w.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?rel=0" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+            return w;
+        }
+
+        /* ===== Rapikan isi bacaan + video di tengah teks ===== */
+        function rapikanKonten(root) {
+            // buang gaya inline yang membuat jarak melebar
+            root.querySelectorAll('p, span, div, li, h1, h2, h3, h4, ul, ol, blockquote').forEach(el => {
+                ['margin', 'margin-top', 'margin-bottom', 'padding-top', 'padding-bottom', 'line-height', 'font-family'].forEach(p => el.style.removeProperty(p));
+                if (!el.getAttribute('style')) el.removeAttribute('style');
+            });
+            // gabungkan <br> berulang
+            root.querySelectorAll('p').forEach(p => { p.innerHTML = p.innerHTML.replace(/(<br\s*\/?>\s*){2,}/gi, '<br>'); });
+            // YouTube: iframe, oembed, tautan / teks URL tunggal
+            root.querySelectorAll('iframe').forEach(f => {
+                const id = youtubeId(f.getAttribute('src')); if (!id) return;
+                const host = f.closest('p') || f; host.replaceWith(buatYT(id));
+            });
+            root.querySelectorAll('oembed[url]').forEach(o => {
+                const id = youtubeId(o.getAttribute('url')); if (id) (o.closest('figure') || o).replaceWith(buatYT(id));
+            });
+            root.querySelectorAll('p, div').forEach(el => {
+                if (el.querySelector('p, div, img, iframe') ) return;
+                const id = youtubeId(el.textContent.trim().length < 140 ? (el.querySelector('a')?.href || el.textContent.trim()) : '');
+                if (id && /^\s*(https?:\/\/)?(www\.|m\.)?(youtu|youtube)/i.test(el.textContent.trim())) el.replaceWith(buatYT(id));
+            });
+            // buang paragraf kosong
+            root.querySelectorAll('p').forEach(p => { if (!p.textContent.trim() && !p.querySelector('img, iframe, video, a')) p.remove(); });
+            root.querySelectorAll('img').forEach(i => i.setAttribute('draggable', 'false'));
+        }
+
+        /* ===== Ringkasan AI (cache 24 jam) ===== */
+        const TTL = 24 * 60 * 60 * 1000;
+        const kunciRingkas = id => 'ringkasan_' + id;
+        function tampilRingkasan(d, ts) {
+            document.getElementById('resumePoints').innerHTML = d.points.length ? d.points.map(p => `<li>${esc(p)}</li>`).join('') : '<li>Rangkuman berhasil diekstrak.</li>';
+            document.getElementById('resumeMakna').innerText = d.meaning || 'Teks telah berhasil dianalisis.';
+            const sisa = Math.max(1, Math.round((TTL - (Date.now() - ts)) / 3600000));
+            document.getElementById('resumeInfo').innerText = `Tersimpan ± ${sisa} jam`;
+            document.getElementById('resumeResult').classList.remove('hidden');
+            document.getElementById('btnResumeLabel').innerText = 'Ringkas Ulang';
+        }
+        function muatRingkasanTersimpan(id) {
+            try {
+                const raw = localStorage.getItem(kunciRingkas(id)); if (!raw) return;
+                const o = JSON.parse(raw);
+                if (Date.now() - o.ts > TTL) { localStorage.removeItem(kunciRingkas(id)); return; }
+                tampilRingkasan(o.data, o.ts);
+            } catch (e) {}
+        }
+        function bersihkanRingkasanLama() {
+            try { Object.keys(localStorage).filter(k => k.startsWith('ringkasan_')).forEach(k => { const o = JSON.parse(localStorage.getItem(k)); if (!o || Date.now() - o.ts > TTL) localStorage.removeItem(k); }); } catch (e) {}
         }
     </script>
 
-    <!-- FIREBASE FETCH DATA LOGIC -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, updateDoc, increment, collection, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" };
-        const app = initializeApp(firebaseConfig);
+        const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" });
         const db = getFirestore(app);
-
         window.currentArticleData = null;
 
         function showError(msg) {
             document.getElementById('stateLoading').classList.add('hidden');
-            const err = document.getElementById('stateError');
-            err.classList.remove('hidden'); err.classList.add('flex');
+            const err = document.getElementById('stateError'); err.classList.remove('hidden'); err.classList.add('flex');
             if (msg) document.getElementById('errorMsg').innerText = msg;
         }
+        const tagChip = (t, aktif) => `<a href="search.html?q=${encodeURIComponent(t)}" class="text-[10px] ${aktif ? 'text-emerald-700 bg-emerald-50 border-emerald-200 font-semibold' : 'text-slate-500 bg-slate-100 border-slate-200'} px-2 py-0.5 rounded border hover:text-emerald-600 hover:border-emerald-300 transition-colors active:scale-95 inline-block">#${esc(t)}</a>`;
 
         async function fetchMateri() {
             const materiId = new URLSearchParams(window.location.search).get('id');
             if (!materiId) return showError("ID Teks/Artikel tidak valid.");
-
             try {
                 const docRef = doc(db, "materials", materiId);
-                const docSnap = await getDoc(docRef);
-                
-                if (!docSnap.exists() || docSnap.data().status === 'dihapus') return showError();
-
-                const data = docSnap.data();
+                const snap = await getDoc(docRef);
+                if (!snap.exists() || snap.data().status === 'dihapus') return showError();
+                const data = snap.data();
                 window.currentArticleData = { id: materiId, ...data };
 
-                // Hitung Views secara real time
-                try {
-                    await updateDoc(docRef, { views: increment(1) });
-                    document.getElementById('viewCountMateri').innerText = `${(data.views || 0) + 1}x`;
-                } catch (e) {
-                    document.getElementById('viewCountMateri').innerText = `${data.views || 1}x`;
-                }
+                try { await updateDoc(docRef, { views: increment(1) }); document.getElementById('viewCountMateri').innerText = `${(data.views || 0) + 1}x`; }
+                catch (e) { document.getElementById('viewCountMateri').innerText = `${data.views || 1}x`; }
 
-                // Render Info Dasar
                 document.getElementById('labelKategori').innerText = data.kategori === 'artikel' ? 'Artikel Berita' : 'Argumentasi';
                 document.getElementById('judulMateri').innerText = data.judul || "Tanpa Judul";
                 document.getElementById('penulisMateri').innerText = data.penulis || "Admin";
-                
-                const dateRaw = data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt)) : new Date();
-                document.getElementById('tanggalMateri').innerText = dateRaw.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                const d = data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt)) : new Date();
+                document.getElementById('tanggalMateri').innerText = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
-                // MENGUBAH TAGAR MENJADI LINK KE SEARCH.HTML
-                const tagBox = document.getElementById('tagsContainer');
-                if (data.tags && Array.isArray(data.tags) && data.tags.length > 0) {
-                    tagBox.innerHTML = data.tags.map(tag => `
-                        <a href="search.html?q=${encodeURIComponent(tag)}" class="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 hover:text-emerald-600 hover:border-emerald-300 transition-colors active:scale-95 inline-block">
-                            #${tag}
-                        </a>
-                    `).join('');
-                } else {
-                    tagBox.innerHTML = '';
-                }
+                const tags = Array.isArray(data.tags) ? data.tags.filter(t => String(t).trim()) : [];
+                document.getElementById('tagsContainer').innerHTML = tags.map(t => tagChip(t, false)).join('');
+                if (tags.length) document.getElementById('tagsBawah').innerHTML = tags.map(t => tagChip(t, true)).join('');
 
-                // Gambar & Sumber Gambar
                 document.getElementById('coverMateri').src = data.coverImage || data.gambarBase64 || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600";
-                if(data.sumberGambar && data.sumberGambar.trim() !== '') {
-                    const elSumberImg = document.getElementById('sumberGambar');
-                    elSumberImg.innerText = "Sumber Foto: " + data.sumberGambar;
-                    elSumberImg.classList.remove('hidden');
-                }
+                document.getElementById('sumberGambar').innerText = "Sumber Foto: " + ((data.sumberGambar || '').trim() || '-');
 
-                // EMBED YOUTUBE VIDEO
                 if (data.youtubeLink) {
-                    const embedUrl = formatYoutubeEmbed(data.youtubeLink);
-                    if (embedUrl) {
-                        document.getElementById('youtubeIframe').src = embedUrl;
-                        document.getElementById('youtubeContainer').classList.remove('hidden');
-                    }
+                    const u = formatYoutubeEmbed(data.youtubeLink);
+                    if (u) { document.getElementById('youtubeIframe').src = u; document.getElementById('youtubeContainer').classList.remove('hidden'); }
                 }
 
-                // Render Isi Rich Text
-                let contentHtml = data.isi || data.konten || "<p>Isi teks belum dimasukkan.</p>";
-                document.getElementById('readingContent').innerHTML = contentHtml;
+                const body = document.getElementById('readingContent');
+                body.innerHTML = data.isi || data.konten || "<p>Isi teks belum dimasukkan.</p>";
+                rapikanKonten(body);
 
-                // Render Daftar Pustaka
-                if(data.daftarPustaka && data.daftarPustaka.trim() !== '') {
-                    document.getElementById('daftarPustakaText').innerHTML = data.daftarPustaka.replace(/\n/g, '<br>');
-                    document.getElementById('daftarPustakaContainer').classList.remove('hidden');
-                }
+                const pustaka = (data.daftarPustaka || '').trim();
+                document.getElementById('daftarPustakaText').innerHTML = pustaka ? esc(pustaka).replace(/\n/g, '<br>') : '-';
 
-                // Tampilkan Konten
                 document.getElementById('stateLoading').classList.add('hidden');
-                const sc = document.getElementById('stateContent');
-                sc.classList.remove('hidden'); sc.classList.add('flex');
+                const sc = document.getElementById('stateContent'); sc.classList.remove('hidden'); sc.classList.add('flex');
 
-                // Panggil Rekomendasi Bacaan
-                await fetchRekomendasi(materiId, data.kategori);
-
-            } catch (error) {
-                console.error(error);
-                showError("Gagal mengambil data ke server. Periksa jaringan Anda.");
-            }
+                bersihkanRingkasanLama();
+                muatRingkasanTersimpan(materiId);
+                await fetchRekomendasi(materiId, data.kategori, tags);
+            } catch (e) { console.error(e); showError("Gagal mengambil data ke server. Periksa jaringan Anda."); }
         }
 
-        // FUNGSI MEMANGGIL BACAAN TERKAIT (Kategori yang Sama)
-        async function fetchRekomendasi(currentId, kategori) {
-            const recBox = document.getElementById('rekomendasiList');
+        /* Rekomendasi berdasarkan TAG (cadangan: kategori sama) */
+        async function fetchRekomendasi(currentId, kategori, tags) {
+            const box = document.getElementById('rekomendasiList');
+            const info = document.getElementById('rekomInfo');
+            const layak = x => x.id !== currentId && x.data.status !== 'draft' && x.data.status !== 'dihapus';
             try {
-                // Tarik 4 materi terbaru di kategori yg sama
-                const q = query(collection(db, "materials"), where("kategori", "==", kategori || 'argumentasi'), where("status", "==", "published"), limit(4));
-                const snap = await getDocs(q);
-
-                let html = "";
-                snap.forEach(doc => {
-                    if (doc.id !== currentId) { // Jangan tampilkan artikel yang sedang dibaca
-                        const d = doc.data();
-                        const imgUrl = d.coverImage || d.gambarBase64 || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=300";
-                        const katName = d.kategori === 'artikel' ? 'Artikel Berita' : 'Argumentasi';
-                        const katColor = d.kategori === 'artikel' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600';
-                        
-                        html += `
-                        <a href="baca.html?id=${doc.id}" class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 hover:border-brand-green transition-colors active:scale-[0.98]">
-                            <img src="${imgUrl}" class="w-20 h-20 object-cover rounded-lg shrink-0 bg-slate-100">
-                            <div class="flex-1 flex flex-col justify-between py-0.5 min-w-0">
-                                <div>
-                                    <span class="text-[8px] font-bold ${katColor} px-1.5 py-0.5 rounded uppercase tracking-widest">${katName}</span>
-                                    <h4 class="font-bold text-xs text-slate-800 line-clamp-2 mt-1.5 leading-snug">${d.judul}</h4>
-                                </div>
-                                <span class="text-[9px] text-slate-400 font-medium"><i class="far fa-eye"></i> ${d.views || 0} Kali dibaca</span>
-                            </div>
-                        </a>`;
-                    }
-                });
-
-                if (html === "") {
-                    recBox.innerHTML = "<p class='text-[11px] text-slate-400'>Belum ada materi lain di kategori ini.</p>";
-                } else {
-                    recBox.innerHTML = html;
+                let hasil = new Map();
+                if (tags.length) {
+                    const s = await getDocs(query(collection(db, "materials"), where("tags", "array-contains-any", tags.slice(0, 10)), limit(20)));
+                    s.forEach(x => { const o = { id: x.id, data: x.data() }; if (layak(o)) hasil.set(x.id, o); });
                 }
-            } catch (err) {
-                console.error("Gagal load rekomendasi:", err);
-                recBox.innerHTML = "";
-            }
+                const urut = [...hasil.values()].map(o => {
+                    const cocok = (o.data.tags || []).filter(t => tags.includes(t));
+                    return { ...o, cocok };
+                }).sort((a, b) => b.cocok.length - a.cocok.length || (b.data.views || 0) - (a.data.views || 0)).slice(0, 4);
+
+                let berdasarTag = urut.length > 0;
+                let daftar = urut;
+                if (daftar.length < 2) {   // cadangan: kategori sama
+                    const s = await getDocs(query(collection(db, "materials"), where("kategori", "==", kategori || 'argumentasi'), limit(8)));
+                    s.forEach(x => { const o = { id: x.id, data: x.data(), cocok: [] }; if (layak(o) && !daftar.find(z => z.id === o.id) && daftar.length < 4) daftar.push(o); });
+                }
+
+                info.innerText = tags.length && berdasarTag ? 'Berdasarkan tag: ' + tags.slice(0, 4).map(t => '#' + t).join(' ') : 'Materi lain di kategori yang sama';
+                if (!daftar.length) { box.innerHTML = "<p class='text-[11px] text-slate-400'>Belum ada materi lain yang terkait.</p>"; return; }
+
+                box.innerHTML = daftar.map(({ id, data: d, cocok }) => {
+                    const img = d.coverImage || d.gambarBase64 || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=300";
+                    const art = d.kategori === 'artikel';
+                    const chips = (d.tags || []).slice(0, 3).map(t => `<span class="text-[8px] px-1.5 py-0.5 rounded border ${cocok.includes(t) ? 'bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold' : 'bg-slate-50 text-slate-400 border-slate-100'}">#${esc(t)}</span>`).join('');
+                    return `
+                    <a href="baca.html?id=${id}" class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 hover:border-brand-green transition-colors active:scale-[0.98]">
+                        <img src="${img}" draggable="false" class="w-20 h-20 object-cover rounded-lg shrink-0 bg-slate-100">
+                        <div class="flex-1 flex flex-col justify-between py-0.5 min-w-0">
+                            <div>
+                                <span class="text-[8px] font-bold ${art ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'} px-1.5 py-0.5 rounded uppercase tracking-widest">${art ? 'Artikel Berita' : 'Argumentasi'}</span>
+                                <h4 class="font-bold text-xs text-slate-800 line-clamp-2 mt-1.5 leading-snug">${esc(d.judul)}</h4>
+                                <div class="flex flex-wrap gap-1 mt-1">${chips}</div>
+                            </div>
+                            <span class="text-[9px] text-slate-400 font-medium mt-1"><i class="far fa-eye"></i> ${d.views || 0} Kali dibaca</span>
+                        </div>
+                    </a>`;
+                }).join('');
+            } catch (err) { console.error("Gagal load rekomendasi:", err); box.innerHTML = ""; }
         }
 
         document.addEventListener('DOMContentLoaded', fetchMateri);
 
-        // ===== FUNGSI RINGKASAN VIA API AI =====
+        /* ===== Ringkasan via API ===== */
         window.prosesResumeRealAPI = async function() {
-            const promptBox = document.getElementById('resumePrompt');
-            const loadBox = document.getElementById('resumeLoading');
-            
-            promptBox.classList.add('hidden'); loadBox.classList.remove('hidden');
-
+            const art = window.currentArticleData || {};
+            const btn = document.getElementById('btnResume');
+            btn.disabled = true; btn.classList.add('opacity-60');
+            document.getElementById('resumeError').classList.add('hidden');
+            document.getElementById('resumeLoading').classList.remove('hidden');
             try {
-                const art = window.currentArticleData || {};
                 const rawText = document.getElementById('readingContent').innerText || '';
-
-                const response = await fetch('/api/summarize', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        materiId: art.id || 'unknown',
-                        teksJudul: art.judul || '',
-                        teksIsi: rawText.trim().slice(0, 5000), // Batas aman memory token AI
-                        action: "summarize"
-                    }),
+                const res = await fetch('/api/summarize', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ materiId: art.id || 'unknown', teksJudul: art.judul || '', teksIsi: rawText.trim().slice(0, 5000), action: "summarize" }),
                     signal: AbortSignal.timeout(30000)
                 });
-
-                const data = await response.json().catch(() => ({}));
-                if (!response.ok) throw new Error(data.detail_error || `Server Error`);
-
-                const points = Array.isArray(data.points) ? data.points : [];
-                document.getElementById('resumePoints').innerHTML = points.length ? points.map(pt => `<li>${pt}</li>`).join('') : "<li>Rangkuman berhasil diekstrak.</li>";
-                document.getElementById('resumeMakna').innerText = data.meaning || "Teks telah berhasil dianalisis.";
-
-                loadBox.classList.add('hidden'); document.getElementById('resumeResult').classList.remove('hidden');
-            } catch (error) {
-                loadBox.classList.add('hidden'); document.getElementById('resumeError').classList.remove('hidden');
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.detail_error || 'Server Error');
+                const hasil = { points: Array.isArray(data.points) ? data.points : [], meaning: data.meaning || '' };
+                const ts = Date.now();
+                try { localStorage.setItem(kunciRingkas(art.id), JSON.stringify({ ts, data: hasil })); } catch (e) {}
+                tampilRingkasan(hasil, ts);
+            } catch (e) {
+                console.error(e);
+                document.getElementById('resumeError').classList.remove('hidden');
+            } finally {
+                document.getElementById('resumeLoading').classList.add('hidden');
+                btn.disabled = false; btn.classList.remove('opacity-60');
             }
-        };
-
-        window.resetResumeUI = function() {
-            document.getElementById('resumeError').classList.add('hidden');
-            document.getElementById('resumePrompt').classList.remove('hidden');
         };
     </script>
 </body>
