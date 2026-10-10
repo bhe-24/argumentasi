@@ -20,7 +20,8 @@
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         /* ===== Isi bacaan: rapat & rapi ===== */
-        .content-body { word-wrap: break-word; overflow-wrap: break-word; color: #334155; line-height: 1.7; }
+        .content-body { word-break: normal; overflow-wrap: break-word; hyphens: manual; white-space: normal; tab-size: 4; color: #334155; line-height: 1.7; }
+        .content-body .tab { display: inline-block; width: 2.2em; }
         .content-body p { margin: 0 0 .7em; line-height: 1.7; }
         .content-body h1, .content-body h2, .content-body h3, .content-body h4 { font-family: 'Poppins', sans-serif; font-weight: 700; color: #0f172a; margin: 1.1em 0 .45em; line-height: 1.35; }
         .content-body h1 { font-size: 1.3rem; } .content-body h2 { font-size: 1.15rem; } .content-body h3 { font-size: 1.05rem; }
@@ -33,7 +34,7 @@
         .content-body img { max-width: 100%; height: auto; border-radius: .5rem; margin: .4em 0 .8em; display: block; }
 
         /* ===== Format dari editor (Quill) ===== */
-        .content-body .ql-align-center { text-align: center; } .content-body .ql-align-right { text-align: right; } .content-body .ql-align-justify { text-align: justify; }
+        .content-body .ql-align-center { text-align: center; } .content-body .ql-align-right { text-align: right; } .content-body .ql-align-justify { text-align: justify; text-justify: inter-word; text-align-last: left; }
         .content-body .ql-align-center img { margin-left: auto; margin-right: auto; } .content-body .ql-align-right img { margin-left: auto; margin-right: 0; }
         .content-body .ql-size-small { font-size: .78em; } .content-body .ql-size-large { font-size: 1.35em; } .content-body .ql-size-huge { font-size: 1.9em; line-height: 1.3; }
         .content-body .ql-indent-1 { padding-left: 2em; } .content-body .ql-indent-2 { padding-left: 4em; } .content-body .ql-indent-3 { padding-left: 6em; } .content-body .ql-indent-4 { padding-left: 8em; }
@@ -211,6 +212,21 @@
 
         /* ===== Rapikan isi bacaan + video di tengah teks ===== */
         function rapikanKonten(root) {
+            // (a) spasi non-breaking (&nbsp;) -> spasi biasa, agar teks bisa turun baris di antara kata (bukan memotong kata)
+            // (b) karakter Tab -> jorokan nyata
+            const nodes = []; const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+            while (tw.nextNode()) nodes.push(tw.currentNode);
+            nodes.forEach(n => {
+                if (n.parentElement && n.parentElement.closest('pre, code')) return;
+                let t = n.nodeValue.replace(/[\u00a0\u202f\u2007]/g, ' ');
+                if (t.indexOf('\t') === -1) { n.nodeValue = t; return; }
+                const frag = document.createDocumentFragment();
+                t.split('\t').forEach((part, i) => {
+                    if (i > 0) { const sp = document.createElement('span'); sp.className = 'tab'; frag.appendChild(sp); }
+                    if (part) frag.appendChild(document.createTextNode(part));
+                });
+                n.replaceWith(frag);
+            });
             // buang gaya inline yang membuat jarak melebar
             root.querySelectorAll('p, span, div, li, h1, h2, h3, h4, ul, ol, blockquote').forEach(el => {
                 ['margin', 'margin-top', 'margin-bottom', 'padding-top', 'padding-bottom', 'line-height', 'font-family'].forEach(p => el.style.removeProperty(p));
