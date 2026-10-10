@@ -1,98 +1,219 @@
-<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script>tailwind.config={theme:{extend:{fontFamily:{sans:["Poppins","sans-serif"],reading:["Merriweather","serif"]}}}}</script>
-<script src="kreasi-core.js"></script><title>Ruang Kreasi - Argumentasi</title></head>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ruang Kreasi - Argumentasi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }
+    </script>
+    <script src="kreasi-core.js"></script>
+    <style>
+        .tabs-scroll::-webkit-scrollbar { display: none; } .tabs-scroll { scrollbar-width: none; }
+        .item { animation: kf .3s ease-out both; }
+        html { scroll-behavior: smooth; }
+    </style>
+</head>
 <body class="flex justify-center min-h-screen">
-<div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col overflow-x-hidden sm:border-x border-slate-200 fade-in">
-<div id="hdr"></div>
-<div class="flex-grow overflow-y-auto hide-scrollbar pb-10">
 
-  <!-- HERO -->
-  <div class="m-4 rounded-3xl p-5 text-white shadow-lg relative overflow-hidden" style="background:linear-gradient(135deg,#7c3aed,#4f46e5 60%,#0ea5e9)">
-    <div class="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10"></div>
-    <p class="text-[10px] uppercase tracking-widest text-white/70 font-semibold">Level <span id="lvNum"></span></p>
-    <h2 id="lvTitle" class="text-xl font-extrabold leading-tight"></h2>
-    <div class="h-2 bg-white/20 rounded-full mt-3 overflow-hidden"><div id="lvBar" class="h-full bg-amber-300 rounded-full transition-all duration-700" style="width:0"></div></div>
-    <p class="text-[10px] text-white/80 mt-1.5"><span id="lvXp"></span> XP menuju level berikutnya</p>
-    <a id="ctaMain" href="kreasi-ide.html" class="btn mt-4 bg-white text-purple-700 py-3 text-sm shadow-md"><i class="fas fa-rocket"></i> <span id="ctaText">Mulai Misi Menulis</span></a>
-  </div>
+<!-- Kerangka aplikasi (tanpa overflow agar header sticky tetap kokoh saat scroll) -->
+<div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
 
-  <!-- PERJALANAN -->
-  <div class="px-4">
-    <h3 class="font-bold text-slate-800 text-sm mb-3">Perjalanan Menulis</h3>
-    <div id="jalan" class="space-y-2.5"></div>
-  </div>
+    <!-- ===== HEADER STICKY ===== -->
+    <header class="sticky top-0 z-50 bg-brand-green h-14 px-4 flex items-center gap-3 shadow-md">
+        <a href="index.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
+        <div class="flex-1 min-w-0">
+            <h1 class="text-white font-bold text-sm leading-tight truncate">Ruang Kreasi</h1>
+            <p class="text-white/70 text-[10px] leading-tight truncate">Latihan menulis teks argumentasi</p>
+        </div>
+        <span class="shrink-0 bg-white/20 border border-white/30 text-white px-2 py-1 rounded-full text-[11px] font-bold"><i class="fas fa-fire text-amber-300"></i> <span id="hStreak">0</span></span>
+        <span class="shrink-0 bg-white/20 border border-white/30 text-white px-2 py-1 rounded-full text-[11px] font-bold"><i class="fas fa-pen-fancy text-[10px]"></i> <span id="hXp">0</span> XP</span>
+        <a href="panduan.html" aria-label="Bantuan" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="far fa-question-circle text-xl"></i></a>
+    </header>
 
-  <!-- TANTANGAN HARIAN -->
-  <div class="px-4 mt-6">
-    <div class="rounded-2xl p-4 bg-amber-50 border border-amber-200 flex items-center gap-3">
-      <div class="w-11 h-11 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0"><i class="fas fa-bolt"></i></div>
-      <div class="flex-1 min-w-0"><p class="text-[9px] font-bold text-amber-600 uppercase tracking-widest">Tantangan Hari Ini</p><p id="tantangan" class="text-xs font-semibold text-slate-700 leading-snug"></p></div>
-      <a id="tantanganGo" class="btn bg-amber-500 text-white text-[11px] px-3 py-2 shrink-0">Ambil</a>
-    </div>
-  </div>
+    <!-- ===== RINGKASAN PROGRES ===== -->
+    <section class="bg-brand-green px-4 pb-5 pt-1 rounded-b-3xl">
+        <div class="bg-white/15 border border-white/20 rounded-2xl p-3.5 flex items-center gap-3 backdrop-blur-sm">
+            <div class="w-12 h-12 rounded-xl bg-white text-brand-green flex flex-col items-center justify-center shrink-0 shadow"><span class="text-[8px] font-bold uppercase leading-none">Level</span><span id="lvNum" class="text-xl font-extrabold leading-none">1</span></div>
+            <div class="flex-1 min-w-0">
+                <p id="lvTitle" class="text-white font-bold text-sm leading-tight truncate">Penulis Pemula</p>
+                <div class="h-1.5 bg-white/25 rounded-full overflow-hidden mt-2"><div id="lvBar" class="h-full bg-amber-300 rounded-full transition-all duration-700" style="width:0"></div></div>
+                <p id="lvNext" class="text-white/80 text-[10px] mt-1"></p>
+            </div>
+        </div>
+    </section>
 
-  <!-- LENCANA -->
-  <div class="px-4 mt-6"><h3 class="font-bold text-slate-800 text-sm mb-3">Lencana</h3><div id="lencana" class="grid grid-cols-5 gap-2"></div></div>
+    <main class="flex-grow pb-8">
 
-  <!-- KARYA SAYA -->
-  <div class="px-4 mt-6"><h3 class="font-bold text-slate-800 text-sm mb-3">Karya Saya</h3><div id="karya" class="space-y-2"></div></div>
+        <!-- ===== LANJUTKAN ===== -->
+        <section id="secLanjut" class="px-4 mt-5 hidden"></section>
 
-  <!-- CONTOH STRUKTUR (Firestore) -->
-  <div class="px-4 mt-6">
-    <h3 class="font-bold text-slate-800 text-sm mb-3">Inspirasi Struktur Teks</h3>
-    <div id="ref" class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm"><div class="p-4"><div class="sk h-3 w-1/2 mb-2"></div><div class="sk h-3 w-full"></div></div></div>
-  </div>
-</div>
+        <!-- ===== TUJUAN ===== -->
+        <section class="px-4 mt-5">
+            <div class="flex gap-3 items-start bg-emerald-50 border border-emerald-100 rounded-xl p-3">
+                <i class="fas fa-bullseye text-brand-green mt-0.5"></i>
+                <p class="text-[11px] text-emerald-900 leading-relaxed"><b>Tujuan akhir:</b> kamu mampu menulis teks argumentasi yang utuh (tesis, argumen, kesimpulan) berdasarkan informasi yang diberikan, sampai menjadi <b>naskah jadi</b>.</p>
+            </div>
+        </section>
+
+        <!-- ===== FILTER STICKY ===== -->
+        <div class="sticky top-14 z-40 bg-slate-50/95 backdrop-blur border-b border-slate-200 mt-5">
+            <div id="tabs" class="tabs-scroll flex gap-2 overflow-x-auto px-4 py-2.5"></div>
+        </div>
+
+        <!-- ===== DAFTAR LATIHAN ===== -->
+        <section class="px-4 mt-4">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="font-bold text-slate-800 text-sm">Daftar Latihan</h2>
+                <span id="cntLatihan" class="text-[10px] text-slate-400 font-medium"></span>
+            </div>
+            <div id="listLatihan" class="flex flex-col gap-3"></div>
+        </section>
+
+        <div class="h-2 bg-slate-100 w-full mt-7"></div>
+
+        <!-- ===== KARYA SAYA ===== -->
+        <section id="secKarya" class="px-4 mt-6 scroll-mt-32">
+            <div class="flex justify-between items-center mb-3"><h2 class="font-bold text-slate-800 text-sm">Karya Saya</h2><span id="cntKarya" class="text-[10px] text-slate-400 font-medium"></span></div>
+            <div id="listKarya" class="flex flex-col gap-3"></div>
+        </section>
+
+        <div class="h-2 bg-slate-100 w-full mt-7"></div>
+
+        <!-- ===== LENCANA ===== -->
+        <section class="px-4 mt-6">
+            <div class="flex justify-between items-center mb-3"><h2 class="font-bold text-slate-800 text-sm">Lencana Penulis</h2><span id="cntBadge" class="text-[10px] text-slate-400 font-medium"></span></div>
+            <div id="listBadge" class="grid grid-cols-5 gap-2 bg-white p-3 rounded-xl shadow-sm border border-slate-100"></div>
+        </section>
+
+        <div class="h-2 bg-slate-100 w-full mt-7"></div>
+
+        <!-- ===== CONTOH TEKS ===== -->
+        <section class="px-4 mt-6">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="font-bold text-slate-800 text-sm">Contoh Teks Argumentasi</h2>
+                <a href="teks.html" class="text-xs text-brand-green font-medium flex items-center gap-1">Lihat Semua <i class="fas fa-chevron-right text-[10px]"></i></a>
+            </div>
+            <div id="listContoh" class="flex flex-col gap-3">
+                <div class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 animate-pulse"><div class="w-20 h-20 bg-slate-200 rounded-lg shrink-0"></div><div class="flex-1 py-1"><div class="h-3 bg-slate-200 w-16 rounded mb-2"></div><div class="h-4 bg-slate-200 w-full rounded mb-1"></div><div class="h-4 bg-slate-200 w-3/4 rounded"></div></div></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0">
+        <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
+        <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
+    </footer>
 </div>
 
 <script>
-K.mountHeader('Ruang Kreasi','index.html');
-const p=K.profile(), L=K.level(p.xp), d=K.draft();
-document.getElementById('lvNum').textContent=L.lv; document.getElementById('lvTitle').textContent=L.title;
-document.getElementById('lvXp').textContent=(L.next-L.cur); setTimeout(()=>document.getElementById('lvBar').style.width=L.pct+'%',100);
+const $ = id => document.getElementById(id);
+const p = K.profile(), L = K.level(p.xp), d = K.draft();
+const adaIde = !!(d && d.ide), adaHasil = !!(d && d.result);
+const MIN = { tesis: 15, argumen: 50, kesimpulan: 20 };
+const bagianSelesai = d ? ['tesis', 'argumen', 'kesimpulan'].filter(k => K.words(d[k]) >= (k === 'kesimpulan' ? 15 : MIN[k])).length : 0;
 
-const adaIde=d&&d.ide, adaTulis=d&&(d.tesis||d.argumen||d.kesimpulan), adaHasil=d&&d.result;
-if(adaIde){document.getElementById('ctaText').textContent=adaHasil?'Lihat Naskah Jadi':'Lanjutkan Menulis';document.getElementById('ctaMain').href=adaHasil?'kreasi-hasil.html':'kreasi-tulis.html';}
-const step=(n,ico,judul,ket,href,st)=>`<a href="${href}" class="flex items-center gap-3 bg-white p-3 rounded-2xl border ${st==='now'?'border-purple-300 shadow-md':'border-slate-100'} active:scale-[.98] transition">
-  <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${st==='done'?'bg-emerald-100 text-emerald-600':st==='now'?'bg-purple-100 text-purple-600':'bg-slate-100 text-slate-400'}"><i class="fas ${st==='done'?'fa-check':ico}"></i></div>
-  <div class="flex-1 min-w-0"><p class="text-xs font-bold text-slate-800">${n}. ${judul}</p><p class="text-[10px] text-slate-500 truncate">${ket}</p></div><i class="fas fa-chevron-right text-slate-300 text-xs"></i></a>`;
-document.getElementById('jalan').innerHTML=
- step(1,'fa-lightbulb','Pilih Ide & Bahan Informasi',adaIde?d.ide.judul:'Cari ide dari AI atau tulis idemu sendiri','kreasi-ide.html',adaIde?'done':'now')+
- step(2,'fa-pen-nib','Tulis & Revisi',adaTulis?'Draf sedang dikerjakan':'Susun tesis, argumen, kesimpulan dengan bantuan mentor AI',adaIde?'kreasi-tulis.html':'kreasi-ide.html',adaHasil?'done':adaIde?'now':'todo')+
- step(3,'fa-scroll','Naskah Jadi','Lihat nilai rubrik, salin, bagikan, atau cetak',adaHasil?'kreasi-hasil.html':'kreasi-ide.html',adaHasil?'now':'todo');
+/* ---------- Header & progres ---------- */
+$('hStreak').textContent = p.streak; $('hXp').textContent = p.xp;
+$('lvNum').textContent = L.lv; $('lvTitle').textContent = L.title;
+$('lvNext').textContent = `${p.xp} XP · ${L.next - L.cur} XP lagi ke Level ${L.lv + 1}`;
+setTimeout(() => $('lvBar').style.width = L.pct + '%', 150);
 
-const T=[['Teknologi','Haruskah ponsel dilarang di sekolah?'],['Lingkungan','Perlukah plastik sekali pakai dilarang di kantin sekolah?'],['Pendidikan','Apakah PR masih diperlukan?'],['Kesehatan','Pantaskah minuman manis dikenai cukai?'],['Sosial','Apakah media sosial membuat remaja lebih peduli atau lebih cuek?'],['Budaya','Perlukah bahasa daerah menjadi pelajaran wajib?'],['Pendidikan','Sekolah lima hari: untung atau buntung?']];
-const tt=T[new Date().getDay()]; document.getElementById('tantangan').textContent=tt[1];
-document.getElementById('tantanganGo').href='kreasi-ide.html?tema='+encodeURIComponent(tt[0])+'&judul='+encodeURIComponent(tt[1]);
+/* ---------- Lanjutkan ---------- */
+if (adaIde) {
+    const sec = $('secLanjut'); sec.classList.remove('hidden');
+    const href = adaHasil ? 'kreasi-hasil.html' : 'kreasi-tulis.html';
+    sec.innerHTML = `<a href="${href}" class="block bg-white rounded-2xl border-2 border-brand-green shadow-sm p-4 active:scale-[0.98] transition">
+        <div class="flex items-center justify-between mb-1.5"><span class="text-[9px] font-bold text-brand-dark bg-brand-light px-2 py-0.5 rounded uppercase tracking-widest">${adaHasil ? 'Naskah Selesai' : 'Sedang Dikerjakan'}</span><span class="text-[10px] font-semibold text-slate-400">${adaHasil ? 'Skor ' + d.result.skor : bagianSelesai + '/3 bagian'}</span></div>
+        <h3 class="font-bold text-slate-800 text-sm leading-snug line-clamp-2">${K.esc(d.ide.judul)}</h3>
+        <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden mt-3"><div class="h-full bg-brand-green rounded-full" style="width:${adaHasil ? 100 : Math.round(bagianSelesai / 3 * 100)}%"></div></div>
+        <div class="flex justify-end mt-3"><span class="bg-brand-green text-white text-[11px] font-bold px-4 py-1.5 rounded-full">${adaHasil ? 'Lihat Naskah' : 'Lanjutkan Menulis'} <i class="fas fa-arrow-right text-[9px] ml-1"></i></span></div></a>`;
+}
 
-document.getElementById('lencana').innerHTML=Object.entries(K.BADGES).map(([id,[n,i]])=>{const on=p.badges.includes(id);return `<div class="text-center"><div class="w-12 h-12 mx-auto rounded-2xl flex items-center justify-center text-lg ${on?'bg-gradient-to-br from-amber-300 to-orange-400 text-white shadow':'bg-slate-200 text-slate-400'}"><i class="fas ${on?i:'fa-lock'}"></i></div><p class="text-[8px] font-semibold mt-1 ${on?'text-slate-700':'text-slate-400'} leading-tight">${n}</p></div>`}).join('');
+/* ---------- Katalog latihan ---------- */
+const KAT = [['semua', 'Semua'], ['ide', 'Ide'], ['menulis', 'Menulis'], ['revisi', 'Revisi']];
+const LATIHAN = [
+    { kat: 'ide', ico: 'fa-lightbulb', c: 'amber', judul: 'Kreasi Ide', desk: 'Temukan topik menarik beserta bahan informasinya dengan bantuan mentor AI, atau tulis idemu sendiri.', durasi: '5 mnt', xp: '+10 XP', level: 'Pemula', href: 'kreasi-ide.html', status: adaIde ? 'selesai' : 'baru' },
+    { kat: 'menulis', ico: 'fa-pen-nib', c: 'emerald', judul: 'Tulis Naskah Argumentasi', desk: 'Susun tesis, argumen, dan kesimpulan dari bahan informasi. Minta petunjuk saat buntu.', durasi: '15 mnt', xp: 'hingga +70 XP', level: 'Menengah', href: adaIde ? 'kreasi-tulis.html' : null, kunci: 'Selesaikan Kreasi Ide dulu', status: adaHasil ? 'selesai' : adaIde ? 'berjalan' : 'kunci' },
+    { kat: 'revisi', ico: 'fa-spell-check', c: 'blue', judul: 'Revisi & Umpan Balik', desk: 'Cek tiap bagian, terima umpan balik mentor, lalu perbaiki. Nilai naik = bonus XP.', durasi: '10 mnt', xp: '+15 XP / kenaikan', level: 'Menengah', href: adaIde ? 'kreasi-tulis.html' : null, kunci: 'Mulai menulis dulu', status: adaIde ? 'berjalan' : 'kunci' },
+    { kat: 'menulis', ico: 'fa-layer-group', c: 'purple', judul: 'Bedah Struktur Teks', desk: 'Kenali tesis, argumen, dan kesimpulan pada contoh teks sebelum menulis sendiri.', durasi: '8 mnt', xp: '+20 XP', level: 'Pemula', status: 'segera' },
+    { kat: 'revisi', ico: 'fa-link', c: 'rose', judul: 'Kata Penghubung Argumen', desk: 'Latihan memakai karena, sehingga, misalnya, dan sejenisnya agar alur lebih runtut.', durasi: '8 mnt', xp: '+20 XP', level: 'Pemula', status: 'segera' },
+    { kat: 'ide', ico: 'fa-people-arrows', c: 'cyan', judul: 'Argumen Tandingan', desk: 'Pikirkan sudut pandang lawan dan siapkan bantahan agar tesismu makin kuat.', durasi: '10 mnt', xp: '+25 XP', level: 'Mahir', status: 'segera' }
+];
+const STATUS = {
+    baru: ['Baru', 'bg-brand-light text-brand-dark border-emerald-200'], berjalan: ['Berjalan', 'bg-amber-50 text-amber-600 border-amber-100'],
+    selesai: ['Selesai', 'bg-emerald-50 text-emerald-600 border-emerald-100'], kunci: ['Terkunci', 'bg-slate-100 text-slate-400 border-slate-200'], segera: ['Segera Hadir', 'bg-slate-100 text-slate-400 border-slate-200']
+};
+let aktif = 'semua';
 
-const ks=K.karya();
-document.getElementById('karya').innerHTML=ks.length?ks.slice(0,5).map(k=>`<a href="kreasi-hasil.html?id=${k.id}" class="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-100 active:scale-[.98] transition"><div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-extrabold text-sm shrink-0">${k.skor}</div><div class="flex-1 min-w-0"><p class="text-xs font-bold text-slate-800 lc2 leading-snug">${K.esc(k.judul)}</p><p class="text-[9px] text-slate-400 mt-0.5">${new Date(k.tanggal).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p></div><i class="fas fa-chevron-right text-slate-300 text-xs"></i></a>`).join(''):'<div class="text-center py-6 bg-white rounded-2xl border border-dashed border-slate-200 text-[11px] text-slate-400"><i class="fas fa-feather text-2xl text-slate-300 mb-2 block"></i>Belum ada karya. Selesaikan misi pertamamu!</div>';
+function renderTabs() {
+    $('tabs').innerHTML = KAT.map(([k, n]) => {
+        const jml = k === 'semua' ? LATIHAN.length : LATIHAN.filter(x => x.kat === k).length, on = aktif === k;
+        return `<button onclick="setTab('${k}')" class="shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition ${on ? 'bg-brand-green text-white border-brand-green shadow-sm' : 'bg-white text-slate-600 border-slate-200'}">${n} <span class="${on ? 'text-white/80' : 'text-slate-400'} text-[10px] ml-0.5">${jml}</span></button>`;
+    }).join('');
+}
+function renderLatihan() {
+    const arr = LATIHAN.filter(x => aktif === 'semua' || x.kat === aktif);
+    $('cntLatihan').textContent = arr.length + ' latihan';
+    $('listLatihan').innerHTML = arr.map((x, i) => {
+        const off = x.status === 'segera' || x.status === 'kunci', st = STATUS[x.status];
+        const tag = off ? 'div' : 'a', href = !off ? `href="${x.href}"` : '';
+        const aksi = x.status === 'segera' ? '<span class="text-[11px] font-semibold text-slate-400"><i class="far fa-clock mr-1"></i>Menyusul</span>'
+            : x.status === 'kunci' ? `<span class="text-[11px] font-semibold text-slate-400"><i class="fas fa-lock mr-1"></i>${x.kunci}</span>`
+            : `<span class="text-[11px] font-bold text-white bg-brand-green px-3.5 py-1.5 rounded-full">${x.status === 'selesai' ? 'Ulangi' : x.status === 'berjalan' ? 'Lanjut' : 'Mulai'} <i class="fas fa-arrow-right text-[9px] ml-1"></i></span>`;
+        return `<${tag} ${href} style="animation-delay:${i * 50}ms" class="item flex gap-3 bg-white p-3.5 rounded-2xl shadow-sm border ${off ? 'border-slate-100 opacity-75' : 'border-slate-100 hover:border-brand-green active:scale-[0.98]'} transition">
+            <div class="w-14 h-14 rounded-xl flex items-center justify-center text-2xl shrink-0 ${off ? 'bg-slate-100 text-slate-300' : `bg-${x.c}-50 text-${x.c}-500`}"><i class="fas ${x.ico}"></i></div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2"><span class="text-[9px] font-bold uppercase tracking-widest text-slate-400">${x.kat}</span><span class="text-[9px] font-bold border px-1.5 py-0.5 rounded ${st[1]}">${st[0]}</span></div>
+                <h3 class="font-bold text-[13px] text-slate-800 leading-snug mt-0.5">${x.judul}</h3>
+                <p class="text-[11px] text-slate-500 leading-relaxed mt-1 line-clamp-2">${x.desk}</p>
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[10px] text-slate-400"><span><i class="far fa-clock"></i> ${x.durasi}</span><span><i class="fas fa-bolt text-amber-400"></i> ${x.xp}</span><span><i class="fas fa-signal"></i> ${x.level}</span></div>
+                <div class="flex justify-end mt-2.5">${aksi}</div>
+            </div></${tag}>`;
+    }).join('');
+}
+window.setTab = k => { aktif = k; renderTabs(); renderLatihan(); };
+renderTabs(); renderLatihan();
+
+/* ---------- Karya saya ---------- */
+const ks = K.karya();
+$('cntKarya').textContent = ks.length ? ks.length + ' naskah' : '';
+$('listKarya').innerHTML = ks.length ? ks.slice(0, 5).map(k => `<a href="kreasi-hasil.html?id=${k.id}" class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 hover:border-brand-green transition-colors active:scale-[0.98]">
+    <div class="w-14 h-14 rounded-lg bg-brand-light text-brand-green flex flex-col items-center justify-center shrink-0"><span class="text-lg font-extrabold leading-none">${k.skor}</span><span class="text-[8px] font-bold uppercase mt-0.5">Skor</span></div>
+    <div class="flex-1 flex flex-col justify-between py-0.5 min-w-0"><h3 class="font-bold text-[13px] text-slate-800 line-clamp-2 leading-snug">${K.esc(k.judul)}</h3>
+    <div class="flex justify-between items-end"><span class="text-[10px] text-slate-400"><i class="far fa-calendar-alt"></i> ${new Date(k.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span><span class="text-[11px] font-bold text-brand-green">Buka <i class="fas fa-chevron-right text-[9px] ml-0.5"></i></span></div></div></a>`).join('')
+    : '<div class="bg-white border border-dashed border-slate-300 rounded-xl p-5 text-center"><i class="fas fa-feather text-slate-300 text-2xl mb-2"></i><p class="text-xs text-slate-500">Belum ada naskah jadi. Mulai dari <b>Kreasi Ide</b> untuk membuat karya pertamamu.</p></div>';
+
+/* ---------- Lencana ---------- */
+$('cntBadge').textContent = p.badges.length + '/' + Object.keys(K.BADGES).length;
+$('listBadge').innerHTML = Object.entries(K.BADGES).map(([id, [n, i]]) => { const on = p.badges.includes(id);
+    return `<div class="text-center"><div class="w-12 h-12 mx-auto rounded-xl flex items-center justify-center text-lg ${on ? 'bg-brand-light text-brand-green border border-emerald-200' : 'bg-slate-100 text-slate-300'}"><i class="fas ${on ? i : 'fa-lock'}"></i></div><p class="text-[8px] font-semibold mt-1 leading-tight ${on ? 'text-slate-700' : 'text-slate-400'}">${n}</p></div>`; }).join('');
 </script>
 
 <script type="module">
-import {initializeApp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import {getFirestore,collection,query,where,limit,getDocs} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-const db=getFirestore(initializeApp({apiKey:"AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",projectId:"mading-cf676"}));
-const box=document.getElementById('ref');
-try{
- const s=await getDocs(query(collection(db,"materials"),where("kategori","==","argumentasi"),limit(5)));
- const a=[];s.forEach(x=>{const v=x.data();if(v.status!=='draft'&&v.status!=='dihapus')a.push({id:x.id,...v})});
- if(!a.length)throw 0;
- const m=a[Math.floor(Math.random()*a.length)];
- const ps=(m.isi||m.konten||'').replace(/<\/(p|h\d|li)>/gi,'\n').replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').split('\n').map(t=>t.trim()).filter(t=>t.length>25);
- const sh=(t)=>K.esc((t||'-').slice(0,230))+((t||'').length>230?'…':'');
- box.innerHTML=`<div class="bg-slate-900 p-4"><span class="bg-white/20 text-white text-[8px] font-bold px-2 py-0.5 rounded uppercase tracking-widest">Contoh dari Galeri</span><h4 class="font-bold text-white text-sm mt-1.5 leading-snug lc2">${K.esc(m.judul)}</h4></div>
- <div class="p-4 space-y-3 font-reading">
-  <div class="border-l-2 border-emerald-400 pl-3"><b class="text-[10px] text-emerald-600 font-sans">Tesis</b><p class="text-xs text-slate-600 italic">${sh(ps[0])}</p></div>
-  <div class="border-l-2 border-amber-400 pl-3"><b class="text-[10px] text-amber-600 font-sans">Argumen</b><p class="text-xs text-slate-600 italic">${sh(ps[1])}</p></div>
-  <div class="border-l-2 border-blue-400 pl-3"><b class="text-[10px] text-blue-600 font-sans">Kesimpulan</b><p class="text-xs text-slate-600 italic">${sh(ps[ps.length-1])}</p></div>
-  <a href="baca.html?id=${m.id}" class="block text-center text-[11px] font-bold text-purple-600 font-sans">Baca selengkapnya <i class="fas fa-arrow-right"></i></a></div>`;
-}catch(e){box.innerHTML='<p class="p-4 text-center text-xs text-slate-400">Contoh belum tersedia.</p>'}
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, query, where, limit, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+const db = getFirestore(initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" }));
+const el = document.getElementById('listContoh');
+const card = x => {
+    const img = x.coverImage || x.gambarBase64 || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=300";
+    return `<a href="baca.html?id=${x.id}" class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 hover:border-brand-green transition-colors active:scale-[0.98]">
+        <img src="${img}" alt="" class="w-20 h-20 object-cover rounded-lg shrink-0 bg-slate-100">
+        <div class="flex-1 flex flex-col justify-between py-0.5 min-w-0"><div>
+            <span class="text-[9px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 px-1.5 py-0.5 rounded uppercase tracking-widest">Argumentasi</span>
+            <h3 class="font-bold text-[13px] text-slate-800 line-clamp-2 mt-1.5 leading-snug">${K.esc(x.judul)}</h3></div>
+        <div class="flex justify-between items-end mt-1.5"><span class="text-[10px] text-slate-400"><i class="far fa-clock"></i> ${K.esc(x.waktuBaca || '5 Min')}</span><span class="text-[11px] font-bold text-brand-green">Pelajari <i class="fas fa-chevron-right text-[9px] ml-0.5"></i></span></div></div></a>`;
+};
+try {
+    const s = await getDocs(query(collection(db, "materials"), where("kategori", "==", "argumentasi"), orderBy("createdAt", "desc"), limit(10)));
+    let h = '', n = 0;
+    s.forEach(d => { const v = d.data(); if (v.status !== 'draft' && v.status !== 'dihapus' && n < 3) { h += card({ id: d.id, ...v }); n++; } });
+    el.innerHTML = h || '<p class="text-xs text-center text-slate-400 py-4">Belum ada teks argumentasi yang dipublikasikan.</p>';
+} catch (e) { console.error(e); el.innerHTML = '<p class="text-xs text-center text-red-400 py-4">Gagal memuat contoh teks.</p>'; }
 </script>
-</body></html>
+</body>
+</html>
