@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kata Penghubung Argumen - Ruang Kreasi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }
+    </script>
+    <!-- Logika bersama Ruang Kreasi disematkan agar halaman ini berdiri sendiri -->
+    <script>
+/* kreasi-core.js — logika bersama seluruh halaman Ruang Kreasi (profil, XP, draf, arsip, API, UI umum) */
+(function () {
+    const rd = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
+    const wr = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const day = d => d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+    const TITLES = ['Penulis Pemula', 'Penulis Muda', 'Penalar Cermat', 'Debater Handal', 'Maestro Argumen'];
+    const BADGES = { ide: ['Pencari Ide', 'fa-lightbulb'], naskah: ['Naskah Perdana', 'fa-scroll'], revisi: ['Rajin Revisi', 'fa-pen-nib'], skor80: ['Nilai 80+', 'fa-star'], streak3: ['Api 3 Hari', 'fa-fire'] };
+
+    document.head.insertAdjacentHTML('beforeend', `<style>
+        body{font-family:'Poppins',sans-serif;background:#f1f5f9;-webkit-tap-highlight-color:transparent}
+        .hide-scrollbar::-webkit-scrollbar{display:none}.hide-scrollbar{scrollbar-width:none}
+        .fade-in{animation:kf .35s ease-out both}@keyframes kf{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+        .line-clamp-1{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}.line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.lc2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .sk{position:relative;overflow:hidden;background:#e2e8f0;border-radius:.6rem}.sk::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:sh 1.3s infinite}@keyframes sh{100%{transform:translateX(100%)}}
+        .btn{display:flex;align-items:center;justify-content:center;gap:.5rem;font-weight:700;border-radius:.85rem;transition:transform .15s}.btn:active{transform:scale(.96)}.btn:disabled{opacity:.45}
+        .fld{width:100%;border:1px solid #e2e8f0;border-radius:.85rem;padding:.7rem .9rem;font-size:13px;background:#f8fafc;outline:none}.fld:focus{border-color:#059669;box-shadow:0 0 0 4px rgba(5,150,105,.12)}
+    </style>`);
+
+    const K = {
+        esc,
+        profile() {
+            const p = rd('kreasi_profile', null) || { xp: parseInt(localStorage.getItem('kreasiPointsArg') || '0'), streak: 0, last: '', badges: [], level: 'smp' };
+            return p;
+        },
+        saveProfile(p) { wr('kreasi_profile', p); },
+        level(xp) {
+            const lv = Math.floor(xp / 150) + 1, cur = xp % 150;
+            return { lv, title: TITLES[Math.min(TITLES.length - 1, lv - 1)], cur, next: 150, pct: Math.round(cur / 150 * 100) };
+        },
+        touch() {
+            const p = K.profile(), now = new Date(), y = new Date(now.getTime() - 864e5);
+            if (p.last !== day(now)) { p.streak = p.last === day(y) ? p.streak + 1 : 1; p.last = day(now); K.saveProfile(p); if (p.streak >= 3) K.badge('streak3'); }
+        },
+        addXP(n, why) {
+            const p = K.profile(), before = K.level(p.xp).lv;
+            p.xp += n; K.saveProfile(p); localStorage.setItem('kreasiPointsArg', p.xp);
+            const el = document.getElementById('kXp'); if (el) el.textContent = p.xp;
+            K.toast(`+${n} XP${why ? ' · ' + why : ''}`);
+            const after = K.level(p.xp);
+            if (after.lv > before) setTimeout(() => { K.toast(`Naik ke Level ${after.lv}: ${after.title}!`); K.beep('success'); window.confetti && confetti({ particleCount: 90, spread: 70, origin: { y: .6 }, zIndex: 100000 }); }, 900);
+        },
+        badge(id) {
+            const p = K.profile(); if (p.badges.includes(id) || !BADGES[id]) return;
+            p.badges.push(id); K.saveProfile(p); setTimeout(() => K.toast(`Lencana baru: ${BADGES[id][0]}!`), 1400);
+        },
+        BADGES,
+        draft: () => rd('kreasi_draft', null),
+        setDraft(patch, replace) { const d = replace ? patch : Object.assign(rd('kreasi_draft', {}) || {}, patch); wr('kreasi_draft', d); return d; },
+        clearDraft: () => localStorage.removeItem('kreasi_draft'),
+        karya: () => rd('kreasi_karya', []),
+        addKarya(k) { const a = K.karya(); a.unshift(k); wr('kreasi_karya', a.slice(0, 30)); },
+        words: t => String(t || '').trim().split(/\s+/).filter(Boolean).length,
+
+        async api(action, payload = {}) {
+            const res = await fetch('/api/all-kreasi', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, level: K.profile().level, ...payload }), signal: AbortSignal.timeout(30000) });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.detail_error || 'Server error');
+            return data;
+        },
+
+        toast(msg, err) {
+            let c = document.getElementById('kToast');
+            if (!c) { c = document.createElement('div'); c.id = 'kToast'; c.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none'; document.body.appendChild(c); }
+            const t = document.createElement('div');
+            t.className = `${err ? 'bg-red-500' : 'bg-slate-800'} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 transition-all duration-300 opacity-0 -translate-y-3`;
+            t.innerHTML = `<i class="fas ${err ? 'fa-exclamation-circle' : 'fa-circle-check text-emerald-400'}"></i><span class="flex-1">${esc(msg)}</span>`;
+            c.appendChild(t); requestAnimationFrame(() => t.classList.remove('opacity-0', '-translate-y-3'));
+            setTimeout(() => { t.classList.add('opacity-0', '-translate-y-3'); setTimeout(() => t.remove(), 300); }, 2800);
+        },
+        beep(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)(), o = ctx.createOscillator(), g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                if (type === 'success') { o.type = 'sine'; o.frequency.setValueAtTime(523, ctx.currentTime); o.frequency.exponentialRampToValueAtTime(1046, ctx.currentTime + .1); }
+                else { o.type = 'sawtooth'; o.frequency.setValueAtTime(150, ctx.currentTime); }
+                g.gain.setValueAtTime(.08, ctx.currentTime); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .4); o.start(); o.stop(ctx.currentTime + .4);
+            } catch (e) {}
+        },
+
+        mountHeader(title, back) {
+            const p = K.profile();
+            document.getElementById('hdr').innerHTML = `
+            <header class="bg-brand-green fixed w-full max-w-md z-50 px-4 py-3 flex items-center gap-3 shadow-md">
+                <a href="${back}" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors active:scale-95"><i class="fas fa-chevron-left"></i></a>
+                <h1 class="flex-1 text-white font-bold text-sm tracking-wide truncate">${title}</h1>
+                <span class="bg-white/20 border border-white/30 text-white px-2.5 py-1 rounded-full text-[11px] font-bold backdrop-blur-sm"><i class="fas fa-fire text-amber-300"></i> ${p.streak}</span>
+                <span class="bg-white/20 border border-white/30 text-white px-2.5 py-1 rounded-full text-[11px] font-bold backdrop-blur-sm flex items-center gap-1"><i class="fas fa-pen-fancy text-[10px]"></i><span id="kXp">${p.xp}</span> XP</span>
+            </header>
+            <div class="h-[60px] bg-brand-green"></div>
+            <div class="bg-brand-green pb-10 px-4 relative z-10 rounded-b-[2rem] -mt-1"></div>`;
+        },
+        mountSteps(n) {
+            const S = ['Pilih Ide', 'Tulis & Revisi', 'Naskah Jadi'];
+            document.getElementById('steps').innerHTML = `<div class="px-4 -mt-10 relative z-20"><div class="bg-white rounded-2xl shadow-md p-4"><div class="flex items-center">${S.map((s, i) => `
+                <div class="flex items-center ${i < 2 ? 'flex-1' : ''}"><div class="flex flex-col items-center"><div class="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold ${i + 1 < n ? 'bg-emerald-500 text-white' : i + 1 === n ? 'bg-brand-green text-white ring-4 ring-brand-light' : 'bg-slate-100 text-slate-400'}">${i + 1 < n ? '<i class="fas fa-check"></i>' : i + 1}</div><span class="text-[9px] font-semibold mt-1 ${i + 1 === n ? 'text-brand-dark' : 'text-slate-400'}">${s}</span></div>${i < 2 ? `<div class="flex-1 h-0.5 mx-2 mb-4 ${i + 1 < n ? 'bg-emerald-400' : 'bg-slate-200'}"></div>` : ''}</div>`).join('')}</div></div></div>`;
+        }
+    };
+    window.K = K; K.touch();
+})();
+
+    </script>
+    <style>
+        .item { animation: kf .3s ease-out both; }
+        details > summary { list-style: none; } details > summary::-webkit-details-marker { display: none; }
+        details[open] .chev { transform: rotate(180deg); } .chev { transition: transform .2s; }
+        .shake { animation: sk .35s; } @keyframes sk { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen">
+<div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
+
+    <header class="sticky top-0 z-50 bg-brand-green h-14 px-4 flex items-center gap-3 shadow-md">
+        <a href="kreasi.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
+        <div class="flex-1 min-w-0"><h1 class="text-white font-bold text-sm leading-tight truncate">Kata Penghubung Argumen</h1><p class="text-white/70 text-[10px] leading-tight truncate">Latihan memilih kata penghubung yang tepat</p></div>
+        <span class="shrink-0 bg-white/20 border border-white/30 text-white px-2 py-1 rounded-full text-[11px] font-bold"><i class="fas fa-fire text-amber-300"></i> <span id="hStreak">0</span></span>
+        <span class="shrink-0 bg-white/20 border border-white/30 text-white px-2 py-1 rounded-full text-[11px] font-bold"><i class="fas fa-pen-fancy text-[10px]"></i> <span id="hXp">0</span> XP</span>
+    </header>
+
+    <section class="bg-brand-green px-4 pb-5 pt-1 rounded-b-3xl"><div class="bg-white/15 border border-white/20 rounded-2xl p-4 backdrop-blur-sm">
+    <div class="flex items-center gap-3"><div class="w-11 h-11 rounded-xl bg-white text-brand-green flex items-center justify-center text-xl shrink-0"><i class="fas fa-link"></i></div>
+    <div class="flex-1 min-w-0"><p class="text-white font-bold text-sm leading-tight">Rangkai alasan dengan kata penghubung</p><p class="text-white/80 text-[11px] leading-snug mt-0.5">Pilih kata yang tepat agar alur argumenmu runtut dan meyakinkan.</p></div></div>
+    <details class="mt-3.5 bg-white/15 rounded-xl"><summary class="flex items-center justify-between cursor-pointer px-3 py-2"><span class="text-[11px] font-bold text-white"><i class="fas fa-book mr-1.5"></i>Kamus kata penghubung</span><i class="fas fa-chevron-down text-white/70 text-[10px] chev"></i></summary>
+    <div class="px-3 pb-3 grid grid-cols-2 gap-1.5 text-[10px]">
+        <div class="bg-white/15 rounded-lg p-2"><b class="text-amber-200">Sebab</b><p class="text-white/90">karena, sebab</p></div>
+        <div class="bg-white/15 rounded-lg p-2"><b class="text-amber-200">Akibat</b><p class="text-white/90">sehingga, oleh karena itu</p></div>
+        <div class="bg-white/15 rounded-lg p-2"><b class="text-amber-200">Contoh</b><p class="text-white/90">misalnya, contohnya</p></div>
+        <div class="bg-white/15 rounded-lg p-2"><b class="text-amber-200">Pertentangan</b><p class="text-white/90">namun, tetapi</p></div>
+        <div class="bg-white/15 rounded-lg p-2"><b class="text-amber-200">Tambahan</b><p class="text-white/90">selain itu, lagi pula</p></div>
+        <div class="bg-white/15 rounded-lg p-2"><b class="text-amber-200">Simpulan</b><p class="text-white/90">dengan demikian, jadi</p></div>
+    </div></details></div></section>
+
+
+    <div class="sticky top-14 z-40 bg-slate-50/95 backdrop-blur border-b border-slate-200 mt-5">
+        <div class="px-4 py-2.5"><div class="flex justify-between text-[10px] font-semibold text-slate-500 mb-1.5"><span id="prog">Soal 1/5</span><span id="stat"></span></div><div class="h-1.5 bg-slate-200 rounded-full overflow-hidden"><div id="progBar" class="h-full bg-brand-green rounded-full transition-all duration-300" style="width:0"></div></div></div>
+    </div>
+    <main class="flex-grow px-4 mt-4 pb-6">
+        <div id="kuis"></div>
+        <div id="hasil" class="hidden"></div>
+        <div class="mt-5 flex justify-center"><button id="btnAi" onclick="soalAi()" class="bg-white border border-slate-200 text-brand-green text-[11px] font-bold px-4 py-2 rounded-full active:scale-95 transition disabled:opacity-50"><i class="fas fa-wand-magic-sparkles mr-1"></i><span id="btnAiTxt">Soal baru dari AI</span></button></div>
+    </main>
+
+
+    <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0">
+        <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
+        <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
+    </footer>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const hari = () => { const n = new Date(); return n.getFullYear() + '-' + (n.getMonth() + 1) + '-' + n.getDate(); };
+const shuf = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function xpHarian(key, n, why) {
+    const p = K.profile(); p.daily = p.daily || {};
+    if (p.daily[key] === hari() || n <= 0) return 0;
+    p.daily[key] = hari(); K.saveProfile(p); K.addXP(n, why); $('hXp').textContent = K.profile().xp; return n;
+}
+{ const p = K.profile(); $('hStreak').textContent = p.streak; $('hXp').textContent = p.xp; }
+
+const LOKAL = [
+ { k: 'Sampah plastik sulit terurai, ___ penggunaannya perlu dikurangi.', opsi: ['oleh karena itu', 'namun', 'misalnya', 'padahal'], j: 0, ket: 'Kalimat kedua adalah akibat/simpulan dari kalimat pertama, jadi dipakai “oleh karena itu”.' },
+ { k: 'Banyak siswa belajar lebih baik di pagi hari ___ otak masih segar.', opsi: ['karena', 'sehingga', 'namun', 'misalnya'], j: 0, ket: '“Otak masih segar” adalah sebab, sehingga dipakai “karena”.' },
+ { k: 'Olahraga bermanfaat bagi kesehatan. ___, berlari pagi dapat menguatkan jantung.', opsi: ['Misalnya', 'Namun', 'Padahal', 'Sebab'], j: 0, ket: 'Kalimat kedua memberi contoh dari pernyataan pertama.' },
+ { k: 'Banyak orang menganggap gim hanya hiburan. ___, beberapa gim dapat melatih strategi dan kerja sama.', opsi: ['Namun', 'Sebab', 'Dengan demikian', 'Selain itu'], j: 0, ket: 'Kedua kalimat bertentangan, jadi dipakai kata penghubung pertentangan “namun”.' },
+ { k: 'Membaca melatih konsentrasi. ___, membaca juga menambah kosakata.', opsi: ['Selain itu', 'Namun', 'Karena', 'Sehingga'], j: 0, ket: 'Kalimat kedua menambah alasan, jadi dipakai “selain itu”.' },
+ { k: 'Hujan turun deras sepanjang malam, ___ jalan di desa itu terendam banjir.', opsi: ['sehingga', 'karena', 'misalnya', 'tetapi'], j: 0, ket: 'Banjir adalah akibat hujan deras, jadi dipakai “sehingga”.' },
+ { k: 'Beberapa alasan telah dijelaskan di atas. ___, kebiasaan menabung perlu ditanamkan sejak dini.', opsi: ['Dengan demikian', 'Misalnya', 'Namun', 'Karena'], j: 0, ket: 'Kalimat kedua adalah simpulan dari alasan-alasan sebelumnya.' },
+ { k: 'Ia tidak bisa menonton pertandingan ___ harus mengerjakan tugas.', opsi: ['karena', 'sehingga', 'misalnya', 'oleh karena itu'], j: 0, ket: '“Harus mengerjakan tugas” adalah sebab ia tidak bisa menonton.' },
+ { k: 'Kantin sekolah perlu menjual makanan sehat, ___ jajanan yang terlalu manis dapat mengganggu kesehatan.', opsi: ['sebab', 'sehingga', 'namun', 'misalnya'], j: 0, ket: 'Klausa kedua menjelaskan alasan klausa pertama, jadi dipakai “sebab”.' }
+];
+let soal = [], idx = 0, benar = 0, kunci = false, combo = 0, busy = false;
+
+const siapkan = x => { const b = x.opsi[x.j]; return { k: x.k, opsi: shuf(x.opsi), benar: b, ket: x.ket }; };
+function mulai(arr) { soal = arr; idx = 0; benar = 0; combo = 0; kunci = false; $('hasil').classList.add('hidden'); $('kuis').classList.remove('hidden'); tampil(); }
+const lokal5 = () => shuf(LOKAL).slice(0, 5).map(siapkan);
+
+function tampil() {
+    const s = soal[idx], t = soal.length;
+    $('prog').textContent = `Soal ${idx + 1}/${t}`; $('progBar').style.width = (idx / t * 100) + '%';
+    $('stat').innerHTML = `Benar ${benar}${combo >= 2 ? ` · <span class="text-amber-500"><i class="fas fa-fire"></i> ${combo}x</span>` : ''}`;
+    const parts = s.k.split('___');
+    $('kuis').innerHTML = `<div class="item bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+        <span class="text-[9px] font-bold text-brand-dark bg-brand-light border border-emerald-200 px-2 py-0.5 rounded uppercase tracking-widest">Lengkapi kalimat</span>
+        <p class="font-reading text-[14px] text-slate-800 leading-[1.9] mt-3">${K.esc(parts[0])}<span id="blank" class="inline-block min-w-[5.5rem] text-center border-b-2 border-dashed border-brand-green text-brand-green font-bold px-1 mx-0.5">&nbsp;</span>${K.esc(parts[1] || '')}</p>
+        <div id="opsi" class="grid grid-cols-2 gap-2 mt-4">${s.opsi.map((o, i) => `<button onclick="jawab(${i})" class="opt py-3 px-2 rounded-xl border-2 border-slate-200 bg-white text-[12px] font-bold text-slate-700 active:scale-95 transition">${K.esc(o)}</button>`).join('')}</div>
+        <div id="ket" class="hidden mt-4"></div></div>`;
+}
+window.jawab = i => {
+    if (kunci) return; kunci = true;
+    const s = soal[idx], pilih = s.opsi[i], ok = pilih === s.benar, btns = document.querySelectorAll('.opt');
+    btns.forEach((b, n) => { b.disabled = true; if (s.opsi[n] === s.benar) b.className = 'opt py-3 px-2 rounded-xl border-2 border-emerald-400 bg-emerald-50 text-[12px] font-bold text-emerald-700'; else if (n === i) b.className = 'opt shake py-3 px-2 rounded-xl border-2 border-rose-300 bg-rose-50 text-[12px] font-bold text-rose-600'; else b.className = 'opt py-3 px-2 rounded-xl border-2 border-slate-100 bg-white text-[12px] font-bold text-slate-300'; });
+    $('blank').textContent = s.benar; $('blank').className = 'inline-block min-w-[5.5rem] text-center border-b-2 border-emerald-500 text-emerald-600 font-bold px-1 mx-0.5';
+    if (ok) { benar++; combo++; K.beep('success'); } else { combo = 0; K.beep('error'); }
+    $('stat').innerHTML = `Benar ${benar}${combo >= 2 ? ` · <span class="text-amber-500"><i class="fas fa-fire"></i> ${combo}x</span>` : ''}`;
+    const last = idx === soal.length - 1;
+    $('ket').classList.remove('hidden');
+    $('ket').innerHTML = `<div class="rounded-xl p-3 ${ok ? 'bg-emerald-50 border border-emerald-100' : 'bg-rose-50 border border-rose-100'}"><p class="text-[11px] font-bold ${ok ? 'text-emerald-700' : 'text-rose-600'}"><i class="fas ${ok ? 'fa-circle-check' : 'fa-circle-xmark'} mr-1"></i>${ok ? 'Tepat!' : 'Belum tepat. Jawaban: ' + K.esc(s.benar)}</p><p class="text-[11px] text-slate-600 leading-relaxed mt-1">${K.esc(s.ket || '')}</p></div>
+        <button onclick="lanjut()" class="w-full mt-3 bg-brand-green text-white font-bold py-3 rounded-xl text-xs shadow-md active:scale-95 transition">${last ? 'Lihat Hasil' : 'Soal Berikutnya'} <i class="fas fa-arrow-right ml-1 text-[10px]"></i></button>`;
+};
+window.lanjut = () => { kunci = false; if (idx < soal.length - 1) { idx++; tampil(); window.scrollTo({ top: 0, behavior: 'smooth' }); } else selesai(); };
+
+function selesai() {
+    const t = soal.length, xp = xpHarian('hubung', benar * 4 + (benar === t ? 10 : 0), 'Kata penghubung');
+    $('progBar').style.width = '100%'; $('prog').textContent = 'Selesai'; $('kuis').classList.add('hidden'); $('hasil').classList.remove('hidden');
+    const w = benar === t ? ['emerald', 'fa-trophy', 'Sempurna! Alur argumenmu makin runtut.'] : benar / t >= .6 ? ['amber', 'fa-thumbs-up', 'Bagus! Sedikit lagi sempurna.'] : ['rose', 'fa-book-open', 'Pelajari kamus kata penghubung di atas, lalu coba lagi.'];
+    $('hasil').innerHTML = `<div class="item bg-white rounded-2xl border border-slate-200 shadow-sm p-5 text-center">
+        <div class="w-16 h-16 rounded-2xl bg-${w[0]}-50 text-${w[0]}-500 flex items-center justify-center text-3xl mx-auto"><i class="fas ${w[1]}"></i></div>
+        <p class="text-3xl font-extrabold text-slate-800 mt-3">${benar}<span class="text-base text-slate-400 font-semibold">/${t}</span></p><p class="text-xs text-slate-500 mt-1">${w[2]}</p>
+        ${xp ? `<span class="inline-block mt-3 text-[11px] font-bold text-brand-dark bg-brand-light px-3 py-1 rounded-full"><i class="fas fa-bolt text-amber-500 mr-1"></i>+${xp} XP</span>` : '<p class="text-[10px] text-slate-400 mt-3">XP latihan ini sudah kamu ambil hari ini.</p>'}
+        <div class="grid grid-cols-2 gap-2 mt-5"><button onclick="mulai(lokal5())" class="bg-white border border-slate-200 text-slate-700 font-bold py-3 rounded-xl text-xs active:scale-95 transition"><i class="fas fa-rotate mr-1.5"></i>Main Lagi</button><a href="kreasi-tulis.html" class="bg-brand-green text-white font-bold py-3 rounded-xl text-xs shadow-md active:scale-95 transition"><i class="fas fa-pen-nib mr-1.5"></i>Terapkan di Naskah</a></div></div>`;
+    if (benar === t) { K.beep('success'); window.confetti && confetti({ particleCount: 90, spread: 70, origin: { y: .5 }, zIndex: 100000 }); }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+window.soalAi = async () => {
+    if (busy) return; busy = true; $('btnAi').disabled = true; $('btnAiTxt').textContent = 'Menyusun soal…';
+    try {
+        const r = await K.api('penghubung', {});
+        const ok = (r.soal || []).filter(x => x && typeof x.kalimat === 'string' && x.kalimat.split('___').length === 2 && Array.isArray(x.opsi) && x.opsi.length === 4 && x.jawaban >= 0 && x.jawaban < 4)
+            .map(x => siapkan({ k: x.kalimat, opsi: x.opsi, j: x.jawaban, ket: x.penjelasan }));
+        if (ok.length < 3) throw new Error('format');
+        mulai(ok);
+    } catch (e) { console.error(e); K.toast('AI sedang sibuk. Soal lokal tetap bisa dipakai.', true); K.beep('error'); }
+    finally { busy = false; $('btnAi').disabled = false; $('btnAiTxt').textContent = 'Soal baru dari AI'; }
+};
+window.mulai = mulai; window.lokal5 = lokal5;
+mulai(lokal5());
+
+</script>
+</body>
+</html>
