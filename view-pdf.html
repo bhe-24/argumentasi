@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baca PDF - Argumentasi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] } } } }
+    </script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #1e293b; -webkit-tap-highlight-color: transparent; }
+        .pg { background: #fff; margin: 0 auto 10px; box-shadow: 0 2px 10px rgba(0,0,0,.35); position: relative; overflow: hidden; }
+        .pg.kosong::after { content: attr(data-n); position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 42px; font-weight: 800; color: #e2e8f0; }
+        .pg canvas { display: block; }
+        .up { animation: up .3s ease-out both; } @keyframes up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        .noscroll::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen">
+<div id="app" class="w-full max-w-md bg-slate-700 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-600">
+
+    <!-- HEADER (STICKY) -->
+    <header class="sticky top-0 z-50 bg-amber-500 shadow-md">
+        <div class="h-14 px-3 flex items-center gap-2">
+            <a href="handout.html" aria-label="Kembali" class="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
+            <div class="flex-1 min-w-0"><h1 id="judul" class="text-white font-bold text-sm leading-tight truncate">Memuat dokumen…</h1><p id="sub" class="text-white/80 text-[10px] leading-tight truncate">PDF</p></div>
+            <button onclick="bukaInfo()" aria-label="Info" class="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-circle-info text-lg"></i></button>
+            <button id="btnUnduh" onclick="unduh()" aria-label="Unduh" class="shrink-0 h-9 px-3 rounded-full bg-white text-amber-600 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition shadow-sm"><i class="fas fa-download"></i><span>Unduh</span></button>
+        </div>
+        <div class="h-[3px] bg-amber-700/40"><div id="progres" class="h-full bg-white transition-all duration-200" style="width:0"></div></div>
+    </header>
+
+    <!-- AREA BACA -->
+    <main id="viewer" class="flex-grow overflow-x-auto noscroll py-2.5 px-2 relative">
+        <div id="muat" class="flex flex-col items-center justify-center py-24 text-white">
+            <div class="w-14 h-14 border-4 border-white/20 border-t-amber-400 rounded-full animate-spin mb-4"></div>
+            <p class="text-sm font-semibold">Memuat dokumen PDF…</p><p id="muatPersen" class="text-xs text-white/60 mt-1">Menyiapkan</p>
+        </div>
+        <div id="halaman"></div>
+
+        <!-- CADANGAN jika PDF.js tidak bisa membaca (mis. akses lintas domain ditolak) -->
+        <div id="cadangan" class="hidden px-1">
+            <div class="bg-white rounded-2xl p-4 text-center shadow-lg">
+                <div class="w-12 h-12 mx-auto rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-xl mb-2"><i class="fas fa-file-pdf"></i></div>
+                <p id="cadanganPesan" class="text-sm font-bold text-slate-800">Pratinjau langsung tidak tersedia</p>
+                <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">Kamu tetap bisa membaca lewat tab baru atau mengunduh file-nya.</p>
+                <div class="grid grid-cols-2 gap-2 mt-3"><a id="cadBuka" target="_blank" rel="noopener" class="bg-amber-500 text-white text-xs font-bold py-2.5 rounded-xl active:scale-95"><i class="fas fa-up-right-from-square mr-1.5"></i>Buka di Tab Baru</a><button onclick="unduh()" class="bg-slate-100 text-slate-700 text-xs font-bold py-2.5 rounded-xl active:scale-95"><i class="fas fa-download mr-1.5"></i>Unduh</button></div>
+            </div>
+            <iframe id="cadIframe" class="w-full mt-3 rounded-xl bg-white border-0" style="height:70vh" title="Pratinjau cadangan"></iframe>
+        </div>
+    </main>
+
+    <!-- TOOLBAR (STICKY BAWAH) -->
+    <div id="bar" class="hidden sticky bottom-0 z-50 bg-white/95 backdrop-blur border-t border-slate-200 px-3 py-2">
+        <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-1">
+                <button onclick="lompat(cur-1)" aria-label="Halaman sebelumnya" class="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 active:scale-95"><i class="fas fa-chevron-up"></i></button>
+                <div class="flex items-center gap-1 text-xs font-semibold text-slate-600"><input id="inHal" type="number" min="1" class="w-12 h-9 text-center rounded-lg border border-slate-200 bg-slate-50 text-sm font-bold text-slate-800 outline-none focus:border-amber-500" onkeydown="if(event.key==='Enter'){lompat(+this.value);this.blur()}" onchange="lompat(+this.value)"><span>/ <span id="tot">0</span></span></div>
+                <button onclick="lompat(cur+1)" aria-label="Halaman berikutnya" class="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 active:scale-95"><i class="fas fa-chevron-down"></i></button>
+            </div>
+            <div class="flex items-center gap-1">
+                <button onclick="ubahZoom(-0.25)" aria-label="Perkecil" class="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 active:scale-95"><i class="fas fa-magnifying-glass-minus"></i></button>
+                <button onclick="setZoom(1)" id="zoomTxt" class="min-w-[3.2rem] h-9 rounded-lg bg-slate-100 text-xs font-bold text-slate-600 active:scale-95">100%</button>
+                <button onclick="ubahZoom(0.25)" aria-label="Perbesar" class="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 active:scale-95"><i class="fas fa-magnifying-glass-plus"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- INFO -->
+<div id="info" class="fixed inset-0 bg-slate-900/60 z-[99999] hidden items-end sm:items-center justify-center" onclick="if(event.target===this) tutupInfo()">
+    <div class="up bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 max-h-[80vh] overflow-y-auto">
+        <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-4 sm:hidden"></div>
+        <div class="flex items-start justify-between gap-3"><h2 id="iJudul" class="font-bold text-slate-800 text-sm leading-snug"></h2><button onclick="tutupInfo()" class="text-slate-400 shrink-0"><i class="fas fa-xmark text-lg"></i></button></div>
+        <div id="iMeta" class="flex flex-wrap gap-1.5 mt-2.5"></div>
+        <div id="iDesk" class="mt-3.5 bg-amber-50 border border-amber-100 rounded-xl p-3 hidden"><p class="text-[9px] font-bold text-amber-700 uppercase tracking-wider mb-1">Ringkasan</p><p id="iDeskTxt" class="text-[12px] text-slate-700 leading-relaxed"></p></div>
+    </div>
+</div>
+<div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 z-[100000] w-11/12 max-w-sm pointer-events-none"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const slug = s => String(s || 'dokumen').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'dokumen';
+const qs = new URLSearchParams(location.search);
+let meta = { judul: 'Dokumen', url: '', kategori: '', ukuran: '', deskripsi: '', halaman: '', tanggal: '' };
+let pdf = null, total = 0, zoom = 1, cur = 1, pgs = [], rasio = [], io = null, ticking = false;
+const ZMIN = 0.6, ZMAX = 3;
+
+function toast(msg, err) {
+    const t = document.createElement('div');
+    t.className = `${err ? 'bg-red-500' : 'bg-slate-800'} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 mb-2 up`;
+    t.innerHTML = `<i class="fas ${err ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400'}"></i><span class="flex-1">${esc(msg)}</span>`;
+    $('toast').appendChild(t); setTimeout(() => t.remove(), 2800);
+}
+
+/* ---------- Unduh ---------- */
+window.unduh = async function () {
+    if (!meta.url) return toast('Tautan file tidak tersedia.', true);
+    const b = $('btnUnduh'), isi = b.innerHTML; b.disabled = true; b.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>Mengunduh</span>';
+    try {
+        const r = await fetch(meta.url, { mode: 'cors' }); if (!r.ok) throw new Error('http ' + r.status);
+        const blob = await r.blob(), a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = slug(meta.judul) + '.pdf'; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000); toast('Unduhan dimulai.');
+    } catch (e) { console.warn('Unduh langsung gagal:', e); window.open(meta.url, '_blank', 'noopener'); toast('File dibuka di tab baru. Simpan dari sana.'); }
+    finally { b.disabled = false; b.innerHTML = isi; }
+};
+
+/* ---------- Info ---------- */
+window.bukaInfo = () => {
+    $('iJudul').textContent = meta.judul;
+    const chip = (ic, t) => t ? `<span class="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full"><i class="fas ${ic} text-amber-500 mr-1"></i>${esc(t)}</span>` : '';
+    $('iMeta').innerHTML = chip('fa-tag', meta.kategori) + chip('fa-file-lines', (total || meta.halaman) ? (total || meta.halaman) + ' halaman' : '') + chip('fa-weight-hanging', meta.ukuran ? meta.ukuran + ' MB' : '') + chip('fa-calendar', meta.tanggal);
+    $('iDesk').classList.toggle('hidden', !meta.deskripsi); $('iDeskTxt').textContent = meta.deskripsi;
+    $('info').classList.replace('hidden', 'flex');
+};
+window.tutupInfo = () => $('info').classList.replace('flex', 'hidden');
+
+/* ---------- Penampil PDF ---------- */
+const lebar = () => Math.max(240, $('viewer').clientWidth - 16);
+function ukur(n) { const el = pgs[n - 1], w = lebar() * zoom; el.style.width = w + 'px'; el.style.height = (w * (rasio[n] || rasio[1] || 1.414)) + 'px'; }
+
+async function render(n) {
+    const el = pgs[n - 1]; if (!el || el._sibuk) return;
+    const zNow = zoom; if (el._selesai && el._z === zNow) return;
+    el._sibuk = true;
+    try {
+        const page = await pdf.getPage(n), v1 = page.getViewport({ scale: 1 });
+        rasio[n] = v1.height / v1.width; ukur(n);
+        const cssW = lebar() * zNow, dpr = Math.min(window.devicePixelRatio || 1, 2), vp = page.getViewport({ scale: cssW * dpr / v1.width });
+        const c = el._c || (el._c = document.createElement('canvas'));
+        c.width = Math.floor(vp.width); c.height = Math.floor(vp.height); c.style.width = '100%'; c.style.height = '100%';
+        if (!c.parentNode) el.appendChild(c);
+        el._tugas = page.render({ canvasContext: c.getContext('2d'), viewport: vp }); await el._tugas.promise;
+        el._selesai = true; el._z = zNow; el.classList.remove('kosong');
+    } catch (e) { if (!e || e.name !== 'RenderingCancelledException') console.error('Render halaman', n, e); }
+    finally { el._sibuk = false; if (el._vis && (!el._selesai || el._z !== zoom)) render(n); }
+}
+function lepas(n) {
+    const el = pgs[n - 1]; if (!el) return;
+    try { el._tugas && el._tugas.cancel(); } catch (e) {}
+    if (el._c) { el._c.width = el._c.height = 0; el._c.remove(); }
+    el._selesai = false; el.classList.add('kosong');
+}
+function bangunHalaman() {
+    $('halaman').innerHTML = ''; pgs = [];
+    for (let n = 1; n <= total; n++) { const d = document.createElement('div'); d.className = 'pg kosong'; d.dataset.n = n; $('halaman').appendChild(d); pgs.push(d); ukur(n); }
+    if (io) io.disconnect();
+    io = new IntersectionObserver(es => es.forEach(e => { const n = +e.target.dataset.n; e.target._vis = e.isIntersecting; e.isIntersecting ? render(n) : lepas(n); }), { rootMargin: '1400px 0px' });
+    pgs.forEach(p => io.observe(p));
+}
+function posisi() {
+    const mid = window.innerHeight / 2; let aktif = 1;
+    for (let i = 0; i < pgs.length; i++) { const r = pgs[i].getBoundingClientRect(); if (r.top <= mid) aktif = i + 1; else break; }
+    return aktif;
+}
+function perbarui() {
+    ticking = false; if (!total) return;
+    cur = posisi(); if (document.activeElement !== $('inHal')) $('inHal').value = cur;
+    $('progres').style.width = (cur / total * 100) + '%';
+    try { localStorage.setItem('pdfpos_' + (qs.get('id') || meta.url), String(cur)); } catch (e) {}
+}
+window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(perbarui); } }, { passive: true });
+window.lompat = n => {
+    n = Math.max(1, Math.min(total, Math.round(n) || 1)); const el = pgs[n - 1]; if (!el) return;
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
+};
+window.setZoom = z => {
+    z = Math.max(ZMIN, Math.min(ZMAX, +z.toFixed(2))); if (z === zoom || !total) { $('zoomTxt').textContent = Math.round(zoom * 100) + '%'; return; }
+    const n = cur, el = pgs[n - 1], frac = el ? Math.max(0, -el.getBoundingClientRect().top + 56) / (el.offsetHeight || 1) : 0;
+    zoom = z; $('zoomTxt').textContent = Math.round(zoom * 100) + '%';
+    pgs.forEach((p, i) => { ukur(i + 1); p._selesai = false; try { p._tugas && p._tugas.cancel(); } catch (e) {} });
+    const e2 = pgs[n - 1]; window.scrollTo({ top: e2.getBoundingClientRect().top + window.scrollY - 56 + frac * e2.offsetHeight });
+    pgs.forEach((p, i) => { if (p._vis) render(i + 1); });
+};
+window.ubahZoom = d => setZoom(zoom + d);
+let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (!total) return; pgs.forEach((p, i) => { ukur(i + 1); p._selesai = false; }); pgs.forEach((p, i) => { if (p._vis) render(i + 1); }); }, 250); });
+
+/* ---------- Cadangan bila PDF.js gagal ---------- */
+function pakaiCadangan(alasan) {
+    console.warn('Memakai tampilan cadangan:', alasan);
+    $('muat').classList.add('hidden'); $('halaman').innerHTML = ''; $('bar').classList.add('hidden'); $('cadangan').classList.remove('hidden');
+    $('cadBuka').href = meta.url;
+    $('cadIframe').src = 'https://docs.google.com/viewer?url=' + encodeURIComponent(meta.url) + '&embedded=true';
+}
+
+/* ---------- Dipanggil setelah data dokumen didapat ---------- */
+window.mulai = async function (m) {
+    meta = Object.assign(meta, m);
+    $('judul').textContent = meta.judul; document.title = meta.judul + ' - Baca PDF';
+    $('sub').textContent = [meta.kategori, meta.ukuran ? meta.ukuran + ' MB' : ''].filter(Boolean).join(' • ') || 'PDF';
+    if (!meta.url) return pakaiGalat('Tautan file PDF tidak ditemukan.');
+    if (!window.pdfjsLib) return pakaiCadangan('pdf.js tidak termuat');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    try {
+        const tugas = pdfjsLib.getDocument({ url: meta.url });
+        tugas.onProgress = p => { if (p.total) $('muatPersen').textContent = Math.round(p.loaded / p.total * 100) + '%'; else $('muatPersen').textContent = Math.round(p.loaded / 1024) + ' KB'; };
+        pdf = await tugas.promise; total = pdf.numPages;
+        const p1 = await pdf.getPage(1), v = p1.getViewport({ scale: 1 }); rasio[1] = v.height / v.width;
+        $('muat').classList.add('hidden'); $('bar').classList.remove('hidden'); $('tot').textContent = total; $('inHal').max = total; $('inHal').value = 1;
+        $('sub').textContent = total + ' halaman' + (meta.ukuran ? ' • ' + meta.ukuran + ' MB' : '');
+        bangunHalaman();
+        const simpan = parseInt(localStorage.getItem('pdfpos_' + (qs.get('id') || meta.url)) || '1');
+        if (simpan > 1 && simpan <= total) setTimeout(() => { lompat(simpan); toast('Dilanjutkan dari halaman ' + simpan); }, 400);
+    } catch (e) { pakaiCadangan(e && e.message); }
+};
+function pakaiGalat(pesan) {
+    $('muat').innerHTML = `<div class="text-center px-6"><i class="fas fa-file-circle-exclamation text-4xl text-white/40 mb-3"></i><p class="text-sm font-bold text-white">Dokumen tidak dapat dibuka</p><p class="text-xs text-white/60 mt-1 leading-relaxed">${esc(pesan)}</p><a href="handout.html" class="inline-block mt-4 bg-amber-500 text-white text-xs font-bold px-5 py-2.5 rounded-full">Kembali ke Koleksi</a></div>`;
+    $('btnUnduh').classList.add('hidden');
+}
+window.pakaiGalat = pakaiGalat;
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+const qs = new URLSearchParams(location.search), id = qs.get('id'), langsung = qs.get('url');
+if (id) {
+    try {
+        const db = getFirestore(initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" }));
+        const ref = doc(db, "handouts", id), snap = await getDoc(ref);
+        if (!snap.exists() || snap.data().status === 'dihapus') window.pakaiGalat('Handout ini tidak ada atau sudah dihapus.');
+        else {
+            const v = snap.data(), t = v.createdAt && (v.createdAt.toDate ? v.createdAt.toDate() : new Date(v.createdAt));
+            window.mulai({ judul: v.judul || 'Handout', url: v.fileUrl || '', kategori: v.kategori || '', ukuran: v.ukuranFile || '', deskripsi: v.deskripsi || '', halaman: v.halaman || '',
+                tanggal: t && !isNaN(t) ? t.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '' });
+            if (!sessionStorage.getItem('vw_' + id)) { sessionStorage.setItem('vw_' + id, '1'); try { await updateDoc(ref, { views: increment(1) }); } catch (e) {} }
+        }
+    } catch (e) { console.error(e); window.pakaiGalat('Gagal mengambil data dokumen. Periksa jaringanmu lalu muat ulang.'); }
+} else if (langsung) window.mulai({ judul: qs.get('judul') || 'Dokumen PDF', url: langsung });
+else window.pakaiGalat('Dokumen tidak dipilih. Buka dari halaman Koleksi Handout.');
+</script>
+</body>
+</html>
