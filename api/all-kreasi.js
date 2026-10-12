@@ -31,6 +31,8 @@ async function callAI(level, user, maxTokens = 1300) {
 }
 
 const cl = t => String(t ?? '').replace(/[*_#`]/g, '').trim();
+// Untuk kalimat berlubang: pertahankan tanda kosong, seragamkan menjadi tepat "___"
+const clBlank = t => String(t ?? '').replace(/[*#`]/g, '').replace(/_{2,}|\.{4,}|…{2,}|\[\s*\.{2,}\s*\]|\(\s*\.{2,}\s*\)/g, '___').replace(/\s+/g, ' ').trim();
 const arr = (a, n) => (Array.isArray(a) ? a : []).map(cl).filter(Boolean).slice(0, n);
 const lim = (t, n = 3000) => String(t ?? '').slice(0, n);
 const num = (v, max) => Math.max(0, Math.min(max, Math.round(Number(v) || 0)));
@@ -142,12 +144,16 @@ Format: {"judul":"","kalimat":[{"teks":"","label":"tesis","alasan":""}]}`, 1100)
 
     // Latihan kata penghubung: soal isian pilihan ganda
     async penghubung({ level }) {
-        const out = await callAI(level, `Buat 5 soal isian kata penghubung untuk teks argumentasi. Tiap soal: satu kalimat bermakna yang memuat tepat satu tanda "___" sebagai bagian yang kosong.
+        const out = await callAI(level, `Buat 5 soal isian kata penghubung untuk teks argumentasi. Tiap soal: satu kalimat bermakna yang memuat tepat satu tanda kosong berupa TIGA garis bawah berurutan: ___ (jangan memakai titik-titik atau tanda lain).
 Kata penghubung yang diuji beragam: sebab (karena), akibat (sehingga, oleh karena itu), contoh (misalnya), pertentangan (namun, tetapi), tambahan (selain itu), simpulan (dengan demikian).
 Tiap soal punya "opsi" (TEPAT 4 pilihan, hanya satu yang benar), "jawaban" (nomor indeks 0-3 dari opsi yang benar), dan "penjelasan" (satu kalimat singkat).
 Format: {"soal":[{"kalimat":"","opsi":["","","",""],"jawaban":0,"penjelasan":""}]}`, 1200);
-        const soal = (out.soal || []).map(x => ({ kalimat: cl(x.kalimat), opsi: arr(x.opsi, 4), jawaban: Number(x.jawaban), penjelasan: cl(x.penjelasan) }))
-            .filter(x => x.kalimat.split('___').length === 2 && x.opsi.length === 4 && Number.isInteger(x.jawaban) && x.jawaban >= 0 && x.jawaban < 4).slice(0, 5);
+        const soal = (out.soal || []).map(x => {
+            const opsi = arr(x.opsi, 4);
+            let jawaban = (typeof x.jawaban === 'number' || /^\s*\d+\s*$/.test(String(x.jawaban ?? ''))) ? Number(x.jawaban) : -1;
+            if (jawaban < 0 && x.jawaban != null) jawaban = opsi.findIndex(o => o.toLowerCase() === cl(x.jawaban).toLowerCase());
+            return { kalimat: clBlank(x.kalimat), opsi, jawaban, penjelasan: cl(x.penjelasan) };
+        }).filter(x => x.kalimat.split('___').length === 2 && x.opsi.length === 4 && new Set(x.opsi).size === 4 && Number.isInteger(x.jawaban) && x.jawaban >= 0 && x.jawaban < 4).slice(0, 5);
         if (soal.length < 3) throw new Error("Soal tidak valid");
         return { soal };
     },
