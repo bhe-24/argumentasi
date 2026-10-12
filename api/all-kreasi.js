@@ -126,6 +126,59 @@ Format: {"rubrik":{"tesis":0,"argumen":0,"logika":0,"bahasa":0,"kesimpulan":0},"
                 perbaikan: ['Tambahkan fakta atau contoh di setiap alasan.', 'Gunakan kata penghubung agar alur lebih runtut.', 'Baca ulang dan perbaiki ejaan serta kalimat yang terlalu panjang.'],
                 komentar: 'Penilaian otomatis sederhana dipakai karena AI sedang sibuk. Coba evaluasi ulang nanti untuk umpan balik yang lebih rinci.' };
         }
+    },
+
+    // Bedah struktur: teks pendek, tiap kalimat berlabel tesis / argumen / kesimpulan
+    async bedah({ tema, level }) {
+        const out = await callAI(level, `Buat SATU teks argumentasi pendek (5 sampai 6 kalimat) bertema "${cl(lim(tema, 60)) || 'bebas, dekat dengan remaja'}" untuk latihan mengenali struktur.
+Kalimat pertama = tesis, kalimat terakhir = kesimpulan, kalimat di tengah = argumen (alasan atau bukti). Setiap kalimat berdiri sendiri dan tidak diberi nomor.
+Beri "judul", dan untuk tiap kalimat: "teks", "label" (tepat salah satu: tesis, argumen, kesimpulan), "alasan" (satu kalimat singkat mengapa label itu benar).
+Format: {"judul":"","kalimat":[{"teks":"","label":"tesis","alasan":""}]}`, 1100);
+        const ok = ['tesis', 'argumen', 'kesimpulan'];
+        const kalimat = (out.kalimat || []).map(k => ({ teks: cl(k.teks), label: cl(k.label).toLowerCase(), alasan: cl(k.alasan) })).filter(k => k.teks && ok.includes(k.label)).slice(0, 7);
+        if (kalimat.length < 4 || !ok.every(l => kalimat.some(k => k.label === l))) throw new Error("Teks tidak valid");
+        return { judul: cl(out.judul) || 'Teks Argumentasi', kalimat };
+    },
+
+    // Latihan kata penghubung: soal isian pilihan ganda
+    async penghubung({ level }) {
+        const out = await callAI(level, `Buat 5 soal isian kata penghubung untuk teks argumentasi. Tiap soal: satu kalimat bermakna yang memuat tepat satu tanda "___" sebagai bagian yang kosong.
+Kata penghubung yang diuji beragam: sebab (karena), akibat (sehingga, oleh karena itu), contoh (misalnya), pertentangan (namun, tetapi), tambahan (selain itu), simpulan (dengan demikian).
+Tiap soal punya "opsi" (TEPAT 4 pilihan, hanya satu yang benar), "jawaban" (nomor indeks 0-3 dari opsi yang benar), dan "penjelasan" (satu kalimat singkat).
+Format: {"soal":[{"kalimat":"","opsi":["","","",""],"jawaban":0,"penjelasan":""}]}`, 1200);
+        const soal = (out.soal || []).map(x => ({ kalimat: cl(x.kalimat), opsi: arr(x.opsi, 4), jawaban: Number(x.jawaban), penjelasan: cl(x.penjelasan) }))
+            .filter(x => x.kalimat.split('___').length === 2 && x.opsi.length === 4 && Number.isInteger(x.jawaban) && x.jawaban >= 0 && x.jawaban < 4).slice(0, 5);
+        if (soal.length < 3) throw new Error("Soal tidak valid");
+        return { soal };
+    },
+
+    // Argumen tandingan: intip pandangan lawan
+    async lawan({ tesis, level }) {
+        const out = await callAI(level, `Tesis siswa: "${cl(lim(tesis, 400))}".
+Bantu siswa memikirkan sisi seberang. Beri "pandangan" (TEPAT 2 kalimat pendapat yang mungkin disampaikan pihak yang tidak setuju, masing-masing dengan alasan singkat) dan "pancingan" (satu pertanyaan yang membantu siswa menyiapkan bantahan, jangan menuliskan bantahannya).
+Format: {"pandangan":["",""],"pancingan":""}`, 600);
+        return { pandangan: arr(out.pandangan, 2), pancingan: cl(out.pancingan) };
+    },
+
+    // Argumen tandingan: nilai bantahan siswa
+    async tandingan({ tesis, lawan, bantahan, level }) {
+        const T = cl(lim(tesis, 500)), L = cl(lim(lawan, 600)), B = cl(lim(bantahan, 1500));
+        try {
+            const out = await callAI(level, `Siswa berlatih membantah pandangan lawan.
+Tesis siswa: "${T}"
+Pandangan lawan: "${L}"
+Bantahan siswa: "${B}"
+Nilai bantahan: mengakui sebagian sisi lawan dengan sopan, menunjukkan kelemahan pandangan lawan, dan memberi alasan atau bukti yang menguatkan tesis.
+Beri "skor" (0-100), "kuat" (maks 2), "perbaiki" (maks 2, spesifik), dan "contoh" (satu contoh kalimat bantahan yang lebih kuat sebagai teladan, bukan jawaban tunggal).
+Format: {"skor":0,"kuat":[""],"perbaiki":[""],"contoh":""}`, 800);
+            return { mode: 'ai', skor: num(out.skor, 100), kuat: arr(out.kuat, 2), perbaiki: arr(out.perbaiki, 2), contoh: cl(out.contoh) };
+        } catch (e) {
+            console.error("tandingan offline:", e.message);
+            const w = words(B), c = (B.match(/namun|tetapi|meskipun|walaupun|karena|sebab|misalnya|faktanya|terbukti|memang/gi) || []).length;
+            return { mode: 'offline', skor: num(25 + Math.min(w, 40) / 40 * 40 + Math.min(c, 3) * 10, 100),
+                kuat: ['Kamu sudah berani menanggapi pandangan lawan.'],
+                perbaiki: [c < 2 ? 'Gunakan pola: akui (memang...), bantah (namun...), buktikan (karena/misalnya...).' : 'Tambahkan satu fakta atau contoh nyata untuk menguatkan bantahanmu.'], contoh: '' };
+        }
     }
 };
 
