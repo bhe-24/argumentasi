@@ -4,349 +4,194 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Koleksi Handout - Argumentasi</title>
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
-                    colors: { 
-                        brand: { amber: '#f59e0b', light: '#fef3c7', dark: '#b45309' } 
-                    }
-                }
-            }
-        }
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { amber: '#f59e0b', light: '#fef3c7', dark: '#b45309' } } } } }
     </script>
-
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
-        
-        /* Menyembunyikan scrollbar untuk estetika Mobile App */
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-        
-        /* Tab Styles (Amber Theme) */
-        .tab-active { border-bottom: 3px solid #f59e0b; color: #f59e0b; font-weight: 700; }
-        .tab-inactive { border-bottom: 3px solid transparent; color: #64748b; font-weight: 500; }
-
-        /* Efek Buku */
-        .book-spine { border-left: 4px solid rgba(0,0,0,0.15); border-radius: 4px 8px 8px 4px; }
-        .modal-z { z-index: 99999 !important; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { scrollbar-width: none; }
+        .lc2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .lc1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .item { animation: up .35s ease-out both; } @keyframes up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        .sk { position: relative; overflow: hidden; background: #e2e8f0; }
+        .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent); animation: sh 1.3s infinite; } @keyframes sh { 100% { transform: translateX(100%); } }
+        .spine { box-shadow: inset 4px 0 0 rgba(0,0,0,.12); }
+        .tab-on { border-bottom: 3px solid #f59e0b; color: #d97706; font-weight: 700; } .tab-off { border-bottom: 3px solid transparent; color: #64748b; font-weight: 500; }
     </style>
 </head>
 <body class="flex justify-center min-h-screen">
+<div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
 
-    <!-- CONTAINER UTAMA (Mobile App Frame) -->
-    <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col overflow-hidden sm:border-x border-slate-200">
-        
-        <!-- HEADER ALA APLIKASI (Amber Theme) -->
-        <header class="bg-amber-500 pt-4 pb-3 px-4 relative z-20 shadow-sm">
-            <!-- Top Bar -->
-            <div class="flex items-center gap-3 mb-4">
-                <a href="index.html" class="text-white text-lg px-2 py-1 hover:bg-white/20 rounded-full transition-colors"><i class="fas fa-chevron-left"></i></a>
-                <h1 class="text-lg font-semibold text-white flex-1 truncate">Koleksi Handout</h1>
-                <a href="profil.html" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white border border-white/30 hover:bg-white/30 transition-colors">
-                    <i class="fas fa-user text-sm"></i>
-                </a>
-            </div>
-            
-            <!-- Search Bar -->
-            <div class="bg-white rounded-xl flex items-center px-3 py-2 shadow-sm border border-amber-300">
-                <i class="fas fa-search text-slate-400 text-sm mr-2"></i>
-                <input type="text" id="searchInput" placeholder="Cari judul buku atau modul..." class="w-full bg-transparent outline-none text-slate-700 text-sm placeholder-slate-400" oninput="filterPencarian()">
-            </div>
+    <!-- HEADER + TAB (STICKY) -->
+    <div class="sticky top-0 z-50 shadow-md">
+        <header class="bg-amber-500 px-4 h-14 flex items-center gap-3">
+            <a href="index.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
+            <div class="flex-1 min-w-0"><h1 class="text-white font-bold text-sm leading-tight truncate">Koleksi Handout</h1><p id="sub" class="text-white/80 text-[10px] leading-tight truncate">Memuat rak buku…</p></div>
+            <button id="btnCari" onclick="tglCari()" aria-label="Cari" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-search"></i></button>
+            <a href="profil.html" aria-label="Profil" class="shrink-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white border border-white/30"><i class="fas fa-user text-sm"></i></a>
         </header>
-
-        <!-- TABS NAVIGASI (Sticky) -->
-        <div class="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm px-2">
-            <div class="flex overflow-x-auto hide-scrollbar">
-                <button onclick="ubahTab('semua', this)" class="tab-btn tab-active flex-1 min-w-[100px] py-3.5 text-center text-[11px] uppercase tracking-wider transition-all whitespace-nowrap">
-                    📚 Semua
-                </button>
-                <button onclick="ubahTab('modul', this)" class="tab-btn tab-inactive flex-1 min-w-[100px] py-3.5 text-center text-[11px] uppercase tracking-wider transition-all whitespace-nowrap">
-                    📝 Modul Ajar
-                </button>
-                <button onclick="ubahTab('buku', this)" class="tab-btn tab-inactive flex-1 min-w-[100px] py-3.5 text-center text-[11px] uppercase tracking-wider transition-all whitespace-nowrap">
-                    📖 Buku Referensi
-                </button>
-            </div>
+        <div id="boxCari" class="hidden bg-amber-500 px-4 pb-3">
+            <div class="bg-white rounded-xl flex items-center px-3 py-2 shadow-sm"><i class="fas fa-search text-slate-400 text-sm mr-2"></i><input id="q" type="text" placeholder="Cari judul, kategori, atau isi ringkasan…" class="w-full bg-transparent outline-none text-slate-700 text-sm placeholder-slate-400" oninput="cariTunda()"><button onclick="hapusCari()" class="text-slate-300 hover:text-slate-500 ml-2"><i class="fas fa-circle-xmark"></i></button></div>
         </div>
-
-        <!-- MAIN KONTEN (Scrollable List) -->
-        <div class="flex-grow overflow-y-auto hide-scrollbar p-4 relative bg-slate-50">
-            
-            <!-- STATE: LOADING -->
-            <div id="loadingState" class="flex flex-col items-center justify-center py-20">
-                <i class="fas fa-circle-notch fa-spin text-3xl text-brand-amber mb-3"></i>
-                <h3 class="font-bold text-slate-700 text-sm">Memuat Rak Buku...</h3>
-            </div>
-
-            <!-- STATE: EMPTY / ERROR -->
-            <div id="emptyState" class="hidden flex-col items-center justify-center py-16 text-center">
-                <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-4xl mb-4 text-slate-300">
-                    <i class="fas fa-folder-open"></i>
-                </div>
-                <h3 class="font-bold text-slate-700 text-base mb-1">Rak Kosong</h3>
-                <p class="text-xs text-slate-500 max-w-[250px] mx-auto" id="emptyMsg">Belum ada file PDF/Handout yang diunggah ke server.</p>
-            </div>
-
-            <!-- GRID CONTAINER (2 Kolom) -->
-            <div id="handoutGrid" class="grid grid-cols-2 gap-3 fade-in hidden">
-                <!-- Card Data akan diinjeksi ke sini oleh JS -->
-            </div>
-
-        </div>
-
+        <nav id="tabs" class="bg-white border-b border-slate-200 flex overflow-x-auto hide-scrollbar px-2"></nav>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- MODAL PRATINJAU PDF (Mobile Frame Constraint)                -->
-    <!-- ============================================================ -->
-    <div id="modalPreview" class="fixed inset-0 bg-slate-900/90 hidden modal-z flex flex-col items-center opacity-0 transition-opacity duration-300">
-        <div class="w-full max-w-md bg-white h-full flex flex-col relative shadow-2xl">
-            
-            <!-- Topbar Modal Preview -->
-            <div class="bg-white px-4 py-3 flex justify-between items-center shadow-md z-10 border-b border-slate-200">
-                <div class="flex items-center gap-3 overflow-hidden">
-                    <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center text-red-600 shrink-0">
-                        <i class="fas fa-file-pdf text-sm"></i>
-                    </div>
-                    <div class="truncate">
-                        <h3 class="font-bold text-slate-800 text-xs truncate leading-none mb-0.5" id="previewTitle">Judul Buku</h3>
-                        <span class="text-[9px] font-medium text-slate-400 uppercase tracking-widest block">Pratinjau Dokumen</span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <a href="#" id="btnUnduhModal" target="_blank" download class="bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors">
-                        <i class="fas fa-download text-xs"></i>
-                    </a>
-                    <button onclick="tutupPreview()" class="text-slate-400 hover:text-red-500 bg-slate-100 hover:bg-red-50 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
-                        <i class="fas fa-times text-sm"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Loading Indicator untuk Iframe -->
-            <div id="previewLoading" class="absolute inset-0 flex flex-col items-center justify-center z-0 bg-slate-800">
-                <i class="fas fa-circle-notch fa-spin text-3xl text-white mb-3"></i>
-                <p class="text-white text-xs font-medium">Memuat Dokumen PDF...</p>
-            </div>
-
-            <!-- Body Modal (Iframe Container) -->
-            <div class="flex-1 w-full bg-slate-800 relative z-10 overflow-hidden">
-                <iframe id="pdfIframe" src="" class="w-full h-full border-0" title="PDF Preview" onload="document.getElementById('previewLoading').classList.add('hidden');"></iframe>
-            </div>
+    <main class="flex-grow p-4">
+        <div id="sLoading" class="grid grid-cols-2 gap-3"></div>
+        <div id="sKosong" class="hidden flex-col items-center justify-center py-16 text-center">
+            <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-4xl mb-4 text-slate-300"><i class="fas fa-folder-open"></i></div>
+            <h3 class="font-bold text-slate-700 text-base mb-1" id="kosongJudul">Rak Kosong</h3>
+            <p class="text-xs text-slate-500 max-w-[260px] mx-auto leading-relaxed" id="kosongPesan">Belum ada handout yang diunggah.</p>
+            <button id="btnUlang" onclick="location.reload()" class="hidden mt-4 bg-amber-500 text-white text-xs font-bold px-5 py-2.5 rounded-full active:scale-95"><i class="fas fa-rotate mr-1.5"></i>Muat Ulang</button>
         </div>
-    </div>
+        <div id="grid" class="hidden grid grid-cols-2 gap-3"></div>
+    </main>
 
-    <!-- SCRIPT UI DASAR & LOGIKA FILTER -->
-    <script>
-        let allHandouts = []; // Menyimpan semua data mentah dari Firebase
-        let currentFilter = 'semua'; // Tab aktif
+    <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0"><p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p></footer>
+</div>
 
-        // Logic Ganti Tab
-        function ubahTab(jenis, btnElement) {
-            currentFilter = jenis;
-            
-            // Ubah Style Tab
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('tab-active');
-                btn.classList.add('tab-inactive');
-            });
-            btnElement.classList.remove('tab-inactive');
-            btnElement.classList.add('tab-active');
+<div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 z-[100] w-11/12 max-w-sm pointer-events-none"></div>
 
-            // Reset Pencarian
-            document.getElementById('searchInput').value = '';
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const TABS = [['semua', '📚 Semua'], ['modul', '📝 Modul Ajar'], ['buku', '📖 Buku Referensi']];
+let semua = [], tab = 'semua', kueri = '', timer = null;
 
-            // Terapkan Pengurutan/Filter
-            renderListByFilter();
-        }
+$('sLoading').innerHTML = [1, 2, 3, 4].map(() => '<div class="bg-white rounded-2xl border border-slate-100 p-3"><div class="sk aspect-[3/4] rounded-lg mb-3"></div><div class="sk h-3 w-5/6 rounded mb-2"></div><div class="sk h-3 w-1/2 rounded"></div></div>').join('');
 
-        // Logic Pencarian Realtime
-        function filterPencarian() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const filteredData = allHandouts.filter(item => item.judul.toLowerCase().includes(query));
-            
-            renderHTML(filteredData);
-            
-            if(filteredData.length === 0) {
-                document.getElementById('emptyState').classList.remove('hidden');
-                document.getElementById('emptyMsg').innerText = "Pencarian tidak menemukan buku/modul yang cocok.";
-            } else {
-                document.getElementById('emptyState').classList.add('hidden');
-            }
-        }
+function toast(msg, err) {
+    const t = document.createElement('div');
+    t.className = `${err ? 'bg-red-500' : 'bg-slate-800'} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 mb-2 item`;
+    t.innerHTML = `<i class="fas ${err ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400'}"></i><span class="flex-1">${esc(msg)}</span>`;
+    $('toast').appendChild(t); setTimeout(() => t.remove(), 2800);
+}
+const slug = s => String(s || 'handout').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'handout';
 
-        // Logic Pengurutan/Filter Data
-        function renderListByFilter() {
-            let filteredData = [...allHandouts];
+/* ---------- Unduh mandiri ---------- */
+window.unduhFile = async function (url, judul, tombol) {
+    const ikon = tombol && tombol.innerHTML; if (tombol) { tombol.disabled = true; tombol.innerHTML = '<i class="fas fa-circle-notch fa-spin text-[10px]"></i>'; }
+    try {
+        const r = await fetch(url, { mode: 'cors' }); if (!r.ok) throw new Error('http ' + r.status);
+        const b = await r.blob(), a = document.createElement('a');
+        a.href = URL.createObjectURL(b); a.download = slug(judul) + '.pdf'; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000); toast('Unduhan dimulai.');
+    } catch (e) { console.warn('Unduh langsung gagal, buka tab baru:', e); window.open(url, '_blank', 'noopener'); toast('File dibuka di tab baru. Simpan dari sana.'); }
+    finally { if (tombol) { tombol.disabled = false; tombol.innerHTML = ikon; } }
+};
 
-            if (currentFilter !== 'semua') {
-                // Filter kategori (mencari kecocokan kata 'modul' atau 'buku')
-                filteredData = filteredData.filter(item => {
-                    const kat = (item.kategori || "").toLowerCase();
-                    return kat.includes(currentFilter);
-                });
-            }
-
-            if(filteredData.length === 0) {
-                document.getElementById('handoutGrid').classList.add('hidden');
-                document.getElementById('emptyState').classList.remove('hidden');
-                document.getElementById('emptyMsg').innerText = "Belum ada dokumen di kategori ini.";
-            } else {
-                document.getElementById('emptyState').classList.add('hidden');
-                renderHTML(filteredData);
-            }
-        }
-
-        // Logic Render HTML ke Layar
-        function renderHTML(dataArray) {
-            const container = document.getElementById('handoutGrid');
-            let html = "";
-
-            dataArray.forEach((data) => {
-                // Escape petik satu pada judul untuk fungsi JS
-                const safeJudul = data.judul.replace(/'/g, "\\'");
-                const sizeText = data.ukuranFile ? `${data.ukuranFile} MB` : 'PDF';
-                const coverImg = data.coverImage || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300";
-
-                html += `
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-3 flex flex-col group hover:border-amber-400 transition-all active:scale-95 fade-in">
-                    <div class="relative w-full aspect-[3/4] rounded-lg overflow-hidden mb-3 shadow-sm bg-slate-100">
-                        <img src="${coverImg}" alt="${data.judul}" class="w-full h-full object-cover book-spine">
-                        <div class="absolute top-2 right-2 bg-red-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm tracking-wider">PDF</div>
-                    </div>
-                    <h3 class="font-bold text-slate-800 text-[12px] leading-snug line-clamp-2 mb-1">${data.judul}</h3>
-                    <p class="text-[9px] text-slate-500 mb-3 line-clamp-1">${data.kategori || 'Handout'} • ${sizeText}</p>
-                    <div class="mt-auto flex gap-1.5">
-                        <button onclick="bukaPreview('${data.fileUrl}', '${safeJudul}')" class="flex-1 bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white text-[10px] font-bold py-2 rounded-lg transition-colors text-center">Buka</button>
-                        <a href="${data.fileUrl}" target="_blank" download class="w-8 flex items-center justify-center bg-slate-50 border border-slate-100 text-slate-500 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 rounded-lg transition-colors" title="Unduh File">
-                            <i class="fas fa-download text-[10px]"></i>
-                        </a>
-                    </div>
-                </div>`;
-            });
-
-            container.innerHTML = html;
-            
-            // Animasi refresh grid
-            container.classList.remove('hidden');
-            container.classList.remove('fade-in');
-            void container.offsetWidth; // trigger reflow
-            container.classList.add('fade-in');
-        }
-
-        // Logic Buka/Tutup Modal PDF
-        window.bukaPreview = function(url, judul) {
-            const modal = document.getElementById('modalPreview');
-            const iframe = document.getElementById('pdfIframe');
-            
-            document.getElementById('previewTitle').innerText = judul;
-            document.getElementById('btnUnduhModal').href = url;
-            document.getElementById('previewLoading').classList.remove('hidden');
-            
-            // Gunakan Google Docs Viewer sebagai iframe renderer universal
-            const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
-            iframe.src = viewerUrl;
-
-            modal.classList.remove('hidden');
-            requestAnimationFrame(() => modal.classList.remove('opacity-0'));
-            document.body.style.overflow = 'hidden';
-        };
-
-        window.tutupPreview = function() {
-            const modal = document.getElementById('modalPreview');
-            const iframe = document.getElementById('pdfIframe');
-            
-            modal.classList.add('opacity-0');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                iframe.src = ''; 
-                document.body.style.overflow = 'auto';
-            }, 300);
-        };
-    </script>
-
-    <!-- FIREBASE FETCH DATA (Real Data) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        // Konfigurasi Firebase Anda
-        const firebaseConfig = {
-            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
-            projectId: "mading-cf676",
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        async function fetchHandoutsServer() {
-            const loadingState = document.getElementById('loadingState');
-            const emptyState = document.getElementById('emptyState');
-            const handoutGrid = document.getElementById('handoutGrid');
-
+/* ---------- Cover dari halaman pertama PDF (cadangan bila belum ada) ---------- */
+const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js', WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+let pdfLibP = null, antri = [], jalan = 0;
+function muatPdfJs() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    return pdfLibP || (pdfLibP = new Promise((ok, no) => { const s = document.createElement('script'); s.src = PDFJS; s.onload = () => { pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER; ok(pdfjsLib); }; s.onerror = () => { pdfLibP = null; no(new Error('pdf.js gagal dimuat')); }; document.head.appendChild(s); }));
+}
+async function buatCover(h) {
+    const lib = await muatPdfJs(), task = lib.getDocument({ url: h.fileUrl });
+    const pdf = await task.promise;
+    try {
+        const p = await pdf.getPage(1), v1 = p.getViewport({ scale: 1 }), vp = p.getViewport({ scale: 280 / v1.width });
+        const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+        await p.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+        return { data: c.toDataURL('image/jpeg', 0.72), halaman: pdf.numPages };
+    } finally { pdf.destroy(); }
+}
+function jalankan() {
+    while (jalan < 2 && antri.length) {
+        const h = antri.shift(); jalan++;
+        (async () => {
             try {
-                // Sesuai sistem sebelumnya, kita menarik dari koleksi 'handouts'
-                const q = query(collection(db, "handouts"), orderBy("createdAt", "desc"));
-                const snap = await getDocs(q);
+                let hasil = null; try { hasil = JSON.parse(sessionStorage.getItem('cv_' + h.id) || 'null'); } catch (e) {}
+                if (!hasil) { hasil = await buatCover(h); try { sessionStorage.setItem('cv_' + h.id, JSON.stringify(hasil)); } catch (e) {} }
+                pasangCover(h.id, hasil.data, hasil.halaman);
+            } catch (e) { console.warn('Cover tidak bisa dibuat untuk', h.judul, e && e.message); }
+            finally { jalan--; jalankan(); }
+        })();
+    }
+}
+function pasangCover(id, data, halaman) {
+    const el = document.querySelector(`[data-cover="${id}"]`); if (!el) return;
+    el.innerHTML = `<img src="${data}" alt="" class="w-full h-full object-cover spine">${el.dataset.badge || ''}`;
+    if (halaman) { const b = document.createElement('div'); b.className = 'absolute bottom-2 left-2 bg-black/60 text-white text-[8px] font-bold px-1.5 py-0.5 rounded'; b.textContent = halaman + ' hal'; el.appendChild(b); }
+}
+const pengamat = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { pengamat.unobserve(e.target); const h = semua.find(x => x.id === e.target.dataset.cover); if (h) { antri.push(h); jalankan(); } } }), { rootMargin: '300px' }) : null;
 
-                loadingState.classList.add('hidden');
+/* ---------- Tampilan ---------- */
+function cocok(h, k) { const kat = (h.kategori || '').toLowerCase(); return k === 'semua' || kat.includes(k); }
+function renderTabs() {
+    $('tabs').innerHTML = TABS.map(([k, l]) => `<button onclick="ubahTab('${k}')" class="flex-1 min-w-[110px] py-3 text-center text-[11px] uppercase tracking-wider whitespace-nowrap transition-all ${tab === k ? 'tab-on' : 'tab-off'}">${l} <span class="text-[10px] opacity-60">${semua.filter(h => cocok(h, k)).length}</span></button>`).join('');
+}
+function daftar() {
+    const q = kueri.trim().toLowerCase();
+    return semua.filter(h => cocok(h, tab) && (!q || (h.judul + ' ' + h.kategori + ' ' + (h.deskripsi || '')).toLowerCase().includes(q)));
+}
+function kartu(h, i) {
+    const badge = '<div class="absolute top-2 right-2 bg-red-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm tracking-wider">PDF</div>';
+    const ukuran = h.ukuranFile ? `${h.ukuranFile} MB` : 'PDF';
+    const cover = h.coverImage
+        ? `<img src="${esc(h.coverImage)}" alt="" loading="lazy" class="w-full h-full object-cover spine" onerror="this.parentNode.dataset.rusak=1;window.__coverRusak&&window.__coverRusak('${esc(h.id)}')">${badge}${h.halaman ? `<div class="absolute bottom-2 left-2 bg-black/60 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">${esc(h.halaman)} hal</div>` : ''}`
+        : `<div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-amber-100 to-amber-200 p-3 text-center"><i class="fas fa-file-pdf text-3xl text-amber-500 mb-2"></i><p class="text-[10px] font-bold text-amber-800 lc2 leading-snug">${esc(h.judul)}</p></div>${badge}`;
+    return `<article class="item bg-white rounded-2xl shadow-sm border border-slate-100 p-3 flex flex-col hover:border-amber-400 transition" style="animation-delay:${Math.min(i, 10) * 40}ms">
+        <button data-act="baca" data-id="${esc(h.id)}" data-cover="${esc(h.id)}" data-badge='${badge}' class="relative w-full aspect-[3/4] rounded-lg overflow-hidden mb-3 shadow-sm bg-slate-100 block text-left" aria-label="Baca ${esc(h.judul)}">${cover}</button>
+        <h3 class="font-bold text-slate-800 text-[12px] leading-snug lc2 mb-1">${esc(h.judul)}</h3>
+        <p class="text-[9px] text-slate-500 mb-3 lc1">${esc(h.kategori)} • ${esc(ukuran)}</p>
+        <div class="mt-auto flex gap-1.5">
+            <button data-act="baca" data-id="${esc(h.id)}" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold py-2 rounded-lg transition active:scale-95"><i class="fas fa-book-open mr-1"></i>Baca</button>
+            <button data-act="unduh" data-id="${esc(h.id)}" title="Unduh" aria-label="Unduh" class="w-9 flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-500 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 rounded-lg transition active:scale-95"><i class="fas fa-download text-[11px]"></i></button>
+        </div></article>`;
+}
+function tampil() {
+    const arr = daftar(); renderTabs();
+    $('sub').textContent = semua.length ? `${arr.length} dari ${semua.length} dokumen` : 'Belum ada dokumen';
+    if (!arr.length) {
+        $('grid').classList.add('hidden'); $('sKosong').classList.replace('hidden', 'flex');
+        $('kosongJudul').textContent = kueri ? 'Tidak ditemukan' : 'Rak Kosong';
+        $('kosongPesan').textContent = kueri ? 'Tidak ada handout yang cocok dengan pencarianmu.' : (semua.length ? 'Belum ada dokumen di kategori ini.' : 'Belum ada handout yang diunggah.');
+        $('btnUlang').classList.add('hidden'); return;
+    }
+    $('sKosong').classList.replace('flex', 'hidden');
+    $('grid').innerHTML = arr.map(kartu).join(''); $('grid').classList.remove('hidden');
+    arr.forEach(h => { const el = document.querySelector(`[data-cover="${h.id}"]`); if (el && !h.coverImage && pengamat) pengamat.observe(el); });
+}
+window.__coverRusak = id => { const h = semua.find(x => x.id === id), el = document.querySelector(`[data-cover="${id}"]`); if (h && el && pengamat) { h.coverImage = ''; el.innerHTML = '<div class="w-full h-full sk"></div>'; antri.push(h); jalankan(); } };
 
-                if (snap.empty) {
-                    emptyState.classList.remove('hidden');
-                    return;
-                }
+window.ubahTab = k => { tab = k; tampil(); window.scrollTo({ top: 0 }); };
+window.tglCari = () => { const b = $('boxCari'); b.classList.toggle('hidden'); if (!b.classList.contains('hidden')) $('q').focus(); };
+window.hapusCari = () => { $('q').value = ''; kueri = ''; tampil(); };
+window.cariTunda = () => { clearTimeout(timer); timer = setTimeout(() => { kueri = $('q').value; tampil(); }, 200); };
 
-                allHandouts = [];
-                snap.forEach(doc => {
-                    const data = doc.data();
-                    if(data.fileUrl) {
-                        allHandouts.push({
-                            id: doc.id,
-                            judul: data.judul || "Handout Tanpa Judul",
-                            coverImage: data.coverImage,
-                            fileUrl: data.fileUrl,
-                            ukuranFile: data.ukuranFile,
-                            kategori: data.kategori || "Bahan Ajar"
-                        });
-                    }
-                });
+$('grid').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const h = semua.find(x => x.id === b.dataset.id); if (!h) return;
+    if (b.dataset.act === 'baca') location.href = 'view-pdf.html?id=' + encodeURIComponent(h.id);
+    else unduhFile(h.fileUrl, h.judul, b);
+});
 
-                if (allHandouts.length === 0) {
-                    emptyState.classList.remove('hidden');
-                    return;
-                }
+/* ---------- Dipanggil oleh pemuat Firestore ---------- */
+window.muatData = list => { semua = list; $('sLoading').classList.add('hidden'); tampil(); };
+window.galat = pesan => { $('sLoading').classList.add('hidden'); $('sub').textContent = 'Gagal memuat'; $('sKosong').classList.replace('hidden', 'flex'); $('kosongJudul').textContent = 'Gagal Memuat'; $('kosongPesan').textContent = pesan; $('btnUlang').classList.remove('hidden'); };
+</script>
 
-                // Tampilkan list untuk pertama kali (Mode 'Semua')
-                handoutGrid.classList.remove('hidden');
-                renderListByFilter();
-
-            } catch (error) {
-                console.error("Firebase Error:", error);
-                loadingState.classList.add('hidden');
-                emptyState.classList.remove('hidden');
-                document.getElementById('emptyMsg').innerText = "Terjadi gangguan jaringan saat memuat data rak buku. Silakan muat ulang.";
-            }
-        }
-
-        // Panggil fungsi saat DOM selesai di-load
-        document.addEventListener('DOMContentLoaded', fetchHandoutsServer);
-    </script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+const db = getFirestore(initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" }));
+try {
+    // Tanpa orderBy agar dokumen tanpa createdAt tetap tampil; diurutkan di sisi klien.
+    const snap = await getDocs(collection(db, "handouts"));
+    const ms = t => t ? (t.toMillis ? t.toMillis() : new Date(t).getTime() || 0) : 0;
+    const list = [];
+    snap.forEach(d => { const v = d.data();
+        if (!v.fileUrl || v.status === 'draft' || v.status === 'dihapus') return;
+        list.push({ id: d.id, judul: v.judul || 'Handout Tanpa Judul', coverImage: v.coverImage || '', fileUrl: v.fileUrl, ukuranFile: v.ukuranFile || '', kategori: v.kategori || 'Bahan Ajar', halaman: v.halaman || '', deskripsi: v.deskripsi || '', t: ms(v.createdAt) }); });
+    list.sort((a, b) => b.t - a.t);
+    window.muatData(list);
+} catch (e) { console.error("Firebase Error:", e); window.galat('Terjadi gangguan jaringan saat memuat rak buku. Silakan muat ulang.'); }
+</script>
 </body>
 </html>
