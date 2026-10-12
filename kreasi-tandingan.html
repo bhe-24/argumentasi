@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Argumen Tandingan - Ruang Kreasi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }
+    </script>
+    <!-- Logika bersama Ruang Kreasi disematkan agar halaman ini berdiri sendiri -->
+    <script>
+/* kreasi-core.js — logika bersama seluruh halaman Ruang Kreasi (profil, XP, draf, arsip, API, UI umum) */
+(function () {
+    const rd = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
+    const wr = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const day = d => d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+    const TITLES = ['Penulis Pemula', 'Penulis Muda', 'Penalar Cermat', 'Debater Handal', 'Maestro Argumen'];
+    const BADGES = { ide: ['Pencari Ide', 'fa-lightbulb'], naskah: ['Naskah Perdana', 'fa-scroll'], revisi: ['Rajin Revisi', 'fa-pen-nib'], skor80: ['Nilai 80+', 'fa-star'], streak3: ['Api 3 Hari', 'fa-fire'] };
+
+    document.head.insertAdjacentHTML('beforeend', `<style>
+        body{font-family:'Poppins',sans-serif;background:#f1f5f9;-webkit-tap-highlight-color:transparent}
+        .hide-scrollbar::-webkit-scrollbar{display:none}.hide-scrollbar{scrollbar-width:none}
+        .fade-in{animation:kf .35s ease-out both}@keyframes kf{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+        .line-clamp-1{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}.line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.lc2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .sk{position:relative;overflow:hidden;background:#e2e8f0;border-radius:.6rem}.sk::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:sh 1.3s infinite}@keyframes sh{100%{transform:translateX(100%)}}
+        .btn{display:flex;align-items:center;justify-content:center;gap:.5rem;font-weight:700;border-radius:.85rem;transition:transform .15s}.btn:active{transform:scale(.96)}.btn:disabled{opacity:.45}
+        .fld{width:100%;border:1px solid #e2e8f0;border-radius:.85rem;padding:.7rem .9rem;font-size:13px;background:#f8fafc;outline:none}.fld:focus{border-color:#059669;box-shadow:0 0 0 4px rgba(5,150,105,.12)}
+    </style>`);
+
+    const K = {
+        esc,
+        profile() {
+            const p = rd('kreasi_profile', null) || { xp: parseInt(localStorage.getItem('kreasiPointsArg') || '0'), streak: 0, last: '', badges: [], level: 'smp' };
+            return p;
+        },
+        saveProfile(p) { wr('kreasi_profile', p); },
+        level(xp) {
+            const lv = Math.floor(xp / 150) + 1, cur = xp % 150;
+            return { lv, title: TITLES[Math.min(TITLES.length - 1, lv - 1)], cur, next: 150, pct: Math.round(cur / 150 * 100) };
+        },
+        touch() {
+            const p = K.profile(), now = new Date(), y = new Date(now.getTime() - 864e5);
+            if (p.last !== day(now)) { p.streak = p.last === day(y) ? p.streak + 1 : 1; p.last = day(now); K.saveProfile(p); if (p.streak >= 3) K.badge('streak3'); }
+        },
+        addXP(n, why) {
+            const p = K.profile(), before = K.level(p.xp).lv;
+            p.xp += n; K.saveProfile(p); localStorage.setItem('kreasiPointsArg', p.xp);
+            const el = document.getElementById('kXp'); if (el) el.textContent = p.xp;
+            K.toast(`+${n} XP${why ? ' · ' + why : ''}`);
+            const after = K.level(p.xp);
+            if (after.lv > before) setTimeout(() => { K.toast(`Naik ke Level ${after.lv}: ${after.title}!`); K.beep('success'); window.confetti && confetti({ particleCount: 90, spread: 70, origin: { y: .6 }, zIndex: 100000 }); }, 900);
+        },
+        badge(id) {
+            const p = K.profile(); if (p.badges.includes(id) || !BADGES[id]) return;
+            p.badges.push(id); K.saveProfile(p); setTimeout(() => K.toast(`Lencana baru: ${BADGES[id][0]}!`), 1400);
+        },
+        BADGES,
+        draft: () => rd('kreasi_draft', null),
+        setDraft(patch, replace) { const d = replace ? patch : Object.assign(rd('kreasi_draft', {}) || {}, patch); wr('kreasi_draft', d); return d; },
+        clearDraft: () => localStorage.removeItem('kreasi_draft'),
+        karya: () => rd('kreasi_karya', []),
+        addKarya(k) { const a = K.karya(); a.unshift(k); wr('kreasi_karya', a.slice(0, 30)); },
+        words: t => String(t || '').trim().split(/\s+/).filter(Boolean).length,
+
+        async api(action, payload = {}) {
+            const res = await fetch('/api/all-kreasi', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, level: K.profile().level, ...payload }), signal: AbortSignal.timeout(30000) });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.detail_error || 'Server error');
+            return data;
+        },
+
+        toast(msg, err) {
+            let c = document.getElementById('kToast');
+            if (!c) { c = document.createElement('div'); c.id = 'kToast'; c.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none'; document.body.appendChild(c); }
+            const t = document.createElement('div');
+            t.className = `${err ? 'bg-red-500' : 'bg-slate-800'} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 transition-all duration-300 opacity-0 -translate-y-3`;
+            t.innerHTML = `<i class="fas ${err ? 'fa-exclamation-circle' : 'fa-circle-check text-emerald-400'}"></i><span class="flex-1">${esc(msg)}</span>`;
+            c.appendChild(t); requestAnimationFrame(() => t.classList.remove('opacity-0', '-translate-y-3'));
+            setTimeout(() => { t.classList.add('opacity-0', '-translate-y-3'); setTimeout(() => t.remove(), 300); }, 2800);
+        },
+        beep(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)(), o = ctx.createOscillator(), g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                if (type === 'success') { o.type = 'sine'; o.frequency.setValueAtTime(523, ctx.currentTime); o.frequency.exponentialRampToValueAtTime(1046, ctx.currentTime + .1); }
+                else { o.type = 'sawtooth'; o.frequency.setValueAtTime(150, ctx.currentTime); }
+                g.gain.setValueAtTime(.08, ctx.currentTime); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .4); o.start(); o.stop(ctx.currentTime + .4);
+            } catch (e) {}
+        },
+
+        mountHeader(title, back) {
+            const p = K.profile();
+            document.getElementById('hdr').innerHTML = `
+            <header class="bg-brand-green fixed w-full max-w-md z-50 px-4 py-3 flex items-center gap-3 shadow-md">
+                <a href="${back}" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors active:scale-95"><i class="fas fa-chevron-left"></i></a>
+                <h1 class="flex-1 text-white font-bold text-sm tracking-wide truncate">${title}</h1>
+                <span class="bg-white/20 border border-white/30 text-white px-2.5 py-1 rounded-full text-[11px] font-bold backdrop-blur-sm"><i class="fas fa-fire text-amber-300"></i> ${p.streak}</span>
+                <span class="bg-white/20 border border-white/30 text-white px-2.5 py-1 rounded-full text-[11px] font-bold backdrop-blur-sm flex items-center gap-1"><i class="fas fa-pen-fancy text-[10px]"></i><span id="kXp">${p.xp}</span> XP</span>
+            </header>
+            <div class="h-[60px] bg-brand-green"></div>
+            <div class="bg-brand-green pb-10 px-4 relative z-10 rounded-b-[2rem] -mt-1"></div>`;
+        },
+        mountSteps(n) {
+            const S = ['Pilih Ide', 'Tulis & Revisi', 'Naskah Jadi'];
+            document.getElementById('steps').innerHTML = `<div class="px-4 -mt-10 relative z-20"><div class="bg-white rounded-2xl shadow-md p-4"><div class="flex items-center">${S.map((s, i) => `
+                <div class="flex items-center ${i < 2 ? 'flex-1' : ''}"><div class="flex flex-col items-center"><div class="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold ${i + 1 < n ? 'bg-emerald-500 text-white' : i + 1 === n ? 'bg-brand-green text-white ring-4 ring-brand-light' : 'bg-slate-100 text-slate-400'}">${i + 1 < n ? '<i class="fas fa-check"></i>' : i + 1}</div><span class="text-[9px] font-semibold mt-1 ${i + 1 === n ? 'text-brand-dark' : 'text-slate-400'}">${s}</span></div>${i < 2 ? `<div class="flex-1 h-0.5 mx-2 mb-4 ${i + 1 < n ? 'bg-emerald-400' : 'bg-slate-200'}"></div>` : ''}</div>`).join('')}</div></div></div>`;
+        }
+    };
+    window.K = K; K.touch();
+})();
+
+    </script>
+    <style>
+        .item { animation: kf .3s ease-out both; }
+        details > summary { list-style: none; } details > summary::-webkit-details-marker { display: none; }
+        details[open] .chev { transform: rotate(180deg); } .chev { transition: transform .2s; }
+        .shake { animation: sk .35s; } @keyframes sk { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen">
+<div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
+
+    <header class="sticky top-0 z-50 bg-brand-green h-14 px-4 flex items-center gap-3 shadow-md">
+        <a href="kreasi.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
+        <div class="flex-1 min-w-0"><h1 class="text-white font-bold text-sm leading-tight truncate">Argumen Tandingan</h1><p class="text-white/70 text-[10px] leading-tight truncate">Latihan membantah pandangan lawan</p></div>
+        <span class="shrink-0 bg-white/20 border border-white/30 text-white px-2 py-1 rounded-full text-[11px] font-bold"><i class="fas fa-fire text-amber-300"></i> <span id="hStreak">0</span></span>
+        <span class="shrink-0 bg-white/20 border border-white/30 text-white px-2 py-1 rounded-full text-[11px] font-bold"><i class="fas fa-pen-fancy text-[10px]"></i> <span id="hXp">0</span> XP</span>
+    </header>
+
+    <section class="bg-brand-green px-4 pb-5 pt-1 rounded-b-3xl"><div class="bg-white/15 border border-white/20 rounded-2xl p-4 backdrop-blur-sm">
+    <div class="flex items-center gap-3"><div class="w-11 h-11 rounded-xl bg-white text-brand-green flex items-center justify-center text-xl shrink-0"><i class="fas fa-people-arrows"></i></div>
+    <div class="flex-1 min-w-0"><p class="text-white font-bold text-sm leading-tight">Perkuat tesismu dengan bantahan</p><p class="text-white/80 text-[11px] leading-snug mt-0.5">Pikirkan pandangan lawan, lalu patahkan dengan alasan yang kuat.</p></div></div>
+    <div class="flex items-center justify-between mt-3.5 text-center">
+        <div class="flex-1"><div class="w-7 h-7 mx-auto rounded-full bg-white text-brand-green text-[11px] font-bold flex items-center justify-center">1</div><p class="text-[9px] font-semibold text-white mt-1">Akui</p></div>
+        <i class="fas fa-chevron-right text-white/40 text-[10px]"></i>
+        <div class="flex-1"><div class="w-7 h-7 mx-auto rounded-full bg-white text-brand-green text-[11px] font-bold flex items-center justify-center">2</div><p class="text-[9px] font-semibold text-white mt-1">Bantah</p></div>
+        <i class="fas fa-chevron-right text-white/40 text-[10px]"></i>
+        <div class="flex-1"><div class="w-7 h-7 mx-auto rounded-full bg-white text-brand-green text-[11px] font-bold flex items-center justify-center">3</div><p class="text-[9px] font-semibold text-white mt-1">Buktikan</p></div>
+    </div></div></section>
+
+
+    <div class="sticky top-14 z-40 bg-slate-50/95 backdrop-blur border-b border-slate-200 mt-5">
+        <div class="px-4 py-2.5"><div class="flex justify-between text-[10px] font-semibold text-slate-500 mb-1.5"><span id="prog">0/3 bagian terisi</span><span id="draftInfo" class="truncate ml-3"></span></div><div class="h-1.5 bg-slate-200 rounded-full overflow-hidden"><div id="progBar" class="h-full bg-brand-green rounded-full transition-all duration-300" style="width:0"></div></div></div>
+    </div>
+    <main class="flex-grow px-4 mt-4 pb-4">
+
+        <!-- 1 TESIS -->
+        <section class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4">
+            <div class="flex items-center justify-between mb-2"><h2 class="font-bold text-sm text-emerald-700"><i class="fas fa-flag mr-1.5"></i>1. Tesismu</h2><button id="btnDraf" onclick="dariDraf()" class="hidden text-[10px] font-bold text-brand-green bg-brand-light px-2.5 py-1 rounded-full active:scale-95">Ambil dari draf</button></div>
+            <textarea id="tTesis" rows="2" maxlength="400" class="fld font-reading leading-relaxed resize-none" style="font-size:13px" placeholder="Tulis pendapat yang ingin kamu pertahankan…"></textarea>
+        </section>
+
+        <!-- 2 LAWAN -->
+        <section class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 mt-3">
+            <h2 class="font-bold text-sm text-amber-700 mb-2"><i class="fas fa-user-group mr-1.5"></i>2. Pandangan Lawan</h2>
+            <textarea id="tLawan" rows="3" maxlength="500" class="fld font-reading leading-relaxed resize-none" style="font-size:13px" placeholder="Apa yang mungkin dikatakan orang yang tidak setuju denganmu?"></textarea>
+            <button id="btnLawan" onclick="intip()" class="w-full mt-2.5 bg-amber-50 border border-amber-200 text-amber-700 font-bold py-2.5 rounded-xl text-[11px] active:scale-95 transition disabled:opacity-50"><i class="fas fa-eye mr-1.5"></i><span id="btnLawanTxt">Intip pandangan lawan (AI)</span></button>
+            <div id="boxLawan" class="mt-2.5"></div>
+        </section>
+
+        <!-- 3 BANTAHAN -->
+        <section class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 mt-3">
+            <h2 class="font-bold text-sm text-blue-700 mb-1"><i class="fas fa-shield-halved mr-1.5"></i>3. Bantahanmu</h2>
+            <p class="text-[11px] text-slate-500 leading-relaxed mb-2.5">Pola: <b>akui</b> sisi yang benar, <b>bantah</b> kelemahannya, lalu <b>buktikan</b> dengan alasan atau contoh.</p>
+            <div class="flex flex-col gap-1.5 mb-2.5" id="awal"></div>
+            <textarea id="tBantah" rows="5" maxlength="1200" class="fld font-reading leading-relaxed resize-none" style="font-size:13px" placeholder="Tulis bantahanmu di sini…"></textarea>
+            <div class="flex justify-between text-[10px] text-slate-400 mt-1.5"><span id="cntB">0 kata</span><span>target ≥ 12 kata</span></div>
+            <button id="btnCek" onclick="periksa()" class="w-full mt-3 bg-brand-green text-white font-bold py-3 rounded-xl shadow-md text-sm active:scale-95 transition disabled:opacity-40 disabled:shadow-none"><i class="fas fa-spell-check mr-1.5"></i><span id="btnCekTxt">Periksa Bantahan</span></button>
+        </section>
+
+        <div id="fb" class="mt-3"></div>
+    </main>
+
+
+    <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0">
+        <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
+        <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
+    </footer>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const hari = () => { const n = new Date(); return n.getFullYear() + '-' + (n.getMonth() + 1) + '-' + n.getDate(); };
+const shuf = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function xpHarian(key, n, why) {
+    const p = K.profile(); p.daily = p.daily || {};
+    if (p.daily[key] === hari() || n <= 0) return 0;
+    p.daily[key] = hari(); K.saveProfile(p); K.addXP(n, why); $('hXp').textContent = K.profile().xp; return n;
+}
+{ const p = K.profile(); $('hStreak').textContent = p.streak; $('hXp').textContent = p.xp; }
+
+const AWAL = ['Memang benar bahwa …, namun …', 'Pendapat itu kurang tepat karena …', 'Meskipun demikian, faktanya …'];
+const INS = ['Memang benar bahwa ', 'Pendapat itu kurang tepat karena ', 'Meskipun demikian, faktanya '];
+let busy = false, selesaiSkor = null;
+$('awal').innerHTML = AWAL.map((a, i) => `<button onclick="sisip(${i})" class="text-left text-[11px] italic bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-600 active:scale-[0.98] hover:border-brand-green transition">${a}</button>`).join('');
+const draf = K.draft();
+const adaDraf = !!(draf && draf.ide);
+if (adaDraf) { $('btnDraf').classList.remove('hidden'); $('draftInfo').textContent = 'Draf: ' + draf.ide.judul; }
+
+window.dariDraf = () => { const t = (draf.tesis && draf.tesis.trim()) || draf.ide.sudut || draf.ide.judul; $('tTesis').value = t; hitung(); K.toast('Tesis diambil dari drafmu.'); };
+window.sisip = i => { const t = $('tBantah'); t.value += (t.value && !/\s$/.test(t.value) ? ' ' : '') + INS[i]; t.focus(); t.setSelectionRange(t.value.length, t.value.length); hitung(); };
+function hitung() {
+    const a = K.words($('tTesis').value) >= 6, b = K.words($('tLawan').value) >= 6, c = K.words($('tBantah').value) >= 12;
+    $('prog').textContent = [a, b, c].filter(Boolean).length + '/3 bagian terisi'; $('progBar').style.width = ([a, b, c].filter(Boolean).length / 3 * 100) + '%';
+    $('cntB').textContent = K.words($('tBantah').value) + ' kata'; $('btnCek').disabled = busy || !(a && b && c);
+}
+['tTesis', 'tLawan', 'tBantah'].forEach(i => $(i).addEventListener('input', hitung)); hitung();
+
+window.intip = async () => {
+    const tesis = $('tTesis').value.trim();
+    if (K.words(tesis) < 6) { K.beep('error'); return K.toast('Tulis dulu tesismu (minimal 6 kata).', true); }
+    if (busy) return; busy = true; $('btnLawan').disabled = true; $('btnLawanTxt').textContent = 'Mengintip…';
+    try {
+        const r = await K.api('lawan', { tesis });
+        if (!r.pandangan || !r.pandangan.length) throw new Error('kosong');
+        window._lw = r.pandangan;
+        $('boxLawan').innerHTML = `<div class="item bg-amber-50 border border-amber-100 rounded-xl p-3"><p class="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-1.5">Bisa jadi lawanmu berkata:</p><div class="flex flex-col gap-1.5">${r.pandangan.map((x, i) => `<button onclick="pakaiLawan(${i})" class="text-left text-[11px] bg-white border border-amber-100 rounded-lg px-3 py-2 text-slate-700 leading-relaxed active:scale-[0.98]">${K.esc(x)} <span class="text-brand-green font-bold">· Pakai</span></button>`).join('')}</div>
+            ${r.pancingan ? `<p class="text-[11px] text-slate-600 italic mt-2.5 leading-relaxed"><i class="fas fa-lightbulb text-amber-500 mr-1"></i>${K.esc(r.pancingan)}</p>` : ''}</div>`;
+    } catch (e) { console.error(e); K.toast('AI sedang sibuk. Kamu tetap bisa menulis pandangan lawan sendiri.', true); K.beep('error'); }
+    finally { busy = false; $('btnLawan').disabled = false; $('btnLawanTxt').textContent = 'Intip pandangan lawan (AI)'; hitung(); }
+};
+window.pakaiLawan = i => { $('tLawan').value = window._lw[i]; hitung(); K.toast('Pandangan lawan dipakai.'); };
+
+const li = (a, ic, c) => (a || []).map(x => `<li class="flex gap-2 text-[11px] text-slate-700 leading-relaxed"><i class="fas ${ic} ${c} mt-1 text-[9px]"></i><span>${K.esc(x)}</span></li>`).join('');
+window.periksa = async () => {
+    if (busy) return; busy = true; $('btnCek').disabled = true; $('btnCekTxt').textContent = 'Mentor sedang membaca…';
+    $('fb').innerHTML = '<div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm"><div class="sk h-3 w-1/2 mb-3"></div><div class="sk h-3 w-full mb-2"></div><div class="sk h-3 w-4/5"></div></div>';
+    try {
+        const bantahan = $('tBantah').value.trim();
+        const r = await K.api('tandingan', { tesis: $('tTesis').value.trim(), lawan: $('tLawan').value.trim(), bantahan });
+        const xp = r.skor >= 60 ? xpHarian('tandingan', 25, 'Bantahan kuat') : 0;
+        const w = r.skor >= 80 ? ['emerald', 'Bantahan yang meyakinkan!'] : r.skor >= 60 ? ['amber', 'Sudah baik, tinggal diasah'] : ['rose', 'Yuk perkuat sedikit lagi'];
+        if (r.skor >= 80) { K.beep('success'); window.confetti && confetti({ particleCount: 80, spread: 65, origin: { y: .7 }, zIndex: 100000 }); }
+        const bisaSimpan = adaDraf && !draf.result;
+        $('fb').innerHTML = `<div class="item bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+            <div class="flex items-center gap-3 mb-3.5"><div class="w-14 h-14 rounded-full bg-${w[0]}-50 text-${w[0]}-600 border-2 border-${w[0]}-200 flex items-center justify-center font-extrabold text-lg shrink-0">${r.skor}</div>
+            <div><p class="text-xs font-bold text-slate-800">${w[1]}</p>${xp ? `<span class="inline-block mt-1 text-[10px] font-bold text-brand-dark bg-brand-light px-2 py-0.5 rounded-full"><i class="fas fa-bolt text-amber-500 mr-1"></i>+${xp} XP</span>` : `<p class="text-[10px] text-slate-400 mt-0.5">${r.skor >= 60 ? 'XP latihan ini sudah kamu ambil hari ini.' : 'Capai skor 60 untuk mendapat XP.'}</p>`}</div></div>
+            ${r.kuat.length ? `<p class="text-[10px] font-bold text-emerald-600 uppercase mb-1.5">Sudah bagus</p><ul class="space-y-1.5 mb-3.5">${li(r.kuat, 'fa-check', 'text-emerald-500')}</ul>` : ''}
+            ${r.perbaiki.length ? `<p class="text-[10px] font-bold text-rose-500 uppercase mb-1.5">Bisa diperbaiki</p><ul class="space-y-1.5">${li(r.perbaiki, 'fa-arrow-right', 'text-rose-400')}</ul>` : ''}
+            ${r.contoh ? `<div class="mt-3.5 bg-emerald-50 border border-emerald-100 rounded-xl p-3"><p class="text-[9px] font-bold text-emerald-700 uppercase tracking-wider mb-1">Contoh bantahan yang lebih kuat</p><p class="text-[11px] text-slate-700 italic leading-relaxed">${K.esc(r.contoh)}</p></div>` : ''}
+            ${r.mode === 'offline' ? '<p class="text-[9px] text-slate-400 mt-3">Penilaian sederhana (AI sedang sibuk).</p>' : ''}
+            <div class="grid grid-cols-1 gap-2 mt-4">${bisaSimpan ? '<button onclick="keDraf()" class="bg-brand-green text-white font-bold py-2.5 rounded-xl text-xs shadow-md active:scale-95 transition"><i class="fas fa-file-circle-plus mr-1.5"></i>Tambahkan bantahan ke argumen draf</button>' : ''}<a href="kreasi.html" class="bg-white border border-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-xs text-center active:scale-95 transition">Kembali ke Ruang Kreasi</a></div></div>`;
+        $('fb').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) { console.error(e); $('fb').innerHTML = ''; K.toast('Gagal memeriksa. Tulisanmu masih aman, coba lagi.', true); K.beep('error'); }
+    finally { busy = false; $('btnCekTxt').textContent = 'Periksa Bantahan'; hitung(); }
+};
+window.keDraf = () => {
+    const d = K.draft(); if (!d || !d.ide || d.result) return K.toast('Tidak ada draf aktif.', true);
+    const b = $('tBantah').value.trim(), a = (d.argumen || '').trim();
+    K.setDraft({ argumen: (a ? a + ' ' : '') + b }); K.toast('Bantahan ditambahkan ke bagian Argumen drafmu.');
+    setTimeout(() => location.href = 'kreasi-tulis.html', 900);
+};
+
+</script>
+</body>
+</html>
