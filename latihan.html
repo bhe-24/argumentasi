@@ -4,228 +4,322 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ruang Latihan - Argumentasi</title>
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Fonts -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }</script>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
-                    colors: { 
-                        brand: { green: '#059669', orange: '#f97316' } 
-                    }
-                }
-            }
-        }
-    </script>
+/* latihan-core — penyimpanan per-browser (localStorage + IndexedDB), XP, timer, toast, PDF */
+(function () {
+    const LS = 'lat_v1', DBN = 'latihan-db'; let S = null, siapP = null;
+    const pad = n => String(n).padStart(2, '0');
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'x' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    const today = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+    const lsRead = () => { try { return JSON.parse(localStorage.getItem(LS)); } catch (e) { return null; } };
+    const idbOpen = () => new Promise((ok, no) => { const r = indexedDB.open(DBN, 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
+    const idbGet = async () => { try { const d = await idbOpen(); return await new Promise(ok => { const q = d.transaction('kv').objectStore('kv').get('state'); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); }); } catch (e) { return null; } };
+    const idbSet = async v => { try { const d = await idbOpen(); await new Promise(ok => { const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, 'state'); t.oncomplete = ok; t.onerror = ok; t.onabort = ok; }); } catch (e) {} };
 
+    const L = {
+        esc, today, pad,
+        // Muat status: ambil salinan terbaru dari localStorage atau IndexedDB, lalu samakan keduanya
+        siap() { return siapP || (siapP = (async () => {
+            const a = lsRead(), b = await idbGet();
+            S = [a, b].filter(x => x && x.hari).sort((x, y) => (y.u || 0) - (x.u || 0))[0] || { v: 1, id: uuid(), u: Date.now(), hari: {} };
+            L.simpan(true); try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+            return S; })()); },
+        state: () => S,
+        simpan(tetap) {
+            if (!tetap) S.u = Date.now();
+            const ks = Object.keys(S.hari).sort(); while (ks.length > 45) delete S.hari[ks.shift()];
+            try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {}
+            idbSet(JSON.parse(JSON.stringify(S)));
+        },
+        // Siklus latihan = 24 jam sejak gacha diputar. Setelah itu otomatis kedaluwarsa dan gacha bisa diputar lagi.
+        aktif() { const now = Date.now(); let best = null; for (const k in S.hari) { const h = S.hari[k]; if (h.spin && now < h.spin.ts + 864e5 && (!best || h.spin.ts > S.hari[best].spin.ts)) best = k; } return best; },
+        baru() { const k = 'c' + Date.now(); S.hari[k] = { sesi: {}, hasil: {} }; return S.hari[k]; },
+        hari(kunci) { if (kunci === undefined || kunci === null) { const a = L.aktif(); return a ? S.hari[a] : null; } return S.hari[kunci] || null; },
+        sisaReset() { const a = L.aktif(); return a ? Math.max(0, S.hari[a].spin.ts + 864e5 - Date.now()) : 0; },
+        jam(ms) { const s = Math.floor(ms / 1000); return pad(Math.floor(s / 3600)) + ':' + pad(Math.floor(s % 3600 / 60)) + ':' + pad(s % 60); },
+        nama: () => localStorage.getItem('namaSiswaCendekia') || 'Siswa',
+        xp: () => (parseInt(localStorage.getItem('latihanPointsCendekia') || '0') + parseInt(localStorage.getItem('kelasPointsArg') || '0')),
+        tambahXp(n) { localStorage.setItem('latihanPointsCendekia', String(parseInt(localStorage.getItem('latihanPointsCendekia') || '0') + n)); },
+        fmt(s) { s = Math.max(0, Math.round(s)); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); },
+        menit: s => Math.max(1, Math.round(s / 60)),
+        acakInt(n) { if (window.crypto && crypto.getRandomValues) { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; } return Math.floor(Math.random() * n); },
+        async paket(hid) {
+            const r = await fetch('/api/latihan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'buat', handoutId: hid }), signal: AbortSignal.timeout(75000) });
+            const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.detail_error || 'Server error (' + r.status + ')'); return d;
+        },
+        toast(msg, err) {
+            let c = document.getElementById('lToast');
+            if (!c) { c = document.createElement('div'); c.id = 'lToast'; c.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none'; document.body.appendChild(c); }
+            const t = document.createElement('div'); t.className = `${err ? 'bg-red-500' : 'bg-slate-800'} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2`;
+            t.innerHTML = `<i class="fas ${err ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400'}"></i><span class="flex-1">${esc(msg)}</span>`; c.appendChild(t); setTimeout(() => t.remove(), 3000);
+        },
+        beep(jenis) {
+            try { const x = new (window.AudioContext || window.webkitAudioContext)(), o = x.createOscillator(), g = x.createGain(); o.connect(g); g.connect(x.destination);
+                if (jenis === 'ok') { o.type = 'sine'; o.frequency.setValueAtTime(523, x.currentTime); o.frequency.exponentialRampToValueAtTime(1046, x.currentTime + .12); }
+                else if (jenis === 'tik') { o.type = 'square'; o.frequency.setValueAtTime(900, x.currentTime); }
+                else { o.type = 'sawtooth'; o.frequency.setValueAtTime(150, x.currentTime); }
+                g.gain.setValueAtTime(.06, x.currentTime); g.gain.exponentialRampToValueAtTime(.001, x.currentTime + (jenis === 'tik' ? .06 : .4)); o.start(); o.stop(x.currentTime + .4); } catch (e) {}
+        },
+        // Unduh PDF: salin elemen laporan tersembunyi lalu ubah menjadi PDF
+        async pdf(el, namaBerkas) {
+            if (!window.html2pdf) await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'; s.onload = ok; s.onerror = () => no(new Error('Pembuat PDF gagal dimuat')); document.head.appendChild(s); });
+            const c = el.cloneNode(true); c.style.cssText = 'display:block;position:static;width:700px;background:#fff;color:#0f172a';
+            await html2pdf().set({ margin: [10, 10, 12, 10], filename: namaBerkas, image: { type: 'jpeg', quality: .95 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: ['css', 'legacy'], avoid: '.nobreak' } }).from(c).save();
+        }
+    };
+    window.L = L;
+})();
+
+    </script>
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        body { font-family: 'Poppins', sans-serif; background: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        .up { animation: up .35s ease-out both; } @keyframes up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        .lc2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .sk { position: relative; overflow: hidden; background: #e2e8f0; }
+        .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent); animation: sh 1.3s infinite; } @keyframes sh { 100% { transform: translateX(100%); } }
+        .roda-wrap { position: relative; width: 300px; height: 300px; margin: 0 auto; }
+        #roda { width: 300px; height: 300px; border-radius: 9999px; box-shadow: 0 0 0 8px #fff, 0 0 0 12px #059669, 0 12px 30px rgba(0,0,0,.25); }
+        .petunjuk { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); z-index: 5; filter: drop-shadow(0 3px 3px rgba(0,0,0,.3)); }
+        .petunjuk::after { content: ''; display: block; width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 30px solid #ef4444; }
+        .tombol-roda { position: absolute; top: 50%; left: 50%; width: 76px; height: 76px; margin: -38px 0 0 -38px; z-index: 6; border-radius: 9999px; background: #fff; border: 5px solid #059669; font-weight: 800; color: #059669; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+        .tombol-roda:active { transform: scale(.94); } .tombol-roda:disabled { opacity: .6; }
+        .putar-pelan { animation: pp 9s linear infinite; } @keyframes pp { to { transform: rotate(360deg); } }
+        .denyut { animation: dn 1.6s ease-in-out infinite; } @keyframes dn { 0%,100% { transform: scale(1); box-shadow: 0 8px 20px rgba(5,150,105,.45); } 50% { transform: scale(1.07); box-shadow: 0 8px 28px rgba(5,150,105,.7); } }
     </style>
 </head>
 <body class="flex justify-center min-h-screen">
+<div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
 
-    <!-- CONTAINER UTAMA (Mobile App Frame) -->
-    <div class="w-full max-w-md bg-white relative min-h-screen shadow-2xl flex flex-col overflow-x-hidden sm:border-x border-slate-200 fade-in">
-        
-        <!-- HEADER ALA SHOPEE -->
-        <header class="bg-white flex items-center justify-between px-4 py-3 sticky top-0 z-50 shadow-sm">
-            <div class="flex items-center gap-3">
-                <a href="index.html" class="text-slate-700 text-xl px-1 hover:text-brand-green transition-colors">
-                    <i class="fas fa-arrow-left"></i>
-                </a>
-                <h1 class="text-[17px] font-bold text-slate-800 tracking-wide">Latihan Analisis</h1>
-            </div>
-            
-            <!-- XP Badge (Meniru Koin Shopee) -->
-            <div class="bg-slate-50 border border-slate-200 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
-                <div class="w-4 h-4 bg-amber-400 rounded-full flex items-center justify-center text-white text-[9px]">
-                    <i class="fas fa-star"></i>
-                </div>
-                <span class="text-xs font-bold text-slate-700" id="userScore">0</span>
-            </div>
-        </header>
+    <header class="sticky top-0 z-50 bg-brand-green h-14 px-4 flex items-center gap-3 shadow-md">
+        <a href="index.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
+        <div class="flex-1 min-w-0"><h1 class="text-white font-bold text-sm leading-tight truncate">Ruang Latihan</h1><p class="text-white/70 text-[10px] leading-tight truncate">Latihan harian dari materi handout</p></div>
+        <span class="shrink-0 bg-white/20 border border-white/30 text-white px-2.5 py-1 rounded-full text-[11px] font-bold"><i class="fas fa-star text-amber-300 text-[10px]"></i> <span id="hXp">0</span> XP</span>
+    </header>
 
-        <!-- KONTEN UTAMA (Scrollable) -->
-        <div class="flex-grow overflow-y-auto hide-scrollbar pb-10">
-            
-            <!-- BANNER PROMO / INFO (Dinamis dari Firebase) -->
-            <div class="w-full relative bg-slate-100 aspect-[21/9] overflow-hidden" id="bannerContainer">
-                <!-- Skeleton Loading Banner -->
-                <div id="bannerLoading" class="absolute inset-0 flex items-center justify-center animate-pulse bg-slate-200">
-                    <i class="fas fa-image text-4xl text-slate-300"></i>
-                </div>
-                <!-- Gambar Banner -->
-                <img id="bannerImage" src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80" alt="Banner Latihan" class="w-full h-full object-cover hidden transition-opacity duration-500">
-            </div>
+    <section class="bg-brand-green px-4 pb-6 pt-1 rounded-b-3xl"><div id="hero" class="bg-white/15 border border-white/20 rounded-2xl p-4 backdrop-blur-sm"><div class="sk h-24 rounded-xl"></div></div></section>
 
-            <!-- MENU LATIHAN (4 KOLOM) -->
-            <div class="px-4 py-6">
-                <div class="grid grid-cols-4 gap-y-4 gap-x-2">
-                    
-                    <!-- Menu 1: Pemahaman Pokok -->
-                    <a href="latihan/pilgan.html" class="flex flex-col items-center group active:scale-95 transition-transform">
-                        <div class="w-12 h-12 bg-white border border-slate-200 shadow-sm rounded-2xl flex items-center justify-center mb-2 group-hover:border-blue-400">
-                            <i class="fas fa-font text-2xl text-blue-500"></i>
-                        </div>
-                        <span class="text-[10px] text-slate-700 font-medium text-center leading-tight">Pemahaman Pokok</span>
-                    </a>
-                    
-                    <!-- Menu 2: Bedah Struktur -->
-                    <a href="latihan/struktur.html" class="flex flex-col items-center group active:scale-95 transition-transform">
-                        <div class="w-12 h-12 bg-white border border-slate-200 shadow-sm rounded-2xl flex items-center justify-center mb-2 group-hover:border-amber-400">
-                            <i class="fas fa-layer-group text-2xl text-amber-500"></i>
-                        </div>
-                        <span class="text-[10px] text-slate-700 font-medium text-center leading-tight">Bedah Struktur</span>
-                    </a>
+    <main class="flex-grow px-4 pt-5 pb-4">
+        <div class="flex items-center justify-between mb-3"><h2 class="font-bold text-slate-800 text-sm">Latihan Hari Ini</h2><span id="tglInfo" class="text-[10px] text-slate-400 font-medium"></span></div>
+        <div id="kartu" class="grid grid-cols-2 gap-3"></div>
 
-                    <!-- Menu 3: Isi Argumentasi -->
-                    <a href="latihan/esai.html" class="flex flex-col items-center group active:scale-95 transition-transform">
-                        <div class="w-12 h-12 bg-white border border-slate-200 shadow-sm rounded-2xl flex items-center justify-center mb-2 group-hover:border-emerald-400">
-                            <i class="fas fa-pen-nib text-2xl text-emerald-500"></i>
-                        </div>
-                        <span class="text-[10px] text-slate-700 font-medium text-center leading-tight">Isi Argumentasi</span>
-                    </a>
+        <div class="mt-5 bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-3">
+            <div class="w-9 h-9 bg-white rounded-full flex items-center justify-center shrink-0 text-blue-500 shadow-sm"><i class="fas fa-circle-info"></i></div>
+            <div class="text-[11px] text-blue-700 leading-relaxed"><b class="text-blue-800">Aturan main</b><br>Putar gacha untuk mendapat materi. Berlaku <b>1 kali per hari</b>: setiap latihan hanya bisa dikerjakan 1 kali, dan <b>24 jam setelah gacha diputar</b> semuanya direset dengan materi baru. Hasil tersimpan di browser ini dan bisa diunduh sebagai PDF.</div>
+        </div>
 
-                    <!-- Menu 4: Uji Berfikir Kritis -->
-                    <a href="latihan/kritis.html" class="flex flex-col items-center group active:scale-95 transition-transform">
-                        <div class="w-12 h-12 bg-white border border-slate-200 shadow-sm rounded-2xl flex items-center justify-center mb-2 group-hover:border-rose-400">
-                            <i class="fas fa-brain text-2xl text-rose-500"></i>
-                        </div>
-                        <span class="text-[10px] text-slate-700 font-medium text-center leading-tight">Uji Berfikir</span>
-                    </a>
+        <div class="mt-6"><div class="flex items-center justify-between mb-3"><h2 class="font-bold text-slate-800 text-sm">Riwayat Latihan</h2></div><div id="riwayat" class="flex flex-col gap-2.5"></div></div>
+        <a href="panduan.html" class="mt-5 flex items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-600 active:scale-[0.98] transition"><span><i class="far fa-circle-question text-brand-green mr-2"></i>Butuh bantuan? Buka Panduan</span><i class="fas fa-chevron-right text-slate-300 text-[10px]"></i></a>
+    </main>
 
-                </div>
-            </div>
+    <div id="fabWrap" class="sticky bottom-4 z-40 px-4 flex justify-end pointer-events-none mb-4"><button id="fab" onclick="bukaRoda()" class="pointer-events-auto denyut bg-brand-green text-white rounded-full pl-4 pr-5 py-3 font-bold text-xs flex items-center gap-2"><i class="fas fa-dharmachakra text-lg"></i> Putar Gacha</button></div>
 
-            <!-- DIVIDER -->
-            <div class="h-2 w-full bg-slate-100"></div>
+    <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0"><p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p></footer>
+</div>
 
-            <!-- SECTION PANDUAN & CONTOH (Meniru layout Rekomendasi Promo) -->
-            <div class="px-4 py-5">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="font-bold text-slate-800 text-[15px]">Panduan & Contoh</h2>
-                    <a href="panduan.html" class="text-xs text-slate-400 font-medium flex items-center">Lihat Semua <i class="fas fa-chevron-right ml-1 text-[10px]"></i></a>
-                </div>
+<!-- MODAL GACHA -->
+<div id="modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[99999] hidden items-end sm:items-center justify-center">
+    <div class="up bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 pb-6 max-h-[94vh] overflow-y-auto relative">
+        <button id="btnTutup" onclick="tutupRoda()" class="absolute top-3 right-4 text-slate-400 hover:text-slate-600"><i class="fas fa-xmark text-xl"></i></button>
 
-                <div class="grid grid-cols-2 gap-3">
-                    
-                    <!-- Kartu Contoh 1 -->
-                    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                        <div class="relative h-24 bg-slate-100 w-full overflow-hidden">
-                            <img src="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=300" class="w-full h-full object-cover">
-                            <div class="absolute top-0 left-0 bg-rose-500 text-white text-[8px] font-bold px-2 py-1 rounded-br-lg uppercase">Contoh Esai</div>
-                        </div>
-                        <div class="p-3">
-                            <h3 class="font-bold text-slate-800 text-xs mb-1 line-clamp-2">Cara Menyusun Paragraf Argumen yang Kuat</h3>
-                            <p class="text-[9px] text-slate-500">Pelajari struktur dasar tesis dan pembuktian.</p>
-                        </div>
-                    </div>
+        <div id="vRoda">
+            <h3 class="text-center font-extrabold text-slate-800 text-base">Gacha Guru</h3>
+            <p id="rodaKet" class="text-center text-[11px] text-slate-500 mt-1 mb-5">Putar roda untuk mendapat materi latihan hari ini.</p>
+            <div class="roda-wrap"><div class="petunjuk"></div><canvas id="roda"></canvas><button id="btnPutar" class="tombol-roda" onclick="putar()">PUTAR</button></div>
+            <p id="rodaInfo" class="text-center text-[10px] text-slate-400 mt-6"></p>
+        </div>
 
-                    <!-- Kartu Contoh 2 -->
-                    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                        <div class="relative h-24 bg-slate-100 w-full overflow-hidden">
-                            <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=300" class="w-full h-full object-cover">
-                            <div class="absolute top-0 left-0 bg-blue-500 text-white text-[8px] font-bold px-2 py-1 rounded-br-lg uppercase">Tips Analisis</div>
-                        </div>
-                        <div class="p-3">
-                            <h3 class="font-bold text-slate-800 text-xs mb-1 line-clamp-2">Mendeteksi Bias dalam Sebuah Berita</h3>
-                            <p class="text-[9px] text-slate-500">Trik membedakan fakta objektif dan opini.</p>
-                        </div>
-                    </div>
+        <div id="vHasil" class="hidden text-center">
+            <p class="text-[10px] font-bold text-brand-green uppercase tracking-widest">Materi terpilih</p>
+            <div id="hasilCover" class="w-28 aspect-[3/4] mx-auto mt-3 rounded-xl overflow-hidden shadow-xl bg-slate-100 border border-slate-200 up"></div>
+            <h3 id="hasilJudul" class="font-extrabold text-slate-800 text-base leading-snug mt-4"></h3>
+            <p class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">Guru akan membaca isi materi ini dan menyusun soal pilihan ganda, bedah struktur, isi argumentasi, dan uji berpikir untukmu.</p>
+            <button onclick="siapkan()" class="mt-5 w-full bg-brand-green text-white font-bold py-3.5 rounded-xl shadow-md text-sm active:scale-95 transition"><i class="fas fa-wand-magic-sparkles mr-1.5"></i>Ambil Materi & Siapkan Soal</button>
+        </div>
 
-                </div>
-            </div>
+        <div id="vProses" class="hidden text-center py-4">
+            <div class="relative w-20 h-20 mx-auto mb-5"><div class="absolute inset-0 border-4 border-slate-100 rounded-full"></div><div class="absolute inset-0 border-4 border-brand-green border-t-transparent rounded-full animate-spin"></div><i class="fas fa-book-open absolute inset-0 flex items-center justify-center text-2xl text-brand-green"></i></div>
+            <p id="prosesJudul" class="font-bold text-slate-800 text-sm"></p>
+            <p id="prosesTeks" class="text-[12px] text-slate-500 mt-1.5 h-4">Membuka berkas materi…</p>
+            <div class="h-2 bg-slate-100 rounded-full overflow-hidden mt-5"><div id="prosesBar" class="h-full bg-brand-green rounded-full transition-all duration-700" style="width:4%"></div></div>
+            <p class="text-[10px] text-slate-400 mt-3">Proses ini bisa sampai satu menit. Jangan tutup halaman.</p>
+        </div>
 
-            <!-- DIVIDER -->
-            <div class="h-2 w-full bg-slate-100"></div>
-
-            <!-- INFO / ALERT BOX (Pengganti area promo bawah) -->
-            <div class="px-4 py-6">
-                <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-4">
-                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shrink-0 shadow-sm text-blue-500">
-                        <i class="fas fa-info-circle text-xl"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-blue-800 text-sm mb-1">Informasi Evaluasi</h4>
-                        <p class="text-xs text-blue-600 leading-relaxed">Jawaban yang Anda kirimkan pada menu <strong>Isi Argumentasi</strong> dan <strong>Uji Berfikir</strong> akan dievaluasi langsung oleh Sistem AI kami secara <em>real-time</em>. Kumpulkan XP sebanyak-banyaknya!</p>
-                    </div>
-                </div>
-            </div>
-
+        <div id="vGalat" class="hidden text-center py-3">
+            <div class="w-14 h-14 mx-auto rounded-full bg-red-50 text-red-500 flex items-center justify-center text-2xl mb-3"><i class="fas fa-triangle-exclamation"></i></div>
+            <p class="font-bold text-slate-800 text-sm">Soal belum berhasil disiapkan</p>
+            <p id="galatPesan" class="text-[11px] text-slate-500 mt-1.5 leading-relaxed break-words"></p>
+            <div class="grid grid-cols-2 gap-2 mt-5"><button onclick="tutupRoda()" class="py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs">Nanti</button><button onclick="siapkan()" class="py-3 rounded-xl bg-brand-green text-white font-bold text-xs">Coba Lagi</button></div>
+            <p class="text-[10px] text-slate-400 mt-3">Materi pilihanmu tetap tersimpan. Kamu tidak perlu memutar ulang.</p>
         </div>
     </div>
+</div>
 
-    <!-- SCRIPT UI DASAR -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Ambil Skor Lokal
-            const xpScore = parseInt(localStorage.getItem('latihanPointsCendekia') || '0') + parseInt(localStorage.getItem('kelasPointsArg') || '0');
-            document.getElementById('userScore').innerText = xpScore;
-        });
-    </script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = L.esc;
+const WARNA = ['#059669', '#0ea5e9', '#f59e0b', '#8b5cf6', '#ef4444', '#14b8a6', '#ec4899', '#6366f1', '#84cc16', '#f97316'];
+const TAMBAH = { pilgan: 'latihan/pilgan.html', struktur: 'latihan/struktur.html', esai: 'latihan/esai.html', kritis: 'latihan/kritis.html' };
+const TERSEDIA = { pilgan: true, struktur: false, esai: false, kritis: false };   // ubah ke true saat halamannya sudah dibuat
+const BAGIAN = {
+    pilgan: { n: 'Pilihan Ganda', ic: 'fa-circle-check', c: 'blue', d: 'Soal bertingkat sampai HOTS', meta: p => `${p.pilgan.soal.length} soal · ${L.menit(p.pilgan.total)} menit` },
+    struktur: { n: 'Bedah Struktur', ic: 'fa-layer-group', c: 'amber', d: 'Labeli tesis, argumen, kesimpulan', meta: p => `${p.struktur.teks.length} kalimat · ${L.menit(p.struktur.waktu)} menit` },
+    esai: { n: 'Isi Argumentasi', ic: 'fa-pen-nib', c: 'emerald', d: 'Pilih argumen yang paling tepat', meta: p => `${p.esai.soal.length} soal · ${L.menit(p.esai.total)} menit` },
+    kritis: { n: 'Uji Berpikir', ic: 'fa-brain', c: 'rose', d: 'Teori & proses penalaran', meta: p => `${p.kritis.soal.length} soal · ${L.menit(p.kritis.total)} menit` }
+};
+let handouts = null, segmen = [], berputar = false, terpilih = null, memproses = false, tick = null;
 
-    <!-- SCRIPT FIREBASE FETCH BANNER -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+/* ---------- tampilan utama ---------- */
+function hariIni() { return L.hari(); }
+let adaSiklus = false;
+function render() {
+    $('hXp').textContent = L.xp();
+    $('tglInfo').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' });
+    const H = hariIni(), spin = H && H.spin, pack = H && H.pack; adaSiklus = !!spin;
+    const selesai = pack ? Object.keys(BAGIAN).filter(k => H.hasil[k]).length : 0;
 
-        // Konfigurasi Firebase Anda
-        const firebaseConfig = {
-            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
-            projectId: "mading-cf676",
-        };
+    // hero
+    if (!spin) {
+        $('hero').innerHTML = `<div class="flex items-center gap-4"><div class="w-20 h-20 shrink-0 rounded-full bg-white flex items-center justify-center text-brand-green text-4xl shadow-lg putar-pelan"><i class="fas fa-dharmachakra"></i></div>
+            <div class="flex-1 min-w-0"><p class="text-white font-extrabold text-base leading-tight">Gacha Guru belum diputar</p><p class="text-white/80 text-[11px] leading-snug mt-1">Putar dulu untuk membuka materi dan soal latihan hari ini.</p></div></div>
+            <button onclick="bukaRoda()" class="mt-4 w-full bg-white text-brand-green font-bold py-3 rounded-xl text-sm shadow-md active:scale-95 transition"><i class="fas fa-dharmachakra mr-1.5"></i>Putar Gacha Guru</button>`;
+    } else {
+        const cov = spin.cover ? `<img src="${esc(spin.cover)}" alt="" class="w-full h-full object-cover">` : '<div class="w-full h-full flex items-center justify-center text-amber-400"><i class="fas fa-file-pdf text-2xl"></i></div>';
+        $('hero').innerHTML = `<div class="flex gap-3.5"><div class="w-[72px] aspect-[3/4] rounded-lg overflow-hidden bg-white shrink-0 shadow-lg">${cov}</div>
+            <div class="flex-1 min-w-0"><span class="text-[9px] font-bold text-white bg-white/20 px-2 py-0.5 rounded uppercase tracking-widest">Materi hari ini</span>
+            <h2 class="text-white font-extrabold text-[15px] leading-snug mt-1.5 lc2">${esc(spin.judul)}</h2>
+            ${pack ? `<p class="text-white/80 text-[10px] leading-snug mt-1.5 lc2">${esc(pack.ringkasan || '')}</p>` : '<p class="text-amber-200 text-[11px] font-semibold mt-1.5"><i class="fas fa-triangle-exclamation mr-1"></i>Soal belum disiapkan</p>'}</div></div>
+            ${pack ? `<div class="mt-3.5"><div class="flex justify-between text-[10px] font-semibold text-white/80 mb-1"><span>Kemajuan hari ini</span><span>${selesai}/4 selesai</span></div><div class="h-2 bg-white/25 rounded-full overflow-hidden"><div class="h-full bg-amber-300 rounded-full transition-all duration-700" style="width:${selesai / 4 * 100}%"></div></div></div>`
+            : `<button onclick="siapkanDariHub()" class="mt-3.5 w-full bg-white text-brand-green font-bold py-2.5 rounded-xl text-xs shadow-md active:scale-95 transition"><i class="fas fa-wand-magic-sparkles mr-1.5"></i>Siapkan Soal</button>`}`;
+    }
+    if (spin) $('hero').insertAdjacentHTML('beforeend', '<p class="text-[10px] text-white/80 mt-3 pt-2.5 border-t border-white/20"><i class="fas fa-rotate mr-1"></i>Latihan direset & materi baru dibuka dalam <b id="resetInfo" class="tabular-nums">--:--:--</b></p>');
+    tickReset();
+    $('fab').parentElement.classList.toggle('hidden', !!spin);
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    // kartu latihan
+    $('kartu').innerHTML = Object.entries(BAGIAN).map(([k, b], i) => {
+        const hasil = H && H.hasil[k], sesi = H && H.sesi[k] && !hasil, kunci = !pack, belum = !TERSEDIA[k];
+        let status, gaya;
+        if (belum) { status = 'Segera hadir'; gaya = 'bg-slate-100 text-slate-400'; }
+        else if (kunci) { status = spin ? 'Menunggu soal' : 'Putar gacha dulu'; gaya = 'bg-slate-100 text-slate-400'; }
+        else if (hasil) { status = 'Selesai · ' + hasil.skor; gaya = 'bg-emerald-50 text-emerald-600'; }
+        else if (sesi) { status = 'Sedang berjalan'; gaya = 'bg-amber-50 text-amber-600'; }
+        else { status = 'Siap dikerjakan'; gaya = 'bg-brand-light text-brand-dark'; }
+        const off = kunci || belum;
+        return `<button onclick="buka('${k}')" class="up text-left bg-white rounded-2xl border border-slate-100 shadow-sm p-3.5 active:scale-95 transition ${off ? 'opacity-70' : 'hover:border-brand-green'}" style="animation-delay:${i * 60}ms">
+            <div class="flex items-center justify-between"><div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl ${off ? 'bg-slate-100 text-slate-300' : `bg-${b.c}-50 text-${b.c}-500`}"><i class="fas ${kunci && !belum ? 'fa-lock' : b.ic}"></i></div>${hasil ? '<i class="fas fa-circle-check text-emerald-500"></i>' : ''}</div>
+            <h3 class="font-bold text-[13px] text-slate-800 mt-3 leading-tight">${b.n}</h3><p class="text-[10px] text-slate-500 mt-0.5 leading-snug">${b.d}</p>
+            <p class="text-[10px] text-slate-400 mt-1.5 h-3.5">${pack && !belum ? b.meta(pack) : '&nbsp;'}</p>
+            <span class="inline-block mt-2 text-[9px] font-bold px-2 py-0.5 rounded-full ${gaya}">${status}</span></button>`;
+    }).join('');
 
-        async function fetchBannerLatihan() {
-            try {
-                // Mencari dokumen banner di koleksi pengaturan/admin
-                const docRef = doc(db, "settings", "banner_latihan");
-                const snap = await getDoc(docRef);
+    // riwayat
+    const S = L.state(), ak = L.aktif(), tgls = Object.keys(S.hari).filter(t => S.hari[t].spin && t !== ak).sort((a, b) => S.hari[b].spin.ts - S.hari[a].spin.ts).slice(0, 8);
+    $('riwayat').innerHTML = tgls.length ? tgls.map(t => { const h = S.hari[t];
+        const chip = Object.entries(BAGIAN).filter(([k]) => h.hasil[k]).map(([k, b]) => `<a href="${TAMBAH[k]}?tgl=${t}" class="text-[9px] font-bold bg-${b.c}-50 text-${b.c}-600 px-2 py-0.5 rounded-full">${b.n.split(' ')[0]} ${h.hasil[k].skor}</a>`).join('') || '<span class="text-[9px] text-slate-400">Tidak dikerjakan</span>';
+        return `<div class="bg-white border border-slate-100 rounded-xl p-3"><div class="flex items-center justify-between gap-2"><h3 class="font-bold text-[12px] text-slate-800 lc2 leading-snug flex-1">${esc(h.spin.judul)}</h3><span class="text-[9px] text-slate-400 shrink-0">${new Date(h.spin.ts).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span></div><div class="flex flex-wrap gap-1.5 mt-2">${chip}</div></div>`; }).join('')
+        : '<div class="bg-white border border-dashed border-slate-300 rounded-xl p-5 text-center text-[11px] text-slate-400"><i class="fas fa-clock-rotate-left text-xl text-slate-300 mb-2 block"></i>Riwayat latihan akan muncul di sini.</div>';
+}
+window.buka = k => {
+    const H = hariIni();
+    if (!H || !H.spin) return L.toast('Putar Gacha Guru dulu untuk membuka latihan.', true), bukaRoda();
+    if (!H.pack) return L.toast('Soal belum siap. Tekan “Siapkan Soal”.', true);
+    if (!TERSEDIA[k]) return L.toast('Latihan ini segera hadir.', true);
+    location.href = TAMBAH[k];
+};
 
-                const imgElement = document.getElementById('bannerImage');
-                const loadingElement = document.getElementById('bannerLoading');
+/* ---------- roda gacha ---------- */
+const potong = (s, n) => s.length > n ? s.slice(0, n - 1) + '…' : s;
+function gambarRoda() {
+    const c = $('roda'), dpr = Math.min(window.devicePixelRatio || 1, 2), U = 300, x = c.getContext('2d');
+    c.width = U * dpr; c.height = U * dpr; x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, U, U);
+    const R = U / 2, n = segmen.length, a = 2 * Math.PI / n;
+    segmen.forEach((s, i) => {
+        x.beginPath(); x.moveTo(R, R); x.arc(R, R, R - 2, -Math.PI / 2 + i * a, -Math.PI / 2 + (i + 1) * a); x.closePath(); x.fillStyle = WARNA[i % WARNA.length]; x.fill(); x.lineWidth = 2; x.strokeStyle = '#fff'; x.stroke();
+        x.save(); x.translate(R, R); x.rotate(-Math.PI / 2 + (i + .5) * a); x.textAlign = 'right'; x.fillStyle = '#fff'; x.font = '700 11px Poppins, sans-serif'; x.fillText(potong(s.judul, n > 6 ? 17 : 24), R - 44, 4); x.restore();
+    });
+}
+window.bukaRoda = () => {
+    ['vHasil', 'vProses', 'vGalat'].forEach(v => $(v).classList.add('hidden')); $('vRoda').classList.remove('hidden'); $('btnTutup').classList.remove('hidden');
+    $('modal').classList.replace('hidden', 'flex');
+    const H = hariIni();
+    if (H && H.spin) { terpilih = H.spin; return H.pack ? tutupRoda() : tampilHasil(); }
+    if (!handouts) { $('rodaKet').textContent = 'Memuat daftar materi…'; $('btnPutar').disabled = true; return; }
+    siapRoda();
+};
+function siapRoda() {
+    const lay = handouts.filter(h => h.fileUrl);
+    if (!lay.length) { $('rodaKet').textContent = 'Belum ada materi handout. Minta guru mengunggah materi terlebih dahulu.'; $('btnPutar').disabled = true; $('roda').getContext('2d').clearRect(0, 0, 300, 300); return; }
+    segmen = lay.map(h => [h, L.acakInt(1e6)]).sort((a, b) => a[1] - b[1]).map(x => x[0]).slice(0, 10);
+    $('rodaKet').textContent = 'Putar roda untuk mendapat materi latihan hari ini.'; $('rodaInfo').textContent = `${segmen.length} materi ada di roda`; $('btnPutar').disabled = false;
+    $('roda').style.transition = 'none'; $('roda').style.transform = 'rotate(0deg)'; gambarRoda();
+}
+window.tutupRoda = () => { if (memproses) return; $('modal').classList.replace('flex', 'hidden'); };
+window.putar = () => {
+    if (berputar || !segmen.length) return; berputar = true; $('btnPutar').disabled = true; $('btnTutup').classList.add('hidden');
+    const n = segmen.length, r = L.acakInt(n), per = 360 / n, geser = (Math.random() - .5) * per * .6;
+    const derajat = 360 * 6 - (r + .5) * per + geser, c = $('roda');
+    c.getBoundingClientRect(); c.style.transition = 'transform 5.4s cubic-bezier(.12,.67,.1,1)'; c.style.transform = `rotate(${derajat}deg)`;
+    let t = 0; const ti = setInterval(() => { if (++t < 24) L.beep('tik'); else clearInterval(ti); }, 180);
+    setTimeout(() => {
+        berputar = false; const h = segmen[r];
+        const H = L.baru(); H.spin = { hid: h.id, judul: h.judul, cover: h.coverImage || '', ts: Date.now() }; L.simpan();
+        terpilih = H.spin; L.beep('ok'); window.confetti && confetti({ particleCount: 110, spread: 75, origin: { y: .5 }, zIndex: 100001 });
+        render(); tampilHasil();
+    }, 5600);
+};
+function tampilHasil() {
+    ['vRoda', 'vProses', 'vGalat'].forEach(v => $(v).classList.add('hidden')); $('vHasil').classList.remove('hidden'); $('btnTutup').classList.remove('hidden');
+    $('hasilCover').innerHTML = terpilih.cover ? `<img src="${esc(terpilih.cover)}" alt="" class="w-full h-full object-cover">` : '<div class="w-full h-full flex items-center justify-center text-amber-400 text-4xl"><i class="fas fa-file-pdf"></i></div>';
+    $('hasilJudul').textContent = terpilih.judul;
+}
 
-                if (snap.exists() && snap.data().imageBase64) {
-                    imgElement.src = snap.data().imageBase64;
-                } else {
-                    // Jika admin belum mengunggah, gunakan default image elegan
-                    imgElement.src = "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80";
-                }
+/* ---------- siapkan soal (satu kali panggil Gemini) ---------- */
+const LANGKAH = ['Membuka berkas materi…', 'Guru sedang membaca isi materi…', 'Menyusun soal pilihan ganda bertingkat…', 'Merancang soal HOTS dan uji berpikir…', 'Menentukan waktu pengerjaan tiap soal…', 'Hampir selesai, merapikan soal…'];
+window.siapkanDariHub = () => { const H = hariIni(); if (!H || !H.spin) return; terpilih = H.spin; $('modal').classList.replace('hidden', 'flex'); siapkan(); };
+window.siapkan = async () => {
+    if (memproses || !terpilih) return; memproses = true;
+    ['vRoda', 'vHasil', 'vGalat'].forEach(v => $(v).classList.add('hidden')); $('vProses').classList.remove('hidden'); $('btnTutup').classList.add('hidden');
+    $('prosesJudul').textContent = terpilih.judul; let i = 0; $('prosesTeks').textContent = LANGKAH[0]; $('prosesBar').style.width = '6%';
+    tick = setInterval(() => { i = Math.min(i + 1, LANGKAH.length - 1); $('prosesTeks').textContent = LANGKAH[i]; $('prosesBar').style.width = Math.min(92, 6 + (i + 1) * 14) + '%'; }, 7000);
+    try {
+        const pack = await L.paket(terpilih.hid);
+        const H = hariIni() || L.baru(); H.pack = pack; L.simpan();
+        $('prosesBar').style.width = '100%'; $('prosesTeks').textContent = 'Soal siap!'; L.beep('ok');
+        setTimeout(() => { memproses = false; clearInterval(tick); $('modal').classList.replace('flex', 'hidden'); render(); L.toast('Soal latihan hari ini sudah siap!'); }, 700);
+    } catch (e) {
+        console.error(e); clearInterval(tick); memproses = false; L.beep('err');
+        ['vProses'].forEach(v => $(v).classList.add('hidden')); $('vGalat').classList.remove('hidden'); $('btnTutup').classList.remove('hidden');
+        $('galatPesan').textContent = e.name === 'TimeoutError' ? 'Proses terlalu lama. Coba lagi sebentar.' : e.message;
+    }
+};
 
-                // Tampilkan gambar setelah berhasil dimuat
-                imgElement.onload = () => {
-                    loadingElement.classList.add('hidden');
-                    imgElement.classList.remove('hidden');
-                };
+window.setHandouts = list => { handouts = list; if ($('modal').classList.contains('flex') && !$('vRoda').classList.contains('hidden') && !segmen.length) siapRoda(); };
+window.galatHandouts = () => { handouts = []; if ($('modal').classList.contains('flex')) siapRoda(); };
 
-            } catch (error) {
-                console.error("Gagal memuat banner:", error);
-                // Fallback jika error koneksi
-                const imgElement = document.getElementById('bannerImage');
-                imgElement.src = "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80";
-                imgElement.onload = () => {
-                    document.getElementById('bannerLoading').classList.add('hidden');
-                    imgElement.classList.remove('hidden');
-                };
-            }
-        }
+function tickReset() {
+    const el = $('resetInfo'), H = hariIni();
+    if (!H || !H.spin) { if (adaSiklus) { render(); L.toast('Sudah 24 jam! Putar gacha untuk materi baru.'); } return; }
+    if (el) el.textContent = L.jam(L.sisaReset());
+}
+L.siap().then(() => { render(); setInterval(tickReset, 1000); });
+</script>
 
-        document.addEventListener('DOMContentLoaded', fetchBannerLatihan);
-    </script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+const db = getFirestore(initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" }));
+try {
+    const snap = await getDocs(collection(db, "handouts")), list = [];
+    snap.forEach(d => { const v = d.data(); if (v.fileUrl && v.status !== 'draft' && v.status !== 'dihapus') list.push({ id: d.id, judul: v.judul || 'Materi', coverImage: v.coverImage || '', fileUrl: v.fileUrl }); });
+    window.setHandouts(list);
+} catch (e) { console.error(e); window.galatHandouts(); }
+</script>
 </body>
 </html>
