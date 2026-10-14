@@ -4,7 +4,7 @@
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mading-cf676';
 const WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0'; // kunci web publik Firebase
 
-const MODELS = [...new Set([process.env.GEMINI_MODEL, 'gemini-3.5-flash', 'gemini-2.5-flash'].filter(Boolean))];
+const MODELS = [...new Set([process.env.GEMINI_MODEL, 'gemini-3-flash', 'gemini-2.5-flash'].filter(Boolean))];
 
 // Inisialisasi Groq SDK
 let Groq; try { Groq = require('groq-sdk'); } catch (err) { console.error("Gagal load groq-sdk:", err); }
