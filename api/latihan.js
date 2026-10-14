@@ -1,13 +1,24 @@
-// api/latihan.js — membaca PDF handout dengan Groq / Gemini SATU KALI jalan dan menghasilkan seluruh paket soal harian
+// api/latihan.js — membaca PDF handout dengan Gemini (primary) / Groq (fallback tanpa PDF)
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mading-cf676';
-const WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0'; 
+const WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0';
 
-// Model Gemini yang valid
-const MODELS = [...new Set([process.env.GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-3.6-flash'].filter(Boolean))];
+// Model Gemini yang valid (UPDATE terbaru 2025)
+const MODELS = [...new Set([
+    process.env.GEMINI_MODEL,
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-2.5-pro'
+].filter(Boolean))];
 
 // Inisialisasi Groq SDK
 let Groq; try { Groq = require('groq-sdk'); } catch (err) { console.error("Gagal load groq-sdk:", err); }
-const MODELS_GROQ = [...new Set([process.env.GROQ_MODEL, 'openai/gpt-oss-20b', 'openai/gpt-oss-120b', 'qwen/qwen3.8-27b'].filter(Boolean))];
+const MODELS_GROQ = [...new Set([
+    process.env.GROQ_MODEL,
+    'openai/gpt-oss-20b',
+    'openai/gpt-oss-120b',
+    'qwen/qwen3-32b',
+    'llama-3.3-70b-versatile'
+].filter(Boolean))];
 
 const MAKS_PDF = 14 * 1024 * 1024;
 const galat = (pesan, status) => Object.assign(new Error(pesan), { status });
@@ -59,61 +70,92 @@ Bahasa Indonesia baku, teks polos (tanpa markdown). Keluarkan HANYA satu objek J
 ATURAN:
 - Pilgan: komposisi 4 mudah, 5 sedang, 3 sulit, 3 hots.
 - "waktu" dalam detik per soal. "j" = indeks 0-3.
-- Larang opsi "semua benar/salah".`;
+- Larang opsi "semua benar/salah".
+- Pastikan JSON valid dan LENGKAP (jangan terpotong).`;
 
-/* ---------- Integrasi Gemini ---------- */
+/* ---------- Integrasi Gemini (PRIMARY - support PDF native) ---------- */
 async function tanyaGemini(judul, pdfB64) {
     const key = process.env.GEMINI_API_KEY;
     if (!key) throw galat('GEMINI_API_KEY belum diisi di Vercel Environment Variables.', 500);
     const catatan = [];
     for (const model of MODELS) {
-        const ac = new AbortController(), t = setTimeout(() => ac.abort(), 55000);
+        // Timeout dinaikkan ke 110 detik
+        const ac = new AbortController(), t = setTimeout(() => ac.abort(), 110000);
         try {
             const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
                 method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-                body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: PROMPT(judul) }, { inlineData: { mimeType: 'application/pdf', data: pdfB64 } }] }],
-                    generationConfig: { responseMimeType: 'application/json', temperature: 0.6, maxOutputTokens: 8192 } }) });
+                body: JSON.stringify({
+                    contents: [{ role: 'user', parts: [
+                        { text: PROMPT(judul) },
+                        { inlineData: { mimeType: 'application/pdf', data: pdfB64 } }
+                    ]}],
+                    generationConfig: {
+                        responseMimeType: 'application/json',
+                        temperature: 0.6,
+                        // Dinaikkan agar JSON tidak terpotong
+                        maxOutputTokens: 32768
+                    }
+                })
+            });
             const j = await r.json().catch(() => ({}));
             if (!r.ok) throw new Error((j.error && j.error.message) || 'HTTP ' + r.status);
             const teks = ((j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || []).map(p => p.text || '').join('');
-            const s = teks.indexOf('{'), e = teks.lastIndexOf('}'); if (s === -1 || e === -1) throw new Error('Respons bukan JSON');
+            if (!teks) throw new Error('Respons kosong');
+            const s = teks.indexOf('{'), e = teks.lastIndexOf('}');
+            if (s === -1 || e === -1) throw new Error('Respons bukan JSON');
             return { paket: rapikan(JSON.parse(teks.slice(s, e + 1))), model };
-        } catch (err) { console.error(`Gemini ${model} gagal:`, err.message); catatan.push(`${model}: ${err.message}`); }
-        finally { clearTimeout(t); }
+        } catch (err) {
+            console.error(`Gemini ${model} gagal:`, err.message);
+            catatan.push(`${model}: ${err.message}`);
+        } finally { clearTimeout(t); }
     }
     throw galat('Gemini belum berhasil menyusun soal. ' + catatan.join(' | '), 502);
 }
 
-/* ---------- Integrasi Groq ---------- */
-async function tanyaGroq(judul, pdfB64) {
+/* ---------- Integrasi Groq (FALLBACK - tanpa PDF, hanya judul + ringkasan prompt) ---------- */
+async function tanyaGroq(judul) {
     const key = process.env.GROQ_API_KEY;
     if (!key) throw galat('GROQ_API_KEY belum diisi di Vercel Environment Variables.', 500);
     if (!Groq) throw galat('groq-sdk belum terinstall di project.', 500);
-    
+
     const groqClient = new Groq({ apiKey: key });
     const catatan = [];
-    
-    // Potong Base64 jika terlalu panjang agar tidak melebihi konteks pesan Groq
-    const pdfB64Clipped = pdfB64.slice(0, 500000); 
+
+    // Groq TIDAK mendukung PDF. Jadi kita hanya kasih judul + instruksi generik.
+    // Hasil mungkin kurang akurat, tetapi setidaknya tidak error context_length.
+    const promptGroq = `Kamu adalah guru Bahasa Indonesia yang ahli menyusun asesmen penalaran dan teks argumentasi untuk siswa SMP/SMA.
+Susun SATU paket latihan harian bertema "${judul}". Buat soal yang masuk akal dan edukatif.
+Bahasa Indonesia baku, teks polos (tanpa markdown). Keluarkan HANYA satu objek JSON valid dengan struktur:
+
+{
+ "ringkasan": "2-3 kalimat inti materi",
+ "pilgan": [ 15 soal: { "p": "pertanyaan", "opsi": ["A","B","C","D"], "j": 0, "tingkat": "mudah|sedang|sulit|hots", "waktu": 45, "bahas": "alasan jawaban benar" } ],
+ "struktur": { "judul": "judul teks", "waktu": 300, "teks": [ 7 kalimat: { "t": "kalimat", "label": "tesis|argumen|kesimpulan", "alasan": "mengapa label itu" } ] },
+ "esai": [ 6 soal: { "tesis": "pernyataan pendapat", "opsi": ["argumen A","argumen B","argumen C","argumen D"], "j": 0, "tingkat": "sedang|sulit|hots", "waktu": 90, "bahas": "mengapa argumen itu paling tepat" } ],
+ "kritis": [ 8 soal: { "konsep": "nama konsep", "p": "skenario + pertanyaan", "opsi": ["A","B","C","D"], "j": 0, "tingkat": "sedang|sulit|hots", "waktu": 75, "bahas": "penjelasan" } ]
+}
+
+ATURAN: Pilgan komposisi 4 mudah/5 sedang/3 sulit/3 hots. "j" indeks 0-3. Larang opsi "semua benar/salah". JSON harus LENGKAP.`;
 
     for (const model of MODELS_GROQ) {
-        const ac = new AbortController(), t = setTimeout(() => ac.abort(), 50000);
+        const ac = new AbortController(), t = setTimeout(() => ac.abort(), 90000);
         try {
             const completion = await groqClient.chat.completions.create({
                 model: model,
-                messages: [
-                    { role: 'user', content: `${PROMPT(judul)}\n\n(Catatan: Sumber data PDF materi Base64):\n${pdfB64Clipped}` }
-                ],
+                messages: [{ role: 'user', content: promptGroq }],
                 temperature: 0.6,
+                max_tokens: 16384,
                 response_format: { type: 'json_object' }
             }, { signal: ac.signal });
 
             const teks = completion.choices[0]?.message?.content || '';
-            const s = teks.indexOf('{'), e = teks.lastIndexOf('}'); if (s === -1 || e === -1) throw new Error('Respons bukan JSON');
+            if (!teks) throw new Error('Respons kosong');
+            const s = teks.indexOf('{'), e = teks.lastIndexOf('}');
+            if (s === -1 || e === -1) throw new Error('Respons bukan JSON');
             return { paket: rapikan(JSON.parse(teks.slice(s, e + 1))), model: `groq/${model}` };
-        } catch (err) { 
-            console.error(`Groq ${model} gagal:`, err.message); 
-            catatan.push(`${model}: ${err.message}`); 
+        } catch (err) {
+            console.error(`Groq ${model} gagal:`, err.message);
+            catatan.push(`${model}: ${err.message}`);
         } finally { clearTimeout(t); }
     }
     throw galat('Groq belum berhasil menyusun soal. ' + catatan.join(' | '), 502);
@@ -127,7 +169,7 @@ function soalPg(x, tingkatDefault) {
     const benar = opsi[j], baru = acak(opsi);
     let tingkat = String(x.tingkat || '').toLowerCase(); if (!TINGKAT.includes(tingkat)) tingkat = tingkatDefault;
     const o = { p, opsi: baru, j: baru.indexOf(benar), tingkat, waktu: jepit(x.waktu, RENTANG[tingkat]), bahas: bersih(x.bahas, 500) };
-    if (x.tesis) { o.tesis = bersih(x.tesis, 500); delete o.p; o.p = o.tesis; }
+    if (x.tesis) { o.tesis = bersih(x.tesis, 500); o.p = o.tesis; }
     if (x.konsep) o.konsep = bersih(x.konsep, 60);
     return o;
 }
@@ -136,14 +178,14 @@ const jumlah = a => a.reduce((t, s) => t + s.waktu, 0);
 
 function rapikan(o) {
     const pilgan = urutTingkat((o.pilgan || []).map(x => soalPg(x, 'sedang')).filter(Boolean)).slice(0, 15);
-    if (pilgan.length < 10) throw new Error('Soal pilihan ganda kurang dari 10');
+    if (pilgan.length < 10) throw new Error('Soal pilihan ganda kurang dari 10 (didapat ' + pilgan.length + ')');
     const LAB = ['tesis', 'argumen', 'kesimpulan'];
     const teks = ((o.struktur && o.struktur.teks) || []).map(k => ({ t: bersih(k.t, 500), label: String(k.label || '').toLowerCase().trim(), alasan: bersih(k.alasan, 300) })).filter(k => k.t && LAB.includes(k.label)).slice(0, 9);
     if (teks.length < 5 || !LAB.every(l => teks.some(k => k.label === l))) throw new Error('Bagian struktur tidak lengkap');
     const esai = urutTingkat((o.esai || []).map(x => soalPg(x, 'sulit')).filter(Boolean)).slice(0, 6);
-    if (esai.length < 4) throw new Error('Soal isi argumentasi kurang dari 4');
+    if (esai.length < 4) throw new Error('Soal isi argumentasi kurang dari 4 (didapat ' + esai.length + ')');
     const kritis = urutTingkat((o.kritis || []).map(x => soalPg(x, 'sulit')).filter(Boolean)).slice(0, 8);
-    if (kritis.length < 5) throw new Error('Soal uji berpikir kurang dari 5');
+    if (kritis.length < 5) throw new Error('Soal uji berpikir kurang dari 5 (didapat ' + kritis.length + ')');
     return {
         ringkasan: bersih(o.ringkasan, 500),
         pilgan: { soal: pilgan, total: jumlah(pilgan) },
@@ -157,24 +199,24 @@ const HANDLERS = {
     async buat({ handoutId, ai }) {
         const h = await ambilHandout(handoutId);
         const pdfB64 = await ambilPdf(h.url);
-        
+
         let hasil;
         const provider = String(ai || 'auto').toLowerCase();
 
         if (provider === 'gemini') {
             hasil = await tanyaGemini(h.judul, pdfB64);
         } else if (provider === 'groq') {
-            hasil = await tanyaGroq(h.judul, pdfB64);
+            hasil = await tanyaGroq(h.judul);
         } else {
-            // Priority: Groq -> Fallback: Gemini
+            // Priority: Gemini (support PDF) -> Fallback: Groq (tanpa PDF)
             try {
-                hasil = await tanyaGroq(h.judul, pdfB64);
-            } catch (errGroq) {
-                console.warn('Groq gagal, mencoba Gemini:', errGroq.message);
+                hasil = await tanyaGemini(h.judul, pdfB64);
+            } catch (errGemini) {
+                console.warn('Gemini gagal, mencoba Groq:', errGemini.message);
                 try {
-                    hasil = await tanyaGemini(h.judul, pdfB64);
-                } catch (errGemini) {
-                    throw galat(`Gagal membuat soal dari kedua AI. Groq: [${errGroq.message}] | Gemini: [${errGemini.message}]`, 502);
+                    hasil = await tanyaGroq(h.judul);
+                } catch (errGroq) {
+                    throw galat(`Gagal membuat soal dari kedua AI. Gemini: [${errGemini.message}] | Groq: [${errGroq.message}]`, 502);
                 }
             }
         }
@@ -196,4 +238,5 @@ module.exports = async function handler(req, res) {
         return res.status(e.status || 500).json({ error: 'Gagal menyiapkan soal', detail_error: e.message });
     }
 };
-module.exports.config = { maxDuration: 60 };
+// Vercel Pro mendukung maxDuration 300 detik; Hindari timeout
+module.exports.config = { maxDuration: 120 };
