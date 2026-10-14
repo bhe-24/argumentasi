@@ -28,19 +28,15 @@
 
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
-        
-        /* Hide Scrollbar */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .up { animation: up 0.35s ease-out both; }
+        @keyframes up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Skeleton shimmer */
-        .sk { position: relative; overflow: hidden; background: #e2e8f0; border-radius: .5rem; color: transparent !important; }
-        .sk-light { background: rgba(255,255,255,.28); }
-        .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent); animation: shimmer 1.4s infinite; }
-        @keyframes shimmer { 100% { transform: translateX(100%); } }
+        /* Skeleton Loading Anti-Bocor & Seragam */
+        .sk { position: relative; overflow: hidden; background: #e2e8f0; isolation: isolate; transform: translateZ(0); }
+        .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent); animation: sh 1.3s infinite; pointer-events: none; }
+        @keyframes sh { 100% { transform: translateX(100%); } }
     </style>
 </head>
 <body class="flex justify-center min-h-screen">
@@ -51,10 +47,13 @@
         <!-- HEADER STICKY -->
         <header class="bg-brand-green fixed w-full max-w-md z-50 px-4 py-3 flex items-center justify-between shadow-md" id="topHeader">
             <div class="flex items-center gap-3">
-                <a href="../index.html" class="shrink-0 bg-white/90 p-1 rounded-lg shadow-sm active:scale-95 transition-transform">
+                <a href="../index.html" class="shrink-0 bg-white/95 p-1 rounded-lg shadow-sm active:scale-95 transition-transform">
                     <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-6 object-contain" onerror="this.outerHTML='<i class=\'fas fa-shield-alt text-brand-green px-1\'></i>'">
                 </a>
-                <h1 class="text-white font-bold text-sm tracking-wide">Pusat Kendali</h1>
+                <div>
+                    <h1 class="text-white font-bold text-sm leading-tight tracking-wide">Pusat Kendali</h1>
+                    <p class="text-white/70 text-[10px] leading-tight">Dashboard Administrator</p>
+                </div>
             </div>
             
             <!-- Tombol Keluar / Logout -->
@@ -67,71 +66,140 @@
         <div class="h-[60px] bg-brand-green shrink-0"></div>
 
         <!-- BACKGROUND LENGKUNG -->
-        <div class="bg-brand-green pb-10 px-4 relative z-10 rounded-b-[2rem] -mt-1 shrink-0"></div>
+        <div class="bg-brand-green pb-12 px-4 relative z-10 rounded-b-[2rem] -mt-1 shrink-0"></div>
 
-        <!-- KARTU INFORMASI ADMIN -->
-        <div class="px-4 -mt-10 relative z-20">
-            <a href="profil.html" class="block bg-white rounded-2xl shadow-md p-4 flex items-center justify-between active:scale-[0.98] transition-transform group border border-slate-100 hover:border-brand-green">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-brand-light text-brand-green rounded-full flex items-center justify-center shrink-0 border border-emerald-200 overflow-hidden relative">
-                        <i id="adminIcon" class="fas fa-user-shield text-xl z-0"></i>
-                        <img id="adminPhoto" src="" class="absolute inset-0 w-full h-full object-cover hidden z-10">
+        <!-- ==================== SKELETON VIEW (TAMPIL SERENTAK SAAT MEMUAT) ==================== -->
+        <div id="viewSkeleton" class="flex-grow flex flex-col pb-10">
+            <!-- Skeleton Kartu Profil -->
+            <div class="px-4 -mt-11 relative z-20">
+                <div class="bg-white rounded-2xl shadow-md p-4 flex items-center justify-between border border-slate-100">
+                    <div class="flex items-center gap-3.5 flex-1">
+                        <div class="w-14 h-14 rounded-full sk shrink-0"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="h-3 w-28 rounded sk"></div>
+                            <div class="h-4 w-40 rounded sk"></div>
+                            <div class="h-2.5 w-24 rounded sk"></div>
+                        </div>
                     </div>
-                    <div class="overflow-hidden">
-                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider group-hover:text-brand-green transition-colors">Super Administrator</p>
-                        <h3 class="text-sm font-bold text-slate-800 truncate sk sk-light w-28 h-5 mt-0.5" id="adminNameDisplay">Memuat...</h3>
-                    </div>
+                    <div class="w-7 h-7 rounded-full sk shrink-0"></div>
                 </div>
-                <i class="fas fa-chevron-right text-slate-300 group-hover:text-brand-green transition-colors"></i>
-            </a>
+            </div>
+
+            <!-- Skeleton Statistik -->
+            <div class="px-4 mt-6">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="h-4 w-32 rounded sk"></div>
+                    <div class="h-3 w-20 rounded sk"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-100 flex items-center gap-3"><div class="w-10 h-10 rounded-lg sk shrink-0"></div><div class="space-y-1.5 flex-1"><div class="h-2.5 w-16 rounded sk"></div><div class="h-5 w-10 rounded sk"></div></div></div>
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-100 flex items-center gap-3"><div class="w-10 h-10 rounded-lg sk shrink-0"></div><div class="space-y-1.5 flex-1"><div class="h-2.5 w-16 rounded sk"></div><div class="h-5 w-10 rounded sk"></div></div></div>
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-100 flex items-center gap-3"><div class="w-10 h-10 rounded-lg sk shrink-0"></div><div class="space-y-1.5 flex-1"><div class="h-2.5 w-16 rounded sk"></div><div class="h-5 w-10 rounded sk"></div></div></div>
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-100 flex items-center gap-3"><div class="w-10 h-10 rounded-lg sk shrink-0"></div><div class="space-y-1.5 flex-1"><div class="h-2.5 w-16 rounded sk"></div><div class="h-5 w-10 rounded sk"></div></div></div>
+                    <div class="col-span-2 bg-white p-3.5 rounded-xl border border-slate-100 flex items-center gap-3"><div class="w-10 h-10 rounded-lg sk shrink-0"></div><div class="space-y-1.5 flex-1"><div class="h-2.5 w-24 rounded sk"></div><div class="h-5 w-12 rounded sk"></div></div></div>
+                </div>
+            </div>
+
+            <div class="h-2 bg-slate-100 w-full mt-6"></div>
+
+            <!-- Skeleton Navigasi Utama -->
+            <div class="px-4 mt-6">
+                <div class="h-4 w-28 rounded sk mb-3"></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 flex flex-col items-center"><div class="w-12 h-12 rounded-full sk mb-2.5"></div><div class="h-3.5 w-24 rounded sk"></div><div class="h-2.5 w-16 rounded sk mt-1.5"></div></div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 flex flex-col items-center"><div class="w-12 h-12 rounded-full sk mb-2.5"></div><div class="h-3.5 w-24 rounded sk"></div><div class="h-2.5 w-16 rounded sk mt-1.5"></div></div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 flex flex-col items-center"><div class="w-12 h-12 rounded-full sk mb-2.5"></div><div class="h-3.5 w-24 rounded sk"></div><div class="h-2.5 w-16 rounded sk mt-1.5"></div></div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 flex flex-col items-center"><div class="w-12 h-12 rounded-full sk mb-2.5"></div><div class="h-3.5 w-24 rounded sk"></div><div class="h-2.5 w-16 rounded sk mt-1.5"></div></div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 flex flex-col items-center"><div class="w-12 h-12 rounded-full sk mb-2.5"></div><div class="h-3.5 w-24 rounded sk"></div><div class="h-2.5 w-16 rounded sk mt-1.5"></div></div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 flex flex-col items-center"><div class="w-12 h-12 rounded-full sk mb-2.5"></div><div class="h-3.5 w-24 rounded sk"></div><div class="h-2.5 w-16 rounded sk mt-1.5"></div></div>
+                    <div class="col-span-2 bg-white p-3.5 rounded-xl border border-slate-100 flex items-center gap-3"><div class="w-11 h-11 rounded-full sk shrink-0"></div><div class="space-y-1.5 flex-1"><div class="h-3.5 w-32 rounded sk"></div><div class="h-2.5 w-44 rounded sk"></div></div></div>
+                </div>
+            </div>
         </div>
 
-        <!-- MAIN KONTEN (Scrollable) -->
-        <div class="flex-grow overflow-y-auto hide-scrollbar pb-10 fade-in">
+        <!-- ==================== KONTEN ASLI (TAMPIL BERSAMAAN SETELAH SIAP) ==================== -->
+        <div id="viewContent" class="hidden flex-grow flex flex-col pb-10">
             
+            <!-- KARTU INFORMASI ADMIN -->
+            <div class="px-4 -mt-11 relative z-20 up">
+                <a href="profil.html" class="block bg-white rounded-2xl shadow-md p-4 flex items-center justify-between active:scale-[0.98] transition-all group border border-slate-100 hover:border-brand-green">
+                    <div class="flex items-center gap-3.5 min-w-0">
+                        <div class="relative shrink-0">
+                            <div class="w-14 h-14 bg-brand-light text-brand-green rounded-full flex items-center justify-center border-2 border-emerald-200 overflow-hidden shadow-sm relative">
+                                <i id="adminIcon" class="fas fa-user-shield text-2xl"></i>
+                                <img id="adminPhoto" src="" alt="Foto Admin" class="absolute inset-0 w-full h-full object-cover hidden">
+                            </div>
+                            <span class="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full" title="Online"></span>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <span id="adminRoleDisplay" class="inline-block text-[9px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Super Administrator</span>
+                            <h3 class="text-sm font-extrabold text-slate-800 truncate mt-1 group-hover:text-brand-green transition-colors" id="adminNameDisplay">Admin Argumentasi</h3>
+                            <p class="text-[10px] text-slate-400 truncate mt-0.5" id="adminSubDisplay"><i class="fas fa-id-badge mr-1 text-brand-green"></i>Ketuk untuk lihat & edit profil</p>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-slate-50 group-hover:bg-emerald-50 flex items-center justify-center text-slate-400 group-hover:text-brand-green transition-colors shrink-0 ml-2">
+                        <i class="fas fa-chevron-right text-xs"></i>
+                    </div>
+                </a>
+            </div>
+
             <!-- STATISTIK SISTEM -->
-            <div class="px-4 mt-6">
-                <h2 class="font-bold text-slate-800 text-sm mb-3">Statistik Platform</h2>
+            <div class="px-4 mt-6 up" style="animation-delay: 50ms">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="font-bold text-slate-800 text-sm">Statistik Platform</h2>
+                    <span id="tglHariIni" class="text-[10px] text-slate-400 font-medium"></span>
+                </div>
                 <div class="grid grid-cols-2 gap-3">
                     <!-- Guru -->
-                    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
+                    <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
                         <div class="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600 shrink-0"><i class="fas fa-chalkboard-teacher"></i></div>
                         <div>
                             <p class="text-[9px] font-bold text-slate-400 uppercase">Guru Aktif</p>
-                            <h3 id="statGuru" class="sk h-6 w-8 text-lg font-bold leading-none mt-1">0</h3>
+                            <h3 id="statGuru" class="text-lg font-extrabold text-slate-800 leading-none mt-1">0</h3>
                         </div>
                     </div>
                     <!-- Siswa -->
-                    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
+                    <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
                         <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 shrink-0"><i class="fas fa-user-graduate"></i></div>
                         <div>
                             <p class="text-[9px] font-bold text-slate-400 uppercase">Total Siswa</p>
-                            <h3 id="statSiswa" class="sk h-6 w-8 text-lg font-bold leading-none mt-1">0</h3>
+                            <h3 id="statSiswa" class="text-lg font-extrabold text-slate-800 leading-none mt-1">0</h3>
                         </div>
                     </div>
                     <!-- Materi -->
-                    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
+                    <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
                         <div class="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600 shrink-0"><i class="fas fa-book-open"></i></div>
                         <div>
                             <p class="text-[9px] font-bold text-slate-400 uppercase">Total Materi</p>
-                            <h3 id="statMateri" class="sk h-6 w-8 text-lg font-bold leading-none mt-1">0</h3>
+                            <h3 id="statMateri" class="text-lg font-extrabold text-slate-800 leading-none mt-1">0</h3>
                         </div>
                     </div>
                     <!-- Kelas -->
-                    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
+                    <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
                         <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-purple-600 shrink-0"><i class="fas fa-door-open"></i></div>
                         <div>
                             <p class="text-[9px] font-bold text-slate-400 uppercase">Total Kelas</p>
-                            <h3 id="statKelas" class="sk h-6 w-8 text-lg font-bold leading-none mt-1">0</h3>
+                            <h3 id="statKelas" class="text-lg font-extrabold text-slate-800 leading-none mt-1">0</h3>
                         </div>
+                    </div>
+                    <!-- Handout (Full Width Stat Bar) -->
+                    <div class="col-span-2 bg-white p-3.5 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600 shrink-0"><i class="fas fa-file-pdf"></i></div>
+                            <div>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase">Total Handout & Latihan</p>
+                                <h3 id="statHandout" class="text-lg font-extrabold text-slate-800 leading-none mt-1">0</h3>
+                            </div>
+                        </div>
+                        <a href="handout.html" class="text-[10px] font-bold text-teal-600 bg-teal-50 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition">Kelola <i class="fas fa-arrow-right ml-1"></i></a>
                     </div>
                 </div>
             </div>
 
             <div class="h-2 bg-slate-100 w-full mt-6"></div>
 
-            <!-- MENU UTAMA (6 SECTION) -->
-            <div class="px-4 mt-6">
+            <!-- MENU UTAMA (TERMASUK HANDOUT.HTML) -->
+            <div class="px-4 mt-6 up" style="animation-delay: 100ms">
                 <h2 class="font-bold text-slate-800 text-sm mb-3">Navigasi Utama</h2>
                 <div class="grid grid-cols-2 gap-3">
                     
@@ -139,6 +207,14 @@
                         <div class="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-emerald-100 transition-all"><i class="fas fa-book-open"></i></div>
                         <h3 class="text-xs font-bold text-slate-700">Kelola Materi</h3>
                         <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Teks & Artikel</p>
+                    </a>
+
+                    <!-- KARTU BARU: ADMIN/HANDOUT.HTML -->
+                    <a href="handout.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-teal-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95 relative overflow-hidden">
+                        <span class="absolute top-2 right-2 text-[8px] font-extrabold uppercase bg-teal-50 text-teal-600 px-1.5 py-0.5 rounded-full border border-teal-200">PDF</span>
+                        <div class="w-12 h-12 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-teal-100 transition-all"><i class="fas fa-file-pdf"></i></div>
+                        <h3 class="text-xs font-bold text-slate-700">Kelola Handout</h3>
+                        <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Modul & Gacha Soal</p>
                     </a>
                     
                     <a href="budaya.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-amber-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
@@ -162,13 +238,18 @@
                     <a href="profil.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-rose-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
                         <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-rose-100 transition-all"><i class="fas fa-user-edit"></i></div>
                         <h3 class="text-xs font-bold text-slate-700">Profil Saya</h3>
-                        <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Ubah Foto & Data</p>
+                        <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Biodata & Foto</p>
                     </a>
 
-                    <a href="../index.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-indigo-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
-                        <div class="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-indigo-100 transition-all"><i class="fas fa-home"></i></div>
-                        <h3 class="text-xs font-bold text-slate-700">Beranda</h3>
-                        <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Halaman Publik</p>
+                    <a href="../index.html" class="col-span-2 bg-white p-3.5 rounded-xl shadow-sm border border-slate-100 hover:border-indigo-400 hover:shadow-md transition-all group flex items-center justify-between active:scale-[0.98]">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center text-lg group-hover:scale-105 group-hover:bg-indigo-100 transition-all shrink-0"><i class="fas fa-home"></i></div>
+                            <div class="text-left">
+                                <h3 class="text-xs font-bold text-slate-700">Beranda Utama</h3>
+                                <p class="text-[10px] text-slate-400 mt-0.5">Buka halaman publik platform siswa</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-external-link-alt text-slate-300 group-hover:text-indigo-500 text-xs mr-1 transition-colors"></i>
                     </a>
 
                 </div>
@@ -177,7 +258,7 @@
         </div>
 
         <!-- FOOTER -->
-        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0">
+        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto">
             <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50" onerror="this.remove()">
             <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi Admin.</p>
         </footer>
@@ -204,44 +285,84 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // ---- CEK PROFIL LOKAL (Memuat Foto Admin Jika Ada) ----
-        function loadLocalProfile() {
-            // Sesuai dengan sistem lokal yang kamu minta di form profil admin
-            const localName = localStorage.getItem('namaAdminCendekia');
-            const localPhoto = localStorage.getItem('fotoAdminCendekia');
-
-            if(localPhoto) {
-                const imgEl = document.getElementById('adminPhoto');
-                imgEl.src = localPhoto;
-                imgEl.classList.remove('hidden');
-                document.getElementById('adminIcon').classList.add('hidden');
-            }
-
-            return localName;
+        // Ambil data profil lokal (dari halaman profil.html)
+        function getLocalProfileData() {
+            let bio = {};
+            try { bio = JSON.parse(localStorage.getItem('profilAdminCendekia') || '{}'); } catch (e) {}
+            return {
+                nama: localStorage.getItem('namaAdminCendekia') || bio.namaLengkap || '',
+                foto: localStorage.getItem('fotoAdminCendekia') || bio.fotoProfil || '',
+                jabatan: localStorage.getItem('jabatanAdminCendekia') || bio.jabatan || '',
+                instansi: bio.instansi || ''
+            };
         }
 
-        // ---- AUTH GUARD (Cek Login Admin) ----
+        // Hitung dokumen dengan aman tanpa melempar error
+        async function ambilJumlah(q) {
+            try { return (await getCountFromServer(q)).data().count; }
+            catch (e) { console.error("Statistik gagal:", e); return '-'; }
+        }
+
+        // ---- AUTH GUARD & MUAT DATA SERENTAK ----
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = "../login.html"; return; }
             try {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists() && userDoc.data().role === 'admin') {
-                    
-                    const localName = loadLocalProfile();
-                    
-                    // Prioritaskan Nama Lokal (jika admin pernah edit), jika tidak pakai Firebase
-                    const finalName = localName || userDoc.data().namaLengkap || 'Admin Argumentasi';
-                    const el = document.getElementById('adminNameDisplay');
-                    el.textContent = finalName;
-                    el.classList.remove('sk', 'sk-light', 'w-28');
-                    
-                    // Muat Data Statistik
-                    muatStatistik();
-                } else {
+                // Jalankan pengambilan profil & semua statistik secara paralel agar selesai bersamaan
+                const [userDoc, jmlGuru, jmlSiswa, jmlMateri, jmlKelas, jmlHandout] = await Promise.all([
+                    getDoc(doc(db, "users", user.uid)),
+                    ambilJumlah(query(collection(db, "users"), where("role", "==", "teacher"))),
+                    ambilJumlah(query(collection(db, "users"), where("role", "==", "student"))),
+                    ambilJumlah(collection(db, "materials")),
+                    ambilJumlah(collection(db, "classes")),
+                    ambilJumlah(collection(db, "handouts"))
+                ]);
+
+                if (!userDoc.exists() || userDoc.data().role !== 'admin') {
                     alert("Akses Ditolak! Area ini khusus Administrator.");
                     await signOut(auth);
                     window.location.href = "../login.html";
+                    return;
                 }
+
+                const fbData = userDoc.data();
+                const local = getLocalProfileData();
+
+                // Sinkronkan ke localStorage bila localStorage masih kosong tapi di Firestore ada
+                const finalName = local.nama || fbData.namaLengkap || 'Admin Argumentasi';
+                const finalPhoto = local.foto || fbData.fotoProfil || '';
+                const finalRole = local.jabatan || fbData.jabatan || 'Super Administrator';
+                const finalInstansi = local.instansi || fbData.instansi || '';
+
+                if (finalName) localStorage.setItem('namaAdminCendekia', finalName);
+                if (finalPhoto) localStorage.setItem('fotoAdminCendekia', finalPhoto);
+                if (finalRole) localStorage.setItem('jabatanAdminCendekia', finalRole);
+
+                // Isi elemen profil
+                document.getElementById('adminNameDisplay').textContent = finalName;
+                document.getElementById('adminRoleDisplay').textContent = finalRole;
+                if (finalInstansi) {
+                    document.getElementById('adminSubDisplay').innerHTML = `<i class="fas fa-university mr-1 text-brand-green"></i>${finalInstansi}`;
+                }
+
+                if (finalPhoto) {
+                    const imgEl = document.getElementById('adminPhoto');
+                    imgEl.src = finalPhoto;
+                    imgEl.classList.remove('hidden');
+                    document.getElementById('adminIcon').classList.add('hidden');
+                }
+
+                // Isi elemen statistik sekaligus
+                document.getElementById('tglHariIni').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                document.getElementById('statGuru').textContent = jmlGuru;
+                document.getElementById('statSiswa').textContent = jmlSiswa;
+                document.getElementById('statMateri').textContent = jmlMateri;
+                document.getElementById('statKelas').textContent = jmlKelas;
+                document.getElementById('statHandout').textContent = jmlHandout;
+
+                // Tampilkan seluruh halaman secara serentak & sembunyikan skeleton
+                document.getElementById('viewSkeleton').classList.add('hidden');
+                document.getElementById('viewContent').classList.remove('hidden');
+
             } catch (error) {
                 alert("Terjadi kesalahan sistem: " + error.message);
                 window.location.href = "../login.html";
@@ -255,29 +376,6 @@
                 window.location.href = "../login.html";
             }
         };
-
-        // ---- FUNGSI HITUNG STATISTIK ----
-        function isiStat(id, n) {
-            const el = document.getElementById(id);
-            el.textContent = n;
-            el.classList.remove('sk', 'w-8');
-        }
-
-        async function hitung(q, id) {
-            try { 
-                isiStat(id, (await getCountFromServer(q)).data().count); 
-            } catch (e) { 
-                console.error("Statistik gagal:", id, e); 
-                isiStat(id, '-'); 
-            }
-        }
-
-        function muatStatistik() {
-            hitung(query(collection(db, "users"), where("role", "==", "teacher")), 'statGuru');
-            hitung(query(collection(db, "users"), where("role", "==", "student")), 'statSiswa');
-            hitung(collection(db, "materials"), 'statMateri');
-            hitung(collection(db, "classes"), 'statKelas');
-        }
     </script>
 </body>
 </html>
