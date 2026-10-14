@@ -4,235 +4,130 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Profil Administrator - Argumentasi</title>
-
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
-                    colors: { 
-                        brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } 
-                    }
-                }
-            }
-        }
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }
     </script>
-
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
-        .up { animation: up 0.3s ease-out both; }
-        @keyframes up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Skeleton Loading Anti-Bocor */
+        .up { animation: up 0.3s ease-out both; } @keyframes up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .sk { position: relative; overflow: hidden; background: #e2e8f0; isolation: isolate; transform: translateZ(0); }
         .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent); animation: sh 1.3s infinite; pointer-events: none; }
         @keyframes sh { 100% { transform: translateX(100%); } }
-
-        /* Grid pemandu Crop 1:1 */
-        .crop-grid {
-            background-image:
-                linear-gradient(to right, rgba(255,255,255,.35) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255,255,255,.35) 1px, transparent 1px);
-            background-size: 33.333% 33.333%;
-        }
+        .crop-grid { background-image: linear-gradient(to right, rgba(255,255,255,.35) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,.35) 1px, transparent 1px); background-size: 33.333% 33.333%; }
         canvas { touch-action: none; }
+        .in { width: 100%; padding: .625rem .875rem; border-radius: .75rem; border: 1px solid #e2e8f0; font-size: 12px; font-weight: 600; color: #1e293b; background: rgba(248,250,252,.6); outline: none; transition: all .15s; }
+        .in:focus { border-color: #059669; background: #fff; }
+        .lb { display: block; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .25rem; }
     </style>
+    <!-- Penjaga: bila script utama gagal berjalan, tampilkan penyebabnya (bukan skeleton selamanya) -->
+    <script>
+        window.__profilSiap = false; window.__profilError = [];
+        window.addEventListener('error', e => { window.__profilError.push(e.message || 'Error tidak diketahui'); });
+        window.addEventListener('unhandledrejection', e => { window.__profilError.push(String((e.reason && e.reason.message) || e.reason || 'Promise ditolak')); });
+        setTimeout(() => {
+            if (window.__profilSiap) return;
+            const sk = document.getElementById('viewSkeleton'); if (!sk) return;
+            sk.innerHTML = '<div class="px-6 py-20 text-center"><div class="w-14 h-14 mx-auto rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-2xl mb-3"><i class="fas fa-triangle-exclamation"></i></div><p class="font-bold text-slate-800 text-sm">Halaman belum bisa dimuat</p><p class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">Periksa internet lalu muat ulang. Jika tetap begini, kirim pesan di bawah ini ke pengembang.</p><pre class="mt-3 text-left text-[10px] bg-slate-100 border border-slate-200 rounded-lg p-3 whitespace-pre-wrap break-words text-rose-600">' + (window.__profilError.length ? window.__profilError.join('\n').replace(/</g, '&lt;') : 'Tidak ada pesan error. Kemungkinan koneksi ke Firebase lambat atau diblokir.') + '</pre><button onclick="location.reload()" class="mt-4 bg-brand-green text-white text-xs font-bold px-5 py-2.5 rounded-full">Muat Ulang</button></div>';
+        }, 12000);
+    </script>
 </head>
 <body class="flex justify-center min-h-screen">
-
-    <!-- CONTAINER UTAMA (Mobile App Frame) -->
     <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col overflow-x-hidden sm:border-x border-slate-200">
 
-        <!-- HEADER STICKY -->
         <header class="bg-brand-green sticky top-0 z-40 h-14 px-4 flex items-center justify-between shadow-md">
             <div class="flex items-center gap-3">
-                <a href="index.html" aria-label="Kembali" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
-                    <i class="fas fa-chevron-left"></i>
-                </a>
-                <div>
-                    <h1 class="text-white font-bold text-sm leading-tight">Profil Administrator</h1>
-                    <p class="text-white/75 text-[10px] leading-tight">Kelola Foto & Biodata Diri</p>
-                </div>
+                <a href="index.html" aria-label="Kembali" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
+                <div><h1 class="text-white font-bold text-sm leading-tight">Profil Administrator</h1><p class="text-white/75 text-[10px] leading-tight">Kelola Foto & Biodata Diri</p></div>
             </div>
-
-            <!-- Tombol Ikon Pensil untuk Masuk ke Mode Edit -->
-            <button id="btnPencilHeader" onclick="masukModeEdit()" class="hidden w-9 h-9 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white hover:text-brand-green transition active:scale-95 border border-white/30" title="Edit Biodata">
-                <i class="fas fa-pen text-xs"></i>
-            </button>
+            <button id="btnPencilHeader" onclick="masukModeEdit()" class="hidden w-9 h-9 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white hover:text-brand-green transition active:scale-95 border border-white/30" title="Edit Biodata"><i class="fas fa-pen text-xs"></i></button>
         </header>
 
-        <!-- ==================== SKELETON LOADING SERENTAK ==================== -->
+        <!-- SKELETON -->
         <div id="viewSkeleton" class="flex-grow pb-10">
             <div class="bg-brand-green h-16 rounded-b-[2rem]"></div>
             <div class="px-4 -mt-12">
-                <div class="bg-white rounded-2xl shadow-md p-5 border border-slate-100 flex flex-col items-center">
-                    <div class="w-24 h-24 rounded-full sk mb-3"></div>
-                    <div class="h-4 w-44 rounded sk mb-2"></div>
-                    <div class="h-3 w-28 rounded sk"></div>
-                </div>
+                <div class="bg-white rounded-2xl shadow-md p-5 border border-slate-100 flex flex-col items-center"><div class="w-24 h-24 rounded-full sk mb-3"></div><div class="h-4 w-44 rounded sk mb-2"></div><div class="h-3 w-28 rounded sk"></div></div>
                 <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-100 mt-4 space-y-4">
                     <div class="flex justify-between items-center"><div class="h-4 w-32 rounded sk"></div><div class="w-8 h-8 rounded-full sk"></div></div>
-                    <div class="space-y-3">
-                        <div class="h-12 w-full rounded-xl sk"></div>
-                        <div class="h-12 w-full rounded-xl sk"></div>
-                        <div class="h-12 w-full rounded-xl sk"></div>
-                        <div class="h-12 w-full rounded-xl sk"></div>
-                        <div class="h-16 w-full rounded-xl sk"></div>
-                    </div>
+                    <div class="space-y-3"><div class="h-12 w-full rounded-xl sk"></div><div class="h-12 w-full rounded-xl sk"></div><div class="h-12 w-full rounded-xl sk"></div><div class="h-12 w-full rounded-xl sk"></div><div class="h-16 w-full rounded-xl sk"></div></div>
                 </div>
             </div>
         </div>
 
-        <!-- ==================== KONTEN PROFIL UTAMA ==================== -->
+        <!-- KONTEN -->
         <main id="viewContent" class="hidden flex-grow pb-10">
             <div class="bg-brand-green h-16 rounded-b-[2rem]"></div>
-
             <div class="px-4 -mt-12">
-                <!-- KARTU AVATAR & IDENTITAS UTAMA -->
                 <div class="up bg-white rounded-2xl shadow-md p-5 border border-slate-100 flex flex-col items-center text-center relative">
-                    
-                    <!-- Avatar (Klik untuk Lihat & Zoom, Tombol Kamera untuk Ganti) -->
                     <div class="relative group">
                         <button type="button" onclick="bukaViewerFoto()" class="w-24 h-24 rounded-full bg-brand-light text-brand-green border-4 border-white shadow-lg flex items-center justify-center overflow-hidden relative active:scale-95 transition" title="Ketuk untuk lihat & zoom foto">
                             <i id="avatarIcon" class="fas fa-user-shield text-4xl"></i>
                             <img id="avatarImg" src="" alt="Foto Profil" class="absolute inset-0 w-full h-full object-cover hidden">
-                            <span class="absolute inset-0 bg-slate-900/35 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold">
-                                <i class="fas fa-magnifying-glass-plus text-base"></i>
-                            </span>
+                            <span class="absolute inset-0 bg-slate-900/35 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold"><i class="fas fa-magnifying-glass-plus text-base"></i></span>
                         </button>
-                        <button type="button" onclick="pilihFileFoto()" class="w-8 h-8 rounded-full bg-brand-green text-white border-2 border-white shadow-md flex items-center justify-center absolute bottom-0 right-0 hover:bg-brand-dark active:scale-90 transition" title="Ganti & Crop Foto">
-                            <i class="fas fa-camera text-xs"></i>
-                        </button>
+                        <button type="button" onclick="pilihFileFoto()" class="w-8 h-8 rounded-full bg-brand-green text-white border-2 border-white shadow-md flex items-center justify-center absolute bottom-0 right-0 hover:bg-brand-dark active:scale-90 transition" title="Ganti & Crop Foto"><i class="fas fa-camera text-xs"></i></button>
                         <input id="inputFileFoto" type="file" accept="image/*" class="hidden" onchange="saatPilihFile(event)">
                     </div>
-
                     <div class="flex items-center gap-1.5 mt-2">
                         <button onclick="bukaViewerFoto()" class="text-[10px] font-semibold text-slate-500 hover:text-brand-green bg-slate-100 px-2.5 py-1 rounded-full transition"><i class="fas fa-magnifying-glass-plus mr-1"></i>Lihat & Zoom</button>
                         <button onclick="pilihFileFoto()" class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-full transition"><i class="fas fa-crop-simple mr-1"></i>Ganti Foto 1:1</button>
                     </div>
-
                     <h2 id="dispHeaderNama" class="font-extrabold text-slate-800 text-base mt-3 leading-snug">Admin Argumentasi</h2>
                     <span id="dispHeaderJabatan" class="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Super Administrator</span>
                     <p id="dispHeaderBio" class="text-[11px] text-slate-500 mt-2 leading-relaxed max-w-xs"></p>
                 </div>
 
-                <!-- KARTU BIODATA DIRI (MODE BACA vs MODE EDIT) -->
                 <div class="up bg-white rounded-2xl shadow-sm p-4 border border-slate-100 mt-4" style="animation-delay: 60ms">
                     <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-                        <div>
-                            <h3 class="font-bold text-slate-800 text-sm">Biodata Diri Lengkap</h3>
-                            <p id="statusModeTeks" class="text-[10px] text-slate-400">Ketuk ikon pensil untuk mengubah data</p>
-                        </div>
-                        <!-- Tombol Ikon Pensil (Hanya muncul saat Mode Baca) -->
-                        <button id="btnPencilCard" type="button" onclick="masukModeEdit()" class="w-9 h-9 rounded-xl bg-emerald-50 text-brand-green hover:bg-brand-green hover:text-white flex items-center justify-center shadow-sm transition active:scale-95" title="Edit Biodata">
-                            <i class="fas fa-pen text-xs"></i>
-                        </button>
-                        <!-- Badge Indikator saat Mode Edit Aktif -->
-                        <span id="badgeEditAktif" class="hidden text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2.5 py-1 rounded-full">
-                            <i class="fas fa-pen-to-square mr-1"></i>Mode Edit
-                        </span>
+                        <div><h3 class="font-bold text-slate-800 text-sm">Biodata Diri Lengkap</h3><p id="statusModeTeks" class="text-[10px] text-slate-400">Ketuk ikon pensil untuk mengubah data</p></div>
+                        <button id="btnPencilCard" type="button" onclick="masukModeEdit()" class="w-9 h-9 rounded-xl bg-emerald-50 text-brand-green hover:bg-brand-green hover:text-white flex items-center justify-center shadow-sm transition active:scale-95" title="Edit Biodata"><i class="fas fa-pen text-xs"></i></button>
+                        <span id="badgeEditAktif" class="hidden text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2.5 py-1 rounded-full"><i class="fas fa-pen-to-square mr-1"></i>Mode Edit</span>
                     </div>
 
-                    <!-- 1. TAMPILAN BACA (VIEW MODE) -->
                     <div id="boxViewMode" class="space-y-2.5"></div>
 
-                    <!-- 2. TAMPILAN FORM EDIT (EDIT MODE - Tersembunyi secara default) -->
                     <form id="formEditMode" onsubmit="simpanProfil(event)" class="hidden space-y-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nama Lengkap & Gelar <span class="text-rose-500">*</span></label>
-                            <input id="inNama" type="text" required placeholder="Contoh: Mukhamad Bayu Aji, S.Pd." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
+                        <div><label class="lb">Nama Lengkap & Gelar <span class="text-rose-500">*</span></label><input id="inNama" type="text" required placeholder="Contoh: Mukhamad Bayu Aji, S.Pd." class="in"></div>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div><label class="lb">Jabatan / Peran <span class="text-rose-500">*</span></label><input id="inJabatan" type="text" required placeholder="Super Administrator" class="in"></div>
+                            <div><label class="lb">NIP / NIM / ID</label><input id="inNip" type="text" placeholder="Nomor Identitas" class="in"></div>
                         </div>
                         <div class="grid grid-cols-2 gap-2.5">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Jabatan / Peran <span class="text-rose-500">*</span></label>
-                                <input id="inJabatan" type="text" required placeholder="Super Administrator" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">NIP / NIM / ID</label>
-                                <input id="inNip" type="text" placeholder="Nomor Identitas" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                            </div>
+                            <div><label class="lb">Jenis Kelamin</label><select id="inGender" class="in"><option value="">- Pilih -</option><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option></select></div>
+                            <div><label class="lb">Tempat, Tgl Lahir</label><input id="inTtl" type="text" placeholder="Temanggung, 10 Mei..." class="in"></div>
                         </div>
+                        <div><label class="lb">Instansi / Universitas / Sekolah</label><input id="inInstansi" type="text" placeholder="Nama Instansi atau Lembaga" class="in"></div>
                         <div class="grid grid-cols-2 gap-2.5">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Jenis Kelamin</label>
-                                <select id="inGender" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                                    <option value="">- Pilih -</option>
-                                    <option value="Laki-laki">Laki-laki</option>
-                                    <option value="Perempuan">Perempuan</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tempat, Tgl Lahir</label>
-                                <input id="inTtl" type="text" placeholder="Temanggung, 10 Mei..." class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                            </div>
+                            <div><label class="lb">Email Aktif</label><input id="inEmail" type="email" placeholder="email@domain.com" class="in"></div>
+                            <div><label class="lb">No. WhatsApp / HP</label><input id="inTelepon" type="tel" placeholder="08xxxxxxxxxx" class="in"></div>
                         </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Instansi / Universitas / Sekolah</label>
-                            <input id="inInstansi" type="text" placeholder="Nama Instansi atau Lembaga" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                        </div>
-                        <div class="grid grid-cols-2 gap-2.5">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Email Aktif</label>
-                                <input id="inEmail" type="email" placeholder="email@domain.com" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">No. WhatsApp / HP</label>
-                                <input id="inTelepon" type="tel" placeholder="08xxxxxxxxxx" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Alamat / Domisili</label>
-                            <input id="inAlamat" type="text" placeholder="Kota, Provinsi" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Bio Singkat / Motto</label>
-                            <textarea id="inBio" rows="2" placeholder="Tuliskan deskripsi singkat atau motto pendidikan..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition resize-none"></textarea>
-                        </div>
-
-                        <!-- Tombol Batal & Simpan (Otomatis hilang setelah klik Simpan) -->
+                        <div><label class="lb">Alamat / Domisili</label><input id="inAlamat" type="text" placeholder="Kota, Provinsi" class="in"></div>
+                        <div><label class="lb">Bio Singkat / Motto</label><textarea id="inBio" rows="2" placeholder="Tuliskan deskripsi singkat atau motto pendidikan..." class="in resize-none"></textarea></div>
                         <div id="boxTombolSimpan" class="grid grid-cols-2 gap-2.5 pt-2">
                             <button type="button" onclick="keluarModeEdit()" class="py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs active:scale-95 transition">Batal</button>
-                            <button id="btnSimpanProfil" type="submit" class="py-3 rounded-xl bg-brand-green text-white font-bold text-xs shadow-md active:scale-95 transition flex items-center justify-center gap-1.5">
-                                <i class="fas fa-check"></i><span>Simpan Perubahan</span>
-                            </button>
+                            <button id="btnSimpanProfil" type="submit" class="py-3 rounded-xl bg-brand-green text-white font-bold text-xs shadow-md active:scale-95 transition flex items-center justify-center gap-1.5"><i class="fas fa-check"></i><span>Simpan Perubahan</span></button>
                         </div>
                     </form>
                 </div>
             </div>
         </main>
 
-        <!-- FOOTER -->
-        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto">
-            <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi Admin.</p>
-        </footer>
+        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto"><p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi Admin.</p></footer>
     </div>
 
-    <!-- ==================== MODAL 1: VIEWER & ZOOM FOTO PROFIL ==================== -->
+    <!-- VIEWER FOTO -->
     <div id="modalViewer" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-[99990] hidden flex-col justify-between p-4">
         <div class="flex items-center justify-between text-white max-w-md w-full mx-auto">
-            <div>
-                <h3 class="font-bold text-sm">Foto Profil</h3>
-                <p class="text-[10px] text-white/60">Gunakan tombol + / - atau geser untuk memperbesar</p>
-            </div>
-            <button onclick="tutupViewerFoto()" class="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white hover:bg-white/25">
-                <i class="fas fa-xmark text-lg"></i>
-            </button>
+            <div><h3 class="font-bold text-sm">Foto Profil</h3><p class="text-[10px] text-white/60">Gunakan tombol + / - atau geser untuk memperbesar</p></div>
+            <button onclick="tutupViewerFoto()" class="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white hover:bg-white/25"><i class="fas fa-xmark text-lg"></i></button>
         </div>
-
-        <!-- Area Gambar yang Bisa Di-Zoom & Digeser -->
         <div id="viewerStage" class="flex-1 flex items-center justify-center overflow-hidden my-3 select-none relative">
             <img id="viewerImg" src="" alt="Preview" class="max-w-[88vw] max-h-[62vh] sm:max-w-[340px] sm:max-h-[340px] rounded-2xl shadow-2xl object-contain transition-transform duration-75 cursor-grab active:cursor-grabbing">
         </div>
-
-        <!-- Kontrol Zoom & Ganti Foto -->
         <div class="max-w-md w-full mx-auto bg-slate-900/90 border border-white/15 rounded-2xl p-3.5 space-y-3">
             <div class="flex items-center gap-3">
                 <button type="button" onclick="ubahZoomViewer(-0.25)" class="w-8 h-8 rounded-lg bg-white/10 text-white flex items-center justify-center active:scale-90"><i class="fas fa-magnifying-glass-minus text-xs"></i></button>
@@ -247,25 +142,18 @@
         </div>
     </div>
 
-    <!-- ==================== MODAL 2: PRATINJAU, CROP 1:1 & KOMPRESI OTOMATIS ==================== -->
+    <!-- CROP 1:1 -->
     <div id="modalCrop" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-[99995] hidden items-end sm:items-center justify-center">
         <div class="up bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 max-h-[95vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-3">
-                <div>
-                    <h3 class="font-extrabold text-slate-800 text-sm">Sesuaikan & Crop Foto (1:1)</h3>
-                    <p class="text-[10px] text-slate-500">Geser foto di dalam kotak dan atur perbesaran</p>
-                </div>
+                <div><h3 class="font-extrabold text-slate-800 text-sm">Sesuaikan & Crop Foto (1:1)</h3><p class="text-[10px] text-slate-500">Geser foto di dalam kotak dan atur perbesaran</p></div>
                 <button type="button" onclick="tutupModalCrop()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200"><i class="fas fa-xmark"></i></button>
             </div>
-
-            <!-- Kanvas Interaktif 1:1 -->
             <div class="relative w-[280px] h-[280px] mx-auto rounded-2xl overflow-hidden shadow-inner border-2 border-brand-green bg-slate-900 select-none">
                 <canvas id="cropCanvas" width="480" height="480" class="w-full h-full cursor-move"></canvas>
                 <div class="absolute inset-0 crop-grid pointer-events-none"></div>
                 <div class="absolute inset-0 rounded-full border-2 border-dashed border-white/60 pointer-events-none m-2"></div>
             </div>
-
-            <!-- Kontrol Zoom & Putar -->
             <div class="mt-4 bg-slate-50 border border-slate-200/80 rounded-xl p-3 space-y-2.5">
                 <div class="flex items-center gap-2.5">
                     <button type="button" onclick="stepCropZoom(-0.12)" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 flex items-center justify-center active:scale-90"><i class="fas fa-minus text-xs"></i></button>
@@ -273,17 +161,11 @@
                     <button type="button" onclick="stepCropZoom(0.12)" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 flex items-center justify-center active:scale-90"><i class="fas fa-plus text-xs"></i></button>
                     <button type="button" onclick="putarCrop()" class="px-2.5 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 text-[11px] font-bold flex items-center gap-1 active:scale-90" title="Putar 90°"><i class="fas fa-rotate-right"></i> 90°</button>
                 </div>
-                <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200/70">
-                    <span id="infoUkuranAsli">Ukuran asli: -</span>
-                    <span id="infoUkuranKompres" class="font-bold text-brand-green">Hasil 1:1: ~0 KB</span>
-                </div>
+                <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200/70"><span id="infoUkuranAsli">Ukuran asli: -</span><span id="infoUkuranKompres" class="font-bold text-brand-green">Hasil 1:1: ~0 KB</span></div>
             </div>
-
             <div class="grid grid-cols-2 gap-2.5 mt-4">
                 <button type="button" onclick="tutupModalCrop()" class="py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs active:scale-95 transition">Batal</button>
-                <button id="btnPakaiFoto" type="button" onclick="terapkanCropFoto()" class="py-3 rounded-xl bg-brand-green text-white font-bold text-xs shadow-md active:scale-95 transition flex items-center justify-center gap-1.5">
-                    <i class="fas fa-check"></i><span>Pakai Foto Ini</span>
-                </button>
+                <button id="btnPakaiFoto" type="button" onclick="terapkanCropFoto()" class="py-3 rounded-xl bg-brand-green text-white font-bold text-xs shadow-md active:scale-95 transition flex items-center justify-center gap-1.5"><i class="fas fa-check"></i><span>Pakai Foto Ini</span></button>
             </div>
         </div>
     </div>
@@ -293,15 +175,7 @@
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
-            authDomain: "mading-cf676.firebaseapp.com",
-            projectId: "mading-cf676",
-            storageBucket: "mading-cf676.firebasestorage.app",
-            messagingSenderId: "72175203671",
-            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
-            measurementId: "G-590P9LLK7J"
-        };
+        const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", authDomain: "mading-cf676.firebaseapp.com", projectId: "mading-cf676", storageBucket: "mading-cf676.firebasestorage.app", messagingSenderId: "72175203671", appId: "1:72175203671:web:7a0676a55beb64bc96ba12", measurementId: "G-590P9LLK7J" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -310,426 +184,182 @@
         const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
         let currentUser = null;
-        let profil = {
-            namaLengkap: 'Admin Argumentasi',
-            jabatan: 'Super Administrator',
-            nip: '',
-            gender: '',
-            ttl: '',
-            instansi: '',
-            email: '',
-            telepon: '',
-            alamat: '',
-            bio: '',
-            fotoProfil: ''
-        };
+        let profil = { namaLengkap: 'Admin Argumentasi', jabatan: 'Super Administrator', nip: '', gender: '', ttl: '', instansi: '', email: '', telepon: '', alamat: '', bio: '', fotoProfil: '' };
 
-        // Toast Notification
         function toast(msg, err = false) {
             let c = $('pToast');
-            if (!c) {
-                c = document.createElement('div');
-                c.id = 'pToast';
-                c.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none';
-                document.body.appendChild(c);
-            }
+            if (!c) { c = document.createElement('div'); c.id = 'pToast'; c.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none'; document.body.appendChild(c); }
             const t = document.createElement('div');
             t.className = `${err ? 'bg-rose-600' : 'bg-slate-800'} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 up`;
             t.innerHTML = `<i class="fas ${err ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400'}"></i><span class="flex-1">${esc(msg)}</span>`;
-            c.appendChild(t);
-            setTimeout(() => t.remove(), 3000);
+            c.appendChild(t); setTimeout(() => t.remove(), 3000);
         }
 
-        // Muat data dari localStorage & gabungkan dengan Firestore
+        /* ---------- data lokal ---------- */
         function bacaLocalProfil() {
-            try {
-                const raw = JSON.parse(localStorage.getItem('profilAdminCendekia') || '{}');
-                profil = { ...profil, ...raw };
-            } catch (e) {}
-            const n = localStorage.getItem('namaAdminCendekia');
-            const f = localStorage.getItem('fotoAdminCendekia');
-            const j = localStorage.getItem('jabatanAdminCendekia');
-            if (n) profil.namaLengkap = n;
-            if (f) profil.fotoProfil = f;
-            if (j) profil.jabatan = j;
+            try { const raw = JSON.parse(localStorage.getItem('profilAdminCendekia') || '{}'); profil = { ...profil, ...raw }; } catch (e) {}
+            const n = localStorage.getItem('namaAdminCendekia'), f = localStorage.getItem('fotoAdminCendekia'), j = localStorage.getItem('jabatanAdminCendekia');
+            if (n) profil.namaLengkap = n; if (f) profil.fotoProfil = f; if (j) profil.jabatan = j;
         }
-
         function simpanKeLocal() {
-            localStorage.setItem('namaAdminCendekia', profil.namaLengkap);
-            localStorage.setItem('jabatanAdminCendekia', profil.jabatan);
-            if (profil.fotoProfil) localStorage.setItem('fotoAdminCendekia', profil.fotoProfil);
-            else localStorage.removeItem('fotoAdminCendekia');
-            localStorage.setItem('profilAdminCendekia', JSON.stringify(profil));
+            try {
+                localStorage.setItem('namaAdminCendekia', profil.namaLengkap);
+                localStorage.setItem('jabatanAdminCendekia', profil.jabatan);
+                if (profil.fotoProfil) localStorage.setItem('fotoAdminCendekia', profil.fotoProfil); else localStorage.removeItem('fotoAdminCendekia');
+                localStorage.setItem('profilAdminCendekia', JSON.stringify(profil));
+            } catch (e) { console.warn('Penyimpanan lokal penuh:', e); toast('Penyimpanan browser penuh, data tidak tersimpan lokal.', true); }
         }
 
-        // Render tampilan halaman profil
+        /* ---------- tampilan ---------- */
         function renderProfil() {
             $('dispHeaderNama').textContent = profil.namaLengkap || 'Admin Argumentasi';
-            $('dispHeaderJabatan').textContent = profil.jabatan \vert{}\vert{} 'Super Administrator';$('dispHeaderBio').textContent = profil.bio || 'Pengelola utama ekosistem pembelajaran dan materi Platform Argumentasi.';
-
-            if (profil.fotoProfil) {
-                $('avatarImg').src = profil.fotoProfil;
-                $('avatarImg').classList.remove('hidden');$('avatarIcon').classList.add('hidden');
-            } else {
-                $('avatarImg').src = '';
-                $('avatarImg').classList.add('hidden');$('avatarIcon').classList.remove('hidden');
-            }
+            $('dispHeaderJabatan').textContent = profil.jabatan || 'Super Administrator';
+            $('dispHeaderBio').textContent = profil.bio || 'Pengelola utama ekosistem pembelajaran dan materi Platform Argumentasi.';
+            if (profil.fotoProfil) { $('avatarImg').src = profil.fotoProfil; $('avatarImg').classList.remove('hidden'); $('avatarIcon').classList.add('hidden'); }
+            else { $('avatarImg').src = ''; $('avatarImg').classList.add('hidden'); $('avatarIcon').classList.remove('hidden'); }
 
             const baris = [
-                ['fa-user-tie', 'Nama Lengkap', profil.namaLengkap],
-                ['fa-id-badge', 'Jabatan / Peran', profil.jabatan],
-                ['fa-hashtag', 'NIP / NIM / ID', profil.nip],
-                ['fa-venus-mars', 'Jenis Kelamin', profil.gender],
-                ['fa-calendar-day', 'Tempat, Tanggal Lahir', profil.ttl],
-                ['fa-building-columns', 'Instansi / Lembaga', profil.instansi],
-                ['fa-envelope', 'Email Aktif', profil.email],
-                ['fa-whatsapp fab', 'No. WhatsApp / Telepon', profil.telepon],
-                ['fa-location-dot', 'Alamat / Domisili', profil.alamat],
-                ['fa-quote-left', 'Bio / Motto', profil.bio]
+                ['fa-user-tie', 'Nama Lengkap', profil.namaLengkap], ['fa-id-badge', 'Jabatan / Peran', profil.jabatan], ['fa-hashtag', 'NIP / NIM / ID', profil.nip],
+                ['fa-venus-mars', 'Jenis Kelamin', profil.gender], ['fa-calendar-day', 'Tempat, Tanggal Lahir', profil.ttl], ['fa-building-columns', 'Instansi / Lembaga', profil.instansi],
+                ['fa-envelope', 'Email Aktif', profil.email], ['fa-whatsapp fab', 'No. WhatsApp / Telepon', profil.telepon], ['fa-location-dot', 'Alamat / Domisili', profil.alamat], ['fa-quote-left', 'Bio / Motto', profil.bio]
             ];
-
             $('boxViewMode').innerHTML = baris.map(([ic, lbl, val]) => `
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50/80 border border-slate-100">
-                    <div class="w-8 h-8 rounded-lg bg-white text-brand-green flex items-center justify-center text-xs shadow-sm shrink-0 mt-0.5">
-                        <i class="${ic.includes('fab') ? ic : 'fas ' + ic}"></i>
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-[9px] font-bold uppercase tracking-wider text-slate-400">${esc(lbl)}</p>
-                        <p class="text-xs font-semibold ${val ? 'text-slate-800' : 'text-slate-400 italic'} break-words mt-0.5">${val ? esc(val) : 'Belum diisi'}</p>
-                    </div>
-                </div>
-            `).join('');
+                    <div class="w-8 h-8 rounded-lg bg-white text-brand-green flex items-center justify-center text-xs shadow-sm shrink-0 mt-0.5"><i class="${ic.includes('fab') ? ic : 'fas ' + ic}"></i></div>
+                    <div class="min-w-0 flex-1"><p class="text-[9px] font-bold uppercase tracking-wider text-slate-400">${esc(lbl)}</p><p class="text-xs font-semibold ${val ? 'text-slate-800' : 'text-slate-400 italic'} break-words mt-0.5">${val ? esc(val) : 'Belum diisi'}</p></div>
+                </div>`).join('');
         }
 
-        // ---- MODE LIHAT vs MODE EDIT (IKON PENSIL) ----
-        window.masukModeEdit = function() {
-            $('inNama').value = profil.namaLengkap \vert{}\vert{} '';$('inJabatan').value = profil.jabatan || '';
-            $('inNip').value = profil.nip \vert{}\vert{} '';$('inGender').value = profil.gender || '';
-            $('inTtl').value = profil.ttl \vert{}\vert{} '';$('inInstansi').value = profil.instansi || '';
-            $('inEmail').value = profil.email \vert{}\vert{} '';$('inTelepon').value = profil.telepon || '';
-            $('inAlamat').value = profil.alamat \vert{}\vert{} '';$('inBio').value = profil.bio || '';
-
-            $('boxViewMode').classList.add('hidden');
-            $('formEditMode').classList.remove('hidden');$('btnPencilCard').classList.add('hidden');
-            $('btnPencilHeader').classList.add('hidden');$('badgeEditAktif').classList.remove('hidden');
-            $('statusModeTeks').textContent = 'Ubah data di bawah lalu tekan Simpan Perubahan';$('inNama').focus();
+        /* ---------- mode lihat / edit ---------- */
+        window.masukModeEdit = function () {
+            $('inNama').value = profil.namaLengkap || ''; $('inJabatan').value = profil.jabatan || '';
+            $('inNip').value = profil.nip || ''; $('inGender').value = profil.gender || '';
+            $('inTtl').value = profil.ttl || ''; $('inInstansi').value = profil.instansi || '';
+            $('inEmail').value = profil.email || ''; $('inTelepon').value = profil.telepon || '';
+            $('inAlamat').value = profil.alamat || ''; $('inBio').value = profil.bio || '';
+            $('boxViewMode').classList.add('hidden'); $('formEditMode').classList.remove('hidden');
+            $('btnPencilCard').classList.add('hidden'); $('btnPencilHeader').classList.add('hidden'); $('badgeEditAktif').classList.remove('hidden');
+            $('statusModeTeks').textContent = 'Ubah data di bawah lalu tekan Simpan Perubahan'; $('inNama').focus();
         };
-
-        window.keluarModeEdit = function() {
-            $('formEditMode').classList.add('hidden');$('boxViewMode').classList.remove('hidden');
-            $('badgeEditAktif').classList.add('hidden');$('btnPencilCard').classList.remove('hidden');
-            $('btnPencilHeader').classList.remove('hidden');$('statusModeTeks').textContent = 'Ketuk ikon pensil untuk mengubah data';
+        window.keluarModeEdit = function () {
+            $('formEditMode').classList.add('hidden'); $('boxViewMode').classList.remove('hidden');
+            $('badgeEditAktif').classList.add('hidden'); $('btnPencilCard').classList.remove('hidden'); $('btnPencilHeader').classList.remove('hidden');
+            $('statusModeTeks').textContent = 'Ketuk ikon pensil untuk mengubah data';
         };
-
-        window.simpanProfil = async function(e) {
+        window.simpanProfil = async function (e) {
             e.preventDefault();
-            const btn = $('btnSimpanProfil');
-            const isiAsli = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>Menyimpan...</span>';
-
-            profil.namaLengkap = $('inNama').value.trim() || 'Admin Argumentasi';
-            profil.jabatan = $('inJabatan').value.trim() || 'Super Administrator';
-            profil.nip = $('inNip').value.trim();
-            profil.gender = $('inGender').value;
-            profil.ttl = $('inTtl').value.trim();
-            profil.instansi = $('inInstansi').value.trim();
-            profil.email = $('inEmail').value.trim();
-            profil.telepon = $('inTelepon').value.trim();
-            profil.alamat = $('inAlamat').value.trim();
-            profil.bio = $('inBio').value.trim();
-
+            const btn = $('btnSimpanProfil'), isiAsli = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>Menyimpan...</span>';
+            profil.namaLengkap = $('inNama').value.trim() || 'Admin Argumentasi'; profil.jabatan = $('inJabatan').value.trim() || 'Super Administrator';
+            profil.nip = $('inNip').value.trim(); profil.gender = $('inGender').value; profil.ttl = $('inTtl').value.trim(); profil.instansi = $('inInstansi').value.trim();
+            profil.email = $('inEmail').value.trim(); profil.telepon = $('inTelepon').value.trim(); profil.alamat = $('inAlamat').value.trim(); profil.bio = $('inBio').value.trim();
             simpanKeLocal();
-
+            let cloudOk = true;
             if (currentUser) {
                 try {
-                    await setDoc(doc(db, "users", currentUser.uid), {
-                        namaLengkap: profil.namaLengkap,
-                        jabatan: profil.jabatan,
-                        nip: profil.nip,
-                        gender: profil.gender,
-                        ttl: profil.ttl,
-                        instansi: profil.instansi,
-                        emailKontak: profil.email,
-                        telepon: profil.telepon,
-                        alamat: profil.alamat,
-                        bio: profil.bio,
-                        fotoProfil: profil.fotoProfil || '',
-                        updatedAt: Date.now()
-                    }, { merge: true });
-                } catch (err) {
-                    console.warn("Disimpan di lokal, sinkronisasi cloud tertunda:", err);
-                }
+                    await setDoc(doc(db, "users", currentUser.uid), { namaLengkap: profil.namaLengkap, jabatan: profil.jabatan, nip: profil.nip, gender: profil.gender, ttl: profil.ttl, instansi: profil.instansi, emailKontak: profil.email, telepon: profil.telepon, alamat: profil.alamat, bio: profil.bio, fotoProfil: profil.fotoProfil || '', updatedAt: Date.now() }, { merge: true });
+                } catch (err) { cloudOk = false; console.warn("Disimpan di lokal, sinkronisasi cloud tertunda:", err); }
             }
-
-            btn.disabled = false;
-            btn.innerHTML = isiAsli;
-            renderProfil();
-            keluarModeEdit(); // Sembunyikan tombol simpan & kembalikan ikon pensil
-            toast('Biodata berhasil disimpan!');
+            btn.disabled = false; btn.innerHTML = isiAsli; renderProfil(); keluarModeEdit();
+            toast(cloudOk ? 'Biodata berhasil disimpan!' : 'Tersimpan di perangkat ini. Sinkron ke cloud gagal.', !cloudOk);
         };
 
-        // ==================== VIEWER FOTO (ZOOM IN / ZOOM OUT / PAN) ====================
+        /* ---------- viewer foto ---------- */
         let vZoom = 1, vPanX = 0, vPanY = 0, vDrag = false, vStartX = 0, vStartY = 0;
-
-        function updateViewerTransform() {
-            $('viewerImg').style.transform = `translate(${vPanX}px, ${vPanY}px) scale(${vZoom})`;
-            $('sliderZoomViewer').value = vZoom;
-        }
-        window.bukaViewerFoto = function() {
-            if (!profil.fotoProfil) {
-                toast('Belum ada foto profil. Silakan pilih foto baru.');
-                pilihFileFoto();
-                return;
-            }
-            $('viewerImg').src = profil.fotoProfil;
-            resetZoomViewer();
-            $('modalViewer').classList.replace('hidden', 'flex');
+        function updateViewerTransform() { $('viewerImg').style.transform = `translate(${vPanX}px, ${vPanY}px) scale(${vZoom})`; $('sliderZoomViewer').value = vZoom; }
+        window.bukaViewerFoto = function () {
+            if (!profil.fotoProfil) { toast('Belum ada foto profil. Silakan pilih foto baru.'); pilihFileFoto(); return; }
+            $('viewerImg').src = profil.fotoProfil; resetZoomViewer(); $('modalViewer').classList.replace('hidden', 'flex');
         };
-        window.tutupViewerFoto = function() {
-            $('modalViewer').classList.replace('flex', 'hidden');
-        };
-        window.setZoomViewer = function(val) {
-            vZoom = Math.min(3.5, Math.max(1, parseFloat(val) || 1));
-            if (vZoom === 1) { vPanX = 0; vPanY = 0; }
-            updateViewerTransform();
-        };
-        window.ubahZoomViewer = function(delta) {
-            setZoomViewer(vZoom + delta);
-        };
-        window.resetZoomViewer = function() {
-            vZoom = 1; vPanX = 0; vPanY = 0;
-            updateViewerTransform();
-        };
-
+        window.tutupViewerFoto = function () { $('modalViewer').classList.replace('flex', 'hidden'); };
+        window.setZoomViewer = function (val) { vZoom = Math.min(3.5, Math.max(1, parseFloat(val) || 1)); if (vZoom === 1) { vPanX = 0; vPanY = 0; } updateViewerTransform(); };
+        window.ubahZoomViewer = function (delta) { setZoomViewer(vZoom + delta); };
+        window.resetZoomViewer = function () { vZoom = 1; vPanX = 0; vPanY = 0; updateViewerTransform(); };
         const vStage = $('viewerStage');
-        vStage.addEventListener('pointerdown', e => {
-            if (vZoom <= 1) return;
-            vDrag = true;
-            vStartX = e.clientX - vPanX;
-            vStartY = e.clientY - vPanY;
-            vStage.setPointerCapture(e.pointerId);
-        });
-        vStage.addEventListener('pointermove', e => {
-            if (!vDrag) return;
-            vPanX = e.clientX - vStartX;
-            vPanY = e.clientY - vStartY;
-            updateViewerTransform();
-        });
+        vStage.addEventListener('pointerdown', e => { if (vZoom <= 1) return; vDrag = true; vStartX = e.clientX - vPanX; vStartY = e.clientY - vPanY; vStage.setPointerCapture(e.pointerId); });
+        vStage.addEventListener('pointermove', e => { if (!vDrag) return; vPanX = e.clientX - vStartX; vPanY = e.clientY - vStartY; updateViewerTransform(); });
         vStage.addEventListener('pointerup', () => { vDrag = false; });
-
-        window.hapusFotoProfil = async function() {
+        window.hapusFotoProfil = async function () {
             if (!confirm('Hapus foto profil saat ini?')) return;
-            profil.fotoProfil = '';
-            simpanKeLocal();
-            if (currentUser) {
-                try { await setDoc(doc(db, "users", currentUser.uid), { fotoProfil: '' }, { merge: true }); } catch (e) {}
-            }
-            renderProfil();
-            tutupViewerFoto();
-            toast('Foto profil dihapus.');
+            profil.fotoProfil = ''; simpanKeLocal();
+            if (currentUser) { try { await setDoc(doc(db, "users", currentUser.uid), { fotoProfil: '' }, { merge: true }); } catch (e) {} }
+            renderProfil(); tutupViewerFoto(); toast('Foto profil dihapus.');
         };
 
-        // ==================== CROPPER 1:1 & AUTO-COMPRESSOR BASE64 ====================
-        const cropCanvas = $('cropCanvas');
-        const ctx = cropCanvas.getContext('2d');
-        const UKURAN_OUT = 480; // Ukuran akhir 1:1 (480x480px)
+        /* ---------- crop 1:1 + kompresi ---------- */
+        const cropCanvas = $('cropCanvas'), ctx = cropCanvas.getContext('2d'), UKURAN_OUT = 480;
         let imgObj = null, cZoom = 1, cRot = 0, cOffX = 0, cOffY = 0, cDragging = false, cLastX = 0, cLastY = 0;
-
-        window.pilihFileFoto = function() {
-            $('inputFileFoto').value = '';$('inputFileFoto').click();
-        };
-
-        function formatBytes(b) {
-            if (b < 1024) return b + ' B';
-            if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
-            return (b / 1048576).toFixed(2) + ' MB';
-        }
-
-        window.saatPilihFile = function(e) {
-            const file = e.target.files && e.target.files[0];
-            if (!file) return;
-            if (!file.type.startsWith('image/')) {
-                toast('Pilih berkas gambar (JPG/PNG/WebP).', true);
-                return;
-            }
+        window.pilihFileFoto = function () { $('inputFileFoto').value = ''; $('inputFileFoto').click(); };
+        const formatBytes = b => b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(2) + ' MB';
+        window.saatPilihFile = function (e) {
+            const file = e.target.files && e.target.files[0]; if (!file) return;
+            if (!file.type.startsWith('image/')) { toast('Pilih berkas gambar (JPG/PNG/WebP).', true); return; }
             $('infoUkuranAsli').textContent = `Ukuran asli: ${formatBytes(file.size)}`;
-
             const reader = new FileReader();
             reader.onload = ev => {
                 const im = new Image();
-                im.onload = () => {
-                    imgObj = im;
-                    cZoom = 1; cRot = 0; cOffX = 0; cOffY = 0;
-                    $('cropZoomSlider').value = 1;
-                    $('modalCrop').classList.replace('hidden', 'flex');
-                    gambarKanvasCrop();
-                    hitungEstimasiKompresi();
-                };
+                im.onload = () => { imgObj = im; cZoom = 1; cRot = 0; cOffX = 0; cOffY = 0; $('cropZoomSlider').value = 1; $('modalCrop').classList.replace('hidden', 'flex'); gambarKanvasCrop(); hitungEstimasiKompresi(); };
                 im.onerror = () => toast('Gambar tidak dapat dibaca.', true);
                 im.src = ev.target.result;
             };
             reader.readAsDataURL(file);
         };
-
         function batasGeser() {
             if (!imgObj) return;
-            const w = (cRot % 180 === 0) ? imgObj.width : imgObj.height;
-            const h = (cRot % 180 === 0) ? imgObj.height : imgObj.width;
-            const baseScale = Math.max(UKURAN_OUT / w, UKURAN_OUT / h);
-            const drawW = w * baseScale * cZoom;
-            const drawH = h * baseScale * cZoom;
-            const maxX = Math.max(0, (drawW - UKURAN_OUT) / 2);
-            const maxY = Math.max(0, (drawH - UKURAN_OUT) / 2);
-            cOffX = Math.min(maxX, Math.max(-maxX, cOffX));
-            cOffY = Math.min(maxY, Math.max(-maxY, cOffY));
+            const w = (cRot % 180 === 0) ? imgObj.width : imgObj.height, h = (cRot % 180 === 0) ? imgObj.height : imgObj.width;
+            const baseScale = Math.max(UKURAN_OUT / w, UKURAN_OUT / h), drawW = w * baseScale * cZoom, drawH = h * baseScale * cZoom;
+            const maxX = Math.max(0, (drawW - UKURAN_OUT) / 2), maxY = Math.max(0, (drawH - UKURAN_OUT) / 2);
+            cOffX = Math.min(maxX, Math.max(-maxX, cOffX)); cOffY = Math.min(maxY, Math.max(-maxY, cOffY));
         }
-
         function gambarKanvasCrop() {
-            if (!imgObj) return;
-            batasGeser();
-            ctx.clearRect(0, 0, UKURAN_OUT, UKURAN_OUT);
-            ctx.fillStyle = '#0f172a';
-            ctx.fillRect(0, 0, UKURAN_OUT, UKURAN_OUT);
-
-            const w = (cRot % 180 === 0) ? imgObj.width : imgObj.height;
-            const h = (cRot % 180 === 0) ? imgObj.height : imgObj.width;
-            const baseScale = Math.max(UKURAN_OUT / w, UKURAN_OUT / h);
-            const scale = baseScale * cZoom;
-
-            ctx.save();
-            ctx.translate(UKURAN_OUT / 2 + cOffX, UKURAN_OUT / 2 + cOffY);
-            ctx.rotate((cRot * Math.PI) / 180);
-            ctx.scale(scale, scale);
-            ctx.drawImage(imgObj, -imgObj.width / 2, -imgObj.height / 2);
-            ctx.restore();
+            if (!imgObj) return; batasGeser();
+            ctx.clearRect(0, 0, UKURAN_OUT, UKURAN_OUT); ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, UKURAN_OUT, UKURAN_OUT);
+            const w = (cRot % 180 === 0) ? imgObj.width : imgObj.height, h = (cRot % 180 === 0) ? imgObj.height : imgObj.width;
+            const scale = Math.max(UKURAN_OUT / w, UKURAN_OUT / h) * cZoom;
+            ctx.save(); ctx.translate(UKURAN_OUT / 2 + cOffX, UKURAN_OUT / 2 + cOffY); ctx.rotate((cRot * Math.PI) / 180); ctx.scale(scale, scale); ctx.drawImage(imgObj, -imgObj.width / 2, -imgObj.height / 2); ctx.restore();
         }
-
-        // Kompresi pintar: pastikan hasil Base64 selalu di bawah ~75 KB walaupun foto aslinya puluhan MB
         function hasilkanBase64Terkompresi() {
-            let q = 0.82;
-            let dataUrl = cropCanvas.toDataURL('image/jpeg', q);
-            while (dataUrl.length > 95000 && q > 0.45) {
-                q -= 0.08;
-                dataUrl = cropCanvas.toDataURL('image/jpeg', q);
-            }
+            let q = 0.82, dataUrl = cropCanvas.toDataURL('image/jpeg', q);
+            while (dataUrl.length > 95000 && q > 0.45) { q -= 0.08; dataUrl = cropCanvas.toDataURL('image/jpeg', q); }
             return dataUrl;
         }
-
-        function hitungEstimasiKompresi() {
-            if (!imgObj) return;
-            const b64 = hasilkanBase64Terkompresi();
-            const byteLen = Math.round((b64.length * 3) / 4);
-            $('infoUkuranKompres').textContent = `Hasil 1:1: ~${formatBytes(byteLen)}`;
-        }
-
-        window.aturCropZoom = function(val) {
-            cZoom = Math.min(3.5, Math.max(1, parseFloat(val) || 1));
-            $('cropZoomSlider').value = cZoom;
-            gambarKanvasCrop();
-            hitungEstimasiKompresi();
-        };
-        window.stepCropZoom = function(delta) {
-            aturCropZoom(cZoom + delta);
-        };
-        window.putarCrop = function() {
-            cRot = (cRot + 90) % 360;
-            gambarKanvasCrop();
-            hitungEstimasiKompresi();
-        };
-        window.tutupModalCrop = function() {
-            $('modalCrop').classList.replace('flex', 'hidden');
-            imgObj = null;
-        };
-
-        // Geser gambar di dalam kanvas crop (mendukung layar sentuh & mouse)
-        cropCanvas.addEventListener('pointerdown', e => {
-            if (!imgObj) return;
-            cDragging = true;
-            cLastX = e.clientX;
-            cLastY = e.clientY;
-            cropCanvas.setPointerCapture(e.pointerId);
-        });
+        function hitungEstimasiKompresi() { if (!imgObj) return; const b64 = hasilkanBase64Terkompresi(); $('infoUkuranKompres').textContent = `Hasil 1:1: ~${formatBytes(Math.round((b64.length * 3) / 4))}`; }
+        window.aturCropZoom = function (val) { cZoom = Math.min(3.5, Math.max(1, parseFloat(val) || 1)); $('cropZoomSlider').value = cZoom; gambarKanvasCrop(); hitungEstimasiKompresi(); };
+        window.stepCropZoom = function (delta) { aturCropZoom(cZoom + delta); };
+        window.putarCrop = function () { cRot = (cRot + 90) % 360; gambarKanvasCrop(); hitungEstimasiKompresi(); };
+        window.tutupModalCrop = function () { $('modalCrop').classList.replace('flex', 'hidden'); imgObj = null; };
+        cropCanvas.addEventListener('pointerdown', e => { if (!imgObj) return; cDragging = true; cLastX = e.clientX; cLastY = e.clientY; cropCanvas.setPointerCapture(e.pointerId); });
         cropCanvas.addEventListener('pointermove', e => {
             if (!cDragging || !imgObj) return;
-            const rect = cropCanvas.getBoundingClientRect();
-            const ratio = UKURAN_OUT / rect.width;
-            cOffX += (e.clientX - cLastX) * ratio;
-            cOffY += (e.clientY - cLastY) * ratio;
-            cLastX = e.clientX;
-            cLastY = e.clientY;
-            gambarKanvasCrop();
+            const ratio = UKURAN_OUT / cropCanvas.getBoundingClientRect().width;
+            cOffX += (e.clientX - cLastX) * ratio; cOffY += (e.clientY - cLastY) * ratio; cLastX = e.clientX; cLastY = e.clientY; gambarKanvasCrop();
         });
-        cropCanvas.addEventListener('pointerup', () => {
-            if (cDragging) { cDragging = false; hitungEstimasiKompresi(); }
-        });
-
-        window.terapkanCropFoto = async function() {
+        cropCanvas.addEventListener('pointerup', () => { if (cDragging) { cDragging = false; hitungEstimasiKompresi(); } });
+        window.terapkanCropFoto = async function () {
             if (!imgObj) return;
-            const btn = $('btnPakaiFoto');
-            const asli = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>Memproses...</span>';
-
-            const base64 = hasilkanBase64Terkompresi();
-            profil.fotoProfil = base64;
-            simpanKeLocal();
-
-            if (currentUser) {
-                try {
-                    await setDoc(doc(db, "users", currentUser.uid), {
-                        fotoProfil: base64,
-                        updatedAt: Date.now()
-                    }, { merge: true });
-                } catch (e) {
-                    console.warn("Foto tersimpan di lokal:", e);
-                }
-            }
-
-            btn.disabled = false;
-            btn.innerHTML = asli;
-            renderProfil();
-            tutupModalCrop();
-            toast('Foto profil 1:1 berhasil diperbarui!');
+            const btn = $('btnPakaiFoto'), asli = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>Memproses...</span>';
+            const base64 = hasilkanBase64Terkompresi(); profil.fotoProfil = base64; simpanKeLocal();
+            if (currentUser) { try { await setDoc(doc(db, "users", currentUser.uid), { fotoProfil: base64, updatedAt: Date.now() }, { merge: true }); } catch (e) { console.warn("Foto tersimpan di lokal:", e); } }
+            btn.disabled = false; btn.innerHTML = asli; renderProfil(); tutupModalCrop(); toast('Foto profil 1:1 berhasil diperbarui!');
         };
 
-        // ---- AUTH GUARD & MUAT PROFIL SERENTAK ----
+        /* ---------- akses admin + muat profil ---------- */
+        function tampilkanKonten() { $('viewSkeleton').classList.add('hidden'); $('viewContent').classList.remove('hidden'); $('btnPencilHeader').classList.remove('hidden'); window.__profilSiap = true; }
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = "../login.html"; return; }
-            currentUser = user;
-            bacaLocalProfil();
-
+            currentUser = user; bacaLocalProfil();
             try {
                 const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (!userDoc.exists() || userDoc.data().role !== 'admin') {
-                    alert("Akses Ditolak! Area ini khusus Administrator.");
-                    window.location.href = "../login.html";
-                    return;
-                }
+                if (!userDoc.exists() || userDoc.data().role !== 'admin') { alert("Akses Ditolak! Area ini khusus Administrator."); window.location.href = "../login.html"; return; }
                 const d = userDoc.data();
                 profil.namaLengkap = localStorage.getItem('namaAdminCendekia') || d.namaLengkap || profil.namaLengkap;
                 profil.jabatan = localStorage.getItem('jabatanAdminCendekia') || d.jabatan || profil.jabatan;
                 profil.fotoProfil = localStorage.getItem('fotoAdminCendekia') || d.fotoProfil || profil.fotoProfil;
-                profil.nip = profil.nip || d.nip || '';
-                profil.gender = profil.gender || d.gender || '';
-                profil.ttl = profil.ttl || d.ttl || '';
-                profil.instansi = profil.instansi || d.instansi || '';
-                profil.email = profil.email || d.emailKontak || user.email || '';
-                profil.telepon = profil.telepon || d.telepon || '';
-                profil.alamat = profil.alamat || d.alamat || '';
-                profil.bio = profil.bio || d.bio || '';
-
-                simpanKeLocal();
-                renderProfil();
-
-                // Tampilkan semua elemen sekaligus tanpa berkedip
-                $('viewSkeleton').classList.add('hidden');
-                $('viewContent').classList.remove('hidden');$('btnPencilHeader').classList.remove('hidden');
+                profil.nip = profil.nip || d.nip || ''; profil.gender = profil.gender || d.gender || ''; profil.ttl = profil.ttl || d.ttl || '';
+                profil.instansi = profil.instansi || d.instansi || ''; profil.email = profil.email || d.emailKontak || user.email || '';
+                profil.telepon = profil.telepon || d.telepon || ''; profil.alamat = profil.alamat || d.alamat || ''; profil.bio = profil.bio || d.bio || '';
+                simpanKeLocal(); renderProfil(); tampilkanKonten();
             } catch (err) {
-                console.error(err);
-                renderProfil();
-                $('viewSkeleton').classList.add('hidden');
-                $('viewContent').classList.remove('hidden');$('btnPencilHeader').classList.remove('hidden');
+                console.error(err); renderProfil(); tampilkanKonten(); toast('Gagal memuat dari server. Menampilkan data di perangkat ini.', true);
             }
         });
     </script>
