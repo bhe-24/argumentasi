@@ -1,10 +1,9 @@
-// api/latihan.js — membaca PDF handout dengan Groq / Gemini SATU KALI jalan dan menghasilkan seluruh paket soal harian:
-// pilihan ganda (HOTS bertingkat), bedah struktur, isi argumentasi, dan uji berpikir — lengkap dengan waktu pengerjaan.
-// Env di Vercel: GEMINI_API_KEY, GROQ_API_KEY, GEMINI_MODEL, GROQ_MODEL
+// api/latihan.js — membaca PDF handout dengan Groq / Gemini SATU KALI jalan dan menghasilkan seluruh paket soal harian
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mading-cf676';
-const WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0'; // kunci web publik Firebase
+const WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0'; 
 
-const MODELS = [...new Set([process.env.GEMINI_MODEL, 'gemini-3-flash', 'gemini-2.5-flash'].filter(Boolean))];
+// Model Gemini yang valid
+const MODELS = [...new Set([process.env.GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-3.6-flash'].filter(Boolean))];
 
 // Inisialisasi Groq SDK
 let Groq; try { Groq = require('groq-sdk'); } catch (err) { console.error("Gagal load groq-sdk:", err); }
@@ -15,11 +14,11 @@ const galat = (pesan, status) => Object.assign(new Error(pesan), { status });
 const bersih = (t, n = 600) => String(t ?? '').replace(/[*_#`]/g, '').replace(/\s+/g, ' ').trim().slice(0, n);
 
 const TINGKAT = ['mudah', 'sedang', 'sulit', 'hots'];
-const RENTANG = { mudah: [30, 60], sedang: [45, 90], sulit: [60, 120], hots: [90, 180] };   // detik per soal
+const RENTANG = { mudah: [30, 60], sedang: [45, 90], sulit: [60, 120], hots: [90, 180] };
 const jepit = (v, [a, b]) => Math.max(a, Math.min(b, Math.round(Number(v)) || a));
 const acak = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
-/* ---------- ambil data handout dari Firestore (dibaca publik) ---------- */
+/* ---------- Ambil data handout dari Firestore ---------- */
 async function ambilHandout(id) {
     if (!/^[A-Za-z0-9_-]{6,40}$/.test(String(id || ''))) throw galat('ID materi tidak valid.', 400);
     const r = await fetch(`https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/handouts/${id}?key=${WEB_API_KEY}`);
@@ -33,15 +32,16 @@ async function ambilHandout(id) {
     if (!/^https:\/\//.test(url) || !(host.endsWith('cloudinary.com') || host === 'firebasestorage.googleapis.com')) throw galat('Alamat file materi tidak diizinkan.', 400);
     return { judul: v('judul') || 'Materi', url };
 }
+
 async function ambilPdf(url) {
     const r = await fetch(url);
-    if (!r.ok) throw galat('File PDF tidak bisa dibuka (HTTP ' + r.status + '). Pastikan pengiriman PDF di Cloudinary sudah diaktifkan.', 502);
+    if (!r.ok) throw galat('File PDF tidak bisa dibuka (HTTP ' + r.status + ').', 502);
     const ab = await r.arrayBuffer();
     if (ab.byteLength > MAKS_PDF) throw galat('File PDF terlalu besar untuk dianalisis.', 413);
     return Buffer.from(ab).toString('base64');
 }
 
-/* ---------- Prompt Bersama ---------- */
+/* ---------- Prompt ---------- */
 const PROMPT = judul => `Kamu adalah guru Bahasa Indonesia yang ahli menyusun asesmen penalaran dan teks argumentasi untuk siswa SMP/SMA.
 Terlampir dokumen PDF materi berjudul "${judul}". Baca ISINYA, lalu susun SATU paket latihan harian yang seluruh soalnya didasarkan pada isi dokumen itu. Jangan mengarang fakta di luar dokumen.
 Bahasa Indonesia baku, teks polos (tanpa markdown). Keluarkan HANYA satu objek JSON valid dengan struktur persis berikut:
@@ -57,10 +57,9 @@ Bahasa Indonesia baku, teks polos (tanpa markdown). Keluarkan HANYA satu objek J
 }
 
 ATURAN:
-- Pilgan: komposisi 4 mudah, 5 sedang, 3 sulit, 3 hots. Mudah = ingatan/pemahaman langsung; sedang = penerapan; sulit = analisis; hots = evaluasi/penalaran tingkat tinggi (menimbang, menyimpulkan, mencari kelemahan argumen). Pengecoh harus masuk akal; larang opsi "semua benar/salah".
-- "waktu" dalam detik per soal, sesuaikan tingkat dan panjang soal (mudah 30-60, sedang 45-90, sulit 60-120, hots 90-180). "struktur.waktu" 240-600 detik.
-- "j" = indeks 0-3 opsi yang benar. Bagian struktur harus mengandung tepat satu atau dua tesis di awal, argumen di tengah, dan kesimpulan di akhir.
-- Esai: tiga argumen pengecoh harus berbeda sifat (tidak relevan, hanya opini tanpa bukti, atau sesat pikir); satu argumen yang benar relevan dan berbukti.`;
+- Pilgan: komposisi 4 mudah, 5 sedang, 3 sulit, 3 hots.
+- "waktu" dalam detik per soal. "j" = indeks 0-3.
+- Larang opsi "semua benar/salah".`;
 
 /* ---------- Integrasi Gemini ---------- */
 async function tanyaGemini(judul, pdfB64) {
@@ -68,12 +67,12 @@ async function tanyaGemini(judul, pdfB64) {
     if (!key) throw galat('GEMINI_API_KEY belum diisi di Vercel Environment Variables.', 500);
     const catatan = [];
     for (const model of MODELS) {
-        const ac = new AbortController(), t = setTimeout(() => ac.abort(), 52000);
+        const ac = new AbortController(), t = setTimeout(() => ac.abort(), 55000);
         try {
             const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
                 method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
                 body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: PROMPT(judul) }, { inlineData: { mimeType: 'application/pdf', data: pdfB64 } }] }],
-                    generationConfig: { responseMimeType: 'application/json', temperature: 0.6, maxOutputTokens: 12000 } }) });
+                    generationConfig: { responseMimeType: 'application/json', temperature: 0.6, maxOutputTokens: 8192 } }) });
             const j = await r.json().catch(() => ({}));
             if (!r.ok) throw new Error((j.error && j.error.message) || 'HTTP ' + r.status);
             const teks = ((j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || []).map(p => p.text || '').join('');
@@ -94,13 +93,16 @@ async function tanyaGroq(judul, pdfB64) {
     const groqClient = new Groq({ apiKey: key });
     const catatan = [];
     
+    // Potong Base64 jika terlalu panjang agar tidak melebihi konteks pesan Groq
+    const pdfB64Clipped = pdfB64.slice(0, 500000); 
+
     for (const model of MODELS_GROQ) {
-        const ac = new AbortController(), t = setTimeout(() => ac.abort(), 52000);
+        const ac = new AbortController(), t = setTimeout(() => ac.abort(), 50000);
         try {
             const completion = await groqClient.chat.completions.create({
                 model: model,
                 messages: [
-                    { role: 'user', content: `${PROMPT(judul)}\n\n(Data PDF Base64 Dokumen):\n${pdfB64}` }
+                    { role: 'user', content: `${PROMPT(judul)}\n\n(Catatan: Sumber data PDF materi Base64):\n${pdfB64Clipped}` }
                 ],
                 temperature: 0.6,
                 response_format: { type: 'json_object' }
@@ -117,7 +119,7 @@ async function tanyaGroq(judul, pdfB64) {
     throw galat('Groq belum berhasil menyusun soal. ' + catatan.join(' | '), 502);
 }
 
-/* ---------- validasi + normalisasi ---------- */
+/* ---------- Normalisasi Data ---------- */
 function soalPg(x, tingkatDefault) {
     const opsi = (Array.isArray(x.opsi) ? x.opsi : []).map(o => bersih(o, 300)).filter(Boolean);
     const j = Number(x.j), p = bersih(x.p || x.tesis, 900);
@@ -160,17 +162,15 @@ const HANDLERS = {
         const provider = String(ai || 'auto').toLowerCase();
 
         if (provider === 'gemini') {
-            // Jika dipaksa memilih Gemini
             hasil = await tanyaGemini(h.judul, pdfB64);
         } else if (provider === 'groq') {
-            // Jika dipaksa memilih Groq
             hasil = await tanyaGroq(h.judul, pdfB64);
         } else {
-            // Default (AUTO): Utamakan Groq -> Fallback ke Gemini jika Groq gagal
+            // Priority: Groq -> Fallback: Gemini
             try {
                 hasil = await tanyaGroq(h.judul, pdfB64);
             } catch (errGroq) {
-                console.warn('Groq gagal, beralih ke Gemini sebagai fallback:', errGroq.message);
+                console.warn('Groq gagal, mencoba Gemini:', errGroq.message);
                 try {
                     hasil = await tanyaGemini(h.judul, pdfB64);
                 } catch (errGemini) {
