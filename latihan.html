@@ -76,14 +76,17 @@
     };
     window.L = L;
 })();
-
     </script>
     <style>
         body { font-family: 'Poppins', sans-serif; background: #f1f5f9; -webkit-tap-highlight-color: transparent; }
         .up { animation: up .35s ease-out both; } @keyframes up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
         .lc2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .sk { position: relative; overflow: hidden; background: #e2e8f0; }
-        .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent); animation: sh 1.3s infinite; } @keyframes sh { 100% { transform: translateX(100%); } }
+        /* Skeleton loading anti-bocor (clipping ketat di semua browser mobile) */
+        .sk, .sk-w { position: relative; overflow: hidden; isolation: isolate; transform: translateZ(0); }
+        .sk { background: #e2e8f0; }
+        .sk-w { background: rgba(255,255,255,.18); }
+        .sk::after, .sk-w::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent); animation: sh 1.3s infinite; pointer-events: none; }
+        @keyframes sh { 100% { transform: translateX(100%); } }
         .roda-wrap { position: relative; width: 300px; height: 300px; margin: 0 auto; }
         #roda { width: 300px; height: 300px; border-radius: 9999px; box-shadow: 0 0 0 8px #fff, 0 0 0 12px #059669, 0 12px 30px rgba(0,0,0,.25); }
         .petunjuk { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); z-index: 5; filter: drop-shadow(0 3px 3px rgba(0,0,0,.3)); }
@@ -100,25 +103,56 @@
     <header class="sticky top-0 z-50 bg-brand-green h-14 px-4 flex items-center gap-3 shadow-md">
         <a href="index.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
         <div class="flex-1 min-w-0"><h1 class="text-white font-bold text-sm leading-tight truncate">Ruang Latihan</h1><p class="text-white/70 text-[10px] leading-tight truncate">Latihan harian dari materi handout</p></div>
-        <span class="shrink-0 bg-white/20 border border-white/30 text-white px-2.5 py-1 rounded-full text-[11px] font-bold"><i class="fas fa-star text-amber-300 text-[10px]"></i> <span id="hXp">0</span> XP</span>
+        <span class="shrink-0 bg-white/20 border border-white/30 text-white px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1"><i class="fas fa-star text-amber-300 text-[10px]"></i> <span id="hXp"><span class="inline-block w-6 h-3 rounded sk-w align-middle"></span></span> XP</span>
     </header>
 
-    <section class="bg-brand-green px-4 pb-6 pt-1 rounded-b-3xl"><div id="hero" class="bg-white/15 border border-white/20 rounded-2xl p-4 backdrop-blur-sm"><div class="sk h-24 rounded-xl"></div></div></section>
+    <!-- HERO DENGAN SKELETON ANTI-BOCOR -->
+    <section class="bg-brand-green px-4 pb-6 pt-1 rounded-b-3xl">
+        <div id="hero" class="bg-white/15 border border-white/20 rounded-2xl p-4 backdrop-blur-sm overflow-hidden">
+            <div class="flex items-center gap-3.5">
+                <div class="w-[72px] aspect-[3/4] rounded-lg sk-w shrink-0"></div>
+                <div class="flex-1 min-w-0 space-y-2">
+                    <div class="h-3.5 w-24 rounded sk-w"></div>
+                    <div class="h-4 w-full rounded sk-w"></div>
+                    <div class="h-3 w-4/5 rounded sk-w"></div>
+                </div>
+            </div>
+            <div class="h-10 w-full rounded-xl sk-w mt-3.5"></div>
+        </div>
+    </section>
 
     <main class="flex-grow px-4 pt-5 pb-4">
-        <div class="flex items-center justify-between mb-3"><h2 class="font-bold text-slate-800 text-sm">Latihan Hari Ini</h2><span id="tglInfo" class="text-[10px] text-slate-400 font-medium"></span></div>
-        <div id="kartu" class="grid grid-cols-2 gap-3"></div>
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="font-bold text-slate-800 text-sm">Latihan Hari Ini</h2>
+            <span id="tglInfo" class="text-[10px] text-slate-400 font-medium"><span class="inline-block w-24 h-3 rounded sk"></span></span>
+        </div>
+
+        <!-- KARTU LATIHAN DENGAN SKELETON AWAL (4 KARTU) -->
+        <div id="kartu" class="grid grid-cols-2 gap-3">
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-3.5 overflow-hidden"><div class="w-11 h-11 rounded-xl sk"></div><div class="h-3.5 w-28 rounded sk mt-3"></div><div class="h-2.5 w-full rounded sk mt-1.5"></div><div class="h-2.5 w-20 rounded sk mt-2"></div><div class="h-4 w-24 rounded-full sk mt-2.5"></div></div>
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-3.5 overflow-hidden"><div class="w-11 h-11 rounded-xl sk"></div><div class="h-3.5 w-28 rounded sk mt-3"></div><div class="h-2.5 w-full rounded sk mt-1.5"></div><div class="h-2.5 w-20 rounded sk mt-2"></div><div class="h-4 w-24 rounded-full sk mt-2.5"></div></div>
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-3.5 overflow-hidden"><div class="w-11 h-11 rounded-xl sk"></div><div class="h-3.5 w-28 rounded sk mt-3"></div><div class="h-2.5 w-full rounded sk mt-1.5"></div><div class="h-2.5 w-20 rounded sk mt-2"></div><div class="h-4 w-24 rounded-full sk mt-2.5"></div></div>
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-3.5 overflow-hidden"><div class="w-11 h-11 rounded-xl sk"></div><div class="h-3.5 w-28 rounded sk mt-3"></div><div class="h-2.5 w-full rounded sk mt-1.5"></div><div class="h-2.5 w-20 rounded sk mt-2"></div><div class="h-4 w-24 rounded-full sk mt-2.5"></div></div>
+        </div>
 
         <div class="mt-5 bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-3">
             <div class="w-9 h-9 bg-white rounded-full flex items-center justify-center shrink-0 text-blue-500 shadow-sm"><i class="fas fa-circle-info"></i></div>
             <div class="text-[11px] text-blue-700 leading-relaxed"><b class="text-blue-800">Aturan main</b><br>Putar gacha untuk mendapat materi. Berlaku <b>1 kali per hari</b>: setiap latihan hanya bisa dikerjakan 1 kali, dan <b>24 jam setelah gacha diputar</b> semuanya direset dengan materi baru. Hasil tersimpan di browser ini dan bisa diunduh sebagai PDF.</div>
         </div>
 
-        <div class="mt-6"><div class="flex items-center justify-between mb-3"><h2 class="font-bold text-slate-800 text-sm">Riwayat Latihan</h2></div><div id="riwayat" class="flex flex-col gap-2.5"></div></div>
+        <!-- RIWAYAT DENGAN SKELETON AWAL -->
+        <div class="mt-6">
+            <div class="flex items-center justify-between mb-3"><h2 class="font-bold text-slate-800 text-sm">Riwayat Latihan</h2></div>
+            <div id="riwayat" class="flex flex-col gap-2.5">
+                <div class="bg-white border border-slate-100 rounded-xl p-3 overflow-hidden"><div class="flex justify-between gap-2"><div class="h-3.5 w-3/4 rounded sk"></div><div class="h-3 w-12 rounded sk"></div></div><div class="flex gap-1.5 mt-2.5"><div class="h-4 w-16 rounded-full sk"></div><div class="h-4 w-16 rounded-full sk"></div></div></div>
+                <div class="bg-white border border-slate-100 rounded-xl p-3 overflow-hidden"><div class="flex justify-between gap-2"><div class="h-3.5 w-2/3 rounded sk"></div><div class="h-3 w-12 rounded sk"></div></div><div class="flex gap-1.5 mt-2.5"><div class="h-4 w-20 rounded-full sk"></div></div></div>
+            </div>
+        </div>
         <a href="panduan.html" class="mt-5 flex items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold text-slate-600 active:scale-[0.98] transition"><span><i class="far fa-circle-question text-brand-green mr-2"></i>Butuh bantuan? Buka Panduan</span><i class="fas fa-chevron-right text-slate-300 text-[10px]"></i></a>
     </main>
 
-    <div id="fabWrap" class="sticky bottom-4 z-40 px-4 flex justify-end pointer-events-none mb-4"><button id="fab" onclick="bukaRoda()" class="pointer-events-auto denyut bg-brand-green text-white rounded-full pl-4 pr-5 py-3 font-bold text-xs flex items-center gap-2"><i class="fas fa-dharmachakra text-lg"></i> Putar Gacha</button></div>
+    <!-- FAB DISEMBUNYIKAN SAAT LOADING AWAL AGAR TIDAK BOCOR -->
+    <div id="fabWrap" class="hidden sticky bottom-4 z-40 px-4 flex justify-end pointer-events-none mb-4"><button id="fab" onclick="bukaRoda()" class="pointer-events-auto denyut bg-brand-green text-white rounded-full pl-4 pr-5 py-3 font-bold text-xs flex items-center gap-2"><i class="fas fa-dharmachakra text-lg"></i> Putar Gacha</button></div>
 
     <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0"><p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p></footer>
 </div>
@@ -131,8 +165,14 @@
         <div id="vRoda">
             <h3 class="text-center font-extrabold text-slate-800 text-base">Gacha Guru</h3>
             <p id="rodaKet" class="text-center text-[11px] text-slate-500 mt-1 mb-5">Putar roda untuk mendapat materi latihan hari ini.</p>
-            <div class="roda-wrap"><div class="petunjuk"></div><canvas id="roda"></canvas><button id="btnPutar" class="tombol-roda" onclick="putar()">PUTAR</button></div>
-            <p id="rodaInfo" class="text-center text-[10px] text-slate-400 mt-6"></p>
+            <div class="roda-wrap">
+                <div class="petunjuk"></div>
+                <canvas id="roda"></canvas>
+                <!-- Skeleton bulat penutup roda saat daftar handout masih dimuat -->
+                <div id="rodaSkel" class="hidden absolute inset-0 rounded-full sk z-[4]"></div>
+                <button id="btnPutar" class="tombol-roda" onclick="putar()">PUTAR</button>
+            </div>
+            <p id="rodaInfo" class="text-center text-[10px] text-slate-400 mt-6 min-h-[16px]"></p>
         </div>
 
         <div id="vHasil" class="hidden text-center">
@@ -166,21 +206,27 @@ const $ = id => document.getElementById(id);
 const esc = L.esc;
 const WARNA = ['#059669', '#0ea5e9', '#f59e0b', '#8b5cf6', '#ef4444', '#14b8a6', '#ec4899', '#6366f1', '#84cc16', '#f97316'];
 const TAMBAH = { pilgan: 'latihan/pilgan.html', struktur: 'latihan/struktur.html', esai: 'latihan/esai.html', kritis: 'latihan/kritis.html' };
-const TERSEDIA = { pilgan: true, struktur: false, esai: false, kritis: false };   // ubah ke true saat halamannya sudah dibuat
+const TERSEDIA = { pilgan: true, struktur: true, esai: true, kritis: true }; // semua sub-halaman aktif
 const BAGIAN = {
-    pilgan: { n: 'Pilihan Ganda', ic: 'fa-circle-check', c: 'blue', d: 'Soal bertingkat sampai HOTS', meta: p => `${p.pilgan.soal.length} soal · ${L.menit(p.pilgan.total)} menit` },
-    struktur: { n: 'Bedah Struktur', ic: 'fa-layer-group', c: 'amber', d: 'Labeli tesis, argumen, kesimpulan', meta: p => `${p.struktur.teks.length} kalimat · ${L.menit(p.struktur.waktu)} menit` },
-    esai: { n: 'Isi Argumentasi', ic: 'fa-pen-nib', c: 'emerald', d: 'Pilih argumen yang paling tepat', meta: p => `${p.esai.soal.length} soal · ${L.menit(p.esai.total)} menit` },
-    kritis: { n: 'Uji Berpikir', ic: 'fa-brain', c: 'rose', d: 'Teori & proses penalaran', meta: p => `${p.kritis.soal.length} soal · ${L.menit(p.kritis.total)} menit` }
+    pilgan: { n: 'Pilihan Ganda', ic: 'fa-circle-check', c: 'blue', d: 'Soal bertingkat sampai HOTS', meta: p => `${(p.pilgan?.soal || []).length} soal · ${L.menit(p.pilgan?.total || p.pilgan?.waktu || 300)} menit` },
+    struktur: { n: 'Bedah Struktur', ic: 'fa-layer-group', c: 'amber', d: 'Labeli tesis, argumen, kesimpulan', meta: p => `${(p.struktur?.teks || p.struktur?.kalimat || p.struktur?.soal || []).length} kalimat · ${L.menit(p.struktur?.waktu || p.struktur?.total || 180)} menit` },
+    esai: { n: 'Isi Argumentasi', ic: 'fa-pen-nib', c: 'emerald', d: 'Pilih argumen yang paling tepat', meta: p => `${(p.esai?.soal || []).length} soal · ${L.menit(p.esai?.total || p.esai?.waktu || 300)} menit` },
+    kritis: { n: 'Uji Berpikir', ic: 'fa-brain', c: 'rose', d: 'Teori & proses penalaran', meta: p => `${(p.kritis?.soal || []).length} soal · ${L.menit(p.kritis?.total || p.kritis?.waktu || 300)} menit` }
 };
-let handouts = null, segmen = [], berputar = false, terpilih = null, memproses = false, tick = null;
+let handouts = null, segmen = [], berputar = false, terpilih = null, memproses = false, tick = null, siapUI = false;
+
+/* ---------- pembantu gambar dengan skeleton ---------- */
+function imgCoverHtml(url, ikonSz) {
+    if (!url) return `<div class="w-full h-full flex items-center justify-center text-amber-400"><i class="fas fa-file-pdf ${ikonSz || 'text-2xl'}"></i></div>`;
+    return `<div class="w-full h-full sk"><img src="${esc(url)}" alt="" class="w-full h-full object-cover opacity-0 transition-opacity duration-300" onload="this.classList.remove('opacity-0');this.parentElement.classList.remove('sk')" onerror="this.parentElement.classList.remove('sk');this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-amber-400\\'><i class=\\'fas fa-file-pdf ${ikonSz || 'text-2xl'}\\'></i></div>'"></div>`;
+}
 
 /* ---------- tampilan utama ---------- */
 function hariIni() { return L.hari(); }
 let adaSiklus = false;
 function render() {
-    $('hXp').textContent = L.xp();
-    $('tglInfo').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' });
+    if (!siapUI) return;
+    $('hXp').textContent = L.xp();$('tglInfo').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' });
     const H = hariIni(), spin = H && H.spin, pack = H && H.pack; adaSiklus = !!spin;
     const selesai = pack ? Object.keys(BAGIAN).filter(k => H.hasil[k]).length : 0;
 
@@ -190,7 +236,7 @@ function render() {
             <div class="flex-1 min-w-0"><p class="text-white font-extrabold text-base leading-tight">Gacha Guru belum diputar</p><p class="text-white/80 text-[11px] leading-snug mt-1">Putar dulu untuk membuka materi dan soal latihan hari ini.</p></div></div>
             <button onclick="bukaRoda()" class="mt-4 w-full bg-white text-brand-green font-bold py-3 rounded-xl text-sm shadow-md active:scale-95 transition"><i class="fas fa-dharmachakra mr-1.5"></i>Putar Gacha Guru</button>`;
     } else {
-        const cov = spin.cover ? `<img src="${esc(spin.cover)}" alt="" class="w-full h-full object-cover">` : '<div class="w-full h-full flex items-center justify-center text-amber-400"><i class="fas fa-file-pdf text-2xl"></i></div>';
+        const cov = imgCoverHtml(spin.cover, 'text-2xl');
         $('hero').innerHTML = `<div class="flex gap-3.5"><div class="w-[72px] aspect-[3/4] rounded-lg overflow-hidden bg-white shrink-0 shadow-lg">${cov}</div>
             <div class="flex-1 min-w-0"><span class="text-[9px] font-bold text-white bg-white/20 px-2 py-0.5 rounded uppercase tracking-widest">Materi hari ini</span>
             <h2 class="text-white font-extrabold text-[15px] leading-snug mt-1.5 lc2">${esc(spin.judul)}</h2>
@@ -200,7 +246,7 @@ function render() {
     }
     if (spin) $('hero').insertAdjacentHTML('beforeend', '<p class="text-[10px] text-white/80 mt-3 pt-2.5 border-t border-white/20"><i class="fas fa-rotate mr-1"></i>Latihan direset & materi baru dibuka dalam <b id="resetInfo" class="tabular-nums">--:--:--</b></p>');
     tickReset();
-    $('fab').parentElement.classList.toggle('hidden', !!spin);
+    $('fabWrap').classList.toggle('hidden', !!spin);
 
     // kartu latihan
     $('kartu').innerHTML = Object.entries(BAGIAN).map(([k, b], i) => {
@@ -246,19 +292,24 @@ function gambarRoda() {
     });
 }
 window.bukaRoda = () => {
-    ['vHasil', 'vProses', 'vGalat'].forEach(v => $(v).classList.add('hidden')); $('vRoda').classList.remove('hidden'); $('btnTutup').classList.remove('hidden');
-    $('modal').classList.replace('hidden', 'flex');
+    ['vHasil', 'vProses', 'vGalat'].forEach(v => $(v).classList.add('hidden'));$('vRoda').classList.remove('hidden'); $('btnTutup').classList.remove('hidden');$('modal').classList.replace('hidden', 'flex');
     const H = hariIni();
     if (H && H.spin) { terpilih = H.spin; return H.pack ? tutupRoda() : tampilHasil(); }
-    if (!handouts) { $('rodaKet').textContent = 'Memuat daftar materi…'; $('btnPutar').disabled = true; return; }
+    if (!handouts) {
+        $('rodaKet').textContent = 'Memuat daftar materi…';
+        $('rodaSkel').classList.remove('hidden');$('rodaInfo').innerHTML = '<span class="inline-block w-32 h-3 rounded sk"></span>';
+        $('btnPutar').disabled = true;
+        return;
+    }
     siapRoda();
 };
 function siapRoda() {
+    $('rodaSkel').classList.add('hidden');
     const lay = handouts.filter(h => h.fileUrl);
-    if (!lay.length) { $('rodaKet').textContent = 'Belum ada materi handout. Minta guru mengunggah materi terlebih dahulu.'; $('btnPutar').disabled = true; $('roda').getContext('2d').clearRect(0, 0, 300, 300); return; }
+    if (!lay.length) { $('rodaKet').textContent = 'Belum ada materi handout. Minta guru mengunggah materi terlebih dahulu.'; $('rodaInfo').textContent = ''; $('btnPutar').disabled = true; $('roda').getContext('2d').clearRect(0, 0, 300, 300); return; }
     segmen = lay.map(h => [h, L.acakInt(1e6)]).sort((a, b) => a[1] - b[1]).map(x => x[0]).slice(0, 10);
-    $('rodaKet').textContent = 'Putar roda untuk mendapat materi latihan hari ini.'; $('rodaInfo').textContent = `${segmen.length} materi ada di roda`; $('btnPutar').disabled = false;
-    $('roda').style.transition = 'none'; $('roda').style.transform = 'rotate(0deg)'; gambarRoda();
+    $('rodaKet').textContent = 'Putar roda untuk mendapat materi latihan hari ini.';$('rodaInfo').textContent = `${segmen.length} materi ada di roda`; $('btnPutar').disabled = false;
+    $('roda').style.transition = 'none';$('roda').style.transform = 'rotate(0deg)'; gambarRoda();
 }
 window.tutupRoda = () => { if (memproses) return; $('modal').classList.replace('flex', 'hidden'); };
 window.putar = () => {
@@ -275,9 +326,8 @@ window.putar = () => {
     }, 5600);
 };
 function tampilHasil() {
-    ['vRoda', 'vProses', 'vGalat'].forEach(v => $(v).classList.add('hidden')); $('vHasil').classList.remove('hidden'); $('btnTutup').classList.remove('hidden');
-    $('hasilCover').innerHTML = terpilih.cover ? `<img src="${esc(terpilih.cover)}" alt="" class="w-full h-full object-cover">` : '<div class="w-full h-full flex items-center justify-center text-amber-400 text-4xl"><i class="fas fa-file-pdf"></i></div>';
-    $('hasilJudul').textContent = terpilih.judul;
+    ['vRoda', 'vProses', 'vGalat'].forEach(v => $(v).classList.add('hidden')); $('vHasil').classList.remove('hidden');$('btnTutup').classList.remove('hidden');
+    $('hasilCover').innerHTML = imgCoverHtml(terpilih.cover, 'text-4xl');$('hasilJudul').textContent = terpilih.judul;
 }
 
 /* ---------- siapkan soal (satu kali panggil Gemini) ---------- */
@@ -285,18 +335,16 @@ const LANGKAH = ['Membuka berkas materi…', 'Guru sedang membaca isi materi…'
 window.siapkanDariHub = () => { const H = hariIni(); if (!H || !H.spin) return; terpilih = H.spin; $('modal').classList.replace('hidden', 'flex'); siapkan(); };
 window.siapkan = async () => {
     if (memproses || !terpilih) return; memproses = true;
-    ['vRoda', 'vHasil', 'vGalat'].forEach(v => $(v).classList.add('hidden')); $('vProses').classList.remove('hidden'); $('btnTutup').classList.add('hidden');
-    $('prosesJudul').textContent = terpilih.judul; let i = 0; $('prosesTeks').textContent = LANGKAH[0]; $('prosesBar').style.width = '6%';
-    tick = setInterval(() => { i = Math.min(i + 1, LANGKAH.length - 1); $('prosesTeks').textContent = LANGKAH[i]; $('prosesBar').style.width = Math.min(92, 6 + (i + 1) * 14) + '%'; }, 7000);
+    ['vRoda', 'vHasil', 'vGalat'].forEach(v => $(v).classList.add('hidden'));$('vProses').classList.remove('hidden'); $('btnTutup').classList.add('hidden');$('prosesJudul').textContent = terpilih.judul; let i = 0; $('prosesTeks').textContent = LANGKAH[0];$('prosesBar').style.width = '6%';
+    tick = setInterval(() => { i = Math.min(i + 1, LANGKAH.length - 1); $('prosesTeks').textContent = LANGKAH[i];$('prosesBar').style.width = Math.min(92, 6 + (i + 1) * 14) + '%'; }, 7000);
     try {
         const pack = await L.paket(terpilih.hid);
         const H = hariIni() || L.baru(); H.pack = pack; L.simpan();
-        $('prosesBar').style.width = '100%'; $('prosesTeks').textContent = 'Soal siap!'; L.beep('ok');
+        $('prosesBar').style.width = '100\%';$('prosesTeks').textContent = 'Soal siap!'; L.beep('ok');
         setTimeout(() => { memproses = false; clearInterval(tick); $('modal').classList.replace('flex', 'hidden'); render(); L.toast('Soal latihan hari ini sudah siap!'); }, 700);
     } catch (e) {
         console.error(e); clearInterval(tick); memproses = false; L.beep('err');
-        ['vProses'].forEach(v => $(v).classList.add('hidden')); $('vGalat').classList.remove('hidden'); $('btnTutup').classList.remove('hidden');
-        $('galatPesan').textContent = e.name === 'TimeoutError' ? 'Proses terlalu lama. Coba lagi sebentar.' : e.message;
+        ['vProses'].forEach(v => $(v).classList.add('hidden'));$('vGalat').classList.remove('hidden'); $('btnTutup').classList.remove('hidden');$('galatPesan').textContent = e.name === 'TimeoutError' ? 'Proses terlalu lama. Coba lagi sebentar.' : e.message;
     }
 };
 
@@ -308,7 +356,13 @@ function tickReset() {
     if (!H || !H.spin) { if (adaSiklus) { render(); L.toast('Sudah 24 jam! Putar gacha untuk materi baru.'); } return; }
     if (el) el.textContent = L.jam(L.sisaReset());
 }
-L.siap().then(() => { render(); setInterval(tickReset, 1000); });
+
+// Tahan skeleton sebentar agar transisi dari penyimpanan lokal ke tampilan nyata halus tanpa berkedip
+Promise.all([L.siap(), new Promise(r => setTimeout(r, 220))]).then(() => {
+    siapUI = true;
+    render();
+    setInterval(tickReset, 1000);
+});
 </script>
 
 <script type="module">
