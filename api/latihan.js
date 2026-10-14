@@ -1,9 +1,15 @@
-// api/latihan.js — membaca PDF handout dengan Gemini SATU KALI jalan dan menghasilkan seluruh paket soal harian:
+// api/latihan.js — membaca PDF handout dengan Gemini / Groq SATU KALI jalan dan menghasilkan seluruh paket soal harian:
 // pilihan ganda (HOTS bertingkat), bedah struktur, isi argumentasi, dan uji berpikir — lengkap dengan waktu pengerjaan.
-// Env di Vercel: GEMINI_API_KEY (wajib), GEMINI_MODEL (opsional)
+// Env di Vercel: GEMINI_API_KEY, GROQ_API_KEY, GEMINI_MODEL, GROQ_MODEL
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mading-cf676';
 const WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0'; // kunci web publik Firebase
+
 const MODELS = [...new Set([process.env.GEMINI_MODEL, 'gemini-3.5-flash', 'gemini-2.5-flash'].filter(Boolean))];
+
+// Inisialisasi Groq SDK
+let Groq; try { Groq = require('groq-sdk'); } catch (err) { console.error("Gagal load groq-sdk:", err); }
+const MODELS_GROQ = [...new Set([process.env.GROQ_MODEL, 'openai/gpt-oss-20b', 'openai/gpt-oss-120b', 'qwen/qwen3.8-27b'].filter(Boolean))];
+
 const MAKS_PDF = 14 * 1024 * 1024;
 const galat = (pesan, status) => Object.assign(new Error(pesan), { status });
 const bersih = (t, n = 600) => String(t ?? '').replace(/[*_#`]/g, '').replace(/\s+/g, ' ').trim().slice(0, n);
@@ -35,7 +41,7 @@ async function ambilPdf(url) {
     return Buffer.from(ab).toString('base64');
 }
 
-/* ---------- Gemini ---------- */
+/* ---------- Prompt Bersama ---------- */
 const PROMPT = judul => `Kamu adalah guru Bahasa Indonesia yang ahli menyusun asesmen penalaran dan teks argumentasi untuk siswa SMP/SMA.
 Terlampir dokumen PDF materi berjudul "${judul}". Baca ISINYA, lalu susun SATU paket latihan harian yang seluruh soalnya didasarkan pada isi dokumen itu. Jangan mengarang fakta di luar dokumen.
 Bahasa Indonesia baku, teks polos (tanpa markdown). Keluarkan HANYA satu objek JSON valid dengan struktur persis berikut:
@@ -43,11 +49,11 @@ Bahasa Indonesia baku, teks polos (tanpa markdown). Keluarkan HANYA satu objek J
 {
  "ringkasan": "2-3 kalimat inti materi",
  "pilgan": [ 15 soal, urut dari mudah ke sulit:
-   { "p": "pertanyaan", "opsi": ["A","B","C","D"], "j": 0, "tingkat": "mudah|sedang|sulit|hots", "waktu": 45, "bahas": "alasan jawaban benar (1-2 kalimat)" } ],
+  { "p": "pertanyaan", "opsi": ["A","B","C","D"], "j": 0, "tingkat": "mudah|sedang|sulit|hots", "waktu": 45, "bahas": "alasan jawaban benar (1-2 kalimat)" } ],
  "struktur": { "judul": "judul teks", "waktu": 300, "teks": [ 7 kalimat berurutan: { "t": "kalimat", "label": "tesis|argumen|kesimpulan", "alasan": "mengapa label itu" } ] },
  "esai": [ 6 soal "isi argumentasi": { "tesis": "pernyataan pendapat berdasar materi", "opsi": ["argumen A","argumen B","argumen C","argumen D"], "j": 0, "tingkat": "sedang|sulit|hots", "waktu": 90, "bahas": "mengapa argumen itu paling tepat dan yang lain lemah" } ],
  "kritis": [ 8 soal uji berpikir (teori penalaran: fakta vs opini, sebab-akibat, asumsi, sesat pikir, kredibilitas sumber, kesimpulan yang sah, dsb.) berbasis konteks materi:
-   { "konsep": "nama konsep", "p": "skenario/pernyataan + pertanyaan", "opsi": ["A","B","C","D"], "j": 0, "tingkat": "sedang|sulit|hots", "waktu": 75, "bahas": "penjelasan" } ]
+  { "konsep": "nama konsep", "p": "skenario/pernyataan + pertanyaan", "opsi": ["A","B","C","D"], "j": 0, "tingkat": "sedang|sulit|hots", "waktu": 75, "bahas": "penjelasan" } ]
 }
 
 ATURAN:
@@ -56,6 +62,7 @@ ATURAN:
 - "j" = indeks 0-3 opsi yang benar. Bagian struktur harus mengandung tepat satu atau dua tesis di awal, argumen di tengah, dan kesimpulan di akhir.
 - Esai: tiga argumen pengecoh harus berbeda sifat (tidak relevan, hanya opini tanpa bukti, atau sesat pikir); satu argumen yang benar relevan dan berbukti.`;
 
+/* ---------- Integrasi Gemini ---------- */
 async function tanyaGemini(judul, pdfB64) {
     const key = process.env.GEMINI_API_KEY;
     if (!key) throw galat('GEMINI_API_KEY belum diisi di Vercel Environment Variables.', 500);
@@ -76,6 +83,38 @@ async function tanyaGemini(judul, pdfB64) {
         finally { clearTimeout(t); }
     }
     throw galat('Gemini belum berhasil menyusun soal. ' + catatan.join(' | '), 502);
+}
+
+/* ---------- Integrasi Groq ---------- */
+async function tanyaGroq(judul, pdfB64) {
+    const key = process.env.GROQ_API_KEY;
+    if (!key) throw galat('GROQ_API_KEY belum diisi di Vercel Environment Variables.', 500);
+    if (!Groq) throw galat('groq-sdk belum terinstall di project.', 500);
+    
+    const groqClient = new Groq({ apiKey: key });
+    const catatan = [];
+    
+    for (const model of MODELS_GROQ) {
+        const ac = new AbortController(), t = setTimeout(() => ac.abort(), 52000);
+        try {
+            const completion = await groqClient.chat.completions.create({
+                model: model,
+                messages: [
+                    { role: 'user', content: `${PROMPT(judul)}\n\n(Data PDF Base64 Dokumen):\n${pdfB64}` }
+                ],
+                temperature: 0.6,
+                response_format: { type: 'json_object' }
+            }, { signal: ac.signal });
+
+            const teks = completion.choices[0]?.message?.content || '';
+            const s = teks.indexOf('{'), e = teks.lastIndexOf('}'); if (s === -1 || e === -1) throw new Error('Respons bukan JSON');
+            return { paket: rapikan(JSON.parse(teks.slice(s, e + 1))), model: `groq/${model}` };
+        } catch (err) { 
+            console.error(`Groq ${model} gagal:`, err.message); 
+            catatan.push(`${model}: ${err.message}`); 
+        } finally { clearTimeout(t); }
+    }
+    throw galat('Groq belum berhasil menyusun soal. ' + catatan.join(' | '), 502);
 }
 
 /* ---------- validasi + normalisasi (acak urutan opsi, urut tingkat, waktu dijepit) ---------- */
@@ -113,10 +152,20 @@ function rapikan(o) {
 }
 
 const HANDLERS = {
-    async buat({ handoutId }) {
+    async buat({ handoutId, ai }) {
         const h = await ambilHandout(handoutId);
-        const { paket, model } = await tanyaGemini(h.judul, await ambilPdf(h.url));
-        return { judul: h.judul, handoutId, model, dibuat: Date.now(), ...paket };
+        const pdfB64 = await ambilPdf(h.url);
+        
+        let hasil;
+        const provider = String(ai || 'gemini').toLowerCase();
+        
+        if (provider === 'groq') {
+            hasil = await tanyaGroq(h.judul, pdfB64);
+        } else {
+            hasil = await tanyaGemini(h.judul, pdfB64);
+        }
+
+        return { judul: h.judul, handoutId, model: hasil.model, dibuat: Date.now(), ...hasil.paket };
     }
 };
 
