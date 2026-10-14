@@ -44,7 +44,7 @@
                 <input id="inFile" type="file" accept="application/pdf,.pdf" class="hidden">
                 <div class="w-12 h-12 mx-auto rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-xl mb-2"><i class="fas fa-cloud-arrow-up"></i></div>
                 <p class="text-xs font-bold text-slate-700">Ketuk untuk memilih PDF</p>
-                <p class="text-[10px] text-slate-400 mt-0.5">Maksimal <span id="maksMb">30</span> MB · Sampul dibuat otomatis dari halaman pertama</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">Maksimal <span id="maksMb">10</span> MB · Sampul dibuat otomatis dari halaman pertama</p>
             </label>
 
             <div id="boxFile" class="hidden up">
@@ -116,14 +116,13 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, doc, getDoc, addDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", authDomain: "mading-cf676.firebaseapp.com", projectId: "mading-cf676", storageBucket: "mading-cf676.firebasestorage.app", messagingSenderId: "72175203671", appId: "1:72175203671:web:7a0676a55beb64bc96ba12" };
-const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app), storage = getStorage(app);
+const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app);
 
 /* ===== PENGATURAN ===== */
 const ALLOWED_ROLES = ['admin'];          // tambahkan 'teacher' bila halaman ini dipakai guru
-const MAKS_MB = 30;                       // batas ukuran PDF
+const MAKS_MB = 10;                       // batas ukuran PDF (paket gratis Cloudinary: maks. 10 MB per file)
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const slug = s => String(s || 'handout').toLowerCase().replace(/\.pdf$/i, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'handout';
@@ -236,13 +235,37 @@ $('inDesk').addEventListener('input', e => { S.sentuh.desk = true; $('tagDesk').
 /* ===== SIMPAN ===== */
 function ovShow(j, i, p) { $('ov').classList.replace('hidden', 'flex'); $('ovJudul').textContent = j; $('ovInfo').textContent = i || 'Jangan tutup halaman ini.'; $('ovBar').style.width = (p || 0) + '%'; }
 const ovHide = () => $('ov').classList.replace('flex', 'hidden');
-function unggah(file, path) {
+/* ===== Cloudinary: server memberi tanda tangan, file dikirim langsung dari browser ===== */
+async function apiCloud(action, body) {
+    const token = await S.user.getIdToken();
+    const r = await fetch('/api/cloudinary', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ action, ...body }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw Object.assign(new Error(d.detail_error || 'Server error'), { code: 'api/' + r.status });
+    return d;
+}
+async function unggah(file) {
+    const t = await apiCloud('tanda', { namaFile: file.name });
     return new Promise((ok, no) => {
-        const task = uploadBytesResumable(ref(storage, path), file, { contentType: 'application/pdf', cacheControl: 'public,max-age=31536000' });
-        task.on('state_changed', s => { const p = Math.round(s.bytesTransferred / s.totalBytes * 100); ovShow('Mengunggah file…', `${p}% · ${fmtMb(s.bytesTransferred)} dari ${fmtMb(s.totalBytes)} MB`, p); }, no, async () => { try { ok(await getDownloadURL(task.snapshot.ref)); } catch (e) { no(e); } });
+        const fd = new FormData(); fd.append('file', file); fd.append('api_key', t.api_key); fd.append('timestamp', t.timestamp); fd.append('public_id', t.public_id); fd.append('signature', t.signature);
+        const x = new XMLHttpRequest(); x.open('POST', `https://api.cloudinary.com/v1_1/${t.cloud_name}/raw/upload`);
+        x.upload.onprogress = e => { if (e.lengthComputable) { const p = Math.round(e.loaded / e.total * 100); ovShow('Mengunggah file…', `${p}% · ${fmtMb(e.loaded)} dari ${fmtMb(e.total)} MB`, p); } };
+        x.onload = () => { let j = {}; try { j = JSON.parse(x.responseText); } catch (e) {} if (x.status >= 200 && x.status < 300 && j.secure_url) ok({ url: j.secure_url, publicId: j.public_id }); else no(Object.assign(new Error((j.error && j.error.message) || 'HTTP ' + x.status), { code: 'cloud/' + x.status })); };
+        x.onerror = () => no(Object.assign(new Error('Koneksi ke Cloudinary gagal.'), { code: 'cloud/jaringan' }));
+        x.send(fd);
     });
 }
-const pesanStorage = e => ({ 'storage/unauthorized': 'Ditolak oleh Firebase Storage. Periksa Storage Rules (lihat pengaturan-firebase/storage.rules).', 'storage/quota-exceeded': 'Kuota Storage habis atau paket Firebase belum Blaze.', 'storage/retry-limit-exceeded': 'Koneksi terputus terlalu lama. Coba lagi.', 'storage/canceled': 'Unggahan dibatalkan.' }[e && e.code] || (e && e.message) || 'Gagal mengunggah.');
+async function hapusCloud(publicId) { if (publicId) { try { await apiCloud('hapus', { publicId }); } catch (e) { console.warn('File di Cloudinary tidak terhapus:', e.message); } } }
+const pesanStorage = e => {
+    const m = String((e && e.message) || ''), c = (e && e.code) || '';
+    let p = m || 'Gagal mengunggah.';
+    if (/Variabel belum diisi/i.test(m)) p = m;
+    else if (/signature/i.test(m)) p = 'Tanda tangan ditolak Cloudinary. Periksa CLOUDINARY_API_SECRET di Vercel (salin ulang tanpa spasi).';
+    else if (/api[_ ]key/i.test(m)) p = 'API Key Cloudinary tidak dikenali. Periksa CLOUDINARY_API_KEY dan CLOUDINARY_CLOUD_NAME di Vercel.';
+    else if (/too large|file size|maximum/i.test(m)) p = `File melebihi batas ${MAKS_MB} MB paket gratis Cloudinary. Kecilkan PDF-nya lalu coba lagi.`;
+    else if (c === 'api/401' || c === 'api/403') p = m;
+    else if (c === 'cloud/jaringan') p = 'Koneksi terputus. Periksa internet lalu coba lagi.';
+    return p + (c ? ' [' + c + ']' : '') + ' — jalankan “Cek Penyimpanan” di halaman Kelola Handout.';
+};
 
 window.simpan = async function () {
     if (S.sibuk) return;
@@ -250,22 +273,21 @@ window.simpan = async function () {
     if (!judul) { toast('Judul tidak boleh kosong.', true); $('inJudul').focus(); return; }
     if (!editId && !S.file) { toast('Pilih file PDF terlebih dahulu.', true); return; }
     S.sibuk = true; $('btnSimpan').disabled = true;
-    let baruPath = '', baruUrl = '';
+    let baru = null;
     try {
         const data = { judul, kategori: $('inKategori').value, status: $('inStatus').value, deskripsi: $('inDesk').value.trim(), updatedAt: serverTimestamp() };
         if (S.file) {
-            baruPath = `handouts/${Date.now()}_${slug(S.file.name)}.pdf`;
-            ovShow('Mengunggah file…', '0%', 0); baruUrl = await unggah(S.file, baruPath);
-            Object.assign(data, { fileUrl: baruUrl, storagePath: baruPath, ukuranFile: fmtMb(S.file.size), halaman: S.halaman, coverImage: S.cover });
+            ovShow('Mengunggah file…', '0%', 0); baru = await unggah(S.file);
+            Object.assign(data, { fileUrl: baru.url, storagePath: baru.publicId, storage: 'cloudinary', ukuranFile: fmtMb(S.file.size), halaman: S.halaman, coverImage: S.cover });
         } else if (S.lama && !S.lama.coverImage && S.cover) data.coverImage = S.cover;
         ovShow('Menyimpan data…', 'Hampir selesai', 100);
         if (editId) await updateDoc(doc(db, 'handouts', editId), data);
         else await addDoc(collection(db, 'handouts'), { ...data, views: 0, createdAt: serverTimestamp(), uploaderUid: S.user.uid, uploaderRole: S.role });
-        if (editId && baruPath && S.lama && (S.lama.storagePath || S.lama.fileUrl)) { try { await deleteObject(ref(storage, S.lama.storagePath || S.lama.fileUrl)); } catch (e) { console.warn('File lama tidak terhapus:', e.message); } }
+        if (editId && baru && S.lama && S.lama.storage === 'cloudinary') await hapusCloud(S.lama.storagePath);
         ovShow('Berhasil!', 'Mengalihkan…', 100); setTimeout(() => location.replace('handout.html'), 600);
     } catch (e) {
         console.error(e);
-        if (baruPath) { try { await deleteObject(ref(storage, baruPath)); } catch (x) {} }   // bersihkan file yatim
+        if (baru) await hapusCloud(baru.publicId);   // bersihkan file yatim bila data gagal tersimpan
         ovHide(); S.sibuk = false; $('btnSimpan').disabled = false; toast(pesanStorage(e), true);
     }
 };
@@ -277,8 +299,7 @@ window.hapusHandout = async function () {
     if (!(await new Promise(r => { resolveM = r; $('modal').classList.replace('hidden', 'flex'); }))) return;
     S.sibuk = true; ovShow('Menghapus…', 'Mohon tunggu', 50);
     try {
-        const d = S.lama || {}; const target = d.storagePath || d.fileUrl;
-        if (target) { try { await deleteObject(ref(storage, target)); } catch (e) { console.warn('File storage tidak terhapus:', e.message); } }
+        const d = S.lama || {}; if (d.storage === 'cloudinary') await hapusCloud(d.storagePath);
         await deleteDoc(doc(db, 'handouts', editId)); location.replace('handout.html');
     } catch (e) { console.error(e); ovHide(); S.sibuk = false; toast('Gagal menghapus: ' + e.message, true); }
 };
