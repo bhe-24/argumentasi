@@ -1,4 +1,4 @@
-// api/latihan.js — membaca PDF handout dengan Gemini / Groq SATU KALI jalan dan menghasilkan seluruh paket soal harian:
+// api/latihan.js — membaca PDF handout dengan Groq / Gemini SATU KALI jalan dan menghasilkan seluruh paket soal harian:
 // pilihan ganda (HOTS bertingkat), bedah struktur, isi argumentasi, dan uji berpikir — lengkap dengan waktu pengerjaan.
 // Env di Vercel: GEMINI_API_KEY, GROQ_API_KEY, GEMINI_MODEL, GROQ_MODEL
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mading-cf676';
@@ -117,7 +117,7 @@ async function tanyaGroq(judul, pdfB64) {
     throw galat('Groq belum berhasil menyusun soal. ' + catatan.join(' | '), 502);
 }
 
-/* ---------- validasi + normalisasi (acak urutan opsi, urut tingkat, waktu dijepit) ---------- */
+/* ---------- validasi + normalisasi ---------- */
 function soalPg(x, tingkatDefault) {
     const opsi = (Array.isArray(x.opsi) ? x.opsi : []).map(o => bersih(o, 300)).filter(Boolean);
     const j = Number(x.j), p = bersih(x.p || x.tesis, 900);
@@ -157,12 +157,26 @@ const HANDLERS = {
         const pdfB64 = await ambilPdf(h.url);
         
         let hasil;
-        const provider = String(ai || 'gemini').toLowerCase();
-        
-        if (provider === 'groq') {
+        const provider = String(ai || 'auto').toLowerCase();
+
+        if (provider === 'gemini') {
+            // Jika dipaksa memilih Gemini
+            hasil = await tanyaGemini(h.judul, pdfB64);
+        } else if (provider === 'groq') {
+            // Jika dipaksa memilih Groq
             hasil = await tanyaGroq(h.judul, pdfB64);
         } else {
-            hasil = await tanyaGemini(h.judul, pdfB64);
+            // Default (AUTO): Utamakan Groq -> Fallback ke Gemini jika Groq gagal
+            try {
+                hasil = await tanyaGroq(h.judul, pdfB64);
+            } catch (errGroq) {
+                console.warn('Groq gagal, beralih ke Gemini sebagai fallback:', errGroq.message);
+                try {
+                    hasil = await tanyaGemini(h.judul, pdfB64);
+                } catch (errGemini) {
+                    throw galat(`Gagal membuat soal dari kedua AI. Groq: [${errGroq.message}] | Gemini: [${errGemini.message}]`, 502);
+                }
+            }
         }
 
         return { judul: h.judul, handoutId, model: hasil.model, dibuat: Date.now(), ...hasil.paket };
