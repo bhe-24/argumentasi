@@ -30,6 +30,7 @@
         <header class="bg-amber-500 h-14 px-4 flex items-center gap-3">
             <a href="index.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 active:scale-95 transition"><i class="fas fa-arrow-left text-sm"></i></a>
             <div class="flex-1 min-w-0"><h1 class="text-white font-bold text-sm leading-tight truncate">Kelola Handout</h1><p id="sub" class="text-white/80 text-[10px] leading-tight truncate">Memuat…</p></div>
+            <button onclick="bukaTes()" title="Cek penyimpanan" aria-label="Cek penyimpanan" class="shrink-0 w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 active:scale-95 transition"><i class="fas fa-stethoscope text-sm"></i></button>
             <a href="form_handout.html?action=create" class="shrink-0 bg-white text-amber-600 hover:bg-amber-50 text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm active:scale-95 transition flex items-center gap-1.5"><i class="fas fa-plus"></i> Unggah</a>
         </header>
         <div class="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center gap-2">
@@ -49,6 +50,16 @@
         </div>
         <div id="list" class="hidden flex-col gap-3"></div>
     </main>
+</div>
+
+<!-- CEK PENYIMPANAN -->
+<div id="tes" class="fixed inset-0 bg-slate-900/60 z-[99999] hidden items-end sm:items-center justify-center" onclick="if(event.target===this) tutupTes()">
+    <div class="up bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 max-h-[88vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-1"><h3 class="font-bold text-slate-800 text-sm"><i class="fas fa-stethoscope text-amber-500 mr-2"></i>Cek Penyimpanan</h3><button onclick="tutupTes()" class="text-slate-400"><i class="fas fa-xmark text-lg"></i></button></div>
+        <p class="text-[11px] text-slate-500 leading-relaxed">Mencoba mengunggah, membaca, lalu menghapus satu file kecil di Cloudinary untuk memastikan penyimpanan siap dipakai.</p>
+        <div id="tesList" class="mt-4 space-y-2"></div>
+        <button id="tesMulai" onclick="jalankanTes()" class="w-full mt-4 bg-amber-500 text-white font-bold py-3 rounded-xl text-xs active:scale-95 transition disabled:opacity-50"><i class="fas fa-play mr-1.5"></i>Jalankan Tes</button>
+    </div>
 </div>
 
 <script type="module">
@@ -84,6 +95,61 @@ function render() {
 }
 window.setFilter = k => { filter = k; render(); };
 window.saring = render;
+
+
+/* ===== CEK PENYIMPANAN (Cloudinary) ===== */
+const LANGKAH = ['Hubungi server (kunci Cloudinary & akses admin)', 'Unggah file uji ke Cloudinary', 'Baca file dari situs (izin PDF & CORS)', 'Hapus file uji'];
+let tesJalan = false;
+async function apiCloud(action, body) {
+    const token = await auth.currentUser.getIdToken();
+    const r = await fetch('/api/cloudinary', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ action, ...body }) });
+    const d = await r.json().catch(() => ({})); if (!r.ok) throw Object.assign(new Error(d.detail_error || 'Server error'), { status: r.status }); return d;
+}
+function bantu(e, tahap) {
+    const m = String((e && e.message) || e || '');
+    if (tahap === 1) {
+        if (/Variabel belum diisi/i.test(m)) return m;
+        if (e && e.status === 404) return 'File api/cloudinary.js belum ter-deploy. Upload file tersebut ke folder api lalu deploy ulang.';
+        if (e && (e.status === 401 || e.status === 403)) return m + ' Pastikan kamu login sebagai admin.';
+        return m;
+    }
+    if (tahap === 2) {
+        if (/signature/i.test(m)) return 'Tanda tangan ditolak. Periksa CLOUDINARY_API_SECRET di Vercel (salin ulang tanpa spasi), lalu deploy ulang.';
+        if (/api[_ ]key|cloud/i.test(m)) return 'Cloud name atau API Key salah. Periksa CLOUDINARY_CLOUD_NAME dan CLOUDINARY_API_KEY di Vercel.';
+        if (/Failed to fetch|NetworkError/i.test(m)) return 'Tidak bisa menghubungi Cloudinary. Periksa internet atau pemblokir iklan/VPN.';
+        return m;
+    }
+    if (tahap === 3) {
+        if (e && e.status === 401) return 'Cloudinary menahan pengiriman PDF (HTTP 401). Buka Cloudinary → Settings → Security → aktifkan "Allow delivery of PDF and ZIP files", lalu Save.';
+        if (e && e.status === 404) return 'File tidak ditemukan di Cloudinary (HTTP 404). Coba jalankan ulang tes.';
+        return 'Browser tidak boleh membaca file itu (CORS/jaringan). Matikan pemblokir iklan lalu ulangi; bila tetap gagal, kirim pesan ini kepada saya: ' + m;
+    }
+    return m;
+}
+function gambarTes(st) {
+    $('tesList').innerHTML = LANGKAH.map((l, i) => { const x = st[i] || { s: 'tunggu' };
+        const ic = x.s === 'ok' ? '<i class="fas fa-circle-check text-emerald-500"></i>' : x.s === 'gagal' ? '<i class="fas fa-circle-xmark text-red-500"></i>' : x.s === 'jalan' ? '<i class="fas fa-circle-notch fa-spin text-amber-500"></i>' : '<i class="far fa-circle text-slate-300"></i>';
+        return `<div class="rounded-xl border ${x.s === 'gagal' ? 'border-red-200 bg-red-50' : 'border-slate-100 bg-slate-50'} p-3"><div class="flex items-center gap-2.5 text-[12px] font-semibold text-slate-700">${ic}<span>${i + 1}. ${l}</span></div>${x.pesan ? `<p class="text-[11px] text-red-700 leading-relaxed mt-1.5 ml-6">${esc(x.pesan)}</p>` : ''}</div>`; }).join('');
+}
+window.bukaTes = () => { $('tes').classList.replace('hidden', 'flex'); gambarTes([]); $('tesMulai').disabled = false; };
+window.tutupTes = () => $('tes').classList.replace('flex', 'hidden');
+window.jalankanTes = async () => {
+    if (tesJalan) return; tesJalan = true; $('tesMulai').disabled = true; $('tesMulai').innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1.5"></i>Menguji…';
+    const st = []; const set = (i, s, pesan) => { st[i] = { s, pesan }; gambarTes(st); };
+    let t = null, hasil = null;
+    try { set(0, 'jalan'); t = await apiCloud('tanda', { namaFile: 'tes-penyimpanan.pdf' }); set(0, 'ok'); } catch (e) { console.error(e); set(0, 'gagal', bantu(e, 1)); }
+    if (t) {
+        try {
+            set(1, 'jalan'); const fd = new FormData(); fd.append('file', new Blob(['%PDF-1.4 tes penyimpanan'], { type: 'application/pdf' }), 'tes.pdf'); fd.append('api_key', t.api_key); fd.append('timestamp', t.timestamp); fd.append('public_id', t.public_id); fd.append('signature', t.signature);
+            const r = await fetch(`https://api.cloudinary.com/v1_1/${t.cloud_name}/raw/upload`, { method: 'POST', body: fd }), j = await r.json().catch(() => ({}));
+            if (!r.ok || !j.secure_url) throw new Error((j.error && j.error.message) || 'HTTP ' + r.status); hasil = j; set(1, 'ok');
+            set(2, 'jalan'); try { const g = await fetch(j.secure_url); if (!g.ok) throw Object.assign(new Error('HTTP ' + g.status), { status: g.status }); await g.blob(); set(2, 'ok'); } catch (e) { set(2, 'gagal', bantu(e, 3)); }
+        } catch (e) { console.error(e); set(hasil ? 2 : 1, 'gagal', bantu(e, hasil ? 3 : 2)); }
+    }
+    if (hasil) { try { set(3, 'jalan'); await apiCloud('hapus', { publicId: hasil.public_id }); set(3, 'ok'); } catch (e) { set(3, 'gagal', bantu(e, 4)); } }
+    if (LANGKAH.every((_, i) => st[i] && st[i].s === 'ok')) $('tesList').insertAdjacentHTML('beforeend', '<p class="text-[12px] font-bold text-emerald-600 text-center pt-2"><i class="fas fa-circle-check"></i> Penyimpanan siap dipakai. Silakan unggah handout.</p>');
+    tesJalan = false; $('tesMulai').disabled = false; $('tesMulai').innerHTML = '<i class="fas fa-rotate mr-1.5"></i>Jalankan Ulang';
+};
 
 onAuthStateChanged(auth, async user => {
     if (!user) { location.href = '../login.html'; return; }
