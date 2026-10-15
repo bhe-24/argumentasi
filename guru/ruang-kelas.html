@@ -3,305 +3,294 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Isi Argumentasi - Ruang Latihan</title>
+    <title>Pusat Kendali Kelas - Argumentasi</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }</script>
-    <script>
-/* latihan-core — penyimpanan per-browser (localStorage + IndexedDB), XP, timer, toast, PDF */
-(function () {
-    const LS = 'lat_v1', DBN = 'latihan-db'; let S = null, siapP = null;
-    const pad = n => String(n).padStart(2, '0');
-    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'x' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    const today = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
-    const lsRead = () => { try { return JSON.parse(localStorage.getItem(LS)); } catch (e) { return null; } };
-    const idbOpen = () => new Promise((ok, no) => { const r = indexedDB.open(DBN, 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
-    const idbGet = async () => { try { const d = await idbOpen(); return await new Promise(ok => { const q = d.transaction('kv').objectStore('kv').get('state'); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); }); } catch (e) { return null; } };
-    const idbSet = async v => { try { const d = await idbOpen(); await new Promise(ok => { const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, 'state'); t.oncomplete = ok; t.onerror = ok; t.onabort = ok; }); } catch (e) {} };
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    const L = {
-        esc, today, pad,
-        siap() { return siapP || (siapP = (async () => {
-            const a = lsRead(), b = await idbGet();
-            S = [a, b].filter(x => x && x.hari).sort((x, y) => (y.u || 0) - (x.u || 0))[0] || { v: 1, id: uuid(), u: Date.now(), hari: {} };
-            L.simpan(true); try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
-            return S; })()); },
-        state: () => S,
-        simpan(tetap) {
-            if (!tetap) S.u = Date.now();
-            const ks = Object.keys(S.hari).sort(); while (ks.length > 45) delete S.hari[ks.shift()];
-            try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {}
-            idbSet(JSON.parse(JSON.stringify(S)));
-        },
-        aktif() { const now = Date.now(); let best = null; for (const k in S.hari) { const h = S.hari[k]; if (h.spin && now < h.spin.ts + 864e5 && (!best || h.spin.ts > S.hari[best].spin.ts)) best = k; } return best; },
-        baru() { const k = 'c' + Date.now(); S.hari[k] = { sesi: {}, hasil: {} }; return S.hari[k]; },
-        hari(kunci) { if (kunci === undefined || kunci === null) { const a = L.aktif(); return a ? S.hari[a] : null; } return S.hari[kunci] || null; },
-        sisaReset() { const a = L.aktif(); return a ? Math.max(0, S.hari[a].spin.ts + 864e5 - Date.now()) : 0; },
-        jam(ms) { const s = Math.floor(ms / 1000); return pad(Math.floor(s / 3600)) + ':' + pad(Math.floor(s % 3600 / 60)) + ':' + pad(s % 60); },
-        nama: () => localStorage.getItem('namaSiswaCendekia') || 'Siswa',
-        xp: () => (parseInt(localStorage.getItem('latihanPointsCendekia') || '0') + parseInt(localStorage.getItem('kelasPointsArg') || '0')),
-        tambahXp(n) { localStorage.setItem('latihanPointsCendekia', String(parseInt(localStorage.getItem('latihanPointsCendekia') || '0') + n)); },
-        fmt(s) { s = Math.max(0, Math.round(s)); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); },
-        menit: s => Math.max(1, Math.round(s / 60)),
-        acakInt(n) { if (window.crypto && crypto.getRandomValues) { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; } return Math.floor(Math.random() * n); },
-        async paket(hid) {
-            const r = await fetch('/api/latihan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'buat', handoutId: hid }), signal: AbortSignal.timeout(75000) });
-            const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.detail_error || 'Server error (' + r.status + ')'); return d;
-        },
-        toast(msg, err) {
-            let c = document.getElementById('lToast');
-            if (!c) { c = document.createElement('div'); c.id = 'lToast'; c.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none'; document.body.appendChild(c); }
-            const t = document.createElement('div'); t.className = `${err ? 'bg-red-500' : 'bg-slate-800'} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2`;
-            t.innerHTML = `<i class="fas ${err ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400'}"></i><span class="flex-1">${esc(msg)}</span>`; c.appendChild(t); setTimeout(() => t.remove(), 3000);
-        },
-        beep(jenis) {
-            try { const x = new (window.AudioContext || window.webkitAudioContext)(), o = x.createOscillator(), g = x.createGain(); o.connect(g); g.connect(x.destination);
-                if (jenis === 'ok') { o.type = 'sine'; o.frequency.setValueAtTime(523, x.currentTime); o.frequency.exponentialRampToValueAtTime(1046, x.currentTime + .12); }
-                else if (jenis === 'tik') { o.type = 'square'; o.frequency.setValueAtTime(900, x.currentTime); }
-                else { o.type = 'sawtooth'; o.frequency.setValueAtTime(150, x.currentTime); }
-                g.gain.setValueAtTime(.06, x.currentTime); g.gain.exponentialRampToValueAtTime(.001, x.currentTime + (jenis === 'tik' ? .06 : .4)); o.start(); o.stop(x.currentTime + .4); } catch (e) {}
-        },
-        async pdf(el, namaBerkas) {
-            if (!window.html2pdf) await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'; s.onload = ok; s.onerror = () => no(new Error('Pembuat PDF gagal dimuat')); document.head.appendChild(s); });
-            const c = el.cloneNode(true); c.style.cssText = 'display:block;position:static;width:700px;background:#fff;color:#0f172a';
-            await html2pdf().set({ margin: [10, 10, 12, 10], filename: namaBerkas, image: { type: 'jpeg', quality: .95 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: ['css', 'legacy'], avoid: '.nobreak' } }).from(c).save();
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        display: ['Playfair Display', 'serif'],
+                    },
+                    colors: { 
+                        brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } 
+                    }
+                }
+            }
         }
-    };
-    window.L = L;
-})();
     </script>
+
     <style>
-        body { font-family: 'Poppins', sans-serif; background: #e2e8f0; -webkit-tap-highlight-color: transparent; }
-        .up { animation: up .35s ease-out both; } @keyframes up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-        .kertas { background: #fffdf8; background-image: repeating-linear-gradient(transparent 0 31px, rgba(148,163,184,.18) 31px 32px); border: 1px solid #e7e5e4; border-left: 3px solid #fca5a5; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-        textarea.esai-input { width: 100%; min-height: 120px; border: 2px solid #e2e8f0; border-radius: .8rem; padding: .75rem; font-size: 13px; color: #334155; background: #fff; transition: all .18s; resize: vertical; line-height: 1.6; }
-        textarea.esai-input:focus { outline: none; border-color: #059669; box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1); }
-        .waktu-kritis { animation: dk 1s infinite; } @keyframes dk { 50% { background: #dc2626; } }
-        .tos { position: relative; height: 112px; display: flex; justify-content: center; align-items: center; }
-        .tos .h { position: absolute; font-size: 66px; color: #fcd34d; filter: drop-shadow(0 4px 3px rgba(0,0,0,.3)); }
-        .hl { animation: tosL 1.2s cubic-bezier(.2,.9,.3,1.15) .1s both; } .hr { animation: tosR 1.2s cubic-bezier(.2,.9,.3,1.15) .1s both; }
-        @keyframes tosL { 0% { transform: translateX(-170px) rotate(-55deg); opacity: 0; } 50% { transform: translateX(-6px) rotate(-8deg); opacity: 1; } 62% { transform: translateX(-20px) rotate(-22deg); } 100% { transform: translateX(-12px) rotate(-14deg); opacity: 1; } }
-        @keyframes tosR { 0% { transform: scaleX(-1) translateX(-170px) rotate(-55deg); opacity: 0; } 50% { transform: scaleX(-1) translateX(-6px) rotate(-8deg); opacity: 1; } 62% { transform: scaleX(-1) translateX(-20px) rotate(-22deg); } 100% { transform: scaleX(-1) translateX(-12px) rotate(-14deg); opacity: 1; } }
-        .tos .boom { position: absolute; width: 20px; height: 20px; border-radius: 9999px; border: 4px solid #fde047; opacity: 0; animation: boom .7s ease-out .62s both; }
-        @keyframes boom { 0% { transform: scale(.2); opacity: 1; } 100% { transform: scale(6); opacity: 0; } }
-        .tos .sp { position: absolute; color: #fde047; font-size: 14px; opacity: 0; animation: sp .9s ease-out .65s both; }
-        @keyframes sp { 0% { transform: scale(0) rotate(0); opacity: 0; } 40% { opacity: 1; } 100% { transform: scale(1.4) rotate(120deg); opacity: 0; } }
-        .goyang { animation: goy 1.2s ease-in-out infinite; } @keyframes goy { 0%,100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-12px) rotate(6deg); } }
-        .detak { animation: dtk 1.2s ease-in-out infinite; } @keyframes dtk { 0%,100% { transform: scale(1); } 50% { transform: scale(1.18); } }
-        .rpt { display: none; font-family: Arial, Helvetica, sans-serif; font-size: 12px; line-height: 1.5; }
-        @media print { body > *:not(#laporan) { display: none !important; } #laporan { display: block !important; } body { background: #fff; } }
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        .font-display { font-family: 'Playfair Display', serif; }
+        .texture-dots { background-image: radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px); background-size: 16px 16px; }
+        
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Skeleton Animation */
+        .skeleton-pulse { animation: skeleton-loading 1.2s ease-in-out infinite alternate; }
+        @keyframes skeleton-loading { 0% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
-<body class="flex justify-center min-h-screen">
-<div class="w-full max-w-md bg-slate-100 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-300">
+<body class="flex justify-center h-screen h-[100dvh] overflow-hidden bg-slate-100">
 
-    <header class="sticky top-0 z-50 bg-brand-green h-14 px-4 flex items-center gap-3 shadow-md">
-        <a id="btnBack" href="../latihan.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
-        <div class="flex-1 min-w-0"><h1 class="text-white font-bold text-sm leading-tight truncate">Esai Argumentasi</h1><p id="hSub" class="text-white/70 text-[10px] leading-tight truncate">Memuat…</p></div>
-        <span id="hTimer" class="hidden shrink-0 bg-white text-brand-green px-3 py-1 rounded-full text-xs font-extrabold tabular-nums"><i class="far fa-clock mr-1"></i><span id="hTimerTxt">00:00</span></span>
-    </header>
-    <div id="barWaktu" class="hidden sticky top-14 z-40 h-1.5 bg-slate-300"><div id="barWaktuIsi" class="h-full bg-brand-green transition-all duration-500" style="width:100%"></div></div>
+    <!-- CONTAINER UTAMA -->
+    <div class="w-full max-w-md bg-slate-50 relative h-full shadow-2xl flex flex-col sm:border-x border-slate-200 overflow-hidden fade-in">
 
-    <main id="main" class="flex-grow px-3 py-4"><div class="text-center py-16 text-slate-400"><i class="fas fa-circle-notch fa-spin text-2xl"></i></div></main>
+        <!-- HEADER STICKY -->
+        <header class="flex-shrink-0 bg-slate-900 border-b-4 border-amber-500 relative z-40">
+            <div class="absolute inset-0 texture-dots opacity-20 pointer-events-none"></div>
+            <div class="px-4 py-3 flex items-center justify-between relative z-10">
+                <a href="index.html" class="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors active:scale-95 border border-white/20">
+                    <i class="fas fa-arrow-left text-sm"></i>
+                </a>
+                
+                <div class="flex flex-col items-center flex-1 overflow-hidden px-2">
+                    <span class="text-[9px] font-bold text-amber-400 uppercase tracking-widest mb-0.5">Ruang Kelas Aktif</span>
+                    
+                    <!-- Skeleton Nama Kelas -->
+                    <div id="skeletonClassName" class="w-24 h-4 bg-white/20 rounded skeleton-pulse"></div>
+                    <!-- Real Nama Kelas -->
+                    <h1 class="font-bold text-white text-sm tracking-wide leading-tight truncate w-full text-center hidden" id="navClassName">Memuat...</h1>
+                </div>
 
-    <div id="bar" class="hidden sticky bottom-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200 p-3 flex items-center gap-3">
-        <div class="flex-1 min-w-0"><p id="barInfo" class="text-[11px] font-semibold text-slate-600"></p><div class="h-1.5 bg-slate-200 rounded-full overflow-hidden mt-1.5"><div id="barJawab" class="h-full bg-brand-green rounded-full transition-all" style="width:0"></div></div></div>
-        <button onclick="mintaKumpul()" class="shrink-0 bg-brand-green text-white font-bold px-5 py-3 rounded-xl text-xs shadow-md active:scale-95 transition"><i class="fas fa-paper-plane mr-1.5"></i>Kumpulkan</button>
-    </div>
-</div>
-
-<div id="modal" class="fixed inset-0 bg-slate-900/60 z-[99999] hidden items-end sm:items-center justify-center">
-    <div class="up bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5">
-        <div id="mIkon" class="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-xl mx-auto mb-3"><i class="fas fa-triangle-exclamation"></i></div>
-        <h3 id="mJudul" class="font-bold text-slate-800 text-center text-sm"></h3><p id="mKet" class="text-[11px] text-slate-500 text-center mt-1.5 leading-relaxed"></p>
-        <div class="grid grid-cols-2 gap-2 mt-5"><button onclick="jawabModal(false)" id="mBatal" class="py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs">Batal</button><button onclick="jawabModal(true)" id="mOk" class="py-3 rounded-xl bg-brand-green text-white font-bold text-xs">Lanjutkan</button></div>
-    </div>
-</div>
-
-<div id="laporan" class="rpt"></div>
-
-<script>
-const $ = id => document.getElementById(id), esc = L.esc, qs = new URLSearchParams(location.search);
-const TKT = { mudah: ['Mudah', 'emerald', 'fa-seedling'], sedang: ['Sedang', 'sky', 'fa-gauge'], sulit: ['Sulit', 'amber', 'fa-mountain'], hots: ['HOTS', 'rose', 'fa-fire'] };
-const HURUF = ['A', 'B', 'C', 'D', 'E'];
-const NAV_BAGIAN = [
-    ['pilgan', 'Pilihan Ganda', 'pilgan.html', 'fa-circle-check', 'blue'],
-    ['struktur', 'Bedah Struktur', 'struktur.html', 'fa-layer-group', 'amber'],
-    ['esai', 'Isi Argumentasi', 'esai.html', 'fa-pen-nib', 'emerald'],
-    ['kritis', 'Uji Berpikir', 'kritis.html', 'fa-brain', 'rose']
-];
-let H, P, soal, totalWaktu, tgl, sesi, timer = null, aktif = false, resolveM = null;
-
-function normJawab(j) {
-    if (typeof j === 'number') return j;
-    const idx = HURUF.indexOf(String(j ?? '').trim().toUpperCase());
-    return idx >= 0 ? idx : (parseInt(j) || 0);
-}
-function normSoal(arr) {
-    return (arr || []).map(s => {
-        const tk = String(s.tingkat || 'sedang').toLowerCase();
-        return {
-            p: s.p ?? s.pertanyaan ?? s.teks ?? 'Tuliskan argumenmu secara logis.', 
-            tingkat: TKT[tk] ? tk : 'sedang',
-            waktu: s.waktu || 300, 
-            bahas: s.bahas ?? s.pembahasan ?? s.kunci ?? '' 
-        };
-    });
-}
-
-const modal = (judul, ket, ok, batal, ikon) => new Promise(r => { resolveM = r; $('mJudul').textContent = judul; $('mKet').textContent = ket; $('mOk').textContent = ok || 'Lanjutkan'; $('mBatal').textContent = batal || 'Batal'; $('mIkon').innerHTML = `<i class="fas ${ikon || 'fa-triangle-exclamation'}"></i>`; $('modal').classList.replace('hidden', 'flex'); });
-window.jawabModal = v => { $('modal').classList.replace('flex', 'hidden'); if (resolveM) { resolveM(v); resolveM = null; } };
-const badge = t => { const [n, c, i] = TKT[t] || TKT.sedang; return `<span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-${c}-100 text-${c}-700"><i class="fas ${i}"></i>${n}</span>`; };
-
-L.siap().then(() => {
-    tgl = qs.get('tgl') || L.aktif(); H = tgl ? L.hari(tgl) : null;
-    if (!H || !H.pack || !H.pack.esai) return location.replace('../latihan.html');
-    P = H.pack.esai; soal = normSoal(P.soal); totalWaktu = P.total || P.waktu || soal.reduce((a, b) => a + b.waktu, 0) || 300;
-    $('hSub').textContent = H.pack.judul;
-    if (H.hasil.esai) return tampilHasil();
-    if (H.sesi.esai) { sesi = H.sesi.esai; return Date.now() >= sesi.batas ? kumpulkan(true) : renderUjian(); }
-    if (tgl !== L.aktif()) return tidakDikerjakan();
-    tampilIntro();
-});
-
-/* ================= INTRO ================= */
-function tampilIntro() {
-    const hit = {}; soal.forEach(s => hit[s.tingkat] = (hit[s.tingkat] || 0) + 1);
-    $('main').innerHTML = `<div class="up bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-        <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl mx-auto"><i class="fas fa-pen-nib"></i></div>
-        <h2 class="text-center font-extrabold text-slate-800 text-base mt-3">Esai Argumentasi</h2><p class="text-center text-[11px] text-slate-500 mt-1 leading-relaxed">Susun argumenmu sendiri berdasarkan materi <b>${esc(H.pack.judul)}</b>. Gunakan logika dan bukti yang kuat.</p> 
-        <div class="grid grid-cols-2 gap-2.5 mt-5"><div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-2xl font-extrabold text-slate-800">${soal.length}</p><p class="text-[10px] text-slate-500 font-semibold">Soal Esai</p></div><div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-2xl font-extrabold text-slate-800">${L.menit(totalWaktu)}</p><p class="text-[10px] text-slate-500 font-semibold">Menit total</p></div></div> 
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-5 mb-2">Tingkat kesulitan</p>
-        <div class="flex flex-wrap gap-2">${['mudah', 'sedang', 'sulit', 'hots'].filter(t => hit[t]).map(t => `<span class="flex items-center gap-1.5">${badge(t)}<b class="text-[11px] text-slate-600">×${hit[t]}</b></span>`).join('')}</div>
-        <ul class="mt-5 space-y-2 text-[11px] text-slate-600 leading-relaxed">
-            <li class="flex gap-2"><i class="fas fa-quote-left text-emerald-500 mt-0.5"></i><span>Jawab setiap pertanyaan esai secara mendalam dan jelas.</span></li> 
-            <li class="flex gap-2"><i class="fas fa-lock text-rose-500 mt-0.5"></i><span><b>Hanya bisa dikerjakan 1 kali per hari.</b> Setelah dimulai, waktu terus berjalan walau halaman ditutup.</span></li>
-            <li class="flex gap-2"><i class="fas fa-floppy-disk text-emerald-500 mt-0.5"></i><span>Jawabanmu tersimpan otomatis di browser ini.</span></li>
-        </ul>
-        <button onclick="mulai()" class="mt-6 w-full bg-brand-green text-white font-bold py-3.5 rounded-xl shadow-md text-sm active:scale-95 transition"><i class="fas fa-play mr-1.5"></i>Mulai Latihan</button></div>`;
-}
-window.mulai = async () => {
-    if (!(await modal('Mulai sekarang?', 'Waktu langsung berjalan dan latihan ini tidak bisa diulang.', 'Mulai', 'Belum', 'fa-play'))) return;
-    const t = Date.now(); H.sesi.esai = sesi = { mulai: t, batas: t + totalWaktu * 1000, jawab: {}, keluar: 0 }; L.simpan(); renderUjian(); window.scrollTo({ top: 0 });
-};
-function tidakDikerjakan() { $('main').innerHTML = '<div class="bg-white rounded-2xl p-8 text-center border border-slate-200"><i class="fas fa-calendar-xmark text-4xl text-slate-300 mb-3"></i><p class="text-sm font-bold text-slate-700">Latihan ini tidak dikerjakan</p><p class="text-[11px] text-slate-500 mt-1">Latihan hanya bisa dikerjakan dalam 24 jam sejak gacha diputar.</p><a href="../latihan.html" class="inline-block mt-4 bg-brand-green text-white text-xs font-bold px-5 py-2.5 rounded-full">Kembali</a></div>'; }
-
-/* ================= UJIAN ================= */
-function renderUjian() {
-    aktif = true; $('hTimer').classList.remove('hidden'); $('barWaktu').classList.remove('hidden'); $('bar').classList.remove('hidden'); $('btnBack').removeAttribute('href'); $('btnBack').onclick = e => { e.preventDefault(); L.toast('Ujian sedang berjalan. Selesaikan atau kumpulkan dulu.', true); };
-    $('main').innerHTML = `<div class="kertas up p-4 pl-5 mb-4"><p class="text-center text-[10px] font-extrabold tracking-[.25em] text-slate-500">LEMBAR SOAL</p><h2 class="text-center font-reading font-bold text-slate-800 text-[15px] mt-1">Esai Argumentasi</h2> 
-        <div class="mt-3 text-[11px] text-slate-600 space-y-0.5"><p><b class="inline-block w-14">Nama</b>: ${esc(L.nama())}</p><p><b class="inline-block w-14">Materi</b>: ${esc(H.pack.judul)}</p><p><b class="inline-block w-14">Petunjuk</b>: Tulis jawaban esaimu dengan argumen yang jelas dan kuat.</p></div></div> 
-        <div id="daftar" class="space-y-4">${soal.map((s, i) => `<article id="q${i}" class="kertas p-4 pl-5">
-            <div class="flex items-center gap-2 mb-2.5"><span class="w-7 h-7 rounded-full bg-slate-800 text-white text-xs font-extrabold flex items-center justify-center">${i + 1}</span>${badge(s.tingkat)}<span class="ml-auto text-[10px] font-semibold text-slate-400"><i class="far fa-clock"></i> ${L.fmt(s.waktu)}</span></div> 
-            <p class="font-reading text-[13px] text-slate-800 leading-[1.8] mb-3">${esc(s.p)}</p>
-            <textarea class="esai-input" data-i="${i}" placeholder="Ketik jawabanmu di sini...">${esc(sesi.jawab[i] || '')}</textarea></article>`).join('')}</div><div class="h-6"></div>`; 
-    $('daftar').addEventListener('input', e => { 
-        if (e.target.tagName.toLowerCase() === 'textarea' && aktif) {
-            const i = +e.target.dataset.i;
-            sesi.jawab[i] = e.target.value;
-            L.simpan();
-            hitungJawab();
-        }
-    }); 
-    hitungJawab(); jalankanWaktu();
-}
-function hitungJawab() { 
-    const n = Object.values(sesi.jawab).filter(v => typeof v === 'string' && v.trim().length > 10).length; 
-    $('barInfo').textContent = `${n} dari ${soal.length} soal terjawab`; 
-    $('barJawab').style.width = (n / soal.length * 100) + '%'; 
-} 
-function jalankanWaktu() {
-    const tot = sesi.batas - sesi.mulai; clearInterval(timer);
-    const tik = () => { const sisa = Math.ceil((sesi.batas - Date.now()) / 1000); $('hTimerTxt').textContent = L.fmt(sisa); $('barWaktuIsi').style.width = Math.max(0, (sesi.batas - Date.now()) / tot * 100) + '%';
-        const krit = sisa <= 60 || (sesi.batas - Date.now()) / tot < .1; $('hTimer').classList.toggle('waktu-kritis', krit); $('hTimer').classList.toggle('text-white', krit); $('hTimer').classList.toggle('text-brand-green', !krit); $('barWaktuIsi').className = 'h-full transition-all duration-500 ' + (krit ? 'bg-red-500' : 'bg-brand-green');
-        if (sisa <= 0) kumpulkan(true); };
-    tik(); timer = setInterval(tik, 400);
-}
-window.addEventListener('beforeunload', e => { if (aktif) { e.preventDefault(); e.returnValue = ''; } });
-document.addEventListener('visibilitychange', () => { if (aktif && document.hidden && sesi) { sesi.keluar = (sesi.keluar || 0) + 1; L.simpan(); } });
-window.mintaKumpul = async () => {
-    const sisa = soal.length - Object.keys(sesi.jawab).length;
-    if (await modal('Kumpulkan jawaban?', sisa ? `Masih ada ${sisa} soal belum dijawab. Setelah dikumpulkan, jawaban tidak bisa diubah dan latihan tidak bisa diulang.` : 'Semua soal sudah dijawab. Setelah dikumpulkan, jawaban tidak bisa diubah.', 'Kumpulkan', 'Periksa Lagi', 'fa-paper-plane')) kumpulkan(false);
-};
-function kumpulkan(auto) {
-    if (H.hasil.esai) return; aktif = false; clearInterval(timer);
-    const jawab = sesi.jawab; 
-    // Esai tidak ada penilaian otomatis benar/salah, berikan XP partisipasi.
-    const dijawab = Object.values(jawab).filter(v => typeof v === 'string' && v.trim().length > 10).length;
-    const skor = Math.round(dijawab / soal.length * 100); 
-    const xp = dijawab * 5; L.tambahXp(xp); 
-    H.hasil.esai = { skor, benar: dijawab, total: soal.length, jawab, durasi: Math.round((Math.min(Date.now(), sesi.batas) - sesi.mulai) / 1000), batas: totalWaktu, selesai: Date.now(), auto: !!auto, keluar: sesi.keluar || 0, xp }; L.simpan(); 
-    $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden'); $('btnBack').href = '../latihan.html'; $('btnBack').onclick = null;
-    if (auto) L.toast('Waktu habis. Jawabanmu otomatis dikumpulkan.', true);
-    tampilHasil(true);
-}
-
-/* ================= HASIL ================= */
-function navLatihanHtml() {
-    const q = tgl && tgl !== L.aktif() ? `?tgl=${tgl}` : '';
-    return `<div class="bg-white rounded-2xl border border-slate-200 p-4 mt-3"><h3 class="font-bold text-slate-800 text-xs mb-2.5"><i class="fas fa-compass text-brand-green mr-1.5"></i>Latihan Lainnya pada Materi Ini</h3><div class="grid grid-cols-2 gap-2">${NAV_BAGIAN.map(([k, n, url, ic, c]) => {
-        const hs = H.hasil[k], cur = k === 'esai';
-        return `<a href="${url}${q}" class="flex items-center gap-2.5 p-2.5 rounded-xl border ${cur ? 'border-brand-green bg-emerald-50/60' : 'border-slate-100 bg-slate-50 hover:border-slate-300'} transition"><div class="w-8 h-8 rounded-lg bg-${c}-100 text-${c}-600 flex items-center justify-center text-xs shrink-0"><i class="fas ${ic}"></i></div><div class="min-w-0 flex-1"><p class="font-bold text-[11px] text-slate-800 truncate">${n}</p><p class="text-[9px] font-semibold ${hs ? 'text-emerald-600' : 'text-slate-400'}">${hs ? 'Selesai' : 'Siap dikerjakan'}</p></div></a>`;
-    }).join('')}</div></div>`;
-}
-
-function tampilHasil(baru) { 
-    const R = H.hasil.esai; aktif = false; $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden'); 
-    
-    const pesan = R.benar > 0 ? ['Luar biasa!', 'Kamu telah menyelesaikan latihan esai ini.'] : ['Tetap semangat!', 'Lain kali coba isi jawabanmu dengan lebih lengkap.']; 
-    const anim = R.benar > 0 ? '<div class="tos"><i class="fas fa-hand h hl"></i><i class="fas fa-hand h hr"></i><div class="boom"></div><i class="fas fa-star sp" style="top:8px;left:42%"></i><i class="fas fa-star sp" style="top:24px;left:58%"></i><i class="fas fa-sparkles sp" style="top:70px;left:36%"></i><i class="fas fa-star sp" style="top:78px;left:60%"></i></div>' 
-        : '<div class="tos"><i class="fas fa-heart detak" style="font-size:60px;color:#fda4af;filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i></div>'; 
- 
-    $('main').innerHTML = `<div class="up rounded-3xl p-5 text-center text-white shadow-lg" style="background:linear-gradient(135deg,#064e3b,#059669 60%,#34d399)">${anim} 
-            <p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold">Status Pengerjaan</p><div class="flex items-end justify-center gap-1"><span class="text-4xl font-extrabold leading-none mt-2">Selesai</span></div> 
-            <p class="font-extrabold text-base mt-4">${pesan[0]}</p><p class="text-[11px] text-white/80">${pesan[1]}</p> 
-            <span class="inline-block mt-3 bg-white/20 rounded-full px-3 py-1 text-[11px] font-bold"><i class="fas fa-star text-amber-300 mr-1"></i>+${R.xp} XP Partisipasi</span>${R.auto ? '<p class="text-[10px] text-amber-200 mt-2"><i class="fas fa-clock mr-1"></i>Dikumpulkan otomatis karena waktu habis</p>' : ''}</div> 
-        <div class="grid grid-cols-2 gap-2.5 mt-3"><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-emerald-600">${R.benar}</p><p class="text-[9px] font-semibold text-slate-500">Soal Dijawab</p></div><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-slate-700">${L.fmt(R.durasi)}</p><p class="text-[9px] font-semibold text-slate-500">dari ${L.fmt(R.batas)}</p></div></div> 
-        <div class="grid grid-cols-2 gap-2 mt-3"><button id="btnPdf" onclick="unduhPdf()" class="bg-white border border-slate-200 text-slate-700 font-bold py-3 rounded-xl text-xs active:scale-95 transition"><i class="fas fa-file-pdf text-red-500 mr-1.5"></i>Unduh PDF</button><a href="../latihan.html" class="bg-brand-green text-white font-bold py-3 rounded-xl text-xs shadow-md text-center active:scale-95 transition"><i class="fas fa-house mr-1.5"></i>Ruang Latihan</a></div> 
-        ${navLatihanHtml()} 
-        <p class="text-center text-[10px] text-slate-400 mt-4"><i class="fas fa-rotate mr-1"></i>Gacha & latihan baru dibuka setelah ${new Date(H.spin.ts + 864e5).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p> 
-        <div class="flex items-center justify-between mt-6 mb-3"><h3 class="font-bold text-slate-800 text-sm">Review Jawabanmu</h3></div><div id="bahas" class="space-y-3"></div>`; 
-    window.scrollTo({ top: 0 }); 
-    if (baru) { if (R.benar > 0) { L.beep('ok'); setTimeout(() => window.confetti && confetti({ particleCount: 140, spread: 80, origin: { y: .4 }, zIndex: 100001 }), 700); } else L.beep('ok'); } 
-    
-    // Tampilkan ulasan (kunci dari AI vs jawaban siswa)
-    $('bahas').innerHTML = soal.map((s, i) => { 
-        const u = R.jawab[i] || ''; 
-        const diJawab = u.trim().length > 10;
-        return `<article class="bg-white rounded-2xl border border-slate-200 p-4"><div class="flex items-center gap-2 mb-2"><span class="w-6 h-6 rounded-full bg-slate-800 text-white text-[11px] font-extrabold flex items-center justify-center">${i + 1}</span>${badge(s.tingkat)}<span class="ml-auto text-[10px] font-bold ${diJawab ? 'text-emerald-600' : 'text-rose-500'}">${diJawab ? 'Dijawab' : 'Tidak Valid/Kosong'}</span></div> 
-            <p class="font-reading text-[12px] text-slate-800 leading-[1.75] mb-2.5">${esc(s.p)}</p>
-            <div class="bg-slate-50 rounded-lg p-2.5 mb-2.5 border border-slate-100">
-                <p class="text-[10px] font-bold text-slate-500 mb-1">Jawabanmu:</p>
-                <p class="text-[11px] text-slate-700 whitespace-pre-wrap">${u ? esc(u) : '<i class="text-slate-400">Kosong</i>'}</p>
+                <div class="bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm" title="Kode Kelas">
+                    <i class="fas fa-key text-emerald-400 text-xs"></i>
+                    <span class="text-white font-bold text-xs tracking-widest" id="classCodeDisplay">------</span>
+                </div>
             </div>
-            ${s.bahas ? `<div class="bg-emerald-50 rounded-lg p-2.5 text-[11px] text-emerald-900 leading-relaxed border border-emerald-100"><b class="text-emerald-700">Poin Penting (Ekspektasi AI):</b> ${esc(s.bahas)}</div>` : ''}</article>`; 
-    }).join(''); 
-} 
+        </header>
 
-/* ================= PDF ================= */
-function isiLaporan() {
-    const R = H.hasil.esai;
-    const tgls = new Date(H.spin.ts).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    $('laporan').innerHTML = `<div style="padding:4px"><div style="border-bottom:3px solid #059669;padding-bottom:8px;margin-bottom:12px"><div style="font-size:17px;font-weight:800;color:#064e3b">LAPORAN LATIHAN — ESAI ARGUMENTASI</div><div style="color:#64748b;font-size:11px">Platform Argumentasi · Ruang Latihan</div></div> 
-        <table style="width:100%;font-size:12px;margin-bottom:12px"><tr><td style="width:90px;color:#64748b">Nama</td><td><b>${esc(L.nama())}</b></td></tr><tr><td style="color:#64748b">Tanggal</td><td>${tgls}</td></tr><tr><td style="color:#64748b">Materi</td><td>${esc(H.pack.judul)}</td></tr><tr><td style="color:#64748b">Waktu</td><td>${L.fmt(R.durasi)} dari ${L.fmt(R.batas)}${R.auto ? ' (waktu habis)' : ''}</td></tr></table>
-        <div class="nobreak" style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:10px 14px;margin-bottom:12px"><span style="font-size:24px;font-weight:800;color:#059669">Selesai</span> &nbsp;·&nbsp; Dijawab <b>${R.benar}</b> dari <b>${R.total}</b> soal</div> 
-        <div style="font-size:13px;font-weight:800;margin-bottom:6px;color:#064e3b">Rincian Jawaban</div> 
-        ${soal.map((s, i) => { 
-            const jwb = R.jawab[i] || '';
-            return `<div class="nobreak" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;margin-bottom:8px"><div style="font-size:11px"><b>${i + 1}.</b> <span style="color:#64748b">[${TKT[s.tingkat][0]}]</span></div><div style="margin:3px 0;font-size:12px">${esc(s.p)}</div><div style="font-size:11px;margin-bottom:4px"><span style="color:#64748b">Jawabanmu:</span><br> ${jwb ? esc(jwb) : '<i>Kosong</i>'}</div>${s.bahas ? `<div style="font-size:11px;color:#065f46;background:#ecfdf5;padding:4px;border-radius:4px;margin-top:4px"><i>Ekspektasi:</i> ${esc(s.bahas)}</div>` : ''}</div>`; 
-        }).join('')} 
-        <div style="font-size:9px;color:#94a3b8;margin-top:10px;text-align:center">Dihasilkan otomatis oleh Platform Argumentasi · ${new Date(R.selesai).toLocaleString('id-ID')}</div></div>`;
-}
-window.unduhPdf = async () => {
-    const b = $('btnPdf'), isi = b.innerHTML; b.disabled = true; b.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1.5"></i>Membuat PDF…';
-    try { isiLaporan(); await L.pdf($('laporan'), `Laporan-Isi-Argumentasi-${new Date(H.spin.ts).toISOString().slice(0, 10)}.pdf`); L.toast('PDF berhasil dibuat.'); }
-    catch (e) { console.error(e); L.toast('Gagal membuat PDF. Memakai cetak browser…', true); setTimeout(() => window.print(), 600); }
-    finally { b.disabled = false; b.innerHTML = isi; }
-};
-</script>
+        <!-- KONTEN UTAMA: SCROLLABLE AREA -->
+        <main class="flex-grow overflow-y-auto hide-scrollbar relative z-20 flex flex-col bg-slate-50">
+            
+            <!-- STATE: DASHBOARD KELAS -->
+            <div id="dashboardState" class="hidden w-full p-4 fade-in pb-10">
+
+                <!-- BAGIAN: INFO KELAS (CP/TP) -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-5">
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
+                        <i class="fas fa-info-circle text-blue-500"></i> Informasi Target Pembelajaran
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Capaian Pembelajaran</p>
+                            <p class="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100 leading-relaxed" id="infoCP">Memuat...</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Tujuan Pembelajaran</p>
+                            <p class="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100 leading-relaxed whitespace-pre-line" id="infoTP">Memuat...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- BAGIAN: MATERI AI -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-5">
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-1">
+                        <i class="fas fa-wand-magic-sparkles text-violet-500"></i> Kelola Materi & Latihan
+                    </h3>
+                    <p class="text-[10px] text-slate-500 mb-4 pb-2 border-b border-slate-100 leading-relaxed">Review, tambahkan, atau ubah soal yang dihasilkan AI untuk menyesuaikan dengan kebutuhan siswa.</p>
+                    
+                    <div class="grid grid-cols-2 gap-3" id="aiModulesContainer">
+                        <!-- Skeleton Loading Level -->
+                        <div class="bg-slate-50 h-28 rounded-xl skeleton-pulse border border-slate-100"></div>
+                        <div class="bg-slate-50 h-28 rounded-xl skeleton-pulse border border-slate-100"></div>
+                        <div class="bg-slate-50 h-28 rounded-xl skeleton-pulse border border-slate-100"></div>
+                        <div class="bg-slate-50 h-28 rounded-xl skeleton-pulse border border-slate-100"></div>
+                    </div>
+                </div>
+
+                <!-- BAGIAN: PAPAN PRESTASI (LEADERBOARD) -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 p-3 flex items-center justify-between text-white">
+                        <h3 class="font-bold text-xs flex items-center gap-2"><i class="fas fa-trophy text-amber-300"></i> Papan Peringkat Siswa</h3>
+                    </div>
+                    <div class="p-3 space-y-2" id="leaderboardList">
+                        <!-- Skeleton Leaderboard -->
+                        <div class="bg-slate-50 h-10 rounded-lg skeleton-pulse border border-slate-100"></div>
+                        <div class="bg-slate-50 h-10 rounded-lg skeleton-pulse border border-slate-100"></div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Notifikasi Toast -->
+    <div id="toastContainer" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-3 pointer-events-none w-[90%] max-w-sm"></div>
+
+    <!-- SCRIPT LOGIC (Multi-Page Navigation & Firebase) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, query, orderBy, onSnapshot, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let classCodeGlobal = null;
+        let classDataGlobal = null;
+
+        // Custom Toast (Tidak menggunakan default Alert Browser)
+        window.showToast = function(msg, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bgClass = type === 'error' ? 'bg-red-600' : (type === 'info' ? 'bg-blue-600' : 'bg-slate-800');
+            const iconClass = type === 'error' ? 'fa-exclamation-circle' : (type === 'info' ? 'fa-info-circle' : 'fa-check-circle text-emerald-400');
+            
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-xl shadow-xl text-xs font-bold flex items-center justify-center gap-2 transform translate-y-5 opacity-0 transition-all duration-300 pointer-events-auto w-full text-center`;
+            toast.innerHTML = `<i class="fas ${iconClass}"></i> ${msg}`;
+            
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => toast.classList.remove('translate-y-5', 'opacity-0'));
+            setTimeout(() => {
+                toast.classList.add('translate-y-5', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        // 1. INIT: MENGAMBIL DATA KELAS DARI URL
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const urlParams = new URLSearchParams(window.location.search);
+                classCodeGlobal = urlParams.get('id');
+
+                if(!classCodeGlobal) {
+                    window.location.href = "index.html"; 
+                    return;
+                }
+
+                // Ambil Data Kelas
+                const docRef = doc(db, "classes", classCodeGlobal);
+                const docSnap = await getDoc(docRef);
+
+                if(docSnap.exists()) {
+                    classDataGlobal = docSnap.data();
+                    
+                    // Verifikasi bahwa user yang login adalah guru pemilik kelas ini atau admin
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    const userData = userDoc.data();
+                    if(userData.role !== 'admin' && classDataGlobal.guruId !== user.uid) {
+                        window.location.href = "index.html";
+                        return;
+                    }
+
+                    // Tampilkan Nama & Kode Kelas
+                    const navClassName = document.getElementById('navClassName');
+                    navClassName.innerText = classDataGlobal.namaKelas;
+                    navClassName.classList.remove('hidden');
+                    document.getElementById('skeletonClassName').classList.add('hidden');
+                    document.getElementById('classCodeDisplay').innerText = classCodeGlobal;
+                    
+                    // Isi Info Kelas
+                    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+                    document.getElementById('infoCP').innerHTML = esc(classDataGlobal.cp) || '-';
+                    document.getElementById('infoTP').innerHTML = esc(classDataGlobal.tp) || '-';
+
+                    // Tampilkan Dashboard
+                    document.getElementById('dashboardState').classList.remove('hidden');
+                    document.getElementById('dashboardState').classList.add('block');
+                    
+                    renderLatihanAI(classDataGlobal.aiPaket || null);
+                    mulaiListenerLeaderboard();
+                } else {
+                    window.location.href = "index.html";
+                }
+            } else {
+                window.location.href = '../login.html';
+            }
+        });
+
+        // 2. RENDER MATERI & LATIHAN AI
+        function renderLatihanAI(aiPaket) {
+            const container = document.getElementById('aiModulesContainer');
+            
+            if(!aiPaket) {
+                container.innerHTML = `<div class="col-span-2 p-4 text-center text-slate-400 text-xs bg-slate-50 rounded-xl border border-slate-200">Data AI belum tersedia.</div>`;
+                return;
+            }
+
+            const formatWaktu = s => Math.max(1, Math.round(s / 60)) + " mnt";
+            
+            const BAGIAN = [
+                { key: 'pilgan', n: 'Pilihan Ganda', ic: 'fa-circle-check', c: 'blue', d: 'Soal bertingkat s.d HOTS', meta: p => `${(p.pilgan?.soal || []).length} soal · ${formatWaktu(p.pilgan?.total || 300)}` },
+                { key: 'struktur', n: 'Bedah Struktur', ic: 'fa-layer-group', c: 'amber', d: 'Labeli struktur argumen', meta: p => `${(p.struktur?.teks || []).length} baris · ${formatWaktu(p.struktur?.waktu || 180)}` },
+                { key: 'esai', n: 'Esai Argumentasi', ic: 'fa-pen-nib', c: 'emerald', d: 'Jawab dengan analisis logis', meta: p => `${(p.esai?.soal || []).length} soal · ${formatWaktu(p.esai?.total || 300)}` },
+                { key: 'kritis', n: 'Uji Berpikir', ic: 'fa-brain', c: 'rose', d: 'Teori & logika penalaran', meta: p => `${(p.kritis?.soal || []).length} soal · ${formatWaktu(p.kritis?.total || 300)}` }
+            ];
+
+            let html = "";
+            BAGIAN.forEach((b, i) => {
+                const url = `preview-latihan.html?id=${classCodeGlobal}&mod=${b.key}`;
+                html += `
+                <a href="${url}" class="group bg-slate-50 rounded-xl border border-slate-200 p-3 flex flex-col active:scale-95 transition-transform hover:border-violet-300 relative overflow-hidden">
+                    <div class="absolute -right-4 -bottom-4 opacity-5 text-4xl group-hover:scale-125 transition-transform group-hover:rotate-12 group-hover:text-violet-500"><i class="fas ${b.ic}"></i></div>
+                    <div class="w-8 h-8 rounded-lg bg-${b.c}-100 text-${b.c}-600 flex items-center justify-center text-sm mb-2 shadow-sm relative z-10"><i class="fas ${b.ic}"></i></div>
+                    <h4 class="font-bold text-[11px] text-slate-800 leading-tight mb-1 relative z-10">${b.n}</h4>
+                    <p class="text-[9px] text-slate-500 leading-snug flex-grow relative z-10">${b.d}</p>
+                    <div class="mt-2 relative z-10 flex justify-between items-center">
+                        <span class="text-[9px] font-bold text-slate-400 bg-white/80 w-max px-2 py-0.5 rounded-full border border-slate-100">${b.meta(aiPaket)}</span>
+                        <span class="text-[9px] font-bold text-violet-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">Review <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </a>`;
+            });
+            container.innerHTML = html;
+        }
+
+        // 3. LEADERBOARD REALTIME LISTENER
+        function mulaiListenerLeaderboard() {
+            const board = document.getElementById('leaderboardList');
+            
+            // Urutkan siswa berdasarkan XP terbanyak
+            const qStudent = query(collection(db, `classes/${classCodeGlobal}/students`), orderBy("xp", "desc"));
+            
+            onSnapshot(qStudent, (snapshot) => {
+                if(snapshot.empty) {
+                    board.innerHTML = '<div class="text-center text-[10px] text-slate-400 p-3">Belum ada aktivitas.</div>';
+                    return;
+                }
+                
+                let html = "";
+                let rank = 1;
+                
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    let rankIco = `<span class="font-bold text-slate-400 w-4 text-center text-xs">${rank}</span>`;
+                    
+                    if(rank === 1) rankIco = `<i class="fas fa-crown text-amber-500 w-4 text-center text-xs"></i>`;
+                    else if(rank === 2) rankIco = `<i class="fas fa-medal text-slate-400 w-4 text-center text-xs"></i>`;
+                    else if(rank === 3) rankIco = `<i class="fas fa-medal text-amber-700 w-4 text-center text-xs"></i>`;
+                    
+                    html += `
+                    <div class="flex justify-between items-center bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+                        <div class="flex items-center gap-2 text-[11px]">
+                            ${rankIco}
+                            <span class="font-bold text-slate-700 truncate w-32">${d.nama}</span>
+                        </div>
+                        <span class="text-[9px] font-black bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded">${d.xp} XP</span>
+                    </div>`;
+                    rank++;
+                });
+                
+                board.innerHTML = html;
+            });
+        }
+    </script>
 </body>
 </html>
