@@ -221,7 +221,7 @@
                 const data = aiPaket[b.key];
                 if (!data) return ''; // Skip if missing from package
 
-                const url = `latihan/${b.key}.html?id=${encodeURIComponent(classId)}` + (sid ? `&sid=${encodeURIComponent(sid)}` : '');
+                const url = `kelas/latihan/${b.key}.html?id=${encodeURIComponent(classId)}` + (sid ? `&sid=${encodeURIComponent(sid)}` : '');
 
                 return `
                 <div class="relative pl-12 group">
