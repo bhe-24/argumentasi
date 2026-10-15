@@ -10,74 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }</script>
-    <script>
-/* latihan-core — penyimpanan per-browser (localStorage + IndexedDB), XP, timer, toast, PDF */
-(function () {
-    const LS = 'lat_v1', DBN = 'latihan-db'; let S = null, siapP = null;
-    const pad = n => String(n).padStart(2, '0');
-    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'x' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    const today = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
-    const lsRead = () => { try { return JSON.parse(localStorage.getItem(LS)); } catch (e) { return null; } };
-    const idbOpen = () => new Promise((ok, no) => { const r = indexedDB.open(DBN, 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
-    const idbGet = async () => { try { const d = await idbOpen(); return await new Promise(ok => { const q = d.transaction('kv').objectStore('kv').get('state'); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); }); } catch (e) { return null; } };
-    const idbSet = async v => { try { const d = await idbOpen(); await new Promise(ok => { const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, 'state'); t.oncomplete = ok; t.onerror = ok; t.onabort = ok; }); } catch (e) {} };
-
-    const L = {
-        esc, today, pad,
-        // Muat status: ambil salinan terbaru dari localStorage atau IndexedDB, lalu samakan keduanya
-        siap() { return siapP || (siapP = (async () => {
-            const a = lsRead(), b = await idbGet();
-            S = [a, b].filter(x => x && x.hari).sort((x, y) => (y.u || 0) - (x.u || 0))[0] || { v: 1, id: uuid(), u: Date.now(), hari: {} };
-            L.simpan(true); try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
-            return S; })()); },
-        state: () => S,
-        simpan(tetap) {
-            if (!tetap) S.u = Date.now();
-            const ks = Object.keys(S.hari).sort(); while (ks.length > 45) delete S.hari[ks.shift()];
-            try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {}
-            idbSet(JSON.parse(JSON.stringify(S)));
-        },
-        // Siklus latihan = 24 jam sejak gacha diputar. Setelah itu otomatis kedaluwarsa dan gacha bisa diputar lagi.
-        aktif() { const now = Date.now(); let best = null; for (const k in S.hari) { const h = S.hari[k]; if (h.spin && now < h.spin.ts + 864e5 && (!best || h.spin.ts > S.hari[best].spin.ts)) best = k; } return best; },
-        baru() { const k = 'c' + Date.now(); S.hari[k] = { sesi: {}, hasil: {} }; return S.hari[k]; },
-        hari(kunci) { if (kunci === undefined || kunci === null) { const a = L.aktif(); return a ? S.hari[a] : null; } return S.hari[kunci] || null; },
-        sisaReset() { const a = L.aktif(); return a ? Math.max(0, S.hari[a].spin.ts + 864e5 - Date.now()) : 0; },
-        jam(ms) { const s = Math.floor(ms / 1000); return pad(Math.floor(s / 3600)) + ':' + pad(Math.floor(s % 3600 / 60)) + ':' + pad(s % 60); },
-        nama: () => localStorage.getItem('namaSiswaCendekia') || 'Siswa',
-        xp: () => (parseInt(localStorage.getItem('latihanPointsCendekia') || '0') + parseInt(localStorage.getItem('kelasPointsArg') || '0')),
-        tambahXp(n) { localStorage.setItem('latihanPointsCendekia', String(parseInt(localStorage.getItem('latihanPointsCendekia') || '0') + n)); },
-        fmt(s) { s = Math.max(0, Math.round(s)); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); },
-        menit: s => Math.max(1, Math.round(s / 60)),
-        acakInt(n) { if (window.crypto && crypto.getRandomValues) { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; } return Math.floor(Math.random() * n); },
-        async paket(hid) {
-            const r = await fetch('/api/latihan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'buat', handoutId: hid }), signal: AbortSignal.timeout(75000) });
-            const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.detail_error || 'Server error (' + r.status + ')'); return d;
-        },
-        toast(msg, err) {
-            let c = document.getElementById('lToast');
-            if (!c) { c = document.createElement('div'); c.id = 'lToast'; c.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none'; document.body.appendChild(c); }
-            const t = document.createElement('div'); t.className = `${err ? 'bg-red-500' : 'bg-slate-800'} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2`;
-            t.innerHTML = `<i class="fas ${err ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400'}"></i><span class="flex-1">${esc(msg)}</span>`; c.appendChild(t); setTimeout(() => t.remove(), 3000);
-        },
-        beep(jenis) {
-            try { const x = new (window.AudioContext || window.webkitAudioContext)(), o = x.createOscillator(), g = x.createGain(); o.connect(g); g.connect(x.destination);
-                if (jenis === 'ok') { o.type = 'sine'; o.frequency.setValueAtTime(523, x.currentTime); o.frequency.exponentialRampToValueAtTime(1046, x.currentTime + .12); }
-                else if (jenis === 'tik') { o.type = 'square'; o.frequency.setValueAtTime(900, x.currentTime); }
-                else { o.type = 'sawtooth'; o.frequency.setValueAtTime(150, x.currentTime); }
-                g.gain.setValueAtTime(.06, x.currentTime); g.gain.exponentialRampToValueAtTime(.001, x.currentTime + (jenis === 'tik' ? .06 : .4)); o.start(); o.stop(x.currentTime + .4); } catch (e) {}
-        },
-        // Unduh PDF: salin elemen laporan tersembunyi lalu ubah menjadi PDF
-        async pdf(el, namaBerkas) {
-            if (!window.html2pdf) await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'; s.onload = ok; s.onerror = () => no(new Error('Pembuat PDF gagal dimuat')); document.head.appendChild(s); });
-            const c = el.cloneNode(true); c.style.cssText = 'display:block;position:static;width:700px;background:#fff;color:#0f172a';
-            await html2pdf().set({ margin: [10, 10, 12, 10], filename: namaBerkas, image: { type: 'jpeg', quality: .95 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: ['css', 'legacy'], avoid: '.nobreak' } }).from(c).save();
-        }
-    };
-    window.L = L;
-})();
-
-    </script>
+    
     <style>
         body { font-family: 'Poppins', sans-serif; background: #e2e8f0; -webkit-tap-highlight-color: transparent; }
         .up { animation: up .35s ease-out both; } @keyframes up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -135,89 +68,229 @@
 
 <div id="laporan" class="rpt"></div>
 
-<script>
-const $ = id => document.getElementById(id), esc = L.esc, qs = new URLSearchParams(location.search);
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" });
+const db = getFirestore(app);
+window.db = db;
+
+window.L = {
+    esc: s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
+    fmt: s => { s = Math.max(0, Math.round(s)); const pad = n => String(n).padStart(2, '0'); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); },
+    menit: s => Math.max(1, Math.round(s / 60)),
+    nama: () => localStorage.getItem('namaSiswaCendekia') || 'Siswa',
+    toast: (msg, err) => {
+        let c = document.getElementById('lToast');
+        if (!c) { c = document.createElement('div'); c.id = 'lToast'; c.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none'; document.body.appendChild(c); }
+        const t = document.createElement('div'); t.className = `${err ? 'bg-red-500' : 'bg-slate-800'} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 up`;
+        t.innerHTML = `<i class="fas ${err ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400'}"></i><span class="flex-1">${window.L.esc(msg)}</span>`; c.appendChild(t); setTimeout(() => t.remove(), 3000);
+    },
+    beep: () => {},
+    pdf: async (el, namaBerkas) => {
+        if (!window.html2pdf) await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'; s.onload = ok; s.onerror = () => no(new Error('Pembuat PDF gagal dimuat')); document.head.appendChild(s); });
+        const c = el.cloneNode(true); c.style.cssText = 'display:block;position:static;width:700px;background:#fff;color:#0f172a';
+        await html2pdf().set({ margin: [10, 10, 12, 10], filename: namaBerkas, image: { type: 'jpeg', quality: .95 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: ['css', 'legacy'], avoid: '.nobreak' } }).from(c).save();
+    },
+    tambahXp: n => {
+        let current = parseInt(localStorage.getItem('kelasPointsArg') || '0');
+        localStorage.setItem('kelasPointsArg', current + n);
+    }
+};
+
+const qs = new URLSearchParams(location.search);
+const classId = qs.get('id');
+const studentId = qs.get('sid') || localStorage.getItem('studentId') || localStorage.getItem('siswa_' + classId);
+
+window.H = { hasil: {}, sesi: {}, pack: {}, spin: { ts: Date.now() } };
+window.P = null;
+window.soal = null;
+window.totalWaktu = 0;
+window.sesi = null;
+window.timer = null;
+window.aktif = false;
+window.resolveM = null;
 const TKT = { mudah: ['Mudah', 'emerald', 'fa-seedling'], sedang: ['Sedang', 'sky', 'fa-gauge'], sulit: ['Sulit', 'amber', 'fa-mountain'], hots: ['HOTS', 'rose', 'fa-fire'] };
-const HURUF = ['A', 'B', 'C', 'D'];
-let H, P, soal, tgl, sesi, timer = null, aktif = false, resolveM = null;
+const HURUF = ['A', 'B', 'C', 'D', 'E'];
+const $ = id => document.getElementById(id), esc = window.L.esc;
 
-const modal = (judul, ket, ok, batal, ikon) => new Promise(r => { resolveM = r; $('mJudul').textContent = judul; $('mKet').textContent = ket; $('mOk').textContent = ok || 'Lanjutkan'; $('mBatal').textContent = batal || 'Batal'; $('mIkon').innerHTML = `<i class="fas ${ikon || 'fa-triangle-exclamation'}"></i>`; $('modal').classList.replace('hidden', 'flex'); });
-window.jawabModal = v => { $('modal').classList.replace('flex', 'hidden'); if (resolveM) { resolveM(v); resolveM = null; } };
-const badge = t => { const [n, c, i] = TKT[t] || TKT.sedang; return `<span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-${c}-100 text-${c}-700"><i class="fas ${i}"></i>${n}</span>`; };
 
-L.siap().then(() => {
-    tgl = qs.get('tgl') || L.aktif(); H = tgl ? L.hari(tgl) : null;
-    if (!H || !H.pack) return location.replace('../latihan.html');
-    P = H.pack.pilgan; soal = P.soal; $('hSub').textContent = H.pack.judul;
-    if (H.hasil.pilgan) return tampilHasil();
-    if (H.sesi.pilgan) { sesi = H.sesi.pilgan; return Date.now() >= sesi.batas ? kumpulkan(true) : renderUjian(); }   // ujian yang sudah dimulai tetap dilanjutkan
-    if (tgl !== L.aktif()) return tidakDikerjakan();   // siklus 24 jam sudah berakhir
-    tampilIntro();
-});
+
+// Helper to determine right parsing logic
+window.normSoal = function(arr) {
+    if ('pilgan' === 'struktur') {
+        return (arr || []).map((s, i) => ({
+            id: i,
+            t: s.t || s.teks || '',
+            label: String(s.label || '').toLowerCase(),
+            alasan: s.alasan || ''
+        }));
+    } else {
+        return (arr || []).map(s => { 
+            const tk = String(s.tingkat || 'sedang').toLowerCase(); 
+            return { 
+                p: s.p ?? s.pertanyaan ?? s.pernyataan ?? s.rumpang ?? s.teks ?? 'Soal', 
+                konteks: s.tesis ?? s.klaim ?? s.konteks ?? s.kutipan ?? s.wacana ?? '', 
+                opsi: Array.isArray(s.opsi) ? s.opsi : (Array.isArray(s.pilihan) ? s.pilihan : []), 
+                j: typeof s.j === 'number' ? s.j : (HURUF.indexOf(String(s.j ?? '').trim().toUpperCase()) >= 0 ? HURUF.indexOf(String(s.j ?? '').trim().toUpperCase()) : (parseInt(s.j) || 0)), 
+                tingkat: TKT[tk] ? tk : 'sedang', 
+                fokus: s.fokus ?? s.jenis ?? '', 
+                waktu: s.waktu || 60, 
+                bahas: s.bahas ?? s.pembahasan ?? s.alasan ?? '',
+                konsep: s.konsep || ''
+            }; 
+        }); 
+    }
+};
+
+window.modal = (judul, ket, ok, batal, ikon) => new Promise(r => { window.resolveM = r; $('mJudul').textContent = judul; $('mKet').textContent = ket; $('mOk').textContent = ok || 'Lanjutkan'; $('mBatal').textContent = batal || 'Batal'; $('mIkon').innerHTML = `<i class="fas ${ikon || 'fa-triangle-exclamation'}"></i>`; $('modal').classList.replace('hidden', 'flex'); });
+window.jawabModal = v => { $('modal').classList.replace('flex', 'hidden'); if (window.resolveM) { window.resolveM(v); window.resolveM = null; } };
+window.badge = t => { const [n, c, i] = TKT[t] || TKT.sedang; return `<span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-${c}-100 text-${c}-700"><i class="fas ${i}"></i>${n}</span>`; };
+
+async function initLatihan() {
+    if (!classId) return location.replace('../index.html');
+    
+    const backUrl = `../ruang_belajar_siswa.html?id=${classId}` + (studentId ? `&sid=${studentId}` : '');
+    $('btnBack').href = backUrl;
+    
+    try {
+        const docSnap = await getDoc(doc(db, "classes", classId));
+        if (!docSnap.exists() || !docSnap.data().aiPaket) throw new Error('Data kelas tidak valid');
+        
+        window.H.pack = docSnap.data().aiPaket;
+        window.H.pack.judul = docSnap.data().namaKelas || 'Materi Kelas';
+        if (!window.H.pack['pilgan']) return location.replace(backUrl);
+        
+        window.P = window.H.pack['pilgan'];
+        const dataSource = 'pilgan' === 'struktur' ? window.P.teks : window.P.soal;
+        window.soal = window.normSoal(dataSource);
+        
+        if ('pilgan' === 'struktur') {
+            window.totalWaktu = window.P.waktu || window.P.total || 300;
+        } else {
+            window.totalWaktu = window.P.total || window.P.waktu || window.soal.reduce((a, b) => a + (b.waktu || 60), 0) || 300;
+        }
+        
+        if($('hSub')) $('hSub').textContent = window.H.pack.judul;
+
+        if (studentId) {
+            const studentSnap = await getDoc(doc(db, `classes/${classId}/students`, studentId));
+            if (studentSnap.exists()) {
+                const sData = studentSnap.data();
+                if (sData.latihan && sData.latihan['pilgan']) {
+                    window.H.hasil['pilgan'] = sData.latihan['pilgan'];
+                }
+            }
+        }
+
+        const localSesi = JSON.parse(localStorage.getItem('sesi_pilgan_' + classId) || 'null');
+        if (localSesi && !window.H.hasil['pilgan']) {
+            window.H.sesi['pilgan'] = localSesi;
+        }
+
+        if (window.H.hasil['pilgan']) return window.tampilHasil();
+        if (window.H.sesi['pilgan']) { 
+            window.sesi = window.H.sesi['pilgan']; 
+            return Date.now() >= window.sesi.batas ? window.kumpulkan(true) : window.renderUjian(); 
+        }
+        
+        window.tampilIntro();
+    } catch(e) {
+        console.error(e);
+        $('main').innerHTML = `<div class="bg-white rounded-2xl p-8 text-center border border-slate-200"><i class="fas fa-exclamation-triangle text-4xl text-slate-300 mb-3"></i><p class="text-sm font-bold text-slate-700">Gagal Memuat Latihan</p><p class="text-[11px] text-slate-500 mt-1">Latihan tidak ditemukan atau tidak tersedia.</p><a href="${backUrl}" class="inline-block mt-4 bg-brand-green text-white text-xs font-bold px-5 py-2.5 rounded-full">Kembali</a></div>`;
+    }
+}
 
 /* ================= INTRO ================= */
-function tampilIntro() {
-    const hit = {}; soal.forEach(s => hit[s.tingkat] = (hit[s.tingkat] || 0) + 1);
+window.tampilIntro = function() {
+    const hit = {}; window.soal.forEach(s => hit[s.tingkat] = (hit[s.tingkat] || 0) + 1);
     $('main').innerHTML = `<div class="up bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
         <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center text-2xl mx-auto"><i class="fas fa-circle-check"></i></div>
-        <h2 class="text-center font-extrabold text-slate-800 text-base mt-3">Siap mengerjakan?</h2><p class="text-center text-[11px] text-slate-500 mt-1 leading-relaxed">Soal disusun dari materi <b>${esc(H.pack.judul)}</b>.</p>
-        <div class="grid grid-cols-2 gap-2.5 mt-5"><div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-2xl font-extrabold text-slate-800">${soal.length}</p><p class="text-[10px] text-slate-500 font-semibold">Soal</p></div><div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-2xl font-extrabold text-slate-800">${L.menit(P.total)}</p><p class="text-[10px] text-slate-500 font-semibold">Menit total</p></div></div>
+        <h2 class="text-center font-extrabold text-slate-800 text-base mt-3">Siap mengerjakan?</h2><p class="text-center text-[11px] text-slate-500 mt-1 leading-relaxed">Soal disusun dari materi <b>${esc(window.H.pack.judul)}</b>.</p>
+        <div class="grid grid-cols-2 gap-2.5 mt-5"><div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-2xl font-extrabold text-slate-800">${window.soal.length}</p><p class="text-[10px] text-slate-500 font-semibold">Soal</p></div><div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-2xl font-extrabold text-slate-800">${L.menit(window.P.total)}</p><p class="text-[10px] text-slate-500 font-semibold">Menit total</p></div></div>
         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-5 mb-2">Tingkat kesulitan</p>
         <div class="flex flex-wrap gap-2">${['mudah', 'sedang', 'sulit', 'hots'].filter(t => hit[t]).map(t => `<span class="flex items-center gap-1.5">${badge(t)}<b class="text-[11px] text-slate-600">×${hit[t]}</b></span>`).join('')}</div>
         <ul class="mt-5 space-y-2 text-[11px] text-slate-600 leading-relaxed">
-            <li class="flex gap-2"><i class="fas fa-clock text-amber-500 mt-0.5"></i><span>Waktu tiap soal ditentukan guru sesuai tingkat kesulitan. Hitung mundur berlaku untuk seluruh lembar soal.</span></li>
+            <li class="flex gap-2"><i class="fas fa-clock text-amber-500 mt-0.5"></i><span>Waktu tiap soal ditentukan guru sesuai tingkat kesulitan. Hitung mundur berlaku untuk seluruh lembar window.soal.</span></li>
             <li class="flex gap-2"><i class="fas fa-lock text-rose-500 mt-0.5"></i><span><b>Hanya bisa dikerjakan 1 kali per hari.</b> Setelah dimulai, waktu terus berjalan walau halaman ditutup. Reset 24 jam setelah gacha diputar.</span></li>
             <li class="flex gap-2"><i class="fas fa-floppy-disk text-emerald-500 mt-0.5"></i><span>Jawabanmu tersimpan otomatis di browser ini.</span></li>
         </ul>
         <button onclick="mulai()" class="mt-6 w-full bg-brand-green text-white font-bold py-3.5 rounded-xl shadow-md text-sm active:scale-95 transition"><i class="fas fa-play mr-1.5"></i>Mulai Ujian</button></div>`;
 }
-window.mulai = async () => {
+window.mulai = async function() {
     if (!(await modal('Mulai sekarang?', 'Waktu langsung berjalan dan latihan ini tidak bisa diulang.', 'Mulai', 'Belum', 'fa-play'))) return;
-    const t = Date.now(); H.sesi.pilgan = sesi = { mulai: t, batas: t + P.total * 1000, jawab: {}, keluar: 0 }; L.simpan(); renderUjian(); window.scrollTo({ top: 0 });
+    const t = Date.now(); window.H.sesi.pilgan = sesi = { mulai: t, batas: t + window.P.total * 1000, jawab: {}, keluar: 0 }; localStorage.setItem('sesi_pilgan_' + classId, JSON.stringify(window.sesi)); renderUjian(); window.scrollTo({ top: 0 });
 };
 function tidakDikerjakan() { $('main').innerHTML = '<div class="bg-white rounded-2xl p-8 text-center border border-slate-200"><i class="fas fa-calendar-xmark text-4xl text-slate-300 mb-3"></i><p class="text-sm font-bold text-slate-700">Latihan ini tidak dikerjakan</p><p class="text-[11px] text-slate-500 mt-1">Latihan hanya bisa dikerjakan dalam 24 jam sejak gacha diputar.</p><a href="../latihan.html" class="inline-block mt-4 bg-brand-green text-white text-xs font-bold px-5 py-2.5 rounded-full">Kembali</a></div>'; }
 
 /* ================= UJIAN ================= */
-function renderUjian() {
-    aktif = true; $('hTimer').classList.remove('hidden'); $('barWaktu').classList.remove('hidden'); $('bar').classList.remove('hidden'); $('btnBack').removeAttribute('href'); $('btnBack').onclick = e => { e.preventDefault(); L.toast('Ujian sedang berjalan. Selesaikan atau kumpulkan dulu.', true); };
+window.renderUjian = function() {
+    window.aktif = true; $('hTimer').classList.remove('hidden'); $('barWaktu').classList.remove('hidden'); $('bar').classList.remove('hidden'); $('btnBack').removeAttribute('href'); $('btnBack').onclick = e => { e.preventDefault(); L.toast('Ujian sedang berjalan. Selesaikan atau kumpulkan dulu.', true); };
     $('main').innerHTML = `<div class="kertas up p-4 pl-5 mb-4"><p class="text-center text-[10px] font-extrabold tracking-[.25em] text-slate-500">LEMBAR SOAL</p><h2 class="text-center font-reading font-bold text-slate-800 text-[15px] mt-1">Pilihan Ganda</h2>
-        <div class="mt-3 text-[11px] text-slate-600 space-y-0.5"><p><b class="inline-block w-14">Nama</b>: ${esc(L.nama())}</p><p><b class="inline-block w-14">Materi</b>: ${esc(H.pack.judul)}</p><p><b class="inline-block w-14">Petunjuk</b>: Pilih satu jawaban yang paling tepat.</p></div></div>
-        <div id="daftar" class="space-y-4">${soal.map((s, i) => `<article id="q${i}" class="kertas p-4 pl-5">
+        <div class="mt-3 text-[11px] text-slate-600 space-y-0.5"><p><b class="inline-block w-14">Nama</b>: ${esc(L.nama())}</p><p><b class="inline-block w-14">Materi</b>: ${esc(window.H.pack.judul)}</p><p><b class="inline-block w-14">Petunjuk</b>: Pilih satu jawaban yang paling tepat.</p></div></div>
+        <div id="daftar" class="space-y-4">${window.soal.map((s, i) => `<article id="q${i}" class="kertas p-4 pl-5">
             <div class="flex items-center gap-2 mb-2.5"><span class="w-7 h-7 rounded-full bg-slate-800 text-white text-xs font-extrabold flex items-center justify-center">${i + 1}</span>${badge(s.tingkat)}<span class="ml-auto text-[10px] font-semibold text-slate-400"><i class="far fa-clock"></i> ${L.fmt(s.waktu)}</span></div>
             <p class="font-reading text-[13px] text-slate-800 leading-[1.8] mb-3">${esc(s.p)}</p>
-            <div class="space-y-2">${s.opsi.map((o, k) => `<button class="opsi ${sesi.jawab[i] === k ? 'sel' : ''}" data-i="${i}" data-k="${k}"><span class="huruf">${HURUF[k]}</span><span class="text-[12px] text-slate-700 leading-snug pt-0.5">${esc(o)}</span></button>`).join('')}</div></article>`).join('')}</div><div class="h-6"></div>`;
-    $('daftar').addEventListener('click', e => { const b = e.target.closest('.opsi'); if (!b || !aktif) return; const i = +b.dataset.i, k = +b.dataset.k;
-        sesi.jawab[i] = k; L.simpan(); b.parentElement.querySelectorAll('.opsi').forEach(x => x.classList.remove('sel')); b.classList.add('sel'); if (navigator.vibrate) navigator.vibrate(8); hitungJawab(); });
+            <div class="space-y-2">${s.opsi.map((o, k) => `<button class="opsi ${window.sesi.jawab[i] === k ? 'sel' : ''}" data-i="${i}" data-k="${k}"><span class="huruf">${HURUF[k]}</span><span class="text-[12px] text-slate-700 leading-snug pt-0.5">${esc(o)}</span></button>`).join('')}</div></article>`).join('')}</div><div class="h-6"></div>`;
+    $('daftar').addEventListener('click', e => { const b = e.target.closest('.opsi'); if (!b || !window.aktif) return; const i = +b.dataset.i, k = +b.dataset.k;
+        window.sesi.jawab[i] = k; localStorage.setItem('sesi_pilgan_' + classId, JSON.stringify(window.sesi)); b.parentElement.querySelectorAll('.opsi').forEach(x => x.classList.remove('sel')); b.classList.add('sel'); if (navigator.vibrate) navigator.vibrate(8); hitungJawab(); });
     hitungJawab(); jalankanWaktu();
 }
-function hitungJawab() { const n = Object.keys(sesi.jawab).length; $('barInfo').textContent = `${n} dari ${soal.length} soal terjawab`; $('barJawab').style.width = (n / soal.length * 100) + '%'; }
-function jalankanWaktu() {
-    const tot = sesi.batas - sesi.mulai; clearInterval(timer);
-    const tik = () => { const sisa = Math.ceil((sesi.batas - Date.now()) / 1000); $('hTimerTxt').textContent = L.fmt(sisa); $('barWaktuIsi').style.width = Math.max(0, (sesi.batas - Date.now()) / tot * 100) + '%';
-        const krit = sisa <= 60 || (sesi.batas - Date.now()) / tot < .1; $('hTimer').classList.toggle('waktu-kritis', krit); $('hTimer').classList.toggle('text-white', krit); $('hTimer').classList.toggle('text-brand-green', !krit); $('barWaktuIsi').className = 'h-full transition-all duration-500 ' + (krit ? 'bg-red-500' : 'bg-brand-green');
+window.hitungJawab = function() { const n = Object.keys(window.sesi.jawab).length; $('barInfo').textContent = `${n} dari ${window.soal.length} soal terjawab`; $('barJawab').style.width = (n / window.soal.length * 100) + '%'; }
+window.jalankanWaktu = function() {
+    const tot = window.sesi.batas - window.sesi.mulai; clearInterval(window.timer);
+    const tik = () => { const sisa = Math.ceil((window.sesi.batas - Date.now()) / 1000); $('hTimerTxt').textContent = L.fmt(sisa); $('barWaktuIsi').style.width = Math.max(0, (window.sesi.batas - Date.now()) / tot * 100) + '%';
+        const krit = sisa <= 60 || (window.sesi.batas - Date.now()) / tot < .1; $('hTimer').classList.toggle('waktu-kritis', krit); $('hTimer').classList.toggle('text-white', krit); $('hTimer').classList.toggle('text-brand-green', !krit); $('barWaktuIsi').className = 'h-full transition-all duration-500 ' + (krit ? 'bg-red-500' : 'bg-brand-green');
         if (sisa <= 0) kumpulkan(true); };
-    tik(); timer = setInterval(tik, 400);
+    tik(); window.timer = setInterval(tik, 400);
 }
-window.addEventListener('beforeunload', e => { if (aktif) { e.preventDefault(); e.returnValue = ''; } });
-document.addEventListener('visibilitychange', () => { if (aktif && document.hidden && sesi) { sesi.keluar = (sesi.keluar || 0) + 1; L.simpan(); } });
-window.mintaKumpul = async () => {
-    const sisa = soal.length - Object.keys(sesi.jawab).length;
+window.addEventListener('beforeunload', e => { if (window.aktif) { e.preventDefault(); e.returnValue = ''; } });
+document.addEventListener('visibilitychange', () => { if (window.aktif && document.hidden && sesi) { window.sesi.keluar = (window.sesi.keluar || 0) + 1; localStorage.setItem('sesi_pilgan_' + classId, JSON.stringify(window.sesi)); } });
+window.mintaKumpul = async function() {
+    const sisa = window.soal.length - Object.keys(window.sesi.jawab).length;
     if (await modal('Kumpulkan jawaban?', sisa ? `Masih ada ${sisa} soal belum dijawab. Setelah dikumpulkan, jawaban tidak bisa diubah dan latihan tidak bisa diulang.` : 'Semua soal sudah dijawab. Setelah dikumpulkan, jawaban tidak bisa diubah.', 'Kumpulkan', 'Periksa Lagi', 'fa-paper-plane')) kumpulkan(false);
 };
-function kumpulkan(auto) {
-    if (H.hasil.pilgan) return; aktif = false; clearInterval(timer);
-    const jawab = sesi.jawab, benar = soal.filter((s, i) => jawab[i] === s.j).length, skor = Math.round(benar / soal.length * 100);
-    const xp = Math.round(skor / 4) + (skor >= 80 ? 10 : 0); L.tambahXp(xp);
-    H.hasil.pilgan = { skor, benar, total: soal.length, jawab, durasi: Math.round((Math.min(Date.now(), sesi.batas) - sesi.mulai) / 1000), batas: P.total, selesai: Date.now(), auto: !!auto, keluar: sesi.keluar || 0, xp }; L.simpan();
-    $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden'); $('btnBack').href = '../latihan.html'; $('btnBack').onclick = null;
-    if (auto) L.toast('Waktu habis. Jawabanmu otomatis dikumpulkan.', true);
-    tampilHasil(true);
+
+window.kumpulkan = async function(auto) { 
+    if (window.H.hasil['pilgan']) return; window.aktif = false; clearInterval(window.timer); 
+    const jawab = window.sesi.jawab; 
+    let benar = 0, skor = 0;
+    
+    if ('pilgan' === 'struktur') {
+        const d_j = window.sesi.jawab;
+        benar = window.soal.filter((s, i) => d_j[i] && d_j[i].l === s.label).length;
+        skor = Math.round(benar / window.soal.length * 100);
+    } else {
+        benar = window.soal.filter((s, i) => jawab[i] === s.j).length;
+        skor = Math.round(benar / window.soal.length * 100);
+    }
+    
+    const xp = Math.round(skor / 4) + (skor >= 80 ? 10 : 0); 
+    window.L.tambahXp(xp); 
+    
+    window.H.hasil['pilgan'] = { skor, benar, total: window.soal.length, jawab, durasi: Math.round((Math.min(Date.now(), window.sesi.batas) - window.sesi.mulai) / 1000), batas: window.totalWaktu, selesai: Date.now(), auto: !!auto, keluar: window.sesi.keluar || 0, xp }; 
+    
+    if (studentId && classId) {
+        try {
+            await setDoc(doc(db, `classes/${classId}/students`, studentId), {
+                latihan: { ['pilgan']: window.H.hasil['pilgan'] }
+            }, { merge: true });
+        } catch(e) { console.error("Gagal simpan ke DB", e); }
+    }
+    
+    localStorage.removeItem('sesi_pilgan_' + classId);
+    
+    $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden'); $('btnBack').onclick = null; 
+    if (auto) window.L.toast('Waktu habis. Jawabanmu otomatis dikumpulkan.', true); 
+    window.tampilHasil(true); 
 }
 
 /* ================= HASIL ================= */
-function tampilHasil(baru) {
-    const R = H.hasil.pilgan; aktif = false; $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden');
-    const tk = {}; soal.forEach((s, i) => { const t = tk[s.tingkat] = tk[s.tingkat] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
+window.tampilHasil = function(baru) {
+    const R = window.H.hasil.pilgan; window.aktif = false; $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden');
+    const tk = {}; window.soal.forEach((s, i) => { const t = tk[s.tingkat] = tk[s.tingkat] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
     const urut = ['mudah', 'sedang', 'sulit', 'hots'].filter(t => tk[t]);
     const lemah = urut.slice().sort((a, b) => tk[a].b / tk[a].n - tk[b].b / tk[b].n)[0], kuat = urut.slice().sort((a, b) => tk[b].b / tk[b].n - tk[a].b / tk[a].n)[0];
     const pesan = R.skor >= 80 ? ['Luar biasa!', 'Pemahamanmu sangat baik.'] : R.skor >= 60 ? ['Bagus!', 'Sedikit lagi menuju sempurna.'] : ['Tetap semangat!', 'Pelajari pembahasan lalu baca ulang materinya.'];
@@ -232,7 +305,7 @@ function tampilHasil(baru) {
         <div class="bg-white rounded-2xl border border-slate-200 p-4 mt-3"><h3 class="font-bold text-slate-800 text-sm mb-3">Analisis per Tingkat</h3><div class="space-y-3">${urut.map(t => { const p = Math.round(tk[t].b / tk[t].n * 100); return `<div><div class="flex justify-between items-center mb-1">${badge(t)}<span class="text-[11px] font-bold text-slate-600">${tk[t].b}/${tk[t].n}</span></div><div class="h-2.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-${TKT[t][1]}-500 rounded-full transition-all duration-1000" style="width:0" data-w="${p}"></div></div></div>`; }).join('')}</div>
             <div class="mt-4 bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-[11px] text-emerald-900 leading-relaxed"><i class="fas fa-lightbulb text-amber-500 mr-1"></i>${rek}</div>${R.keluar ? `<p class="text-[10px] text-slate-400 mt-2.5"><i class="fas fa-eye-slash mr-1"></i>Kamu meninggalkan halaman ${R.keluar}× saat ujian.</p>` : ''}</div>
         <div class="grid grid-cols-2 gap-2 mt-3"><button id="btnPdf" onclick="unduhPdf()" class="bg-white border border-slate-200 text-slate-700 font-bold py-3 rounded-xl text-xs active:scale-95 transition"><i class="fas fa-file-pdf text-red-500 mr-1.5"></i>Unduh PDF</button><a href="../latihan.html" class="bg-brand-green text-white font-bold py-3 rounded-xl text-xs shadow-md text-center active:scale-95 transition"><i class="fas fa-house mr-1.5"></i>Ruang Latihan</a></div>
-        <p class="text-center text-[10px] text-slate-400 mt-4"><i class="fas fa-rotate mr-1"></i>Gacha & latihan baru dibuka setelah ${new Date(H.spin.ts + 864e5).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+        <p class="text-center text-[10px] text-slate-400 mt-4"><i class="fas fa-rotate mr-1"></i>Gacha & latihan baru dibuka setelah ${new Date(window.H.spin.ts + 864e5).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
         <div class="flex items-center justify-between mt-6 mb-3"><h3 class="font-bold text-slate-800 text-sm">Pembahasan</h3><div id="filter" class="flex gap-1.5"></div></div><div id="bahas" class="space-y-3"></div>`;
     window.scrollTo({ top: 0 });
     let c = 0; const st = Math.max(1, Math.round(R.skor / 40)), ti = setInterval(() => { c = Math.min(R.skor, c + st); $('skorAngka').textContent = c; if (c >= R.skor) clearInterval(ti); }, 30);
@@ -240,10 +313,10 @@ function tampilHasil(baru) {
     if (baru) { if (R.skor >= 80) { L.beep('ok'); setTimeout(() => window.confetti && confetti({ particleCount: 140, spread: 80, origin: { y: .4 }, zIndex: 100001 }), 700); } else L.beep(R.skor >= 60 ? 'ok' : 'err'); }
     filterBahas('semua');
 }
-function filterBahas(f) {
-    const R = H.hasil.pilgan;
+window.filterBahas = function(f) {
+    const R = window.H.hasil.pilgan;
     $('filter').innerHTML = [['semua', 'Semua'], ['salah', 'Salah']].map(([k, l]) => `<button onclick="filterBahas('${k}')" class="px-3 py-1 rounded-full text-[10px] font-bold border ${f === k ? 'bg-brand-green text-white border-brand-green' : 'bg-white text-slate-500 border-slate-200'}">${l}</button>`).join('');
-    const arr = soal.map((s, i) => [s, i]).filter(([s, i]) => f === 'semua' || R.jawab[i] !== s.j);
+    const arr = window.soal.map((s, i) => [s, i]).filter(([s, i]) => f === 'semua' || R.jawab[i] !== s.j);
     $('bahas').innerHTML = arr.length ? arr.map(([s, i]) => { const u = R.jawab[i], ok = u === s.j;
         return `<article class="bg-white rounded-2xl border ${ok ? 'border-emerald-200' : 'border-rose-200'} p-4"><div class="flex items-center gap-2 mb-2"><span class="w-6 h-6 rounded-full ${ok ? 'bg-emerald-500' : 'bg-rose-500'} text-white text-[11px] font-extrabold flex items-center justify-center">${i + 1}</span>${badge(s.tingkat)}<span class="ml-auto text-[10px] font-bold ${ok ? 'text-emerald-600' : 'text-rose-500'}">${ok ? 'Benar' : u === undefined ? 'Tidak dijawab' : 'Salah'}</span></div>
             <p class="font-reading text-[12px] text-slate-800 leading-[1.75] mb-2.5">${esc(s.p)}</p><div class="space-y-1.5">${s.opsi.map((o, k) => `<div class="opsi ${k === s.j ? 'benar' : k === u ? 'salah' : ''} !py-2"><span class="huruf">${HURUF[k]}</span><span class="text-[11px] text-slate-700 leading-snug pt-0.5">${esc(o)}</span></div>`).join('')}</div>
@@ -253,24 +326,25 @@ function filterBahas(f) {
 window.filterBahas = filterBahas;
 
 /* ================= PDF ================= */
-function isiLaporan() {
-    const R = H.hasil.pilgan, tk = {}; soal.forEach((s, i) => { const t = tk[s.tingkat] = tk[s.tingkat] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
-    const tgls = new Date(H.spin.ts).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    const A = i => R.jawab[i] === undefined ? '-' : HURUF[R.jawab[i]] + '. ' + esc(soal[i].opsi[R.jawab[i]]);
+window.isiLaporan = function() {
+    const R = window.H.hasil.pilgan, tk = {}; window.soal.forEach((s, i) => { const t = tk[s.tingkat] = tk[s.tingkat] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
+    const tgls = new Date(window.H.spin.ts).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const A = i => R.jawab[i] === undefined ? '-' : HURUF[R.jawab[i]] + '. ' + esc(window.soal[i].opsi[R.jawab[i]]);
     $('laporan').innerHTML = `<div style="padding:4px"><div style="border-bottom:3px solid #059669;padding-bottom:8px;margin-bottom:12px"><div style="font-size:17px;font-weight:800;color:#064e3b">LAPORAN LATIHAN — PILIHAN GANDA</div><div style="color:#64748b;font-size:11px">Platform Argumentasi · Ruang Latihan</div></div>
-        <table style="width:100%;font-size:12px;margin-bottom:12px"><tr><td style="width:90px;color:#64748b">Nama</td><td><b>${esc(L.nama())}</b></td></tr><tr><td style="color:#64748b">Tanggal</td><td>${tgls}</td></tr><tr><td style="color:#64748b">Materi</td><td>${esc(H.pack.judul)}</td></tr><tr><td style="color:#64748b">Waktu</td><td>${L.fmt(R.durasi)} dari ${L.fmt(R.batas)}${R.auto ? ' (waktu habis)' : ''}</td></tr></table>
+        <table style="width:100%;font-size:12px;margin-bottom:12px"><tr><td style="width:90px;color:#64748b">Nama</td><td><b>${esc(L.nama())}</b></td></tr><tr><td style="color:#64748b">Tanggal</td><td>${tgls}</td></tr><tr><td style="color:#64748b">Materi</td><td>${esc(window.H.pack.judul)}</td></tr><tr><td style="color:#64748b">Waktu</td><td>${L.fmt(R.durasi)} dari ${L.fmt(R.batas)}${R.auto ? ' (waktu habis)' : ''}</td></tr></table>
         <div class="nobreak" style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:10px 14px;margin-bottom:12px"><span style="font-size:30px;font-weight:800;color:#059669">${R.skor}</span><span style="color:#64748b"> / 100</span> &nbsp;·&nbsp; Benar <b>${R.benar}</b> dari <b>${R.total}</b> soal</div>
         <table class="nobreak" style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px"><tr style="background:#f1f5f9"><th style="text-align:left;padding:5px 8px;border:1px solid #e2e8f0">Tingkat</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Benar</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Jumlah</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Ketepatan</th></tr>${['mudah', 'sedang', 'sulit', 'hots'].filter(t => tk[t]).map(t => `<tr><td style="padding:5px 8px;border:1px solid #e2e8f0">${TKT[t][0]}</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">${tk[t].b}</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">${tk[t].n}</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">${Math.round(tk[t].b / tk[t].n * 100)}%</td></tr>`).join('')}</table>
         <div style="font-size:13px;font-weight:800;margin-bottom:6px;color:#064e3b">Rincian Jawaban & Pembahasan</div>
-        ${soal.map((s, i) => { const ok = R.jawab[i] === s.j; return `<div class="nobreak" style="border:1px solid ${ok ? '#a7f3d0' : '#fecdd3'};border-radius:6px;padding:8px 10px;margin-bottom:8px"><div style="font-size:11px"><b>${i + 1}.</b> <span style="color:#64748b">[${TKT[s.tingkat][0]}]</span> <b style="color:${ok ? '#059669' : '#e11d48'}">${ok ? 'BENAR' : 'SALAH'}</b></div><div style="margin:3px 0;font-size:12px">${esc(s.p)}</div><div style="font-size:11px"><span style="color:#64748b">Jawabanmu:</span> ${A(i)}</div><div style="font-size:11px"><span style="color:#64748b">Kunci:</span> <b>${HURUF[s.j]}. ${esc(s.opsi[s.j])}</b></div>${s.bahas ? `<div style="font-size:11px;color:#475569;margin-top:3px"><i>Pembahasan:</i> ${esc(s.bahas)}</div>` : ''}</div>`; }).join('')}
+        ${window.soal.map((s, i) => { const ok = R.jawab[i] === s.j; return `<div class="nobreak" style="border:1px solid ${ok ? '#a7f3d0' : '#fecdd3'};border-radius:6px;padding:8px 10px;margin-bottom:8px"><div style="font-size:11px"><b>${i + 1}.</b> <span style="color:#64748b">[${TKT[s.tingkat][0]}]</span> <b style="color:${ok ? '#059669' : '#e11d48'}">${ok ? 'BENAR' : 'SALAH'}</b></div><div style="margin:3px 0;font-size:12px">${esc(s.p)}</div><div style="font-size:11px"><span style="color:#64748b">Jawabanmu:</span> ${A(i)}</div><div style="font-size:11px"><span style="color:#64748b">Kunci:</span> <b>${HURUF[s.j]}. ${esc(s.opsi[s.j])}</b></div>${s.bahas ? `<div style="font-size:11px;color:#475569;margin-top:3px"><i>Pembahasan:</i> ${esc(s.bahas)}</div>` : ''}</div>`; }).join('')}
         <div style="font-size:9px;color:#94a3b8;margin-top:10px;text-align:center">Dihasilkan otomatis oleh Platform Argumentasi · ${new Date(R.selesai).toLocaleString('id-ID')}</div></div>`;
 }
-window.unduhPdf = async () => {
+window.unduhPdf = async function() {
     const b = $('btnPdf'), isi = b.innerHTML; b.disabled = true; b.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1.5"></i>Membuat PDF…';
-    try { isiLaporan(); await L.pdf($('laporan'), `Laporan-Pilihan-Ganda-${new Date(H.spin.ts).toISOString().slice(0, 10)}.pdf`); L.toast('PDF berhasil dibuat.'); }
+    try { isiLaporan(); await L.pdf($('laporan'), `Laporan-Pilihan-Ganda-${new Date(window.H.spin.ts).toISOString().slice(0, 10)}.pdf`); L.toast('PDF berhasil dibuat.'); }
     catch (e) { console.error(e); L.toast('Gagal membuat PDF. Memakai cetak browser…', true); setTimeout(() => window.print(), 600); }
     finally { b.disabled = false; b.innerHTML = isi; }
 };
+initLatihan();
 </script>
 </body>
 </html>
