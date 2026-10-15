@@ -123,7 +123,14 @@ const NAV_BAGIAN = [
 ];
 
 window.normSoal = function(arr) {
-    return (arr || []).map(s => {
+    const modKey = 'kritis';
+    if (modKey === 'struktur') {
+        return (arr || []).map((s, i) => ({
+            id: i,
+            k: s.t || s.teks || '', j: String(s.label || '').toLowerCase(), bahas: s.alasan || ''
+        }));
+    } else {
+        return (arr || []).map(s => {
             const tk = String(s.tingkat || 'sedang').toLowerCase();
             return {
                 p: s.p ?? s.pertanyaan ?? s.pernyataan ?? s.rumpang ?? s.teks ?? 'Soal',
@@ -134,19 +141,39 @@ window.normSoal = function(arr) {
                 fokus: s.fokus ?? s.jenis ?? '',
                 waktu: s.waktu || 60,
                 bahas: s.bahas ?? s.pembahasan ?? s.alasan ?? s.kunci ?? '',
-                konsep: s.konsep || '';);
+                konsep: s.konsep || ''
+            };
+        });
     }
 };
 
 window.modal = (judul, ket, ok, batal, ikon) => new Promise(r => { window.resolveM = r; $('mJudul').textContent = judul; $('mKet').textContent = ket; $('mOk').textContent = ok || 'Lanjutkan'; $('mBatal').textContent = batal || 'Batal'; $('mIkon').innerHTML = `<i class="fas ${ikon || 'fa-triangle-exclamation'}"></i>`; $('modal').classList.replace('hidden', 'flex'); });
-window.jawabModal = v => { $('modal').classList.replace('flex', 'hidden'); if (window.resolveM) { window.resolveM(v); window.resolveM = null; } };
+window.jawabModal = v => { $('modal').classList.replace('flex', 'hidden'); if (window.resolveM) { window.resolveM(v); window.resolveM = null; } }
 
+/* ================= HASIL ================= */
 
+window.navLatihanHtml = function() {
+    const q = `?id=${classId}` + (studentId ? `&sid=${studentId}` : '');
+    return `<div class="bg-white rounded-2xl border border-slate-200 p-4 mt-3"><h3 class="font-bold text-slate-800 text-xs mb-2.5"><i class="fas fa-compass text-brand-green mr-1.5"></i>Latihan Lainnya pada Materi Ini</h3><div class="grid grid-cols-2 gap-2">${NAV_BAGIAN.map(([k, n, url, ic, c]) => {
+        const cur = k === 'kritis';
+        return `<a href="${url}${q}" class="flex items-center gap-2.5 p-2.5 rounded-xl border ${cur ? 'border-brand-green bg-emerald-50/60' : 'border-slate-100 bg-slate-50 hover:border-slate-300'} transition"><div class="w-8 h-8 rounded-lg bg-${c}-100 text-${c}-600 flex items-center justify-center text-xs shrink-0"><i class="fas ${ic}"></i></div><div class="min-w-0 flex-1"><p class="font-bold text-[11px] text-slate-800 truncate">${n}</p><p class="text-[9px] font-semibold text-slate-400">Pilih Latihan</p></div></a>`;
+    }).join('')}</div></div>`;
+};
+
+window.kumpulkan = async function(auto) {
+    if (window.H.hasil['kritis']) return; window.aktif = false; clearInterval(window.timer);
+    const jawab = window.sesi.jawab;
+    let benar = 0, skor = 0;
+
+    if ('kritis' === 'struktur') {
         benar = window.soal.filter((s, i) => jawab[i] === s.j).length;
         skor = Math.round(benar / window.soal.length * 100);
+    } else {
+        benar = window.soal.filter((s, i) => jawab[i] === s.j).length;
+        skor = Math.round(benar / window.soal.length * 100);
+    }
 
-
-    const xp = Math.round(skor / 4) + (skor >= 80 ? 10 : 0);
+    let xp = Math.round(skor / 4) + (skor >= 80 ? 10 : 0);
     window.L.tambahXp(xp);
 
     window.H.hasil['kritis'] = { skor, benar, total: window.soal.length, jawab, durasi: Math.round((Math.min(Date.now(), window.sesi.batas) - window.sesi.mulai) / 1000), batas: window.totalWaktu, selesai: Date.now(), auto: !!auto, keluar: window.sesi.keluar || 0, xp };
@@ -164,16 +191,6 @@ window.jawabModal = v => { $('modal').classList.replace('flex', 'hidden'); if (w
     $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden'); $('btnBack').onclick = null;
     if (auto) window.L.toast('Waktu habis. Jawabanmu otomatis dikumpulkan.', true);
     window.tampilHasil(true);
-}
-
-/* ================= HASIL ================= */
-
-window.navLatihanHtml = function() {
-    const q = `?id=${classId}` + (studentId ? `&sid=${studentId}` : '');
-    return `<div class="bg-white rounded-2xl border border-slate-200 p-4 mt-3"><h3 class="font-bold text-slate-800 text-xs mb-2.5"><i class="fas fa-compass text-brand-green mr-1.5"></i>Latihan Lainnya pada Materi Ini</h3><div class="grid grid-cols-2 gap-2">${NAV_BAGIAN.map(([k, n, url, ic, c]) => {
-        const cur = k === 'kritis';
-        return `<a href="${url}${q}" class="flex items-center gap-2.5 p-2.5 rounded-xl border ${cur ? 'border-brand-green bg-emerald-50/60' : 'border-slate-100 bg-slate-50 hover:border-slate-300'} transition"><div class="w-8 h-8 rounded-lg bg-${c}-100 text-${c}-600 flex items-center justify-center text-xs shrink-0"><i class="fas ${ic}"></i></div><div class="min-w-0 flex-1"><p class="font-bold text-[11px] text-slate-800 truncate">${n}</p><p class="text-[9px] font-semibold text-slate-400">Pilih Latihan</p></div></a>`;
-    }).join('')}</div></div>`;
 };
 window.tampilHasil = function(baru) {
     const R = window.H.hasil['kritis']; window.aktif = false; $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden');
@@ -214,7 +231,7 @@ window.filterBahas = function(f) {
             ${s.bahas ? `<div class="mt-2.5 bg-slate-50 rounded-lg p-2.5 text-[11px] text-slate-600 leading-relaxed"><b class="text-slate-700">Pembahasan:</b> ${esc(s.bahas)}</div>` : ''}</article>`; }).join('')
         : '<div class="bg-white rounded-2xl p-6 text-center text-xs text-emerald-600 font-semibold border border-emerald-100"><i class="fas fa-circle-check mr-1"></i> Tidak ada jawaban yang salah. Hebat!</div>';
 }
-window.filterBahas = filterBahas;
+
 
 /* ================= PDF ================= */
 window.isiLaporan = function() {
