@@ -14,68 +14,65 @@
 
     <script>
         tailwind.config = {
-            theme: { extend: {
-                fontFamily: { sans: ['Poppins', 'sans-serif'], display: ['Playfair Display', 'serif'] },
-                colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } }
-            } }
+            theme: { 
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'], display: ['Playfair Display', 'serif'] },
+                    colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } }
+                } 
+            }
         }
     </script>
 
     <style>
-        html, body { margin: 0; padding: 0; }
-        body {
-            font-family: 'Poppins', sans-serif; background-color: #e2e8f0; -webkit-tap-highlight-color: transparent;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh; height: 100dvh; overflow: hidden;
-        }
-        .mobile-frame {
-            width: 100%; max-width: 448px; height: 100vh; height: 100dvh; background: #f8fafc;
-            display: flex; flex-direction: column; position: relative; overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,.25);
-        }
-        @media (min-width: 640px) {
-            .mobile-frame { height: 90vh; height: 90dvh; border-radius: 1.5rem; border: 8px solid #334155; }
-        }
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         .font-display { font-family: 'Playfair Display', serif; }
         .texture-dots { background-image: radial-gradient(rgba(0,0,0,.05) 1px, transparent 1px); background-size: 16px 16px; }
+        
         .fade-in { animation: fadeIn .4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .skeleton-pulse { animation: skeleton-loading 1.2s ease-in-out infinite alternate; }
-        @keyframes skeleton-loading { 0% { opacity: .5; } 100% { opacity: 1; } }
+        
+        /* Skeleton Loading Selaras & Anti-Bocor */
+        .sk { position: relative; overflow: hidden; background: #e2e8f0; isolation: isolate; transform: translateZ(0); }
+        .sk-light { background: rgba(255,255,255,.28); }
+        .sk::after, .sk-light::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent); animation: sh 1.3s infinite; pointer-events: none; }
+        @keyframes sh { 100% { transform: translateX(100%); } }
+
         .jenjang-radio:checked + div { border-color: #10b981; background-color: #ecfdf5; }
         .jenjang-radio:checked + div .check-icon { opacity: 1; transform: scale(1); }
         .jenjang-radio:focus-visible + div { outline: 2px solid #10b981; outline-offset: 2px; }
     </style>
 </head>
-<body>
+<body class="flex justify-center h-screen h-[100dvh] overflow-hidden bg-slate-100">
 
-<div class="mobile-frame fade-in">
+<!-- CONTAINER UTAMA -->
+<div class="w-full max-w-md bg-slate-50 relative h-full shadow-2xl flex flex-col sm:border-x border-slate-200 overflow-hidden">
 
-    <!-- HEADER: flex-shrink-0 di luar area scroll, jadi selalu terkunci di atas frame -->
-    <header class="flex-shrink-0 bg-white px-4 pb-3 flex items-center justify-between shadow-sm border-b border-slate-200 z-50"
-            style="padding-top:calc(.75rem + env(safe-area-inset-top,0px))">
-        <a href="index.html" aria-label="Kembali" class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-colors active:scale-95">
-            <i class="fas fa-arrow-left text-sm"></i>
+    <!-- HEADER STICKY (Fix & Nempel Menyamai Halaman Profil/Index) -->
+    <header class="bg-brand-green shrink-0 h-14 px-4 flex items-center justify-between shadow-md relative z-50">
+        <a href="index.html" aria-label="Kembali" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
+            <i class="fas fa-chevron-left"></i>
         </a>
 
         <div class="flex items-center gap-3 text-right overflow-hidden flex-1 justify-end ml-4">
             <div class="flex flex-col items-end overflow-hidden w-full">
-                <div id="skeletonHeaderName" class="w-28 h-3 bg-slate-200 rounded skeleton-pulse mb-1"></div>
-                <p id="navTeacherName" class="hidden text-[11px] font-bold text-slate-700 leading-none truncate w-full text-right"></p>
-                <p class="text-[9px] text-emerald-600 font-bold uppercase tracking-widest mt-1">Konfigurasi Kelas</p>
+                <div id="skeletonHeaderName" class="w-28 h-3 rounded sk sk-light mb-1"></div>
+                <p id="navTeacherName" class="hidden text-[11px] font-bold text-white leading-none truncate w-full text-right"></p>
+                <p class="text-[9px] text-emerald-100 font-medium tracking-widest mt-1">Konfigurasi Kelas</p>
             </div>
-            <div class="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-600 shadow-sm shrink-0">
+            <div class="w-8 h-8 rounded-full bg-white/20 border border-white/30 flex items-center justify-center text-white shadow-sm shrink-0">
                 <i class="fas fa-chalkboard-teacher text-xs"></i>
             </div>
         </div>
     </header>
 
-    <!-- AREA SCROLL -->
-    <main id="mainContainer" class="flex-1 min-h-0 overflow-y-auto hide-scrollbar relative bg-slate-50 flex flex-col" style="overscroll-behavior:contain">
+    <!-- AREA SCROLL KONTEN -->
+    <main id="mainContainer" class="flex-grow overflow-y-auto hide-scrollbar relative bg-slate-50 flex flex-col" style="overscroll-behavior:contain">
         <div class="p-4 flex-grow flex flex-col">
 
+            <!-- Stepper Progress Bar -->
             <div class="mb-5 shrink-0" id="stepperHeader">
                 <div class="flex justify-between mb-2">
                     <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest" id="stepLabel">Langkah 1 dari 3</span>
@@ -86,23 +83,24 @@
                 </div>
             </div>
 
+            <!-- Wrapper Form & Skeleton -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative flex-grow flex flex-col" id="formWrapper">
 
                 <!-- SKELETON FORM: tampil sampai otoritas guru terverifikasi -->
-                <div id="authSkeleton" class="absolute inset-0 bg-white z-10 p-5 skeleton-pulse">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 bg-slate-200 rounded-xl"></div>
-                        <div class="flex-1"><div class="w-32 h-4 bg-slate-200 rounded mb-2"></div><div class="w-48 h-3 bg-slate-100 rounded"></div></div>
+                <div id="authSkeleton" class="absolute inset-0 bg-white z-10 p-5">
+                    <div class="flex items-center gap-3 mb-6 shrink-0">
+                        <div class="w-10 h-10 rounded-xl sk shrink-0"></div>
+                        <div class="flex-1"><div class="w-32 h-4 rounded sk mb-2"></div><div class="w-48 h-3 rounded sk"></div></div>
                     </div>
-                    <div class="w-24 h-3 bg-slate-200 rounded mb-3"></div>
-                    <div class="grid grid-cols-2 gap-3 mb-5"><div class="h-24 bg-slate-100 rounded-xl"></div><div class="h-24 bg-slate-100 rounded-xl"></div></div>
-                    <div class="w-28 h-3 bg-slate-200 rounded mb-3"></div>
-                    <div class="h-11 bg-slate-100 rounded-xl"></div>
+                    <div class="w-24 h-3 rounded sk mb-3"></div>
+                    <div class="grid grid-cols-2 gap-3 mb-5 shrink-0"><div class="h-24 rounded-xl sk"></div><div class="h-24 rounded-xl sk"></div></div>
+                    <div class="w-28 h-3 rounded sk mb-3"></div>
+                    <div class="h-11 rounded-xl sk shrink-0"></div>
                 </div>
 
                 <form id="createClassForm" onsubmit="event.preventDefault()" class="flex flex-col flex-grow" novalidate>
 
-                    <!-- STEP 1 -->
+                    <!-- STEP 1: IDENTITAS -->
                     <div id="step1" class="p-5 fade-in flex-grow flex flex-col">
                         <div class="flex items-center gap-3 mb-6 shrink-0">
                             <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-lg shadow-inner border border-blue-100"><i class="fas fa-school"></i></div>
@@ -140,7 +138,7 @@
                         </div>
                     </div>
 
-                    <!-- STEP 2 -->
+                    <!-- STEP 2: KURIKULUM -->
                     <div id="step2" class="p-5 hidden flex-grow flex flex-col">
                         <div class="flex items-center gap-3 mb-6 shrink-0">
                             <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-lg shadow-inner border border-amber-100"><i class="fas fa-book"></i></div>
@@ -159,7 +157,7 @@
                         </div>
                     </div>
 
-                    <!-- STEP 3 -->
+                    <!-- STEP 3: UPLOAD -->
                     <div id="step3" class="p-5 hidden flex-grow flex flex-col">
                         <div class="flex items-center gap-3 mb-6 shrink-0">
                             <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-lg shadow-inner border border-purple-100"><i class="fas fa-file-pdf"></i></div>
@@ -191,7 +189,7 @@
                             </div>
                         </div>
 
-                        <div id="successUploadArea" class="hidden mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
+                        <div id="successUploadArea" class="hidden mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3 shrink-0">
                             <div class="w-10 h-10 bg-emerald-500 text-white rounded-lg flex items-center justify-center text-lg shrink-0 shadow-sm"><i class="fas fa-check"></i></div>
                             <div class="min-w-0 flex-1">
                                 <h4 class="font-bold text-emerald-900 text-xs">Sukses Diekstrak</h4>
@@ -202,7 +200,7 @@
                     </div>
 
                     <!-- NAVIGASI BAWAH -->
-                    <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center mt-auto shrink-0">
+                    <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center mt-auto shrink-0 z-20">
                         <button type="button" id="btnPrev" onclick="prevStep()" class="text-slate-500 hover:text-slate-800 font-bold px-4 py-2.5 rounded-xl transition-colors invisible text-xs">
                             <i class="fas fa-arrow-left mr-1"></i> Kembali
                         </button>
@@ -214,7 +212,7 @@
             </div>
         </div>
 
-        <!-- LAYAR SUKSES -->
+        <!-- LAYAR SUKSES AKHIR -->
         <div id="finalSuccessState" class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center p-6 text-center z-40 fade-in border-t-4 border-emerald-500">
             <div class="absolute inset-0 texture-dots pointer-events-none opacity-20"></div>
             <div class="w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-200 z-10"><i class="fas fa-check-double text-4xl"></i></div>
@@ -226,13 +224,14 @@
             </div>
             <div class="flex gap-3 w-full z-10">
                 <button onclick="salinKodeFinal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 rounded-xl transition-all border border-slate-200 active:scale-95 text-xs"><i class="fas fa-copy mr-1"></i> Salin</button>
-                <a href="index.html" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-1 text-xs">Tutup <i class="fas fa-door-open"></i></a>
+                <a href="index.html" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-1 text-xs">Selesai <i class="fas fa-door-open"></i></a>
             </div>
         </div>
     </main>
 
-    <!-- TOAST: di level frame (bukan di dalam area scroll), jadi selalu terlihat -->
-    <div id="toastContainer" class="absolute left-1/2 -translate-x-1/2 w-[90%] z-[100] flex flex-col gap-2 pointer-events-none" style="bottom:calc(1.25rem + env(safe-area-inset-bottom,0px))"></div>
+    <!-- WADAH TOAST -->
+    <div id="toastContainer" class="fixed top-16 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
+
 </div>
 
 <script type="module">
@@ -245,34 +244,46 @@
     const db = getFirestore(app);
     const $ = (id) => document.getElementById(id);
 
+    // Fungsi escape yang aman
+    const esc = (s) => {
+        if (!s) return '';
+        const t = String(s);
+        const chars = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+        return t.replace(/[&<>"']/g, c => chars[c]);
+    };
+
     let currentStep = 1, currentGuru = null, isFileProcessed = false, generatedCode = "", sedangSimpan = false, sedangUpload = false, uploadTimers = [];
     const MAX_BYTES = 10 * 1024 * 1024;
     const withTimeout = (p, ms) => Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error('TIMEOUT')), ms))]);
 
-    /* ---------- TOAST ---------- */
+    /* ---------- TOAST NOTIFICATION ---------- */
     function showToast(msg, isError = false) {
-        const toast = document.createElement('div');
-        toast.className = `${isError ? 'bg-red-600' : 'bg-slate-800'} text-white px-4 py-3 rounded-lg shadow-xl text-xs font-bold flex items-center justify-center gap-2 translate-y-5 opacity-0 transition-all duration-300 pointer-events-auto w-full text-center`;
-        const ico = document.createElement('i');
-        ico.className = `fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle text-emerald-400'}`;
-        const span = document.createElement('span');
-        span.textContent = msg;
-        toast.append(ico, span);
-        $('toastContainer').appendChild(toast);
-        requestAnimationFrame(() => toast.classList.remove('translate-y-5', 'opacity-0'));
-        setTimeout(() => { toast.classList.add('translate-y-5', 'opacity-0'); setTimeout(() => toast.remove(), 300); }, 3000);
+        const c = $('toastContainer');
+        if (!c) return;
+        const t = document.createElement('div');
+        t.className = `${isError ? 'bg-red-600' : 'bg-slate-800'} text-white px-4 py-3 rounded-xl shadow-lg text-xs font-bold flex items-center justify-center gap-2 translate-y-5 opacity-0 transition-all duration-300 pointer-events-auto w-full text-center`;
+        t.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle text-emerald-400'}"></i><span class="flex-1">${esc(msg)}</span>`;
+        c.appendChild(t);
+        requestAnimationFrame(() => t.classList.remove('translate-y-5', 'opacity-0'));
+        setTimeout(() => { t.classList.add('translate-y-5', 'opacity-0'); setTimeout(() => t.remove(), 300); }, 3000);
     }
 
-    /* ---------- STEPPER ---------- */
+    /* ---------- STEPPER & NAVIGASI ---------- */
     const STEPS = {
         1: ['33%', 'Langkah 1 dari 3', 'Identitas Kelas'],
         2: ['66%', 'Langkah 2 dari 3', 'Data Kurikulum'],
         3: ['100%', 'Langkah 3 dari 3', 'Upload Modul']
     };
+
     function setStep(n) {
         currentStep = n;
         [1, 2, 3].forEach((i) => $('step' + i).classList.toggle('hidden', i !== n));
-        const el = $('step' + n); el.classList.remove('fade-in'); void el.offsetWidth; el.classList.add('fade-in');
+        
+        const el = $('step' + n);
+        el.classList.remove('fade-in'); 
+        void el.offsetWidth; // Trigger reflow
+        el.classList.add('fade-in');
+        
         const [w, label, title] = STEPS[n];
         $('progressBar').style.width = w;
         $('stepLabel').textContent = label;
@@ -286,28 +297,40 @@
         btn.classList.toggle('hover:bg-amber-600', final);
         btn.classList.toggle('bg-emerald-600', !final);
         btn.classList.toggle('hover:bg-emerald-700', !final);
-        if (n === 1) checkStep1(); else btn.disabled = !currentGuru;
+        
+        if (n === 1) checkStep1(); 
+        else btn.disabled = !currentGuru;
+        
         $('mainContainer').scrollTop = 0;
     }
 
     window.checkStep1 = function () {
         const jenjang = document.querySelector('input[name="jenjang"]:checked');
         const nama = $('inputNamaKelas').value.trim();
-        if (currentStep === 1) $('btnNext').disabled = !(currentGuru && jenjang && nama.length > 3);
+        if (currentStep === 1) {
+            $('btnNext').disabled = !(currentGuru && jenjang && nama.length > 3);
+        }
     };
 
     window.nextStep = function () {
         if (currentStep === 1) return setStep(2);
         if (currentStep === 2) {
-            if (!$('inputCP').value.trim() || !$('inputTP').value.trim()) return showToast("Harap isi Capaian & Tujuan Pembelajaran.", true);
+            if (!$('inputCP').value.trim() \vert{}\vert{} !$('inputTP').value.trim()) {
+                return showToast("Harap isi Capaian & Tujuan Pembelajaran.", true);
+            }
             return setStep(3);
         }
-        if (!isFileProcessed) return showToast("Harap unggah PDF materi terlebih dahulu.", true);
+        if (!isFileProcessed) {
+            return showToast("Harap unggah PDF materi terlebih dahulu.", true);
+        }
         submitKeFirebase();
     };
-    window.prevStep = function () { if (currentStep > 1 && !sedangUpload && !sedangSimpan) setStep(currentStep - 1); };
 
-    /* ---------- UPLOAD PDF (simulasi tampilan; file belum dikirim ke server) ---------- */
+    window.prevStep = function () { 
+        if (currentStep > 1 && !sedangUpload && !sedangSimpan) setStep(currentStep - 1); 
+    };
+
+    /* ---------- UPLOAD PDF (Simulasi UI) ---------- */
     window.handleFileUpload = function (event) {
         const input = event.target;
         const file = input.files[0];
@@ -321,8 +344,7 @@
 
         sedangUpload = true;
         $('uploadArea').classList.add('hidden');
-        $('processingArea').classList.remove('hidden');
-        $('btnNext').disabled = true;
+        $('processingArea').classList.remove('hidden');$('btnNext').disabled = true;
         $('btnPrev').classList.add('invisible');
 
         const bar = $('processBarLine');
@@ -332,25 +354,29 @@
         const teks = ["Mengunggah file ke server...", "Menganalisis dokumen...", "Mengekstrak teks menjadi modul...", "Finalisasi pembuatan rubrik..."];
         $('processText').textContent = teks[0];
         let i = 1;
-        const interval = setInterval(() => { if (i < teks.length) $('processText').textContent = teks[i++]; }, 750);
+        
+        const interval = setInterval(() => { 
+            if (i < teks.length) $('processText').textContent = teks[i++]; 
+        }, 750);
+        
         const done = setTimeout(() => {
             clearInterval(interval);
             $('processingArea').classList.add('hidden');
-            $('successUploadArea').classList.remove('hidden');
-            $('fileNameDisplay').textContent = file.name;
-            isFileProcessed = true; sedangUpload = false;
+            $('successUploadArea').classList.remove('hidden');$('fileNameDisplay').textContent = file.name;
+            isFileProcessed = true; 
+            sedangUpload = false;
             $('btnNext').disabled = !currentGuru;
             $('btnPrev').classList.remove('invisible');
             showToast("Modul berhasil dikonversi.");
         }, 3000);
+        
         uploadTimers = [interval, done];
     };
 
     window.gantiFile = function () {
         isFileProcessed = false;
         $('filePdf').value = '';
-        $('successUploadArea').classList.add('hidden');
-        $('uploadArea').classList.remove('hidden');
+        $('successUploadArea').classList.add('hidden');$('uploadArea').classList.remove('hidden');
     };
 
     /* ---------- SALIN KODE ---------- */
@@ -367,39 +393,52 @@
         showToast(`Kode Kelas ${generatedCode} disalin!`);
     };
 
-    /* ---------- AUTH ---------- */
+    /* ---------- AUTHENTICATION ---------- */
     function tampilkanNamaGuru(nama) {
         const el = $('navTeacherName');
         const teks = "Oleh: " + nama;
         el.textContent = teks;
         el.title = teks;
-        // Font mengecil bertahap sesuai panjang nama
+        
         el.classList.remove('text-[11px]', 'text-[10px]', 'text-[9px]');
         el.classList.add(teks.length > 30 ? 'text-[9px]' : teks.length > 22 ? 'text-[10px]' : 'text-[11px]');
+        
         el.classList.remove('hidden');
         $('skeletonHeaderName').classList.add('hidden');
     }
 
     onAuthStateChanged(auth, async (user) => {
         if (!user) { window.location.href = '../login.html'; return; }
+        
         try {
             const snap = await getDoc(doc(db, "users", user.uid));
             if (!snap.exists()) { await signOut(auth); window.location.href = '../login.html'; return; }
+            
             const data = snap.data();
-            if (data.role !== 'teacher' && data.role !== 'admin') { window.location.href = '../index.html'; return; }
+            if (data.role !== 'teacher' && data.role !== 'admin') { 
+                window.location.href = '../index.html'; return; 
+            }
 
-            currentGuru = { uid: user.uid, nama: data.namaLengkap || user.displayName || 'Guru' };
+            // Fallback nama bisa dari Local Storage profil yang baru saja disetel di profil.html
+            const localName = localStorage.getItem('namaGuruCendekia');
+            currentGuru = { 
+                uid: user.uid, 
+                nama: localName ? localName : (data.namaLengkap ? data.namaLengkap : (user.displayName ? user.displayName : 'Guru'))
+            };
+            
             tampilkanNamaGuru(currentGuru.nama);
+            
+            // Hapus Skeleton Penuh & Tampilkan Form
             $('authSkeleton').classList.add('hidden');
             checkStep1();
+
         } catch (error) {
             console.error(error);
             window.location.href = '../login.html';
         }
     });
 
-    /* ---------- SIMPAN KELAS ---------- */
-    // Kode dibuat acak, dan dicek di dalam transaksi supaya tidak menimpa kelas lain yang sudah ada.
+    /* ---------- SIMPAN KELAS TRANSAKSI FIREBASE ---------- */
     async function buatKelasBaru(payload) {
         for (let i = 0; i < 8; i++) {
             const kode = String(Math.floor(100000 + Math.random() * 900000));
@@ -417,12 +456,14 @@
     window.submitKeFirebase = async function () {
         if (sedangSimpan) return;
         if (!currentGuru) return showToast("Otoritas guru belum terverifikasi. Coba lagi sebentar.", true);
+        
         const jenjangEl = document.querySelector('input[name="jenjang"]:checked');
         if (!jenjangEl) return showToast("Pilih jenjang terlebih dahulu.", true);
 
         sedangSimpan = true;
         const btn = $('btnNext');
         const teksAsli = btn.innerHTML;
+        
         btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Menyimpan...';
         btn.disabled = true;
         $('btnPrev').classList.add('invisible');
@@ -441,14 +482,20 @@
             }), 20000);
 
             $('formWrapper').classList.add('hidden');
-            $('stepperHeader').classList.add('hidden');
-            $('finalClassCode').textContent = generatedCode;
+            $('stepperHeader').classList.add('hidden');$('finalClassCode').textContent = generatedCode;
             $('finalSuccessState').classList.remove('hidden');
-            setTimeout(() => confetti({ particleCount: 150, spread: 80, origin: { y: .6 }, colors: ['#10b981', '#fbbf24', '#3b82f6'], zIndex: 9999 }), 300);
+            
+            setTimeout(() => {
+                if(window.confetti) {
+                    confetti({ particleCount: 150, spread: 80, origin: { y: .6 }, colors: ['#10b981', '#fbbf24', '#3b82f6'], zIndex: 99999 });
+                }
+            }, 300);
+
         } catch (error) {
             console.error(error);
             const izin = error && error.code === 'permission-denied';
             showToast(izin ? "Akses ditolak. Anda tidak berwenang membuat kelas." : "Gagal membangun kelas. Periksa koneksi lalu coba lagi.", true);
+            
             btn.innerHTML = teksAsli;
             btn.disabled = false;
             $('btnPrev').classList.remove('invisible');
