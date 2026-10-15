@@ -36,6 +36,10 @@
         .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent); animation: sh 1.3s infinite; pointer-events: none; }
         @keyframes sh { 100% { transform: translateX(100%); } }
 
+        /* Sembunyikan scrollbar tapi tetap bisa di-scroll */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
         /* Grid pemandu Crop 1:1 */
         .crop-grid {
             background-image:
@@ -46,13 +50,13 @@
         canvas { touch-action: none; }
     </style>
 </head>
-<body class="flex justify-center min-h-screen">
+<body class="flex justify-center h-screen overflow-hidden">
 
     <!-- CONTAINER UTAMA -->
-    <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col overflow-x-hidden sm:border-x border-slate-200">
+    <div class="w-full max-w-md bg-slate-50 relative h-full shadow-2xl flex flex-col sm:border-x border-slate-200">
 
-        <!-- HEADER STICKY -->
-        <header class="bg-brand-green sticky top-0 z-40 h-14 px-4 flex items-center justify-between shadow-md">
+        <!-- HEADER STICKY (Fix & Nempel) -->
+        <header class="bg-brand-green shrink-0 h-14 px-4 flex items-center justify-between shadow-md relative z-50">
             <div class="flex items-center gap-3">
                 <a href="index.html" aria-label="Kembali" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
                     <i class="fas fa-chevron-left"></i>
@@ -69,148 +73,152 @@
             </button>
         </header>
 
-        <!-- ==================== SKELETON LOADING SERENTAK ==================== -->
-        <div id="viewSkeleton" class="flex-grow pb-10">
-            <div class="bg-brand-green h-16 rounded-b-[2rem]"></div>
-            <div class="px-4 -mt-12">
-                <div class="bg-white rounded-2xl shadow-md p-5 border border-slate-100 flex flex-col items-center">
-                    <div class="w-24 h-24 rounded-full sk mb-3"></div>
-                    <div class="h-4 w-44 rounded sk mb-2"></div>
-                    <div class="h-3 w-28 rounded sk"></div>
-                </div>
-                <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-100 mt-4 space-y-4">
-                    <div class="flex justify-between items-center"><div class="h-4 w-32 rounded sk"></div><div class="w-8 h-8 rounded-full sk"></div></div>
-                    <div class="space-y-3">
-                        <div class="h-12 w-full rounded-xl sk"></div>
-                        <div class="h-12 w-full rounded-xl sk"></div>
-                        <div class="h-12 w-full rounded-xl sk"></div>
-                        <div class="h-12 w-full rounded-xl sk"></div>
-                        <div class="h-16 w-full rounded-xl sk"></div>
+        <!-- AREA SCROLL KONTEN -->
+        <div class="flex-grow overflow-y-auto hide-scrollbar relative z-10 flex flex-col">
+            
+            <!-- ==================== SKELETON LOADING ==================== -->
+            <div id="viewSkeleton" class="flex-grow pb-10">
+                <div class="bg-brand-green h-16 rounded-b-[2rem]"></div>
+                <div class="px-4 -mt-12">
+                    <div class="bg-white rounded-2xl shadow-md p-5 border border-slate-100 flex flex-col items-center">
+                        <div class="w-24 h-24 rounded-full sk mb-3"></div>
+                        <div class="h-4 w-44 rounded sk mb-2"></div>
+                        <div class="h-3 w-28 rounded sk"></div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm p-4 border border-slate-100 mt-4 space-y-4">
+                        <div class="flex justify-between items-center"><div class="h-4 w-32 rounded sk"></div><div class="w-8 h-8 rounded-full sk"></div></div>
+                        <div class="space-y-3">
+                            <div class="h-12 w-full rounded-xl sk"></div>
+                            <div class="h-12 w-full rounded-xl sk"></div>
+                            <div class="h-12 w-full rounded-xl sk"></div>
+                            <div class="h-12 w-full rounded-xl sk"></div>
+                            <div class="h-16 w-full rounded-xl sk"></div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- ==================== KONTEN PROFIL UTAMA ==================== -->
+            <main id="viewContent" class="hidden flex-grow pb-10">
+                <div class="bg-brand-green h-16 rounded-b-[2rem] shrink-0 relative z-0"></div>
+
+                <div class="px-4 -mt-12 relative z-10">
+                    <!-- KARTU AVATAR & IDENTITAS UTAMA -->
+                    <div class="up bg-white rounded-2xl shadow-md p-5 border border-slate-100 flex flex-col items-center text-center relative">
+                        
+                        <!-- Avatar (Klik untuk Lihat & Zoom, Tombol Kamera untuk Ganti) -->
+                        <div class="relative group">
+                            <button type="button" onclick="bukaViewerFoto()" class="w-24 h-24 rounded-full bg-brand-light text-brand-green border-4 border-white shadow-lg flex items-center justify-center overflow-hidden relative active:scale-95 transition" title="Ketuk untuk lihat & zoom foto">
+                                <i id="avatarIcon" class="fas fa-chalkboard-teacher text-4xl"></i>
+                                <img id="avatarImg" src="" alt="Foto Profil" class="absolute inset-0 w-full h-full object-cover hidden">
+                                <span class="absolute inset-0 bg-slate-900/35 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold">
+                                    <i class="fas fa-magnifying-glass-plus text-base"></i>
+                                </span>
+                            </button>
+                            <button type="button" onclick="pilihFileFoto()" class="w-8 h-8 rounded-full bg-brand-green text-white border-2 border-white shadow-md flex items-center justify-center absolute bottom-0 right-0 hover:bg-brand-dark active:scale-90 transition" title="Ganti & Crop Foto">
+                                <i class="fas fa-camera text-xs"></i>
+                            </button>
+                            <input id="inputFileFoto" type="file" accept="image/*" class="hidden" onchange="saatPilihFile(event)">
+                        </div>
+
+                        <div class="flex items-center gap-1.5 mt-2">
+                            <button onclick="bukaViewerFoto()" class="text-[10px] font-semibold text-slate-500 hover:text-brand-green bg-slate-100 px-2.5 py-1 rounded-full transition"><i class="fas fa-magnifying-glass-plus mr-1"></i>Lihat & Zoom</button>
+                            <button onclick="pilihFileFoto()" class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-full transition"><i class="fas fa-crop-simple mr-1"></i>Ganti Foto 1:1</button>
+                        </div>
+
+                        <h2 id="dispHeaderNama" class="font-extrabold text-slate-800 text-base mt-3 leading-snug">Guru Argumentasi</h2>
+                        <span id="dispHeaderMapel" class="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">Bahasa Indonesia</span>
+                        <p id="dispHeaderBio" class="text-[11px] text-slate-500 mt-2 leading-relaxed max-w-xs"></p>
+                    </div>
+
+                    <!-- KARTU BIODATA DIRI (MODE BACA vs MODE EDIT) -->
+                    <div class="up bg-white rounded-2xl shadow-sm p-4 border border-slate-100 mt-4" style="animation-delay: 60ms">
+                        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm">Biodata Pengajar</h3>
+                                <p id="statusModeTeks" class="text-[10px] text-slate-400">Ketuk ikon pensil untuk mengubah data</p>
+                            </div>
+                            <!-- Tombol Ikon Pensil (Hanya muncul saat Mode Baca) -->
+                            <button id="btnPencilCard" type="button" onclick="masukModeEdit()" class="w-9 h-9 rounded-xl bg-emerald-50 text-brand-green hover:bg-brand-green hover:text-white flex items-center justify-center shadow-sm transition active:scale-95" title="Edit Biodata">
+                                <i class="fas fa-pen text-xs"></i>
+                            </button>
+                            <!-- Badge Indikator saat Mode Edit Aktif -->
+                            <span id="badgeEditAktif" class="hidden text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2.5 py-1 rounded-full">
+                                <i class="fas fa-pen-to-square mr-1"></i>Mode Edit
+                            </span>
+                        </div>
+
+                        <!-- 1. TAMPILAN BACA (VIEW MODE) -->
+                        <div id="boxViewMode" class="space-y-2.5"></div>
+
+                        <!-- 2. TAMPILAN FORM EDIT (EDIT MODE - Tersembunyi secara default) -->
+                        <form id="formEditMode" onsubmit="simpanProfil(event)" class="hidden space-y-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nama Lengkap & Gelar <span class="text-rose-500">*</span></label>
+                                <input id="inNama" type="text" required placeholder="Contoh: Mukhamad Bayu Aji, S.Pd." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Mata Pelajaran <span class="text-rose-500">*</span></label>
+                                    <input id="inMapel" type="text" required placeholder="Bahasa Indonesia" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">NIP / NUPTK</label>
+                                    <input id="inNip" type="text" placeholder="Nomor Induk" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Jenis Kelamin</label>
+                                    <select id="inGender" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
+                                        <option value="">- Pilih -</option>
+                                        <option value="Laki-laki">Laki-laki</option>
+                                        <option value="Perempuan">Perempuan</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tempat, Tgl Lahir</label>
+                                    <input id="inTtl" type="text" placeholder="Temanggung, 10 Mei..." class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sekolah / Instansi Dasar</label>
+                                <input id="inSekolah" type="text" placeholder="Nama Sekolah Tempat Mengajar" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Email Aktif</label>
+                                    <input id="inEmail" type="email" placeholder="email@domain.com" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">No. WhatsApp / HP</label>
+                                    <input id="inTelepon" type="tel" placeholder="08xxxxxxxxxx" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Alamat / Domisili</label>
+                                <input id="inAlamat" type="text" placeholder="Kota, Provinsi" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Bio Singkat / Motto Pendidikan</label>
+                                <textarea id="inBio" rows="2" placeholder="Tuliskan deskripsi singkat atau motto Anda dalam mendidik..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition resize-none"></textarea>
+                            </div>
+
+                            <!-- Tombol Batal & Simpan -->
+                            <div id="boxTombolSimpan" class="grid grid-cols-2 gap-2.5 pt-2">
+                                <button type="button" onclick="keluarModeEdit()" class="py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs active:scale-95 transition">Batal</button>
+                                <button id="btnSimpanProfil" type="submit" class="py-3 rounded-xl bg-brand-green text-white font-bold text-xs shadow-md active:scale-95 transition flex items-center justify-center gap-1.5">
+                                    <i class="fas fa-check"></i><span>Simpan Perubahan</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </main>
         </div>
 
-        <!-- ==================== KONTEN PROFIL UTAMA ==================== -->
-        <main id="viewContent" class="hidden flex-grow pb-10">
-            <div class="bg-brand-green h-16 rounded-b-[2rem] shrink-0"></div>
-
-            <div class="px-4 -mt-12">
-                <!-- KARTU AVATAR & IDENTITAS UTAMA -->
-                <div class="up bg-white rounded-2xl shadow-md p-5 border border-slate-100 flex flex-col items-center text-center relative">
-                    
-                    <!-- Avatar (Klik untuk Lihat & Zoom, Tombol Kamera untuk Ganti) -->
-                    <div class="relative group">
-                        <button type="button" onclick="bukaViewerFoto()" class="w-24 h-24 rounded-full bg-brand-light text-brand-green border-4 border-white shadow-lg flex items-center justify-center overflow-hidden relative active:scale-95 transition" title="Ketuk untuk lihat & zoom foto">
-                            <i id="avatarIcon" class="fas fa-chalkboard-teacher text-4xl"></i>
-                            <img id="avatarImg" src="" alt="Foto Profil" class="absolute inset-0 w-full h-full object-cover hidden">
-                            <span class="absolute inset-0 bg-slate-900/35 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold">
-                                <i class="fas fa-magnifying-glass-plus text-base"></i>
-                            </span>
-                        </button>
-                        <button type="button" onclick="pilihFileFoto()" class="w-8 h-8 rounded-full bg-brand-green text-white border-2 border-white shadow-md flex items-center justify-center absolute bottom-0 right-0 hover:bg-brand-dark active:scale-90 transition" title="Ganti & Crop Foto">
-                            <i class="fas fa-camera text-xs"></i>
-                        </button>
-                        <input id="inputFileFoto" type="file" accept="image/*" class="hidden" onchange="saatPilihFile(event)">
-                    </div>
-
-                    <div class="flex items-center gap-1.5 mt-2">
-                        <button onclick="bukaViewerFoto()" class="text-[10px] font-semibold text-slate-500 hover:text-brand-green bg-slate-100 px-2.5 py-1 rounded-full transition"><i class="fas fa-magnifying-glass-plus mr-1"></i>Lihat & Zoom</button>
-                        <button onclick="pilihFileFoto()" class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-full transition"><i class="fas fa-crop-simple mr-1"></i>Ganti Foto 1:1</button>
-                    </div>
-
-                    <h2 id="dispHeaderNama" class="font-extrabold text-slate-800 text-base mt-3 leading-snug">Guru Argumentasi</h2>
-                    <span id="dispHeaderMapel" class="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">Bahasa Indonesia</span>
-                    <p id="dispHeaderBio" class="text-[11px] text-slate-500 mt-2 leading-relaxed max-w-xs"></p>
-                </div>
-
-                <!-- KARTU BIODATA DIRI (MODE BACA vs MODE EDIT) -->
-                <div class="up bg-white rounded-2xl shadow-sm p-4 border border-slate-100 mt-4" style="animation-delay: 60ms">
-                    <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-                        <div>
-                            <h3 class="font-bold text-slate-800 text-sm">Biodata Pengajar</h3>
-                            <p id="statusModeTeks" class="text-[10px] text-slate-400">Ketuk ikon pensil untuk mengubah data</p>
-                        </div>
-                        <!-- Tombol Ikon Pensil (Hanya muncul saat Mode Baca) -->
-                        <button id="btnPencilCard" type="button" onclick="masukModeEdit()" class="w-9 h-9 rounded-xl bg-emerald-50 text-brand-green hover:bg-brand-green hover:text-white flex items-center justify-center shadow-sm transition active:scale-95" title="Edit Biodata">
-                            <i class="fas fa-pen text-xs"></i>
-                        </button>
-                        <!-- Badge Indikator saat Mode Edit Aktif -->
-                        <span id="badgeEditAktif" class="hidden text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2.5 py-1 rounded-full">
-                            <i class="fas fa-pen-to-square mr-1"></i>Mode Edit
-                        </span>
-                    </div>
-
-                    <!-- 1. TAMPILAN BACA (VIEW MODE) -->
-                    <div id="boxViewMode" class="space-y-2.5"></div>
-
-                    <!-- 2. TAMPILAN FORM EDIT (EDIT MODE - Tersembunyi secara default) -->
-                    <form id="formEditMode" onsubmit="simpanProfil(event)" class="hidden space-y-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nama Lengkap & Gelar <span class="text-rose-500">*</span></label>
-                            <input id="inNama" type="text" required placeholder="Contoh: Mukhamad Bayu Aji, S.Pd." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                        </div>
-                        <div class="grid grid-cols-2 gap-2.5">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Mata Pelajaran <span class="text-rose-500">*</span></label>
-                                <input id="inMapel" type="text" required placeholder="Bahasa Indonesia" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">NIP / NUPTK</label>
-                                <input id="inNip" type="text" placeholder="Nomor Induk" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2.5">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Jenis Kelamin</label>
-                                <select id="inGender" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                                    <option value="">- Pilih -</option>
-                                    <option value="Laki-laki">Laki-laki</option>
-                                    <option value="Perempuan">Perempuan</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tempat, Tgl Lahir</label>
-                                <input id="inTtl" type="text" placeholder="Temanggung, 10 Mei..." class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sekolah / Instansi Dasar</label>
-                            <input id="inSekolah" type="text" placeholder="Nama Sekolah Tempat Mengajar" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                        </div>
-                        <div class="grid grid-cols-2 gap-2.5">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Email Aktif</label>
-                                <input id="inEmail" type="email" placeholder="email@domain.com" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">No. WhatsApp / HP</label>
-                                <input id="inTelepon" type="tel" placeholder="08xxxxxxxxxx" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Alamat / Domisili</label>
-                            <input id="inAlamat" type="text" placeholder="Kota, Provinsi" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Bio Singkat / Motto Pendidikan</label>
-                            <textarea id="inBio" rows="2" placeholder="Tuliskan deskripsi singkat atau motto Anda dalam mendidik..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-brand-green bg-slate-50/60 focus:bg-white transition resize-none"></textarea>
-                        </div>
-
-                        <!-- Tombol Batal & Simpan (Otomatis hilang setelah klik Simpan) -->
-                        <div id="boxTombolSimpan" class="grid grid-cols-2 gap-2.5 pt-2">
-                            <button type="button" onclick="keluarModeEdit()" class="py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs active:scale-95 transition">Batal</button>
-                            <button id="btnSimpanProfil" type="submit" class="py-3 rounded-xl bg-brand-green text-white font-bold text-xs shadow-md active:scale-95 transition flex items-center justify-center gap-1.5">
-                                <i class="fas fa-check"></i><span>Simpan Perubahan</span>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </main>
-
-        <!-- FOOTER -->
-        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto">
+        <!-- FOOTER (Fix di Bawah) -->
+        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 z-40 relative">
             <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi Guru.</p>
         </footer>
     </div>
@@ -328,6 +336,12 @@
             fotoProfil: ''
         };
 
+        // Buka skeleton & tampilkan data real (Mencegah skeleton nyangkut)
+        function hilangkanSkeleton() {
+            $('viewSkeleton').classList.add('hidden');
+            $('viewContent').classList.remove('hidden');$('btnPencilHeader').classList.remove('hidden');
+        }
+
         // Toast Notification Function
         function toast(msg, err = false) {
             const c = $('toastContainer');
@@ -339,7 +353,7 @@
             setTimeout(() => { t.classList.add('-translate-y-4', 'opacity-0'); setTimeout(() => t.remove(), 300); }, 3000);
         }
 
-        // Memuat dari LocalStorage & sinkron dengan global teacher keys
+        // Memuat dari LocalStorage & Sinkron Data
         function bacaLocalProfil() {
             try {
                 const raw = JSON.parse(localStorage.getItem('profilGuruCendekia') || '{}');
@@ -361,7 +375,7 @@
             localStorage.setItem('profilGuruCendekia', JSON.stringify(profil));
         }
 
-        // Render Tampilan
+        // Render Tampilan Profil
         function renderProfil() {
             $('dispHeaderNama').textContent = profil.namaLengkap || 'Guru Argumentasi';
             $('dispHeaderMapel').textContent = profil.mapel \vert{}\vert{} 'Bahasa Indonesia';$('dispHeaderBio').textContent = profil.bio || 'Pengajar aktif di platform Argumentasi.';
@@ -468,7 +482,7 @@
             toast('Biodata pengajar berhasil disimpan!');
         };
 
-        // ==================== VIEWER FOTO (ZOOM IN / ZOOM OUT / PAN) ====================
+        // ==================== VIEWER FOTO ====================
         let vZoom = 1, vPanX = 0, vPanY = 0, vDrag = false, vStartX = 0, vStartY = 0;
 
         function updateViewerTransform() {
@@ -485,36 +499,14 @@
             resetZoomViewer();
             $('modalViewer').classList.replace('hidden', 'flex');
         };
-        window.tutupViewerFoto = function() {
-            $('modalViewer').classList.replace('flex', 'hidden');
-        };
-        window.setZoomViewer = function(val) {
-            vZoom = Math.min(3.5, Math.max(1, parseFloat(val) || 1));
-            if (vZoom === 1) { vPanX = 0; vPanY = 0; }
-            updateViewerTransform();
-        };
-        window.ubahZoomViewer = function(delta) {
-            setZoomViewer(vZoom + delta);
-        };
-        window.resetZoomViewer = function() {
-            vZoom = 1; vPanX = 0; vPanY = 0;
-            updateViewerTransform();
-        };
+        window.tutupViewerFoto = function() { $('modalViewer').classList.replace('flex', 'hidden'); };
+        window.setZoomViewer = function(val) { vZoom = Math.min(3.5, Math.max(1, parseFloat(val) || 1)); if (vZoom === 1) { vPanX = 0; vPanY = 0; } updateViewerTransform(); };
+        window.ubahZoomViewer = function(delta) { setZoomViewer(vZoom + delta); };
+        window.resetZoomViewer = function() { vZoom = 1; vPanX = 0; vPanY = 0; updateViewerTransform(); };
 
         const vStage = $('viewerStage');
-        vStage.addEventListener('pointerdown', e => {
-            if (vZoom <= 1) return;
-            vDrag = true;
-            vStartX = e.clientX - vPanX;
-            vStartY = e.clientY - vPanY;
-            vStage.setPointerCapture(e.pointerId);
-        });
-        vStage.addEventListener('pointermove', e => {
-            if (!vDrag) return;
-            vPanX = e.clientX - vStartX;
-            vPanY = e.clientY - vStartY;
-            updateViewerTransform();
-        });
+        vStage.addEventListener('pointerdown', e => { if (vZoom <= 1) return; vDrag = true; vStartX = e.clientX - vPanX; vStartY = e.clientY - vPanY; vStage.setPointerCapture(e.pointerId); });
+        vStage.addEventListener('pointermove', e => { if (!vDrag) return; vPanX = e.clientX - vStartX; vPanY = e.clientY - vStartY; updateViewerTransform(); });
         vStage.addEventListener('pointerup', () => { vDrag = false; });
 
         window.hapusFotoProfil = async function() {
@@ -524,20 +516,16 @@
             if (currentUser) {
                 try { await setDoc(doc(db, "users", currentUser.uid), { fotoProfil: '' }, { merge: true }); } catch (e) {}
             }
-            renderProfil();
-            tutupViewerFoto();
-            toast('Foto profil dihapus.');
+            renderProfil(); tutupViewerFoto(); toast('Foto profil dihapus.');
         };
 
-        // ==================== CROPPER 1:1 & AUTO-COMPRESSOR BASE64 ====================
+        // ==================== CROPPER 1:1 ====================
         const cropCanvas = $('cropCanvas');
         const ctx = cropCanvas.getContext('2d');
         const UKURAN_OUT = 480; 
         let imgObj = null, cZoom = 1, cRot = 0, cOffX = 0, cOffY = 0, cDragging = false, cLastX = 0, cLastY = 0;
 
-        window.pilihFileFoto = function() {
-            $('inputFileFoto').value = '';$('inputFileFoto').click();
-        };
+        window.pilihFileFoto = function() { $('inputFileFoto').value = '';$('inputFileFoto').click(); };
 
         function formatBytes(b) {
             if (b < 1024) return b + ' B';
@@ -548,22 +536,16 @@
         window.saatPilihFile = function(e) {
             const file = e.target.files && e.target.files[0];
             if (!file) return;
-            if (!file.type.startsWith('image/')) {
-                toast('Pilih berkas gambar (JPG/PNG/WebP).', true);
-                return;
-            }
+            if (!file.type.startsWith('image/')) { toast('Pilih berkas gambar (JPG/PNG/WebP).', true); return; }
             $('infoUkuranAsli').textContent = `Ukuran asli: ${formatBytes(file.size)}`;
 
             const reader = new FileReader();
             reader.onload = ev => {
                 const im = new Image();
                 im.onload = () => {
-                    imgObj = im;
-                    cZoom = 1; cRot = 0; cOffX = 0; cOffY = 0;
-                    $('cropZoomSlider').value = 1;
-                    $('modalCrop').classList.replace('hidden', 'flex');
-                    gambarKanvasCrop();
-                    hitungEstimasiKompresi();
+                    imgObj = im; cZoom = 1; cRot = 0; cOffX = 0; cOffY = 0;
+                    $('cropZoomSlider').value = 1; $('modalCrop').classList.replace('hidden', 'flex');
+                    gambarKanvasCrop(); hitungEstimasiKompresi();
                 };
                 im.onerror = () => toast('Gambar tidak dapat dibaca.', true);
                 im.src = ev.target.result;
@@ -621,80 +603,51 @@
             $('infoUkuranKompres').textContent = `Hasil 1:1: ~${formatBytes(byteLen)}`;
         }
 
-        window.aturCropZoom = function(val) {
-            cZoom = Math.min(3.5, Math.max(1, parseFloat(val) || 1));
-            $('cropZoomSlider').value = cZoom;
-            gambarKanvasCrop();
-            hitungEstimasiKompresi();
-        };
-        window.stepCropZoom = function(delta) {
-            aturCropZoom(cZoom + delta);
-        };
-        window.putarCrop = function() {
-            cRot = (cRot + 90) % 360;
-            gambarKanvasCrop();
-            hitungEstimasiKompresi();
-        };
-        window.tutupModalCrop = function() {
-            $('modalCrop').classList.replace('flex', 'hidden');
-            imgObj = null;
-        };
+        window.aturCropZoom = function(val) { cZoom = Math.min(3.5, Math.max(1, parseFloat(val) || 1)); $('cropZoomSlider').value = cZoom; gambarKanvasCrop(); hitungEstimasiKompresi(); };
+        window.stepCropZoom = function(delta) { aturCropZoom(cZoom + delta); };
+        window.putarCrop = function() { cRot = (cRot + 90) % 360; gambarKanvasCrop(); hitungEstimasiKompresi(); };
+        window.tutupModalCrop = function() { $('modalCrop').classList.replace('flex', 'hidden'); imgObj = null; };
 
-        cropCanvas.addEventListener('pointerdown', e => {
-            if (!imgObj) return;
-            cDragging = true;
-            cLastX = e.clientX;
-            cLastY = e.clientY;
-            cropCanvas.setPointerCapture(e.pointerId);
-        });
+        cropCanvas.addEventListener('pointerdown', e => { if (!imgObj) return; cDragging = true; cLastX = e.clientX; cLastY = e.clientY; cropCanvas.setPointerCapture(e.pointerId); });
         cropCanvas.addEventListener('pointermove', e => {
             if (!cDragging || !imgObj) return;
             const rect = cropCanvas.getBoundingClientRect();
             const ratio = UKURAN_OUT / rect.width;
             cOffX += (e.clientX - cLastX) * ratio;
             cOffY += (e.clientY - cLastY) * ratio;
-            cLastX = e.clientX;
-            cLastY = e.clientY;
+            cLastX = e.clientX; cLastY = e.clientY;
             gambarKanvasCrop();
         });
-        cropCanvas.addEventListener('pointerup', () => {
-            if (cDragging) { cDragging = false; hitungEstimasiKompresi(); }
-        });
+        cropCanvas.addEventListener('pointerup', () => { if (cDragging) { cDragging = false; hitungEstimasiKompresi(); } });
 
         window.terapkanCropFoto = async function() {
             if (!imgObj) return;
-            const btn = $('btnPakaiFoto');
-            const asli = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>Memproses...</span>';
+            const btn = $('btnPakaiFoto'); const asli = btn.innerHTML;
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>Memproses...</span>';
 
             const base64 = hasilkanBase64Terkompresi();
             profil.fotoProfil = base64;
             simpanKeLocal();
 
             if (currentUser) {
-                try {
-                    await setDoc(doc(db, "users", currentUser.uid), {
-                        fotoProfil: base64,
-                        updatedAt: Date.now()
-                    }, { merge: true });
-                } catch (e) {
-                    console.warn("Foto tersimpan di lokal:", e);
-                }
+                try { await setDoc(doc(db, "users", currentUser.uid), { fotoProfil: base64, updatedAt: Date.now() }, { merge: true }); } catch (e) { console.warn("Foto tersimpan di lokal:", e); }
             }
 
-            btn.disabled = false;
-            btn.innerHTML = asli;
-            renderProfil();
-            tutupModalCrop();
-            toast('Foto profil berhasil diperbarui!');
+            btn.disabled = false; btn.innerHTML = asli;
+            renderProfil(); tutupModalCrop(); toast('Foto profil berhasil diperbarui!');
         };
 
-        // ---- AUTH GUARD & MUAT PROFIL ----
+        // ==================== INISIALISASI & FIREBASE ====================
+        
+        // Panggil renderProfil dengan data dari localStorage seketika halaman dibuka!
+        // Sehingga Skeleton langsung dihapus dan user tidak menunggu loading kosong
+        bacaLocalProfil();
+        renderProfil();
+        hilangkanSkeleton();
+
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = "../login.html"; return; }
             currentUser = user;
-            bacaLocalProfil();
 
             try {
                 const userDoc = await getDoc(doc(db, "users", user.uid));
@@ -707,29 +660,22 @@
                     return;
                 }
 
-                profil.namaLengkap = localStorage.getItem('namaGuruCendekia') || d.namaLengkap || profil.namaLengkap;
-                profil.mapel = localStorage.getItem('mapelGuruCendekia') || d.mapel || profil.mapel;
-                profil.fotoProfil = localStorage.getItem('fotoGuruCendekia') || d.fotoProfil || profil.fotoProfil;
-                profil.nip = profil.nip || d.nip || d.nuptk || '';
-                profil.gender = profil.gender || d.gender || '';
-                profil.ttl = profil.ttl || d.ttl || '';
-                profil.instansi = profil.instansi || d.instansi || '';
-                profil.email = profil.email || d.emailKontak || user.email || '';
-                profil.telepon = profil.telepon || d.telepon || '';
-                profil.alamat = profil.alamat || d.alamat || '';
-                profil.bio = profil.bio || d.bio || '';
+                profil.namaLengkap = d.namaLengkap || profil.namaLengkap;
+                profil.mapel = d.mapel || profil.mapel;
+                profil.fotoProfil = d.fotoProfil || profil.fotoProfil;
+                profil.nip = d.nip || d.nuptk || profil.nip;
+                profil.gender = d.gender || profil.gender;
+                profil.ttl = d.ttl || profil.ttl;
+                profil.instansi = d.instansi || profil.instansi;
+                profil.email = d.emailKontak || user.email || profil.email;
+                profil.telepon = d.telepon || profil.telepon;
+                profil.alamat = d.alamat || profil.alamat;
+                profil.bio = d.bio || profil.bio;
 
                 simpanKeLocal();
-                renderProfil();
-
-                // Tampilkan konten dan matikan skeleton
-                $('viewSkeleton').classList.add('hidden');
-                $('viewContent').classList.remove('hidden');$('btnPencilHeader').classList.remove('hidden');
+                renderProfil(); // Update jika ada perubahan dari cloud
             } catch (err) {
-                console.error(err);
-                renderProfil();
-                $('viewSkeleton').classList.add('hidden');
-                $('viewContent').classList.remove('hidden');$('btnPencilHeader').classList.remove('hidden');
+                console.warn("Sinkronisasi cloud lambat/gagal, memakai data lokal.", err);
             }
         });
     </script>
