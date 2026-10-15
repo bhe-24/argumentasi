@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dashboard Guru - Argumentasi</title>
+    <title>Panel Guru - Argumentasi</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,203 +13,181 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <script>
-        tailwind.config = {
-            theme: { extend: {
-                fontFamily: { sans: ['Poppins', 'sans-serif'] },
-                colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } }
-            } }
-        }
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }
     </script>
 
     <style>
-        /* Halaman TIDAK boleh scroll: hanya <main> di dalam frame yang scroll.
-           Inilah yang membuat header tetap menempel, termasuk saat scroll mentok di bawah. */
-        html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
-        body {
-            font-family: 'Poppins', sans-serif; background-color: #e2e8f0; -webkit-tap-highlight-color: transparent;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh; height: 100dvh;
-        }
-        .mobile-frame {
-            width: 100%; max-width: 448px; height: 100vh; height: 100dvh; background-color: #f8fafc;
-            display: flex; flex-direction: column; position: relative; overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,.25);
-        }
-        @media (min-width: 640px) {
-            .mobile-frame { height: 90vh; height: 90dvh; border-radius: 1.5rem; border: 8px solid #334155; }
-        }
-        #mainScroll { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        
+        .hide-scrollbar::-webkit-scrollbar { display: none; } 
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .fade-in { animation: fadeIn .4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .texture-dots { background-image: radial-gradient(rgba(255,255,255,.15) 1px, transparent 1px); background-size: 16px 16px; }
-        .skeleton-pulse { animation: skeleton-loading 1.2s ease-in-out infinite alternate; }
-        @keyframes skeleton-loading { 0% { opacity: .5; } 100% { opacity: 1; } }
+        
+        .fade-in { animation: fadeIn .4s ease-out forwards; } 
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        
+        .sk { position: relative; overflow: hidden; background: #e2e8f0; border-radius: .5rem; }
+        .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent); animation: shimmer 1.4s infinite; }
+        @keyframes shimmer { 100% { transform: translateX(100%); } }
+        .sk-light { background: rgba(255,255,255,.28); }
+        
         #qrCanvasContainer img { margin: auto; border-radius: 8px; }
-
-        /* Modal di dalam frame; tampil/sembunyi lewat .show (tidak bentrok hidden vs flex) */
-        .overlay { position: absolute; inset: 0; z-index: 90; opacity: 0; pointer-events: none; transition: opacity .25s; }
+        .overlay { position: fixed; inset: 0; z-index: 99999; opacity: 0; pointer-events: none; transition: opacity .25s; }
         .overlay.show { opacity: 1; pointer-events: auto; }
-        .overlay .modal-box { transform: scale(.95); transition: transform .25s; }
+        .overlay .modal-box { transform: scale(.95); transition: transform .25s; } 
         .overlay.show .modal-box { transform: scale(1); }
     </style>
 </head>
-<body>
+<body class="flex justify-center min-h-screen">
 
-<div class="mobile-frame fade-in">
+<!-- CONTAINER UTAMA (Menyelaraskan Desain Halaman Lain) -->
+<div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
 
-    <!-- HEADER: di luar area scroll, jadi selalu menempel di atas -->
-    <header class="relative flex-shrink-0 bg-white/90 backdrop-blur-md px-4 pb-2 flex items-center justify-between shadow-sm border-b border-slate-200 z-50"
-            style="padding-top:calc(.5rem + env(safe-area-inset-top,0px))">
-        <a href="profil.html" class="flex flex-col items-center justify-center text-slate-500 hover:text-brand-green transition-colors active:scale-95">
-            <i class="fas fa-user-circle text-[26px]"></i>
-            <span class="text-[10px] font-bold mt-1">Profil</span>
-        </a>
-        <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-9 object-contain absolute left-1/2 -translate-x-1/2" onerror="this.style.display='none'">
-        <button data-act="logout" class="flex items-center gap-2 px-3 py-2 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-colors active:scale-95 shadow-sm border border-red-100" title="Keluar">
+    <!-- HEADER STICKY -->
+    <header class="sticky top-0 z-50 bg-brand-green px-4 py-3 flex items-center justify-between shadow-md">
+        <div class="flex items-center gap-3">
+            <a href="../index.html" class="shrink-0 bg-white/95 p-1 rounded-lg shadow-sm active:scale-95 transition-transform" aria-label="Beranda">
+                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-6 object-contain" onerror="this.outerHTML='<i class=\'fas fa-chalkboard-teacher text-brand-green px-1\'></i>'">
+            </a>
+            <h1 class="text-white font-bold text-sm tracking-wide leading-tight">Panel Guru</h1>
+        </div>
+        <button data-act="logout" class="w-8 h-8 rounded-full bg-red-500/20 text-red-100 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors border border-red-500/30 active:scale-95" title="Keluar" aria-label="Keluar">
             <i class="fas fa-sign-out-alt text-sm"></i>
-            <span class="text-xs font-bold">Keluar</span>
         </button>
     </header>
 
-    <!-- AREA SCROLL -->
-    <main id="mainScroll" class="flex-1 min-h-0 overflow-y-auto hide-scrollbar pb-6 relative">
+    <!-- AREA SCROLL KONTEN -->
+    <main class="flex-grow flex flex-col pb-10">
 
-        <!-- WELCOME -->
-        <div class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 px-5 pt-6 pb-8 relative overflow-hidden rounded-b-[2rem] shadow-md">
-            <div class="absolute inset-0 texture-dots pointer-events-none opacity-20"></div>
-
-            <div class="relative z-10 hidden" id="realWelcomeContent">
-                <p id="greetText" class="text-blue-200 text-sm font-medium">Selamat datang,</p>
-                <span id="welcomeName" class="block text-2xl font-bold text-amber-400 break-words leading-tight">Guru</span>
-                <p id="greetSub" class="text-[11px] text-blue-200/80 mt-1.5 leading-relaxed"></p>
-                <span class="inline-flex items-center gap-1.5 mt-3 mb-5 bg-emerald-400/15 border border-emerald-300/20 text-emerald-300 text-[10px] font-semibold px-2.5 py-1 rounded-full">
-                    <i class="fas fa-check-circle"></i> Akun Anda sudah terverifikasi
-                </span>
-
-                <div class="flex items-center gap-3 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
-                    <div class="flex-1 text-center">
-                        <p class="text-2xl font-black text-white" id="statKelasAktif">0</p>
-                        <p class="text-[9px] font-bold text-blue-200 uppercase tracking-widest mt-1">Berjalan</p>
-                    </div>
-                    <div class="w-px h-10 bg-white/20"></div>
-                    <div class="flex-1 text-center">
-                        <p class="text-2xl font-black text-slate-300" id="statKelasArsip">0</p>
-                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Diarsipkan</p>
-                    </div>
+        <!-- ===== PANEL AKSES DITOLAK (Muncul Bila Peran Bukan Guru) ===== -->
+        <div id="panelTolak" class="hidden px-5 py-10">
+            <div class="bg-white rounded-3xl shadow-md border border-slate-200 p-6 text-center fade-in">
+                <div class="w-16 h-16 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-3xl mx-auto mb-4"><i class="fas fa-user-lock"></i></div>
+                <h2 class="font-extrabold text-slate-800 text-base leading-snug">Akun ini belum terdaftar sebagai guru</h2>
+                <p class="text-[11px] text-slate-500 mt-2 leading-relaxed">Panel ini hanya untuk akun dengan peran <b>guru</b>. Karena itu akunmu tidak diarahkan ke sini.</p>
+                <div class="mt-4 text-left bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
+                    <div><p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Akun yang dipakai</p><p id="tolakEmail" class="text-xs font-semibold text-slate-800 break-all"></p></div>
+                    <div class="flex gap-4"><div><p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Peran tercatat</p><p id="tolakPeran" class="text-xs font-bold text-rose-600"></p></div><div><p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Masuk lewat</p><p id="tolakMetode" class="text-xs font-semibold text-slate-800"></p></div></div>
+                    <div><p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">ID Akun (UID)</p><p id="tolakUid" class="text-[10px] font-mono text-slate-600 break-all"></p></div>
                 </div>
-            </div>
-
-            <div class="relative z-10" id="skeletonWelcomeContent">
-                <div class="w-28 h-3 bg-white/20 rounded mb-2 skeleton-pulse"></div>
-                <div class="w-48 h-7 bg-white/30 rounded mb-2 skeleton-pulse"></div>
-                <div class="w-56 h-3 bg-white/20 rounded mb-4 skeleton-pulse"></div>
-                <div class="w-40 h-5 bg-white/20 rounded-full mb-5 skeleton-pulse"></div>
-                <div class="flex items-center gap-3 bg-white/5 p-4 rounded-2xl border border-white/5">
-                    <div class="flex-1 flex flex-col items-center"><div class="w-8 h-8 bg-white/20 rounded skeleton-pulse mb-2"></div><div class="w-16 h-2 bg-white/20 rounded skeleton-pulse"></div></div>
-                    <div class="w-px h-10 bg-white/10"></div>
-                    <div class="flex-1 flex flex-col items-center"><div class="w-8 h-8 bg-white/10 rounded skeleton-pulse mb-2"></div><div class="w-16 h-2 bg-white/10 rounded skeleton-pulse"></div></div>
+                <div class="mt-4 text-left bg-emerald-50 border border-emerald-100 rounded-xl p-3.5 text-[11px] text-emerald-900 leading-relaxed">
+                    <p class="font-bold mb-1"><i class="fas fa-circle-info mr-1"></i>Cara mengaktifkan sebagai guru</p>
+                    <ol class="list-decimal ml-4 space-y-0.5"><li>Salin ID akun di atas.</li><li>Minta administrator membuka menu <b>Pengguna</b> lalu mengubah peran akun ini menjadi <b>teacher</b>.</li><li>Keluar, lalu masuk lagi.</li></ol>
+                </div>
+                <div class="grid grid-cols-1 gap-2 mt-5">
+                    <button data-act="copy-uid" class="bg-slate-900 text-white font-bold py-3 rounded-xl text-xs active:scale-95 transition"><i class="far fa-copy mr-1.5"></i>Salin ID Akun</button>
+                    <div class="grid grid-cols-2 gap-2"><a href="../index.html" class="bg-slate-100 text-slate-600 font-bold py-3 rounded-xl text-center text-xs active:scale-95 transition">Ke Beranda</a><button data-act="logout" class="bg-red-50 text-red-600 border border-red-100 font-bold py-3 rounded-xl text-xs active:scale-95 transition">Ganti Akun</button></div>
                 </div>
             </div>
         </div>
 
-        <div class="px-4 mt-6">
-            <!-- MENU -->
-            <div class="grid grid-cols-2 gap-3 mb-8">
-                <a href="buat-kelas.html" class="col-span-2 bg-emerald-600 rounded-2xl p-4 shadow-sm border border-emerald-500 hover:bg-emerald-700 hover:shadow-md transition-all flex items-center justify-between active:scale-95 text-white overflow-hidden relative">
-                    <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-bl-full -mr-4 -mt-4 pointer-events-none"></div>
-                    <div class="flex items-center gap-4 relative z-10">
-                        <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-xl shadow-inner shrink-0"><i class="fas fa-plus"></i></div>
-                        <div>
-                            <h3 class="font-bold text-sm tracking-wide">Buat Kelas Baru</h3>
-                            <p class="text-[10px] text-emerald-200 mt-0.5">Hasilkan QR & Kode Kelas</p>
-                        </div>
-                    </div>
-                    <i class="fas fa-chevron-right text-emerald-300 relative z-10 mr-2"></i>
-                </a>
-                <a href="upload-materi.html" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 hover:border-amber-400 transition-all text-center active:scale-95 flex flex-col items-center gap-2">
-                    <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-lg"><i class="fas fa-book-open"></i></div>
-                    <h3 class="font-bold text-slate-800 text-[11px] leading-tight mt-1">Upload Materi <br>& Handout</h3>
-                </a>
-                <a href="upload-artikel.html" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 hover:border-blue-400 transition-all text-center active:scale-95 flex flex-col items-center gap-2">
-                    <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-lg"><i class="fas fa-newspaper"></i></div>
-                    <h3 class="font-bold text-slate-800 text-[11px] leading-tight mt-1">Terbitkan <br>Berita/Artikel</h3>
-                </a>
+        <!-- ===== KONTEN UTAMA GURU ===== -->
+        <div id="panelGuru">
+            
+            <!-- SAPAAN & LENGKUNG HIJAU -->
+            <div class="bg-brand-green px-5 pb-14 pt-2 relative z-10 rounded-b-[2rem] overflow-hidden shrink-0">
+                <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10 pointer-events-none"></div>
+                <div id="sapaanReal" class="hidden relative z-10">
+                    <p id="greetText" class="text-white/80 text-xs font-medium">Selamat datang,</p>
+                    <span id="welcomeName" class="block text-2xl font-extrabold text-white break-words leading-tight">Guru</span>
+                    <p id="greetSub" class="text-[11px] text-white/80 mt-1.5 leading-relaxed"></p>
+                </div>
+                <div id="sapaanSk" class="relative z-10"><div class="sk sk-light h-3 w-24 mb-2"></div><div class="sk sk-light h-7 w-48 mb-2"></div><div class="sk sk-light h-3 w-56"></div></div>
             </div>
 
-            <!-- KELAS AKTIF -->
-            <section class="mb-8">
-                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-4">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Ruang Kelas Aktif
-                </h3>
-                <div id="activeClassesGrid" class="flex flex-col gap-3">
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="bg-slate-200 h-12 w-full skeleton-pulse"></div>
-                        <div class="p-4 flex flex-col gap-3">
-                            <div class="bg-slate-100 h-12 rounded-lg skeleton-pulse"></div>
-                            <div class="flex gap-2"><div class="w-16 h-8 bg-slate-200 rounded-lg skeleton-pulse"></div><div class="flex-1 h-8 bg-slate-200 rounded-lg skeleton-pulse"></div></div>
+            <div class="px-4 -mt-10 relative z-20">
+                <!-- KARTU AKUN -->
+                <a href="profil.html" class="block bg-white rounded-2xl shadow-md p-4 border border-slate-100 flex items-center justify-between active:scale-[0.98] transition-transform group hover:border-brand-green">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-12 h-12 bg-brand-light text-brand-green rounded-full flex items-center justify-center shrink-0 border border-emerald-200"><i class="fas fa-chalkboard-teacher text-xl"></i></div>
+                        <div class="min-w-0">
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider group-hover:text-brand-green transition-colors">Guru Pengampu</p>
+                            <h3 id="akunNama" class="text-sm font-bold text-slate-800 truncate sk h-5 w-28 mt-0.5">Memuat...</h3>
+                            <p id="akunEmail" class="text-[10px] text-slate-400 truncate"></p>
                         </div>
                     </div>
+                    <i class="fas fa-chevron-right text-slate-300 group-hover:text-brand-green transition-colors"></i>
+                </a>
+                <div class="flex flex-wrap gap-1.5 mt-2.5"><span id="chipVerif" class="hidden items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-semibold px-2.5 py-1 rounded-full"><i class="fas fa-check-circle"></i><span></span></span></div>
+            </div>
+
+            <!-- STATISTIK KELAS -->
+            <div class="px-4 mt-5">
+                <h2 class="font-bold text-slate-800 text-sm mb-3">Ringkasan Kelas</h2>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 text-center"><div class="w-9 h-9 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600 mx-auto mb-1.5"><i class="fas fa-door-open"></i></div><h3 id="statKelasAktif" class="text-lg font-extrabold text-slate-800 leading-none">0</h3><p class="text-[9px] font-bold text-slate-400 uppercase mt-1">Berjalan</p></div>
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 text-center"><div class="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 mx-auto mb-1.5"><i class="fas fa-user-graduate"></i></div><h3 id="statSiswa" class="text-lg font-extrabold text-slate-800 leading-none">0</h3><p class="text-[9px] font-bold text-slate-400 uppercase mt-1">Siswa</p></div>
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 text-center"><div class="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 mx-auto mb-1.5"><i class="fas fa-box-archive"></i></div><h3 id="statKelasArsip" class="text-lg font-extrabold text-slate-800 leading-none">0</h3><p class="text-[9px] font-bold text-slate-400 uppercase mt-1">Arsip</p></div>
                 </div>
-                <div id="activeEmptyState" class="hidden bg-white p-6 rounded-3xl shadow-sm border border-slate-200 border-dashed text-center">
-                    <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300"><i class="fas fa-door-open text-xl"></i></div>
-                    <p class="font-bold text-slate-700 text-sm mb-1">Belum Ada Kelas</p>
-                    <p class="text-[10px] text-slate-500 max-w-[200px] mx-auto">Buat ruang kelas baru untuk mulai mengundang siswa.</p>
+            </div>
+
+            <div class="h-2 bg-slate-100 w-full mt-6"></div>
+
+            <!-- NAVIGASI UTAMA -->
+            <div class="px-4 mt-6">
+                <h2 class="font-bold text-slate-800 text-sm mb-3">Menu Utama</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <a href="buat-kelas.html" class="col-span-2 bg-brand-green rounded-2xl p-4 shadow-sm border border-emerald-500 hover:bg-emerald-700 hover:shadow-md transition-all flex items-center justify-between active:scale-95 text-white overflow-hidden relative">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-bl-full -mr-4 -mt-4 pointer-events-none"></div>
+                        <div class="flex items-center gap-4 relative z-10"><div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-xl shrink-0"><i class="fas fa-plus"></i></div><div><h3 class="font-bold text-sm tracking-wide">Buat Kelas Baru</h3><p class="text-[10px] text-emerald-100 mt-0.5">Hasilkan QR & Kode Kelas</p></div></div>
+                        <i class="fas fa-chevron-right text-emerald-200 relative z-10 mr-2"></i>
+                    </a>
+                    <a href="upload-materi.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-amber-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95"><div class="w-12 h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 transition-all"><i class="fas fa-book-open"></i></div><h3 class="text-xs font-bold text-slate-700">Materi & Handout</h3><p class="text-[9px] text-slate-400 mt-1">Unggah bahan ajar</p></a>
+                    <a href="upload-artikel.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-blue-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95"><div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 transition-all"><i class="fas fa-newspaper"></i></div><h3 class="text-xs font-bold text-slate-700">Berita & Artikel</h3><p class="text-[9px] text-slate-400 mt-1">Terbitkan tulisan</p></a>
+                    <a href="profil.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-rose-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95"><div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 transition-all"><i class="fas fa-user-edit"></i></div><h3 class="text-xs font-bold text-slate-700">Profil Saya</h3><p class="text-[9px] text-slate-400 mt-1">Ubah foto & data</p></a>
+                    <a href="../index.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-indigo-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95"><div class="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 transition-all"><i class="fas fa-home"></i></div><h3 class="text-xs font-bold text-slate-700">Beranda</h3><p class="text-[9px] text-slate-400 mt-1">Halaman siswa</p></a>
                 </div>
+            </div>
+
+            <div class="h-2 bg-slate-100 w-full mt-6"></div>
+
+            <!-- KELAS AKTIF -->
+            <section class="px-4 mt-6">
+                <h2 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-3"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Ruang Kelas Aktif</h2>
+                <div id="activeClassesGrid" class="flex flex-col gap-3"></div>
+                <div id="activeEmptyState" class="hidden bg-white p-6 rounded-2xl border border-slate-200 border-dashed text-center"><div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-300"><i class="fas fa-door-open text-xl"></i></div><p class="font-bold text-slate-700 text-sm mb-1">Belum Ada Kelas</p><p class="text-[10px] text-slate-500 max-w-[220px] mx-auto">Buat ruang kelas baru untuk mulai mengundang siswa.</p></div>
             </section>
 
-            <div class="h-1 bg-slate-200/50 w-full mb-6 rounded-full"></div>
+            <div class="h-2 bg-slate-100 w-full mt-6"></div>
 
-            <!-- ARSIP -->
-            <section class="mb-4">
-                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-4">
-                    <i class="fas fa-archive text-slate-400"></i> Arsip Selesai
-                </h3>
-                <div id="archivedClassesGrid" class="flex flex-col gap-3">
-                    <div class="bg-slate-100 h-16 rounded-2xl skeleton-pulse border border-slate-200"></div>
-                </div>
-                <div id="archiveEmptyState" class="hidden bg-slate-50 p-6 rounded-3xl border border-slate-200 border-dashed text-center">
-                    <p class="font-medium text-slate-500 text-xs"><i class="fas fa-folder-open text-slate-300 mr-1.5"></i> Belum ada arsip.</p>
-                </div>
+            <!-- ARSIP KELAS -->
+            <section class="px-4 mt-6 pb-6">
+                <h2 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-3"><i class="fas fa-box-archive text-slate-400"></i> Arsip Selesai</h2>
+                <div id="archivedClassesGrid" class="flex flex-col gap-3"></div>
+                <div id="archiveEmptyState" class="hidden bg-slate-50 p-5 rounded-2xl border border-slate-200 border-dashed text-center"><p class="font-medium text-slate-500 text-xs"><i class="fas fa-folder-open text-slate-300 mr-1.5"></i> Belum ada arsip.</p></div>
             </section>
         </div>
     </main>
 
-    <footer class="flex-shrink-0 bg-white border-t border-slate-200 pt-3 text-center z-30" style="padding-bottom:calc(.75rem + env(safe-area-inset-bottom,0px))">
-        <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Portal Manajemen Guru</p>
+    <!-- FOOTER -->
+    <footer class="flex-shrink-0 bg-white border-t border-slate-200 py-4 text-center z-30 mt-auto">
+        <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi Guru</p>
     </footer>
 
-    <!-- TOAST (di dalam frame, di bawah header) -->
-    <div id="toastContainer" class="absolute left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-[92%] pointer-events-none" style="top:calc(4.5rem + env(safe-area-inset-top,0px))"></div>
+    <!-- WADAH TOAST NOTIFIKASI -->
+    <div id="toastContainer" class="fixed top-16 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
 
     <!-- MODAL KONFIRMASI -->
-    <div id="modalConfirm" class="overlay bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="alertdialog" aria-modal="true">
+    <div id="modalConfirm" class="overlay bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4" role="alertdialog" aria-modal="true">
         <div class="modal-box bg-white w-full max-w-sm rounded-3xl p-6 flex flex-col items-center text-center shadow-2xl">
             <div id="confirmIcon" class="w-16 h-16 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-3xl mb-4"><i class="fas fa-exclamation-triangle"></i></div>
             <h3 class="text-lg font-bold text-slate-800 mb-2" id="confirmTitle">Konfirmasi</h3>
-            <p class="text-sm text-slate-500 mb-6" id="confirmMessage"></p>
-            <div class="flex gap-3 w-full">
-                <button data-act="close-modal" data-target="modalConfirm" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors active:scale-95">Batal</button>
-                <button id="btnConfirmAction" class="flex-1 text-white font-bold py-3 rounded-xl transition-colors shadow-md active:scale-95">Yakin</button>
+            <p class="text-xs text-slate-500 mb-6 leading-relaxed" id="confirmMessage"></p>
+            <div class="grid grid-cols-2 gap-3 w-full">
+                <button data-act="close-modal" data-target="modalConfirm" class="bg-slate-100 text-slate-600 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors active:scale-95 text-xs">Batal</button>
+                <button id="btnConfirmAction" class="text-white font-bold py-3.5 rounded-xl transition-colors shadow-md active:scale-95 text-xs">Yakin</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL QR -->
-    <div id="modalQR" class="overlay bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <!-- MODAL QR CODE -->
+    <div id="modalQR" class="overlay bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true">
         <div class="modal-box bg-white w-full max-w-sm rounded-3xl p-6 relative flex flex-col items-center text-center shadow-2xl">
             <button data-act="close-modal" data-target="modalQR" aria-label="Tutup" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors"><i class="fas fa-times text-lg"></i></button>
-            <h3 class="text-lg font-bold text-slate-800 mt-2 mb-1 max-w-[85%] break-words" id="qrNamaKelas"></h3>
-            <p class="text-xs text-slate-500 mb-5">Minta siswa scan QR ini untuk bergabung</p>
-            <div class="bg-white p-3 rounded-2xl border-4 border-emerald-100 shadow-inner mb-4 inline-block">
-                <div id="qrCanvasContainer" class="w-[200px] h-[200px] bg-slate-50 flex items-center justify-center"></div>
-            </div>
-            <div class="bg-slate-100 px-6 py-3 rounded-xl mb-6 w-full border border-slate-200">
-                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Kode Kelas Manual</p>
-                <p class="text-2xl font-black text-slate-800 tracking-[0.2em]" id="qrKodeTeks">------</p>
-            </div>
-            <button data-act="download-qr" class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl hover:bg-emerald-700 transition-colors shadow-md active:scale-95 flex items-center justify-center gap-2"><i class="fas fa-download"></i> Unduh Gambar QR</button>
+            <h3 class="text-base font-extrabold text-slate-800 mt-2 mb-1 max-w-[85%] break-words" id="qrNamaKelas"></h3>
+            <p class="text-[11px] text-slate-500 mb-5">Minta siswa scan QR ini untuk bergabung</p>
+            <div class="bg-white p-3 rounded-2xl border-4 border-emerald-100 shadow-inner mb-4 inline-block"><div id="qrCanvasContainer" class="w-[200px] h-[200px] bg-slate-50 flex items-center justify-center"></div></div>
+            <div class="bg-slate-100 px-6 py-3 rounded-xl mb-6 w-full border border-slate-200"><p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Kode Kelas Manual</p><p class="text-2xl font-black text-slate-800 tracking-[0.2em]" id="qrKodeTeks">------</p></div>
+            <button data-act="download-qr" class="w-full bg-brand-green text-white font-bold py-3.5 rounded-xl hover:bg-emerald-700 transition-colors shadow-md active:scale-95 flex items-center justify-center gap-2 text-sm"><i class="fas fa-download"></i> Unduh Gambar QR</button>
         </div>
     </div>
 </div>
@@ -219,275 +197,158 @@
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, getCountFromServer, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" });
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", authDomain: "mading-cf676.firebaseapp.com", projectId: "mading-cf676" });
+    const auth = getAuth(app), db = getFirestore(app);
 
-    const $ = (id) => document.getElementById(id);
-    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const withTimeout = (p, ms) => Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error('TIMEOUT')), ms))]);
-    const isArsip = (s) => s === 'archived' || s === 'selesai';
+    const isArsip = s => s === 'archived' || s === 'selesai';
+    const PERAN_GURU = ['teacher', 'guru', 'admin'];     // peran yang boleh membuka panel ini
 
-    let currentGuru = null, currentActiveKode = "", confirmCallback = null, sedangMuat = false;
+    let currentGuru = null, currentUser = null, currentActiveKode = '', confirmCallback = null, sedangMuat = false;
 
-    /* ---------- TOAST ---------- */
     function showToast(msg, isError = false) {
         const t = document.createElement('div');
-        t.className = `${isError ? 'bg-red-600' : 'bg-slate-800'} text-white px-4 py-3 rounded-lg shadow-lg text-xs font-bold flex items-center gap-3 -translate-y-4 opacity-0 transition-all duration-300`;
-        const i = document.createElement('i');
-        i.className = `fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle text-emerald-400'}`;
-        const s = document.createElement('span'); s.textContent = msg;
-        t.append(i, s);
-        $('toastContainer').appendChild(t);
+        t.className = `${isError ? 'bg-red-600' : 'bg-slate-800'} text-white px-4 py-3 rounded-xl shadow-lg text-xs font-bold flex items-center gap-3 -translate-y-4 opacity-0 transition-all duration-300`;
+        const i = document.createElement('i'); i.className = `fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle text-emerald-400'}`;
+        const s = document.createElement('span'); s.textContent = msg; t.append(i, s); $('toastContainer').appendChild(t);
         requestAnimationFrame(() => t.classList.remove('-translate-y-4', 'opacity-0'));
         setTimeout(() => { t.classList.add('-translate-y-4', 'opacity-0'); setTimeout(() => t.remove(), 300); }, 3000);
     }
 
-    /* ---------- MODAL ---------- */
-    const bukaModal = (id) => $(id).classList.add('show');
-    const tutupModal = (id) => $(id).classList.remove('show');
-    ['modalConfirm', 'modalQR'].forEach((id) => $(id).addEventListener('click', (e) => { if (e.target === e.currentTarget) tutupModal(id); }));
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ['modalConfirm', 'modalQR'].forEach(tutupModal); });
-
+    const bukaModal = id => $(id).classList.add('show'), tutupModal = id =>$(id).classList.remove('show');
+    ['modalConfirm', 'modalQR'].forEach(id => $(id).addEventListener('click', e => { if (e.target === e.currentTarget) tutupModal(id); }));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') ['modalConfirm', 'modalQR'].forEach(tutupModal); });
+    
     function showConfirm({ title, message, icon, iconColor, btnText, btnColor, onConfirm }) {
-        $('confirmTitle').textContent = title;
-        $('confirmMessage').textContent = message;
-        $('confirmIcon').className = `w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-4 ${iconColor}`;
-        $('confirmIcon').innerHTML = `<i class="${icon}"></i>`;
-        const btn = $('btnConfirmAction');
-        btn.textContent = btnText;
-        btn.className = `flex-1 text-white font-bold py-3 rounded-xl transition-colors shadow-md active:scale-95 ${btnColor}`;
-        confirmCallback = onConfirm;
-        bukaModal('modalConfirm');
+        $('confirmTitle').textContent = title; $('confirmMessage').textContent = message;
+        $('confirmIcon').className = `w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-4 ${iconColor}`; $('confirmIcon').innerHTML = `<i class="${icon}"></i>`;
+        const btn = $('btnConfirmAction'); btn.textContent = btnText; btn.className = `text-white font-bold py-3 rounded-xl transition-colors shadow-md active:scale-95 text-xs ${btnColor}`;
+        confirmCallback = onConfirm; bukaModal('modalConfirm');
     }
     $('btnConfirmAction').addEventListener('click', () => { tutupModal('modalConfirm'); const cb = confirmCallback; confirmCallback = null; if (cb) cb(); });
 
-    /* ---------- SAPAAN ---------- */
+    /* ---------- Sapaan & Info Akun ---------- */
     function tampilkanSapaan(nama) {
         const jam = new Date().getHours();
-        const [waktu, sub] =
-            jam < 4  ? ['Selamat malam', 'Terima kasih sudah mendampingi siswa hingga larut. Jangan lupa beristirahat.'] :
-            jam < 11 ? ['Selamat pagi',  'Semoga hari mengajar Anda menyenangkan dan penuh semangat.'] :
-            jam < 15 ? ['Selamat siang', 'Semoga kegiatan belajar hari ini berjalan lancar.'] :
-            jam < 18 ? ['Selamat sore',  'Terima kasih atas dedikasi Anda hari ini.'] :
-                       ['Selamat malam', 'Terima kasih sudah mendampingi siswa hari ini.'];
-        $('greetText').textContent = waktu + ',';
-        $('greetSub').textContent = sub;
-
-        const el = $('welcomeName');
-        el.textContent = nama;
-        el.className = 'block font-bold text-amber-400 break-words leading-tight ' + (nama.length > 25 ? 'text-lg' : nama.length > 15 ? 'text-xl' : 'text-2xl');
-        $('skeletonWelcomeContent').classList.add('hidden');
-        $('realWelcomeContent').classList.remove('hidden');
+        const [waktu, sub] = jam < 4 ? ['Selamat malam', 'Terima kasih sudah mendampingi siswa hingga larut. Jangan lupa beristirahat.'] : jam < 11 ? ['Selamat pagi', 'Semoga hari mengajar Anda menyenangkan dan penuh semangat.'] : jam < 15 ? ['Selamat siang', 'Semoga kegiatan belajar hari ini berjalan lancar.'] : jam < 18 ? ['Selamat sore', 'Terima kasih atas dedikasi Anda hari ini.'] : ['Selamat malam', 'Terima kasih sudah mendampingi siswa hari ini.'];
+        $('greetText').textContent = waktu + ',';$('greetSub').textContent = sub;
+        const el = $('welcomeName'); el.textContent = nama; el.className = 'block font-extrabold text-white break-words leading-tight ' + (nama.length > 25 ? 'text-lg' : nama.length > 15 ? 'text-xl' : 'text-2xl');
+        $('sapaanSk').classList.add('hidden');$('sapaanReal').classList.remove('hidden');
+    }
+    function tampilkanAkun(user, nama) {
+        const el = $('akunNama'); el.textContent = nama; el.classList.remove('sk', 'h-5', 'w-28');$('akunEmail').textContent = user.email || '';
+        const google = (user.providerData || []).some(p => p.providerId === 'google.com');
+        const chip = $('chipVerif'); const teks = google ? 'Masuk dengan Google' : user.emailVerified ? 'Email terverifikasi' : '';
+        if (teks) { chip.querySelector('span').textContent = teks; chip.classList.remove('hidden'); chip.classList.add('inline-flex'); }
     }
 
-    /* ---------- AUTH ---------- */
-    onAuthStateChanged(auth, async (user) => {
+    /* ---------- Panel Ditolak ---------- */
+    function tampilTolak(user, data) {
+        const peran = data ? (data.role || '(kosong)') : '(data akun belum ada)';
+        $('tolakEmail').textContent = user.email || '(tanpa email)'; $('tolakPeran').textContent = peran; $('tolakUid').textContent = user.uid;
+        $('tolakMetode').textContent = (user.providerData || []).some(p => p.providerId === 'google.com') ? 'Google' : 'Email & kata sandi';
+        $('panelGuru').classList.add('hidden');$('panelTolak').classList.remove('hidden');
+    }
+
+    onAuthStateChanged(auth, async user => {
         if (!user) { window.location.href = '../login.html'; return; }
+        currentUser = user;
         try {
-            const snap = await getDoc(doc(db, "users", user.uid));
-            if (!snap.exists()) { await signOut(auth); window.location.href = '../login.html'; return; }
-            const d = snap.data();
-            if (d.role !== 'teacher' && d.role !== 'admin') { window.location.href = '../index.html'; return; }
-            currentGuru = { uid: user.uid, nama: d.namaLengkap || "Guru" };
-            tampilkanSapaan(currentGuru.nama);
+            const snap = await getDoc(doc(db, 'users', user.uid));
+            const d = snap.exists() ? snap.data() : null;
+            if (!d || !PERAN_GURU.includes(String(d.role || '').toLowerCase())) { tampilTolak(user, d); return; }
+            currentGuru = { uid: user.uid, nama: d.namaLengkap || user.displayName || 'Guru' };
+            tampilkanSapaan(currentGuru.nama); tampilkanAkun(user, currentGuru.nama);
+            loadClassesData();
         } catch (e) {
-            console.error(e);
-            window.location.href = '../login.html';
-            return;
+            console.error(e); showToast('Gagal memeriksa akun. Periksa koneksi lalu muat ulang.', true);
+            $('sapaanSk').innerHTML = '<p class="text-white text-sm font-semibold">Tidak dapat memuat akun.</p><button data-act="reload-page" class="mt-2 bg-white/20 text-white text-xs font-bold px-4 py-2 rounded-lg border border-white/40">Muat Ulang</button>';
         }
-        loadClassesData();
     });
 
-    /* ---------- DATA KELAS ---------- */
-    async function hitungSiswa(id, cadangan) {
-        try {
-            const s = await withTimeout(getCountFromServer(collection(db, 'classes', id, 'students')), 6000);
-            return s.data().count;
-        } catch (e) { return cadangan || 0; }
-    }
-
+    /* ---------- Memuat Kelas ---------- */
+    async function hitungSiswa(id, cadangan) { try { return (await withTimeout(getCountFromServer(collection(db, 'classes', id, 'students')), 6000)).data().count; } catch (e) { return cadangan || 0; } }
     const kartuAktif = (id, d, jumlah) => {
         const sma = String(d.jenjang || '').toLowerCase() === 'sma';
-        return `
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-            <div class="${sma ? 'bg-blue-600' : 'bg-amber-500'} p-3 text-white flex justify-between items-center gap-2">
-                <div class="flex items-center gap-2 min-w-0">
-                    <span class="bg-white/20 text-white text-[8px] font-bold px-1.5 py-0.5 rounded tracking-widest uppercase shrink-0">${sma ? 'SMA' : 'SMP'}</span>
-                    <h3 class="font-bold text-sm truncate">${esc(d.namaKelas)}</h3>
-                </div>
-                <button data-act="copy" data-id="${esc(id)}" class="bg-white text-slate-800 font-black text-xs tracking-widest px-2 py-1 rounded shadow-sm active:scale-95 transition-transform shrink-0">
-                    ${esc(id)} <i class="far fa-copy text-[10px] ml-1"></i>
-                </button>
+        return `<div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col fade-in">
+            <div class="bg-brand-green p-3 text-white flex justify-between items-center gap-2">
+                <div class="flex items-center gap-2 min-w-0"><span class="${sma ? 'bg-blue-500' : 'bg-amber-500'} text-white text-[8px] font-bold px-1.5 py-0.5 rounded tracking-widest uppercase shrink-0">${sma ? 'SMA' : 'SMP'}</span><h3 class="font-bold text-sm truncate">${esc(d.namaKelas)}</h3></div>
+                <button data-act="copy" data-id="${esc(id)}" class="bg-white text-slate-800 font-black text-xs tracking-widest px-2 py-1 rounded shadow-sm active:scale-95 transition-transform shrink-0">${esc(id)} <i class="far fa-copy text-[10px] ml-1"></i></button>
             </div>
             <div class="p-4 flex flex-col gap-3">
                 <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                    <div class="flex items-center gap-2">
-                        <div class="w-6 h-6 bg-slate-200 text-slate-500 rounded-full flex items-center justify-center text-[10px]"><i class="fas fa-users"></i></div>
-                        <div>
-                            <p class="text-[9px] font-bold text-slate-400 uppercase leading-none">Siswa Bergabung</p>
-                            <p class="text-xs font-black text-slate-800">${jumlah}</p>
-                        </div>
-                    </div>
-                    <button data-act="qr" data-id="${esc(id)}" data-nama="${esc(d.namaKelas)}" class="text-[9px] font-bold ${sma ? 'text-blue-600' : 'text-amber-600'} bg-white px-3 py-1.5 rounded border border-slate-200 shadow-sm hover:bg-slate-50 active:scale-95 transition-colors">
-                        <i class="fas fa-qrcode mr-1"></i> LIHAT QR
-                    </button>
+                    <div class="flex items-center gap-2"><div class="w-6 h-6 bg-slate-200 text-slate-500 rounded-full flex items-center justify-center text-[10px]"><i class="fas fa-users"></i></div><div><p class="text-[9px] font-bold text-slate-400 uppercase leading-none">Siswa Bergabung</p><p class="text-xs font-black text-slate-800">${jumlah}</p></div></div>
+                    <button data-act="qr" data-id="${esc(id)}" data-nama="${esc(d.namaKelas)}" class="text-[9px] font-bold text-brand-green bg-white px-3 py-1.5 rounded border border-slate-200 shadow-sm hover:bg-slate-50 active:scale-95 transition-colors"><i class="fas fa-qrcode mr-1"></i> LIHAT QR</button>
                 </div>
-                <div class="flex gap-2">
-                    <button data-act="end" data-id="${esc(id)}" data-nama="${esc(d.namaKelas)}" class="bg-red-50 text-red-500 font-bold py-2 px-3 rounded-lg text-[10px] active:scale-95 border border-red-100 shrink-0">Akhiri</button>
-                    <a href="ruang-kelas.html?id=${encodeURIComponent(id)}" class="flex-1 bg-slate-900 text-white font-bold py-2 rounded-lg text-center text-xs shadow-sm hover:bg-slate-800 active:scale-95 transition-all">Buka Panel Kelas</a>
-                </div>
-            </div>
-        </div>`;
+                <div class="flex gap-2"><button data-act="end" data-id="${esc(id)}" data-nama="${esc(d.namaKelas)}" class="bg-red-50 text-red-500 font-bold py-2 px-3 rounded-lg text-[10px] active:scale-95 border border-red-100 shrink-0 transition-colors hover:bg-red-100">Akhiri</button><a href="ruang-kelas.html?id=${encodeURIComponent(id)}" class="flex-1 bg-slate-900 text-white font-bold py-2 rounded-lg text-center text-xs shadow-sm hover:bg-slate-800 active:scale-95 transition-all">Buka Panel Kelas</a></div>
+            </div></div>`;
     };
-
-    const kartuArsip = (id, d) => `
-        <div class="bg-slate-50 rounded-2xl border border-slate-200 p-3.5 flex items-center justify-between gap-3 opacity-80 hover:opacity-100 transition-opacity">
-            <div class="flex items-center gap-3 min-w-0">
-                <div class="w-8 h-8 bg-slate-200 text-slate-500 rounded-lg flex items-center justify-center text-sm shrink-0"><i class="fas fa-archive"></i></div>
-                <div class="min-w-0">
-                    <h4 class="font-bold text-slate-700 text-xs truncate">${esc(d.namaKelas)}</h4>
-                    <p class="text-[9px] text-slate-400 font-bold mt-0.5">Kode: ${esc(id)}</p>
-                </div>
-            </div>
-            <a href="ruang-kelas.html?id=${encodeURIComponent(id)}" class="bg-white border border-slate-200 text-slate-600 font-bold px-3 py-1.5 rounded-lg text-[10px] shadow-sm active:scale-95 shrink-0">Laporan</a>
-        </div>`;
-
-    const skeletonKelas = `
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="bg-slate-200 h-12 w-full skeleton-pulse"></div>
-            <div class="p-4"><div class="bg-slate-100 h-12 rounded-lg skeleton-pulse"></div></div>
-        </div>`;
-    const skeletonArsip = `<div class="bg-slate-100 h-16 rounded-2xl skeleton-pulse border border-slate-200"></div>`;
+    const kartuArsip = (id, d) => `<div class="bg-slate-50 rounded-2xl border border-slate-200 p-3.5 flex items-center justify-between gap-3 opacity-80 hover:opacity-100 transition-opacity">
+        <div class="flex items-center gap-3 min-w-0"><div class="w-8 h-8 bg-slate-200 text-slate-500 rounded-lg flex items-center justify-center text-sm shrink-0"><i class="fas fa-box-archive"></i></div><div class="min-w-0"><h4 class="font-bold text-slate-700 text-xs truncate">${esc(d.namaKelas)}</h4><p class="text-[9px] text-slate-400 font-bold mt-0.5">Kode: ${esc(id)}</p></div></div>
+        <a href="ruang-kelas.html?id=${encodeURIComponent(id)}" class="bg-white border border-slate-200 text-slate-600 font-bold px-3 py-1.5 rounded-lg text-[10px] shadow-sm active:scale-95 shrink-0 transition-colors hover:bg-slate-100">Laporan</a></div>`;
+    const skKelas = '<div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"><div class="sk h-12 w-full !rounded-none"></div><div class="p-4"><div class="sk h-12"></div></div></div>';
 
     function tampilkanError() {
-        $('activeEmptyState').classList.add('hidden');
-        $('activeClassesGrid').classList.remove('hidden');
-        $('activeClassesGrid').innerHTML = `
-            <div class="bg-white p-5 rounded-2xl border border-red-100 text-center shadow-sm">
-                <p class="text-xs text-slate-600 mb-3">Data kelas belum bisa dimuat. Periksa koneksi Anda.</p>
-                <button data-act="reload" class="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg active:scale-95"><i class="fas fa-redo mr-1"></i> Coba lagi</button>
-            </div>`;
+        $('activeEmptyState').classList.add('hidden'); $('activeClassesGrid').classList.remove('hidden');$('activeClassesGrid').innerHTML = '<div class="bg-white p-5 rounded-2xl border border-red-100 text-center shadow-sm"><p class="text-xs text-slate-600 mb-3">Data kelas belum bisa dimuat. Periksa koneksi Anda.</p><button data-act="reload" class="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg active:scale-95"><i class="fas fa-redo mr-1"></i> Coba lagi</button></div>';
         $('archivedClassesGrid').innerHTML = '';
     }
-
     async function loadClassesData() {
-        if (sedangMuat || !currentGuru) return;
-        sedangMuat = true;
-        $('activeClassesGrid').innerHTML = skeletonKelas;
-        $('archivedClassesGrid').innerHTML = skeletonArsip;
+        if (sedangMuat || !currentGuru) return; sedangMuat = true;
+        $('activeClassesGrid').innerHTML = skKelas; $('archivedClassesGrid').innerHTML = '<div class="sk h-16"></div>';
         try {
-            // Tanpa orderBy di server (menghindari kebutuhan composite index); diurutkan di sini.
-            const snap = await withTimeout(getDocs(query(collection(db, "classes"), where("guruId", "==", currentGuru.uid))), 15000);
-            const ms = (d) => (d.data().createdAt && d.data().createdAt.toMillis) ? d.data().createdAt.toMillis() : 0;
+            const snap = await withTimeout(getDocs(query(collection(db, 'classes'), where('guruId', '==', currentGuru.uid))), 15000);
+            const ms = d => (d.data().createdAt && d.data().createdAt.toMillis) ? d.data().createdAt.toMillis() : 0;
             const docs = snap.docs.sort((a, b) => ms(b) - ms(a));
-
-            const aktif = docs.filter((d) => !isArsip(d.data().status) && d.data().status === 'active');
-            const arsip = docs.filter((d) => isArsip(d.data().status));
-            const jumlah = await Promise.all(aktif.map((d) => hitungSiswa(d.id, d.data().jumlahSiswa)));
-
-            $('statKelasAktif').textContent = aktif.length;
-            $('statKelasArsip').textContent = arsip.length;
-
-            const gA = $('activeClassesGrid'), gR = $('archivedClassesGrid');
-            gA.innerHTML = aktif.map((d, i) => kartuAktif(d.id, d.data(), jumlah[i])).join('');
-            gR.innerHTML = arsip.map((d) => kartuArsip(d.id, d.data())).join('');
-            gA.classList.toggle('hidden', !aktif.length);
-            $('activeEmptyState').classList.toggle('hidden', !!aktif.length);
-            gR.classList.toggle('hidden', !arsip.length);
-            $('archiveEmptyState').classList.toggle('hidden', !!arsip.length);
-        } catch (e) {
-            console.error(e);
-            tampilkanError();
-            showToast("Gagal menarik data kelas dari server.", true);
-        } finally {
-            sedangMuat = false;
-        }
+            const aktif = docs.filter(d => d.data().status === 'active'), arsip = docs.filter(d => isArsip(d.data().status));
+            const jumlah = await Promise.all(aktif.map(d => hitungSiswa(d.id, d.data().jumlahSiswa)));
+            $('statKelasAktif').textContent = aktif.length; $('statKelasArsip').textContent = arsip.length; $('statSiswa').textContent = jumlah.reduce((a, b) => a + b, 0);
+            const gA = $('activeClassesGrid'), gR =$('archivedClassesGrid');
+            gA.innerHTML = aktif.map((d, i) => kartuAktif(d.id, d.data(), jumlah[i])).join(''); gR.innerHTML = arsip.map(d => kartuArsip(d.id, d.data())).join('');
+            gA.classList.toggle('hidden', !aktif.length); $('activeEmptyState').classList.toggle('hidden', !!aktif.length);
+            gR.classList.toggle('hidden', !arsip.length); $('archiveEmptyState').classList.toggle('hidden', !!arsip.length);
+        } catch (e) { console.error(e); tampilkanError(); showToast('Gagal menarik data kelas dari server.', true); }
+        finally { sedangMuat = false; }
     }
 
-    /* ---------- QR ---------- */
+    /* ---------- Interaksi Tombol (QR, Salin, Dll) ---------- */
     function previewQR(id, nama) {
-        $('qrNamaKelas').textContent = nama;
-        $('qrKodeTeks').textContent = id;
-        currentActiveKode = id;
-        const box = $('qrCanvasContainer');
-        box.innerHTML = "";
-        try {
-            new QRCode(box, { text: id, width: 200, height: 200, colorDark: "#064e3b", colorLight: "#f8fafc", correctLevel: QRCode.CorrectLevel.H });
-        } catch (e) { box.textContent = "QR gagal dibuat"; }
+        $('qrNamaKelas').textContent = nama; $('qrKodeTeks').textContent = id; currentActiveKode = id;
+        const box = $('qrCanvasContainer'); box.innerHTML = '';
+        try { new QRCode(box, { text: id, width: 200, height: 200, colorDark: '#064e3b', colorLight: '#f8fafc', correctLevel: QRCode.CorrectLevel.H }); } catch (e) { box.textContent = 'QR gagal dibuat'; }
         bukaModal('modalQR');
     }
-
     function unduhQR() {
-        const canvas = document.querySelector('#qrCanvasContainer canvas');
-        if (!canvas) return showToast("Gambar QR belum siap, coba lagi.", true);
-        try {
-            const a = document.createElement('a');
-            a.href = canvas.toDataURL("image/png");
-            a.download = `QR_Kelas_${currentActiveKode}.png`;
-            document.body.appendChild(a); a.click(); a.remove();
-            showToast("QR Code berhasil diunduh!");
-        } catch (e) { showToast("Gagal mengunduh gambar.", true); }
+        const canvas = document.querySelector('#qrCanvasContainer canvas'); if (!canvas) return showToast('Gambar QR belum siap, coba lagi.', true);
+        try { const a = document.createElement('a'); a.href = canvas.toDataURL('image/png'); a.download = `QR_Kelas_${currentActiveKode}.png`; document.body.appendChild(a); a.click(); a.remove(); showToast('QR Code berhasil diunduh!'); } catch (e) { showToast('Gagal mengunduh gambar.', true); }
     }
-
-    /* ---------- SALIN ---------- */
-    async function salinKode(kode) {
-        try {
-            await navigator.clipboard.writeText(kode);
-        } catch (e) {
-            const t = document.createElement('textarea');
-            t.value = kode; t.style.cssText = 'position:fixed;opacity:0';
-            document.body.appendChild(t); t.select();
-            let ok = false;
-            try { ok = document.execCommand('copy'); } catch (_) {}
-            t.remove();
-            if (!ok) return showToast("Gagal menyalin. Salin kode secara manual.", true);
-        }
-        showToast(`Kode ${kode} disalin!`);
+    async function salin(teks, pesan) {
+        try { await navigator.clipboard.writeText(teks); }
+        catch (e) { const t = document.createElement('textarea'); t.value = teks; t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (_) {} t.remove(); if (!ok) return showToast('Gagal menyalin. Salin secara manual.', true); }
+        showToast(pesan);
     }
-
-    /* ---------- LOGOUT & AKHIRI KELAS ---------- */
     function konfirmasiLogout() {
-        showConfirm({
-            title: "Keluar dari Sistem?", message: "Anda harus login kembali untuk mengakses panel guru.",
-            icon: "fas fa-sign-out-alt", iconColor: "bg-red-50 text-red-500", btnText: "Keluar", btnColor: "bg-red-600 hover:bg-red-700",
-            onConfirm: async () => {
-                try { await signOut(auth); } catch (e) { console.error(e); }
-                window.location.href = '../login.html';
-            }
-        });
+        showConfirm({ title: 'Keluar dari Sistem?', message: 'Anda harus login kembali untuk mengakses panel guru.', icon: 'fas fa-sign-out-alt', iconColor: 'bg-red-50 text-red-500', btnText: 'Keluar', btnColor: 'bg-red-600 hover:bg-red-700',
+            onConfirm: async () => { try { await signOut(auth); } catch (e) { console.error(e); } window.location.href = '../login.html'; } });
     }
-
     function konfirmasiAkhiriKelas(id, nama) {
-        showConfirm({
-            title: "Akhiri Kelas?",
-            message: `Anda akan MENGAKHIRI kelas "${nama}". Siswa tidak akan bisa masuk lagi ke ruang kelas ini. Tindakan ini permanen.`,
-            icon: "fas fa-door-closed", iconColor: "bg-amber-50 text-amber-500", btnText: "Akhiri Kelas", btnColor: "bg-amber-500 hover:bg-amber-600",
-            onConfirm: async () => {
-                try {
-                    await updateDoc(doc(db, "classes", id), { status: 'archived', archivedAt: serverTimestamp() });
-                    showToast("Kelas berhasil diarsipkan!");
-                    await loadClassesData();
-                } catch (e) {
-                    console.error(e);
-                    showToast("Terjadi kesalahan saat menutup kelas.", true);
-                }
-            }
-        });
+        showConfirm({ title: 'Akhiri Kelas?', message: `Anda akan MENGAKHIRI kelas "${nama}". Siswa tidak akan bisa masuk lagi ke ruang kelas ini. Tindakan ini permanen.`, icon: 'fas fa-door-closed', iconColor: 'bg-amber-50 text-amber-500', btnText: 'Akhiri Kelas', btnColor: 'bg-amber-500 hover:bg-amber-600',
+            onConfirm: async () => { try { await updateDoc(doc(db, 'classes', id), { status: 'archived', archivedAt: serverTimestamp() }); showToast('Kelas berhasil diarsipkan!'); await loadClassesData(); } catch (e) { console.error(e); showToast('Terjadi kesalahan saat menutup kelas.', true); } } });
     }
 
-    /* ---------- EVENT DELEGATION (tanpa onclick inline, aman untuk nama kelas berisi tanda kutip) ---------- */
-    document.addEventListener('click', (e) => {
-        const el = e.target.closest('[data-act]');
-        if (!el) return;
+    document.addEventListener('click', e => {
+        const el = e.target.closest('[data-act]'); if (!el) return;
         const { act, id, nama, target } = el.dataset;
         if (act === 'logout') konfirmasiLogout();
-        else if (act === 'copy') salinKode(id);
+        else if (act === 'copy') salin(id, `Kode ${id} disalin!`);
+        else if (act === 'copy-uid') salin(currentUser ? currentUser.uid : '', 'ID akun disalin! Kirim ke administrator.');
         else if (act === 'qr') previewQR(id, nama);
         else if (act === 'end') konfirmasiAkhiriKelas(id, nama);
         else if (act === 'download-qr') unduhQR();
         else if (act === 'close-modal') tutupModal(target);
         else if (act === 'reload') loadClassesData();
+        else if (act === 'reload-page') location.reload();
     });
 </script>
 </body>
