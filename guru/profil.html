@@ -50,13 +50,13 @@
         canvas { touch-action: none; }
     </style>
 </head>
-<body class="flex justify-center h-screen overflow-hidden">
+<body class="flex justify-center min-h-screen">
 
     <!-- CONTAINER UTAMA -->
-    <div class="w-full max-w-md bg-slate-50 relative h-full shadow-2xl flex flex-col sm:border-x border-slate-200">
+    <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
 
         <!-- HEADER STICKY (Fix & Nempel) -->
-        <header class="bg-brand-green shrink-0 h-14 px-4 flex items-center justify-between shadow-md relative z-50">
+        <header class="sticky top-0 z-50 bg-brand-green h-14 px-4 flex items-center justify-between shadow-md">
             <div class="flex items-center gap-3">
                 <a href="index.html" aria-label="Kembali" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
                     <i class="fas fa-chevron-left"></i>
@@ -74,7 +74,7 @@
         </header>
 
         <!-- AREA SCROLL KONTEN -->
-        <div class="flex-grow overflow-y-auto hide-scrollbar relative z-10 flex flex-col">
+        <div class="flex-grow flex flex-col relative z-10">
             
             <!-- ==================== SKELETON LOADING ==================== -->
             <div id="viewSkeleton" class="flex-grow pb-10">
@@ -218,7 +218,7 @@
         </div>
 
         <!-- FOOTER (Fix di Bawah) -->
-        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 z-40 relative">
+        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto">
             <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi Guru.</p>
         </footer>
     </div>
@@ -336,7 +336,7 @@
             fotoProfil: ''
         };
 
-        // Buka skeleton & tampilkan data real (Mencegah skeleton nyangkut)
+        // Buka skeleton & tampilkan data real
         function hilangkanSkeleton() {
             $('viewSkeleton').classList.add('hidden');
             $('viewContent').classList.remove('hidden');$('btnPencilHeader').classList.remove('hidden');
@@ -506,7 +506,12 @@
 
         const vStage = $('viewerStage');
         vStage.addEventListener('pointerdown', e => { if (vZoom <= 1) return; vDrag = true; vStartX = e.clientX - vPanX; vStartY = e.clientY - vPanY; vStage.setPointerCapture(e.pointerId); });
-        vStage.addEventListener('pointermove', e => { if (!vDrag) return; vPanX = e.clientX - vStartX; vPanY = e.clientY - vStartY; updateViewerTransform(); });
+        vStage.addEventListener('pointermove', e => {
+            if (!vDrag) return;
+            vPanX = e.clientX - vStartX;
+            vPanY = e.clientY - vStartY;
+            updateViewerTransform();
+        });
         vStage.addEventListener('pointerup', () => { vDrag = false; });
 
         window.hapusFotoProfil = async function() {
@@ -639,8 +644,8 @@
 
         // ==================== INISIALISASI & FIREBASE ====================
         
-        // Panggil renderProfil dengan data dari localStorage seketika halaman dibuka!
-        // Sehingga Skeleton langsung dihapus dan user tidak menunggu loading kosong
+        // Panggil renderProfil dan hilangkanSkeleton SECARA INSTAN!
+        // Menjamin skeleton hilang bahkan tanpa koneksi internet sama sekali.
         bacaLocalProfil();
         renderProfil();
         hilangkanSkeleton();
@@ -673,7 +678,7 @@
                 profil.bio = d.bio || profil.bio;
 
                 simpanKeLocal();
-                renderProfil(); // Update jika ada perubahan dari cloud
+                renderProfil(); // Perbarui UI bila ada perubahan sinkronisasi dari Cloud
             } catch (err) {
                 console.warn("Sinkronisasi cloud lambat/gagal, memakai data lokal.", err);
             }
