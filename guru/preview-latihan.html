@@ -25,22 +25,83 @@
             <div class="w-8 h-8"></div>
         </header>
 
+        <header class="bg-violet-600 shrink-0 h-14 px-4 flex items-center justify-between shadow-md relative z-50">
+            <button onclick="history.back()" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition shrink-0"><i class="fas fa-chevron-left"></i></button>
+            <div class="flex-1 text-center"><h1 class="text-white font-bold text-sm tracking-wide" id="hdrTitle">Review Latihan</h1></div>
+            <button id="btnSimpan" onclick="simpanPerubahan()" class="hidden bg-white text-violet-600 px-3 py-1 rounded-full font-bold text-[10px] active:scale-95 transition shadow-sm items-center gap-1"><i class="fas fa-save"></i> Simpan</button>
+        </header>
+
         <main id="mainContainer" class="flex-grow overflow-y-auto hide-scrollbar relative bg-slate-50 flex flex-col p-4 space-y-4">
             <div id="loading" class="flex items-center justify-center py-20 text-slate-400"><i class="fas fa-circle-notch fa-spin text-3xl"></i></div>
 
-            <div id="content" class="hidden space-y-4">
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-800 leading-relaxed">
-                    <i class="fas fa-info-circle mr-1 text-amber-500"></i> Mode Review. Guru dapat melihat soal yang dihasilkan AI. Fitur edit/tambah akan dikembangkan pada rilis berikutnya.
-                </div>
+            <div id="content" class="hidden space-y-4 pb-16">
                 <div id="listSoal" class="space-y-3"></div>
+                <button onclick="tambahSoal()" class="w-full bg-white border-2 border-dashed border-slate-300 text-slate-500 hover:text-brand-green hover:border-brand-green font-bold py-3 rounded-xl transition-all active:scale-95 text-xs flex items-center justify-center gap-2">
+                    <i class="fas fa-plus-circle"></i> Tambah Soal Baru
+                </button>
             </div>
         </main>
     </div>
 
+    <!-- MODAL EDITOR SOAL -->
+    <div id="modalEditor" class="fixed inset-0 bg-slate-900/60 z-[99999] hidden items-end sm:items-center justify-center">
+        <div class="up bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <h3 id="modalTitle" class="font-bold text-slate-800 text-sm">Edit Soal</h3>
+                <button onclick="tutupModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="p-4 overflow-y-auto hide-scrollbar space-y-3 flex-grow">
+                <!-- Group Struktur -->
+                <div id="fgStruktur" class="hidden space-y-3">
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Teks Kalimat</label><textarea id="inStTeks" class="w-full text-xs p-2.5 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-green" rows="3"></textarea></div>
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Label</label><select id="inStLabel" class="w-full text-xs p-2.5 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-green"><option value="tesis">Tesis</option><option value="argumen">Argumen</option><option value="kesimpulan">Kesimpulan</option></select></div>
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Alasan</label><textarea id="inStAlasan" class="w-full text-xs p-2.5 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-green" rows="2"></textarea></div>
+                </div>
+
+                <!-- Group Kritis/Pilgan/Esai -->
+                <div id="fgSoal" class="hidden space-y-3">
+                    <div id="fgKonteks" class="hidden">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Wacana / Konteks (Opsional)</label>
+                        <textarea id="inKonteks" class="w-full text-xs p-2.5 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-green" rows="2"></textarea>
+                    </div>
+                    <div id="fgKonsep" class="hidden">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Konsep (Opsional)</label>
+                        <input type="text" id="inKonsep" class="w-full text-xs p-2.5 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-green" placeholder="Misal: Sesat Pikir">
+                    </div>
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pertanyaan</label><textarea id="inTanya" class="w-full text-xs p-2.5 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-green" rows="3"></textarea></div>
+
+                    <!-- Pilihan Ganda -->
+                    <div id="fgOpsi" class="hidden space-y-2">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase">Pilihan Jawaban</label>
+                        <div class="flex gap-2 items-center"><input type="radio" name="rKunci" value="0" id="k0"><input type="text" id="inOpsi0" class="flex-1 text-[11px] p-2 border border-slate-200 rounded" placeholder="Opsi A"></div>
+                        <div class="flex gap-2 items-center"><input type="radio" name="rKunci" value="1" id="k1"><input type="text" id="inOpsi1" class="flex-1 text-[11px] p-2 border border-slate-200 rounded" placeholder="Opsi B"></div>
+                        <div class="flex gap-2 items-center"><input type="radio" name="rKunci" value="2" id="k2"><input type="text" id="inOpsi2" class="flex-1 text-[11px] p-2 border border-slate-200 rounded" placeholder="Opsi C"></div>
+                        <div class="flex gap-2 items-center"><input type="radio" name="rKunci" value="3" id="k3"><input type="text" id="inOpsi3" class="flex-1 text-[11px] p-2 border border-slate-200 rounded" placeholder="Opsi D"></div>
+                    </div>
+
+                    <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pembahasan / Kunci</label><textarea id="inBahas" class="w-full text-[11px] p-2.5 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-green" rows="3"></textarea></div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tingkat</label><select id="inTingkat" class="w-full text-[11px] p-2.5 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-green"><option value="mudah">Mudah</option><option value="sedang">Sedang</option><option value="sulit">Sulit</option><option value="hots">HOTS</option></select></div>
+                        <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Waktu (Detik)</label><input type="number" id="inWaktu" class="w-full text-[11px] p-2.5 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-green"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-100 shrink-0">
+                <button onclick="simpanModal()" class="w-full bg-brand-green text-white font-bold py-3 rounded-xl shadow-md active:scale-95 transition text-xs">Simpan Item</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toastContainer" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-3 pointer-events-none w-[90%] max-w-sm"></div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" });
         const auth = getAuth(app);
@@ -48,25 +109,43 @@
         const $ = id => document.getElementById(id);
         const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+        let globalClassId = null, globalMod = null, globalAiPaket = {}, currentData = [];
+        let editIndex = -1;
+
+        window.showToast = function(msg, isError = false) {
+            const container = $('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `${isError ? 'bg-red-600' : 'bg-slate-800'} text-white px-4 py-3 rounded-xl shadow-xl text-xs font-bold flex items-center justify-center gap-2 transform translate-y-5 opacity-0 transition-all duration-300 pointer-events-auto w-full text-center`;
+            toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle text-emerald-400'}"></i> ${esc(msg)}`;
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-y-5', 'opacity-0'));
+            setTimeout(() => { toast.classList.add('translate-y-5', 'opacity-0'); setTimeout(() => toast.remove(), 300); }, 3000);
+        };
+
         onAuthStateChanged(auth, async user => {
             if (!user) return location.href = '../login.html';
             const qs = new URLSearchParams(location.search);
-            const classId = qs.get('id'), mod = qs.get('mod');
-            if (!classId || !mod) return history.back();
+            globalClassId = qs.get('id');
+            globalMod = qs.get('mod');
+            if (!globalClassId || !globalMod) return history.back();
 
             try {
-                const docSnap = await getDoc(doc(db, "classes", classId));
+                const docSnap = await getDoc(doc(db, "classes", globalClassId));
                 if (!docSnap.exists() || (docSnap.data().guruId !== user.uid && (await getDoc(doc(db, "users", user.uid))).data().role !== 'admin')) {
                     throw new Error('Akses ditolak');
                 }
-                const aiPaket = docSnap.data().aiPaket || {};
-                const modData = aiPaket[mod];
+                globalAiPaket = docSnap.data().aiPaket || {};
+                const modData = globalAiPaket[globalMod];
                 if (!modData) throw new Error('Modul tidak ditemukan');
 
-                const BAGIAN = { pilgan: 'Pilihan Ganda', struktur: 'Bedah Struktur', esai: 'Esai Argumentasi', kritis: 'Uji Berpikir' };
-                $('hdrTitle').textContent = BAGIAN[mod] || 'Review Latihan';
+                currentData = globalMod === 'struktur' ? (modData.teks || []) : (modData.soal || []);
 
-                renderSoal(mod, modData);
+                const BAGIAN = { pilgan: 'Pilihan Ganda', struktur: 'Bedah Struktur', esai: 'Esai Argumentasi', kritis: 'Uji Berpikir' };
+                $('hdrTitle').textContent = BAGIAN[globalMod] || 'Review Latihan';
+
+                renderSoal();
+                $('btnSimpan').classList.remove('hidden');
+                $('btnSimpan').classList.add('flex');
             } catch(e) {
                 console.error(e);
                 alert('Gagal memuat data: ' + e.message);
@@ -80,34 +159,55 @@
             return `<span class="bg-${c}-100 text-${c}-700 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase">${n}</span>`;
         }
 
-        function renderSoal(mod, data) {
+        window.renderSoal = function() {
             let html = '';
-            if (mod === 'struktur') {
-                html = (data.teks || []).map((t, i) => `
-                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                        <div class="flex gap-2 mb-2"><span class="w-5 h-5 rounded bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold">${i+1}</span><span class="bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase">${esc(t.label)}</span></div>
+            const actionBtns = i => `
+                <div class="flex gap-2">
+                    <button onclick="editSoal(${i})" class="w-6 h-6 rounded-full bg-blue-50 text-blue-500 hover:bg-blue-100 flex items-center justify-center transition-colors"><i class="fas fa-pen text-[10px]"></i></button>
+                    <button onclick="hapusSoal(${i})" class="w-6 h-6 rounded-full bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition-colors"><i class="fas fa-trash text-[10px]"></i></button>
+                </div>`;
+
+            if (globalMod === 'struktur') {
+                html = currentData.map((t, i) => `
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm relative group">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex gap-2 items-center"><span class="w-5 h-5 rounded bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold">${i+1}</span><span class="bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase">${esc(t.label)}</span></div>
+                            ${actionBtns(i)}
+                        </div>
                         <p class="text-xs text-slate-800 leading-relaxed mb-2">${esc(t.t)}</p>
                         <p class="text-[10px] text-slate-500 bg-slate-50 p-2 rounded border border-slate-100"><b class="text-slate-700">Alasan:</b> ${esc(t.alasan)}</p>
                     </div>
                 `).join('');
-            } else if (mod === 'esai') {
-                html = (data.soal || []).map((s, i) => `
-                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                        <div class="flex justify-between items-center mb-2">
-                            <div class="flex gap-2"><span class="w-5 h-5 rounded bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold">${i+1}</span>${badge(s.tingkat)}</div>
-                            <span class="text-[10px] text-slate-400 font-semibold"><i class="far fa-clock"></i> ${s.waktu}s</span>
+            } else if (globalMod === 'esai') {
+                html = currentData.map((s, i) => `
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm relative group">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex gap-2 items-center"><span class="w-5 h-5 rounded bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold">${i+1}</span>${badge(s.tingkat)}</div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-[10px] text-slate-400 font-semibold"><i class="far fa-clock"></i> ${s.waktu}s</span>
+                                ${actionBtns(i)}
+                            </div>
                         </div>
                         <p class="text-xs text-slate-800 leading-relaxed font-semibold mb-2">${esc(s.p)}</p>
                         <p class="text-[10px] text-slate-500 bg-emerald-50 p-2 rounded border border-emerald-100"><b class="text-emerald-700">Kunci/Poin Penting:</b> ${esc(s.bahas)}</p>
                     </div>
                 `).join('');
             } else {
-                html = (data.soal || []).map((s, i) => `
-                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                        <div class="flex justify-between items-center mb-2">
-                            <div class="flex gap-2 items-center"><span class="w-5 h-5 rounded bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold shrink-0">${i+1}</span>${badge(s.tingkat)} ${s.konsep ? `<span class="text-[9px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full truncate max-w-[100px]">${esc(s.konsep)}</span>` : ''}</div>
-                            <span class="text-[10px] text-slate-400 font-semibold shrink-0"><i class="far fa-clock"></i> ${s.waktu}s</span>
+                html = currentData.map((s, i) => `
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm relative group">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex gap-2 items-center flex-wrap">
+                                <span class="w-5 h-5 rounded bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold shrink-0">${i+1}</span>
+                                ${badge(s.tingkat)}
+                                ${s.konsep ? `<span class="text-[9px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full truncate max-w-[100px]">${esc(s.konsep)}</span>` : ''}
+                                ${s.konteks ? `<span class="text-[9px] bg-sky-50 text-sky-600 px-2 py-0.5 rounded-full border border-sky-100" title="Wacana"><i class="fas fa-quote-left"></i> Wacana</span>` : ''}
+                            </div>
+                            <div class="flex items-center gap-3 shrink-0">
+                                <span class="text-[10px] text-slate-400 font-semibold"><i class="far fa-clock"></i> ${s.waktu}s</span>
+                                ${actionBtns(i)}
+                            </div>
                         </div>
+                        ${s.konteks ? `<div class="mb-2 bg-slate-50 border-l-4 border-sky-500 p-2 rounded-r text-[10px] text-slate-600 italic leading-relaxed">${esc(s.konteks)}</div>` : ''}
                         <p class="text-xs text-slate-800 leading-relaxed font-semibold mb-2">${esc(s.p)}</p>
                         <div class="space-y-1 mb-2">
                             ${(s.opsi||[]).map((o, k) => `<div class="text-[11px] p-1.5 rounded ${k===s.j ? 'bg-emerald-100 text-emerald-800 font-semibold' : 'bg-slate-50 text-slate-600'} border ${k===s.j ? 'border-emerald-200' : 'border-slate-100'}"><span class="mr-1">${['A','B','C','D'][k]}.</span> ${esc(o)}</div>`).join('')}
@@ -117,10 +217,166 @@
                 `).join('');
             }
 
-            $('listSoal').innerHTML = html || '<div class="text-center text-xs text-slate-400 py-10">Data kosong</div>';
+            $('listSoal').innerHTML = html || '<div class="text-center text-xs text-slate-400 py-10">Belum ada soal. Tambahkan soal baru.</div>';
             $('loading').classList.add('hidden');
             $('content').classList.remove('hidden');
         }
+
+        window.bukaModal = function(i = -1) {
+            editIndex = i;
+            $('modalTitle').textContent = i >= 0 ? 'Edit Soal' : 'Tambah Soal Baru';
+
+            // Reset
+            ['inStTeks', 'inStAlasan', 'inKonteks', 'inKonsep', 'inTanya', 'inOpsi0', 'inOpsi1', 'inOpsi2', 'inOpsi3', 'inBahas'].forEach(id => {
+                if ($(id)) $(id).value = '';
+            });
+            ['k0', 'k1', 'k2', 'k3'].forEach(id => {
+                if ($(id)) $(id).checked = false;
+            });
+
+            if (globalMod === 'struktur') {
+                $('fgStruktur').classList.remove('hidden');
+                $('fgSoal').classList.add('hidden');
+                if (i >= 0) {
+                    const d = currentData[i];
+                    $('inStTeks').value = d.t || '';
+                    $('inStLabel').value = d.label || 'tesis';
+                    $('inStAlasan').value = d.alasan || '';
+                }
+            } else {
+                $('fgStruktur').classList.add('hidden');
+                $('fgSoal').classList.remove('hidden');
+
+                $('fgOpsi').classList.toggle('hidden', globalMod === 'esai');
+                $('fgKonteks').classList.toggle('hidden', globalMod !== 'kritis');
+                $('fgKonsep').classList.toggle('hidden', globalMod !== 'kritis');
+
+                if (i >= 0) {
+                    const d = currentData[i];
+                    $('inTanya').value = d.p || '';
+                    $('inBahas').value = d.bahas || '';
+                    $('inTingkat').value = d.tingkat || 'sedang';
+                    $('inWaktu').value = d.waktu || 60;
+
+                    if (globalMod !== 'esai') {
+                        (d.opsi || []).forEach((o, k) => {
+                            if ($('inOpsi'+k)) $('inOpsi'+k).value = o;
+                        });
+                        if (d.j >= 0 && d.j <= 3) $('k'+d.j).checked = true;
+                    }
+                    if (globalMod === 'kritis') {
+                        $('inKonteks').value = d.konteks || '';
+                        $('inKonsep').value = d.konsep || '';
+                    }
+                } else {
+                    $('inTingkat').value = 'sedang';
+                    $('inWaktu').value = globalMod === 'esai' ? 300 : 60;
+                    if (globalMod !== 'esai') $('k0').checked = true;
+                }
+            }
+
+            $('modalEditor').classList.replace('hidden', 'flex');
+        };
+
+        window.tutupModal = function() {
+            $('modalEditor').classList.replace('flex', 'hidden');
+        };
+
+        window.simpanModal = function() {
+            let newItem = {};
+            if (globalMod === 'struktur') {
+                newItem = {
+                    t: $('inStTeks').value.trim(),
+                    label: $('inStLabel').value,
+                    alasan: $('inStAlasan').value.trim()
+                };
+                if (!newItem.t) return showToast("Teks kalimat tidak boleh kosong", true);
+            } else {
+                newItem = {
+                    p: $('inTanya').value.trim(),
+                    bahas: $('inBahas').value.trim(),
+                    tingkat: $('inTingkat').value,
+                    waktu: parseInt($('inWaktu').value) || 60
+                };
+                if (!newItem.p) return showToast("Pertanyaan tidak boleh kosong", true);
+
+                if (globalMod !== 'esai') {
+                    newItem.opsi = [
+                        $('inOpsi0').value.trim(),
+                        $('inOpsi1').value.trim(),
+                        $('inOpsi2').value.trim(),
+                        $('inOpsi3').value.trim()
+                    ];
+                    if (newItem.opsi.some(o => !o)) return showToast("Semua opsi (A-D) harus diisi", true);
+                    const k = document.querySelector('input[name="rKunci"]:checked');
+                    if (!k) return showToast("Pilih salah satu kunci jawaban", true);
+                    newItem.j = parseInt(k.value);
+                }
+
+                if (globalMod === 'kritis') {
+                    newItem.konteks = $('inKonteks').value.trim();
+                    newItem.konsep = $('inKonsep').value.trim();
+                }
+            }
+
+            if (editIndex >= 0) {
+                currentData[editIndex] = newItem;
+            } else {
+                currentData.push(newItem);
+            }
+
+            tutupModal();
+            renderSoal();
+        };
+
+        window.hapusSoal = function(i) {
+            if (confirm('Yakin ingin menghapus item ini?')) {
+                currentData.splice(i, 1);
+                renderSoal();
+            }
+        };
+
+        window.editSoal = function(i) {
+            bukaModal(i);
+        };
+
+        window.tambahSoal = function() {
+            bukaModal(-1);
+        };
+
+        window.simpanPerubahan = async function() {
+            const btn = $('btnSimpan');
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Menyimpan...';
+            btn.disabled = true;
+
+            try {
+                let totalWaktu = 0;
+                if (globalMod === 'struktur') {
+                    totalWaktu = currentData.length * 40;
+                    globalAiPaket.struktur = {
+                        ...globalAiPaket.struktur,
+                        teks: currentData,
+                        waktu: totalWaktu
+                    };
+                } else {
+                    totalWaktu = currentData.reduce((t, s) => t + (s.waktu || 60), 0);
+                    globalAiPaket[globalMod] = {
+                        ...globalAiPaket[globalMod],
+                        soal: currentData,
+                        total: totalWaktu
+                    };
+                }
+
+                await updateDoc(doc(db, "classes", globalClassId), { aiPaket: globalAiPaket });
+                showToast("Perubahan berhasil disimpan.");
+            } catch (e) {
+                console.error(e);
+                showToast("Gagal menyimpan: " + e.message, true);
+            } finally {
+                btn.innerHTML = '<i class="fas fa-save"></i> Simpan';
+                btn.disabled = false;
+            }
+        };
     </script>
 </body>
 </html>
