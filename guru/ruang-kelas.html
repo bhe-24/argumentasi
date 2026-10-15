@@ -30,40 +30,7 @@
     </script>
 
     <style>
-        /* Base Styling Mobile First */
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            background-color: #e2e8f0; 
-            -webkit-tap-highlight-color: transparent; 
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        /* Frame Mobile */
-        .mobile-frame {
-            width: 100%;
-            max-width: 448px; 
-            height: 100vh;
-            background-color: #f8fafc;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            overflow: hidden; 
-        }
-        
-        @media (min-width: 640px) {
-            .mobile-frame {
-                height: 90vh;
-                border-radius: 1.5rem; 
-                border: 8px solid #334155; 
-            }
-        }
-
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         .font-display { font-family: 'Playfair Display', serif; }
         .texture-dots { background-image: radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px); background-size: 16px 16px; }
         
@@ -78,10 +45,10 @@
         @keyframes skeleton-loading { 0% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
-<body>
+<body class="flex justify-center h-screen h-[100dvh] overflow-hidden bg-slate-100">
 
-    <!-- CONTAINER UTAMA (MOBILE FRAME) -->
-    <div class="mobile-frame fade-in">
+    <!-- CONTAINER UTAMA -->
+    <div class="w-full max-w-md bg-slate-50 relative h-full shadow-2xl flex flex-col sm:border-x border-slate-200 overflow-hidden fade-in">
 
         <!-- HEADER STICKY -->
         <header class="flex-shrink-0 bg-slate-900 border-b-4 border-amber-500 relative z-40">
@@ -132,9 +99,10 @@
                 
                 <!-- BAGIAN: MATERI AI -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-5">
-                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
-                        <i class="fas fa-wand-magic-sparkles text-violet-500"></i> Materi & Latihan Interaktif
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-1">
+                        <i class="fas fa-wand-magic-sparkles text-violet-500"></i> Kelola Materi & Latihan
                     </h3>
+                    <p class="text-[10px] text-slate-500 mb-4 pb-2 border-b border-slate-100 leading-relaxed">Review, tambahkan, atau ubah soal yang dihasilkan AI untuk menyesuaikan dengan kebutuhan siswa.</p>
                     
                     <div class="grid grid-cols-2 gap-3" id="aiModulesContainer">
                         <!-- Skeleton Loading Level -->
@@ -263,7 +231,7 @@
             const BAGIAN = [
                 { key: 'pilgan', n: 'Pilihan Ganda', ic: 'fa-circle-check', c: 'blue', d: 'Soal bertingkat s.d HOTS', meta: p => `${(p.pilgan?.soal || []).length} soal · ${formatWaktu(p.pilgan?.total || 300)}` },
                 { key: 'struktur', n: 'Bedah Struktur', ic: 'fa-layer-group', c: 'amber', d: 'Labeli struktur argumen', meta: p => `${(p.struktur?.teks || []).length} baris · ${formatWaktu(p.struktur?.waktu || 180)}` },
-                { key: 'esai', n: 'Isi Argumentasi', ic: 'fa-pen-nib', c: 'emerald', d: 'Pilih argumen terkuat', meta: p => `${(p.esai?.soal || []).length} soal · ${formatWaktu(p.esai?.total || 300)}` },
+                { key: 'esai', n: 'Esai Argumentasi', ic: 'fa-pen-nib', c: 'emerald', d: 'Jawab dengan analisis logis', meta: p => `${(p.esai?.soal || []).length} soal · ${formatWaktu(p.esai?.total || 300)}` },
                 { key: 'kritis', n: 'Uji Berpikir', ic: 'fa-brain', c: 'rose', d: 'Teori & logika penalaran', meta: p => `${(p.kritis?.soal || []).length} soal · ${formatWaktu(p.kritis?.total || 300)}` }
             ];
 
@@ -276,13 +244,13 @@
                     <div class="w-8 h-8 rounded-lg bg-${b.c}-100 text-${b.c}-600 flex items-center justify-center text-sm mb-2 shadow-sm relative z-10"><i class="fas ${b.ic}"></i></div>
                     <h4 class="font-bold text-[11px] text-slate-800 leading-tight mb-1 relative z-10">${b.n}</h4>
                     <p class="text-[9px] text-slate-500 leading-snug flex-grow relative z-10">${b.d}</p>
-                    <p class="text-[9px] font-bold text-slate-400 mt-2 relative z-10 bg-white/80 w-max px-2 py-0.5 rounded-full border border-slate-100">${b.meta(aiPaket)}</p>
+                    <div class="mt-2 relative z-10 flex justify-between items-center">
+                        <span class="text-[9px] font-bold text-slate-400 bg-white/80 w-max px-2 py-0.5 rounded-full border border-slate-100">${b.meta(aiPaket)}</span>
+                        <span class="text-[9px] font-bold text-violet-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">Review <i class="fas fa-arrow-right"></i></span>
+                    </div>
                 </a>`;
             });
             container.innerHTML = html;
-
-            // Note: url links currently point to 'preview-latihan.html' which might not exist.
-            // Adjust the href to point to the actual preview/edit page for teachers if necessary.
         }
 
         // 3. LEADERBOARD REALTIME LISTENER

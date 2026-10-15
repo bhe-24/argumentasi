@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Preview Latihan - Argumentasi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }
+    </script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex justify-center h-screen h-[100dvh] overflow-hidden bg-slate-100">
+    <div class="w-full max-w-md bg-slate-50 relative h-full shadow-2xl flex flex-col sm:border-x border-slate-200 overflow-hidden">
+
+        <header class="bg-violet-600 shrink-0 h-14 px-4 flex items-center justify-between shadow-md relative z-50">
+            <button onclick="history.back()" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition shrink-0"><i class="fas fa-chevron-left"></i></button>
+            <div class="flex-1 text-center"><h1 class="text-white font-bold text-sm tracking-wide" id="hdrTitle">Review Latihan</h1></div>
+            <div class="w-8 h-8"></div>
+        </header>
+
+        <main id="mainContainer" class="flex-grow overflow-y-auto hide-scrollbar relative bg-slate-50 flex flex-col p-4 space-y-4">
+            <div id="loading" class="flex items-center justify-center py-20 text-slate-400"><i class="fas fa-circle-notch fa-spin text-3xl"></i></div>
+
+            <div id="content" class="hidden space-y-4">
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-800 leading-relaxed">
+                    <i class="fas fa-info-circle mr-1 text-amber-500"></i> Mode Review. Guru dapat melihat soal yang dihasilkan AI. Fitur edit/tambah akan dikembangkan pada rilis berikutnya.
+                </div>
+                <div id="listSoal" class="space-y-3"></div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" });
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const $ = id => document.getElementById(id);
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+        onAuthStateChanged(auth, async user => {
+            if (!user) return location.href = '../login.html';
+            const qs = new URLSearchParams(location.search);
+            const classId = qs.get('id'), mod = qs.get('mod');
+            if (!classId || !mod) return history.back();
+
+            try {
+                const docSnap = await getDoc(doc(db, "classes", classId));
+                if (!docSnap.exists() || (docSnap.data().guruId !== user.uid && (await getDoc(doc(db, "users", user.uid))).data().role !== 'admin')) {
+                    throw new Error('Akses ditolak');
+                }
+                const aiPaket = docSnap.data().aiPaket || {};
+                const modData = aiPaket[mod];
+                if (!modData) throw new Error('Modul tidak ditemukan');
+
+                const BAGIAN = { pilgan: 'Pilihan Ganda', struktur: 'Bedah Struktur', esai: 'Esai Argumentasi', kritis: 'Uji Berpikir' };
+                $('hdrTitle').textContent = BAGIAN[mod] || 'Review Latihan';
+
+                renderSoal(mod, modData);
+            } catch(e) {
+                console.error(e);
+                alert('Gagal memuat data: ' + e.message);
+                history.back();
+            }
+        });
+
+        function badge(t) {
+            const map = { mudah: ['emerald', 'Mudah'], sedang: ['sky', 'Sedang'], sulit: ['amber', 'Sulit'], hots: ['rose', 'HOTS'] };
+            const [c, n] = map[t] || map.sedang;
+            return `<span class="bg-${c}-100 text-${c}-700 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase">${n}</span>`;
+        }
+
+        function renderSoal(mod, data) {
+            let html = '';
+            if (mod === 'struktur') {
+                html = (data.teks || []).map((t, i) => `
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex gap-2 mb-2"><span class="w-5 h-5 rounded bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold">${i+1}</span><span class="bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase">${esc(t.label)}</span></div>
+                        <p class="text-xs text-slate-800 leading-relaxed mb-2">${esc(t.t)}</p>
+                        <p class="text-[10px] text-slate-500 bg-slate-50 p-2 rounded border border-slate-100"><b class="text-slate-700">Alasan:</b> ${esc(t.alasan)}</p>
+                    </div>
+                `).join('');
+            } else if (mod === 'esai') {
+                html = (data.soal || []).map((s, i) => `
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="flex gap-2"><span class="w-5 h-5 rounded bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold">${i+1}</span>${badge(s.tingkat)}</div>
+                            <span class="text-[10px] text-slate-400 font-semibold"><i class="far fa-clock"></i> ${s.waktu}s</span>
+                        </div>
+                        <p class="text-xs text-slate-800 leading-relaxed font-semibold mb-2">${esc(s.p)}</p>
+                        <p class="text-[10px] text-slate-500 bg-emerald-50 p-2 rounded border border-emerald-100"><b class="text-emerald-700">Kunci/Poin Penting:</b> ${esc(s.bahas)}</p>
+                    </div>
+                `).join('');
+            } else {
+                html = (data.soal || []).map((s, i) => `
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="flex gap-2 items-center"><span class="w-5 h-5 rounded bg-slate-800 text-white flex items-center justify-center text-[10px] font-bold shrink-0">${i+1}</span>${badge(s.tingkat)} ${s.konsep ? `<span class="text-[9px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full truncate max-w-[100px]">${esc(s.konsep)}</span>` : ''}</div>
+                            <span class="text-[10px] text-slate-400 font-semibold shrink-0"><i class="far fa-clock"></i> ${s.waktu}s</span>
+                        </div>
+                        <p class="text-xs text-slate-800 leading-relaxed font-semibold mb-2">${esc(s.p)}</p>
+                        <div class="space-y-1 mb-2">
+                            ${(s.opsi||[]).map((o, k) => `<div class="text-[11px] p-1.5 rounded ${k===s.j ? 'bg-emerald-100 text-emerald-800 font-semibold' : 'bg-slate-50 text-slate-600'} border ${k===s.j ? 'border-emerald-200' : 'border-slate-100'}"><span class="mr-1">${['A','B','C','D'][k]}.</span> ${esc(o)}</div>`).join('')}
+                        </div>
+                        <p class="text-[10px] text-slate-500 bg-slate-50 p-2 rounded border border-slate-100"><b class="text-slate-700">Bahas:</b> ${esc(s.bahas)}</p>
+                    </div>
+                `).join('');
+            }
+
+            $('listSoal').innerHTML = html || '<div class="text-center text-xs text-slate-400 py-10">Data kosong</div>';
+            $('loading').classList.add('hidden');
+            $('content').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
