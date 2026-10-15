@@ -27,7 +27,7 @@
     </script>
 
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         .up { animation: up 0.3s ease-out both; }
         @keyframes up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -50,13 +50,14 @@
         canvas { touch-action: none; }
     </style>
 </head>
-<body class="flex justify-center min-h-screen">
+<!-- Kunci ketinggian body sebesar viewport -->
+<body class="flex justify-center h-screen h-[100dvh] overflow-hidden">
 
     <!-- CONTAINER UTAMA -->
-    <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
+    <div class="w-full max-w-md bg-slate-50 relative h-full shadow-2xl flex flex-col sm:border-x border-slate-200 overflow-hidden">
 
-        <!-- HEADER STICKY (Fix & Nempel) -->
-        <header class="sticky top-0 z-50 bg-brand-green h-14 px-4 flex items-center justify-between shadow-md">
+        <!-- HEADER STICKY (Pasti Nempel) -->
+        <header class="bg-brand-green shrink-0 h-14 px-4 flex items-center justify-between shadow-md z-50">
             <div class="flex items-center gap-3">
                 <a href="index.html" aria-label="Kembali" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
                     <i class="fas fa-chevron-left"></i>
@@ -74,7 +75,7 @@
         </header>
 
         <!-- AREA SCROLL KONTEN -->
-        <div class="flex-grow flex flex-col relative z-10">
+        <div class="flex-grow overflow-y-auto hide-scrollbar relative z-10 flex flex-col">
             
             <!-- ==================== SKELETON LOADING ==================== -->
             <div id="viewSkeleton" class="flex-grow pb-10">
@@ -218,7 +219,7 @@
         </div>
 
         <!-- FOOTER (Fix di Bawah) -->
-        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto">
+        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 z-40 relative">
             <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi Guru.</p>
         </footer>
     </div>
@@ -318,7 +319,15 @@
         const db = getFirestore(app);
 
         const $ = id => document.getElementById(id);
-        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        
+        // Memastikan escape text tidak ada error sintaks lagi.
+        const esc = (s) => {
+            if (!s) return '';
+            const t = String(s);
+            const chars = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+            return t.replace(/[&<>"']/g, c => chars[c]);
+        };
+        
         const PERAN_GURU = ['teacher', 'guru', 'admin'];
 
         let currentUser = null;
@@ -338,13 +347,18 @@
 
         // Buka skeleton & tampilkan data real
         function hilangkanSkeleton() {
-            $('viewSkeleton').classList.add('hidden');
-            $('viewContent').classList.remove('hidden');$('btnPencilHeader').classList.remove('hidden');
+            const skel = $('viewSkeleton');
+            const cont = $('viewContent');
+            const pnc = $('btnPencilHeader');
+            if (skel) skel.classList.add('hidden');
+            if (cont) cont.classList.remove('hidden');
+            if (pnc) pnc.classList.remove('hidden');
         }
 
         // Toast Notification Function
         function toast(msg, err = false) {
             const c = $('toastContainer');
+            if (!c) return;
             const t = document.createElement('div');
             t.className = `${err ? 'bg-red-600' : 'bg-slate-800'} text-white px-4 py-3 rounded-xl shadow-lg text-xs font-bold flex items-center gap-3 -translate-y-4 opacity-0 transition-all duration-300`;
             t.innerHTML = `<i class="fas ${err ? 'fa-exclamation-circle' : 'fa-check-circle text-emerald-400'}"></i><span class="flex-1">${esc(msg)}</span>`;
@@ -359,9 +373,11 @@
                 const raw = JSON.parse(localStorage.getItem('profilGuruCendekia') || '{}');
                 profil = { ...profil, ...raw };
             } catch (e) {}
+            
             const n = localStorage.getItem('namaGuruCendekia');
             const f = localStorage.getItem('fotoGuruCendekia');
             const m = localStorage.getItem('mapelGuruCendekia');
+            
             if (n) profil.namaLengkap = n;
             if (f) profil.fotoProfil = f;
             if (m) profil.mapel = m;
@@ -370,22 +386,35 @@
         function simpanKeLocal() {
             localStorage.setItem('namaGuruCendekia', profil.namaLengkap);
             localStorage.setItem('mapelGuruCendekia', profil.mapel);
-            if (profil.fotoProfil) localStorage.setItem('fotoGuruCendekia', profil.fotoProfil);
-            else localStorage.removeItem('fotoGuruCendekia');
+            if (profil.fotoProfil) {
+                localStorage.setItem('fotoGuruCendekia', profil.fotoProfil);
+            } else {
+                localStorage.removeItem('fotoGuruCendekia');
+            }
             localStorage.setItem('profilGuruCendekia', JSON.stringify(profil));
         }
 
         // Render Tampilan Profil
         function renderProfil() {
-            $('dispHeaderNama').textContent = profil.namaLengkap || 'Guru Argumentasi';
-            $('dispHeaderMapel').textContent = profil.mapel \vert{}\vert{} 'Bahasa Indonesia';$('dispHeaderBio').textContent = profil.bio || 'Pengajar aktif di platform Argumentasi.';
+            const dispNama = $('dispHeaderNama');
+            const dispMapel = $('dispHeaderMapel');
+            const dispBio = $('dispHeaderBio');
+            const avaImg = $('avatarImg');
+            const avaIco = $('avatarIcon');
+            const viewMode = $('boxViewMode');
+            
+            if (dispNama) dispNama.textContent = profil.namaLengkap ? profil.namaLengkap : 'Guru Argumentasi';
+            if (dispMapel) dispMapel.textContent = profil.mapel ? profil.mapel : 'Bahasa Indonesia';
+            if (dispBio) dispBio.textContent = profil.bio ? profil.bio : 'Pengajar aktif di platform Argumentasi.';
 
-            if (profil.fotoProfil) {
-                $('avatarImg').src = profil.fotoProfil;
-                $('avatarImg').classList.remove('hidden');$('avatarIcon').classList.add('hidden');
-            } else {
-                $('avatarImg').src = '';
-                $('avatarImg').classList.add('hidden');$('avatarIcon').classList.remove('hidden');
+            if (profil.fotoProfil && avaImg && avaIco) {
+                avaImg.src = profil.fotoProfil;
+                avaImg.classList.remove('hidden');
+                avaIco.classList.add('hidden');
+            } else if (avaImg && avaIco) {
+                avaImg.src = '';
+                avaImg.classList.add('hidden');
+                avaIco.classList.remove('hidden');
             }
 
             const baris = [
@@ -401,26 +430,33 @@
                 ['fa-quote-left', 'Bio / Motto', profil.bio]
             ];
 
-            $('boxViewMode').innerHTML = baris.map(([ic, lbl, val]) => `
-                <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50/80 border border-slate-100">
-                    <div class="w-8 h-8 rounded-lg bg-white text-brand-green flex items-center justify-center text-xs shadow-sm shrink-0 mt-0.5">
-                        <i class="${ic.includes('fab') ? ic : 'fas ' + ic}"></i>
+            if (viewMode) {
+                viewMode.innerHTML = baris.map(([ic, lbl, val]) => `
+                    <div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50/80 border border-slate-100">
+                        <div class="w-8 h-8 rounded-lg bg-white text-brand-green flex items-center justify-center text-xs shadow-sm shrink-0 mt-0.5">
+                            <i class="${ic.includes('fab') ? ic : 'fas ' + ic}"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-[9px] font-bold uppercase tracking-wider text-slate-400">${esc(lbl)}</p>
+                            <p class="text-xs font-semibold ${val ? 'text-slate-800' : 'text-slate-400 italic'} break-words mt-0.5">${val ? esc(val) : 'Belum diisi'}</p>
+                        </div>
                     </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-[9px] font-bold uppercase tracking-wider text-slate-400">${esc(lbl)}</p>
-                        <p class="text-xs font-semibold ${val ? 'text-slate-800' : 'text-slate-400 italic'} break-words mt-0.5">${val ? esc(val) : 'Belum diisi'}</p>
-                    </div>
-                </div>
-            `).join('');
+                `).join('');
+            }
         }
 
         // ---- MODE LIHAT vs MODE EDIT ----
         window.masukModeEdit = function() {
-            $('inNama').value = profil.namaLengkap \vert{}\vert{} '';$('inMapel').value = profil.mapel || '';
-            $('inNip').value = profil.nip \vert{}\vert{} '';$('inGender').value = profil.gender || '';
-            $('inTtl').value = profil.ttl \vert{}\vert{} '';$('inSekolah').value = profil.instansi || '';
-            $('inEmail').value = profil.email \vert{}\vert{} '';$('inTelepon').value = profil.telepon || '';
-            $('inAlamat').value = profil.alamat \vert{}\vert{} '';$('inBio').value = profil.bio || '';
+            $('inNama').value = profil.namaLengkap ? profil.namaLengkap : '';
+            $('inMapel').value = profil.mapel ? profil.mapel : '';
+            $('inNip').value = profil.nip ? profil.nip : '';
+            $('inGender').value = profil.gender ? profil.gender : '';
+            $('inTtl').value = profil.ttl ? profil.ttl : '';
+            $('inSekolah').value = profil.instansi ? profil.instansi : '';
+            $('inEmail').value = profil.email ? profil.email : '';
+            $('inTelepon').value = profil.telepon ? profil.telepon : '';
+            $('inAlamat').value = profil.alamat ? profil.alamat : '';
+            $('inBio').value = profil.bio ? profil.bio : '';
 
             $('boxViewMode').classList.add('hidden');
             $('formEditMode').classList.remove('hidden');$('btnPencilCard').classList.add('hidden');
@@ -441,8 +477,11 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>Menyimpan...</span>';
 
-            profil.namaLengkap = $('inNama').value.trim() || 'Guru Argumentasi';
-            profil.mapel = $('inMapel').value.trim() || 'Bahasa Indonesia';
+            const txtNama = $('inNama').value.trim();
+            const txtMapel = $('inMapel').value.trim();
+            
+            profil.namaLengkap = txtNama ? txtNama : 'Guru Argumentasi';
+            profil.mapel = txtMapel ? txtMapel : 'Bahasa Indonesia';
             profil.nip = $('inNip').value.trim();
             profil.gender = $('inGender').value;
             profil.ttl = $('inTtl').value.trim();
@@ -467,7 +506,7 @@
                         telepon: profil.telepon,
                         alamat: profil.alamat,
                         bio: profil.bio,
-                        fotoProfil: profil.fotoProfil || '',
+                        fotoProfil: profil.fotoProfil ? profil.fotoProfil : '',
                         updatedAt: Date.now()
                     }, { merge: true });
                 } catch (err) {
@@ -620,7 +659,8 @@
             const ratio = UKURAN_OUT / rect.width;
             cOffX += (e.clientX - cLastX) * ratio;
             cOffY += (e.clientY - cLastY) * ratio;
-            cLastX = e.clientX; cLastY = e.clientY;
+            cLastX = e.clientX;
+            cLastY = e.clientY;
             gambarKanvasCrop();
         });
         cropCanvas.addEventListener('pointerup', () => { if (cDragging) { cDragging = false; hitungEstimasiKompresi(); } });
@@ -665,17 +705,17 @@
                     return;
                 }
 
-                profil.namaLengkap = d.namaLengkap || profil.namaLengkap;
-                profil.mapel = d.mapel || profil.mapel;
-                profil.fotoProfil = d.fotoProfil || profil.fotoProfil;
-                profil.nip = d.nip || d.nuptk || profil.nip;
-                profil.gender = d.gender || profil.gender;
-                profil.ttl = d.ttl || profil.ttl;
-                profil.instansi = d.instansi || profil.instansi;
-                profil.email = d.emailKontak || user.email || profil.email;
-                profil.telepon = d.telepon || profil.telepon;
-                profil.alamat = d.alamat || profil.alamat;
-                profil.bio = d.bio || profil.bio;
+                profil.namaLengkap = d.namaLengkap ? d.namaLengkap : profil.namaLengkap;
+                profil.mapel = d.mapel ? d.mapel : profil.mapel;
+                profil.fotoProfil = d.fotoProfil ? d.fotoProfil : profil.fotoProfil;
+                profil.nip = d.nip ? d.nip : (d.nuptk ? d.nuptk : profil.nip);
+                profil.gender = d.gender ? d.gender : profil.gender;
+                profil.ttl = d.ttl ? d.ttl : profil.ttl;
+                profil.instansi = d.instansi ? d.instansi : profil.instansi;
+                profil.email = d.emailKontak ? d.emailKontak : (user.email ? user.email : profil.email);
+                profil.telepon = d.telepon ? d.telepon : profil.telepon;
+                profil.alamat = d.alamat ? d.alamat : profil.alamat;
+                profil.bio = d.bio ? d.bio : profil.bio;
 
                 simpanKeLocal();
                 renderProfil(); // Perbarui UI bila ada perubahan sinkronisasi dari Cloud
