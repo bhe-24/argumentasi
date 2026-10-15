@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <script>
@@ -237,7 +238,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, runTransaction, serverTimestamp, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" });
     const auth = getAuth(app);
@@ -258,7 +259,38 @@
 
     let currentStep = 1, currentGuru = null, isFileProcessed = false, generatedCode = "", sedangSimpan = false, sedangUpload = false, uploadTimers = [];
     const MAX_BYTES = 10 * 1024 * 1024;
+    const S = { file: null, cover: '', halaman: 0 };
+    const mb = b => (b / 1048576);
+    const fmtMb = b => { const v = mb(b); return v < 0.1 ? '0.1' : v.toFixed(v < 10 ? 2 : 1); };
+
+    async function apiCloud(action, body) {
+        const token = await auth.currentUser.getIdToken();
+        const r = await fetch('/api/cloudinary', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ action, ...body }) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw Object.assign(new Error(d.detail_error || 'Server error'), { code: 'api/' + r.status });
+        return d;
+    }
     
+    async function unggah(file) {
+        const t = await apiCloud('tanda', { namaFile: file.name });
+        return new Promise((ok, no) => {
+            const fd = new FormData(); fd.append('file', file); fd.append('api_key', t.api_key); fd.append('timestamp', t.timestamp); fd.append('public_id', t.public_id); fd.append('signature', t.signature);
+            const x = new XMLHttpRequest(); x.open('POST', `https://api.cloudinary.com/v1_1/${t.cloud_name}/raw/upload`);
+            x.upload.onprogress = e => { 
+                if (e.lengthComputable) { 
+                    const p = Math.round(e.loaded / e.total * 100); 
+                    const bar = $('processBarLine');
+                    if(bar) bar.style.width = p + '%';
+                    const teks = $('processText');
+                    if(teks) teks.textContent = `Mengunggah... ${p}% (${fmtMb(e.loaded)} dari ${fmtMb(e.total)} MB)`;
+                } 
+            };
+            x.onload = () => { let j = {}; try { j = JSON.parse(x.responseText); } catch (e) {} if (x.status >= 200 && x.status < 300 && j.secure_url) ok({ url: j.secure_url, publicId: j.public_id }); else no(Object.assign(new Error((j.error && j.error.message) || 'HTTP ' + x.status), { code: 'cloud/' + x.status })); };
+            x.onerror = () => no(Object.assign(new Error('Koneksi ke Cloudinary gagal.'), { code: 'cloud/jaringan' }));
+            x.send(fd);
+        });
+    }
+
     function withTimeout(p, ms) {
         return Promise.race([
             p, 
@@ -362,8 +394,11 @@
         }
     };
 
-    /* ---------- UPLOAD PDF (Simulasi) ---------- */
-    window.handleFileUpload = function (event) {
+    /* ---------- UPLOAD PDF (Lokal Ekstrak dengan pdf.js) ---------- */
+    function jpeg(canvas, maxKb) { let q = 0.8, d = canvas.toDataURL('image/jpeg', q); while (d.length > maxKb * 1366 && q > 0.4) { q -= 0.1; d = canvas.toDataURL('image/jpeg', q); } return d; }
+    async function render(page, lebar) { const v1 = page.getViewport({ scale: 1 }), vp = page.getViewport({ scale: lebar / v1.width }), c = document.createElement('canvas'); c.width = Math.floor(vp.width); c.height = Math.floor(vp.height); await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise; return c; }
+
+    window.handleFileUpload = async function (event) {
         const input = event.target;
         const file = input.files[0];
         if (!file) { return; }
@@ -384,48 +419,66 @@
             return; 
         }
 
+        if (!window.pdfjsLib) {
+            input.value = '';
+            showToast('Pembaca PDF gagal dimuat. Periksa koneksi lalu muat ulang halaman.', true);
+            return;
+        }
+
         sedangUpload = true;
         $('uploadArea').classList.add('hidden');
         $('processingArea').classList.remove('hidden');
         $('btnNext').disabled = true;
         $('btnPrev').classList.add('invisible');
-
+        
         const bar = $('processBarLine');
         bar.style.transition = 'none'; 
         bar.style.width = '0%'; 
         void bar.offsetWidth;
-        bar.style.transition = 'width 3s linear'; 
-        bar.style.width = '100%';
+        bar.style.transition = 'width 1s linear'; 
+        bar.style.width = '50%';
+        $('processText').textContent = "Membaca file PDF...";
 
-        const teks = ["Mengunggah file ke server...", "Menganalisis dokumen...", "Mengekstrak teks menjadi modul...", "Finalisasi pembuatan rubrik..."];
-        $('processText').textContent = teks[0];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         
-        let i = 1;
-        const interval = setInterval(function() { 
-            if (i < teks.length) {
-                $('processText').textContent = teks[i];
-                i++;
-            }
-        }, 750);
-        
-        const done = setTimeout(function() {
-            clearInterval(interval);
+        let pdf;
+        try {
+            pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+            S.halaman = pdf.numPages;
+            const p1 = await pdf.getPage(1);
+            S.cover = jpeg(await render(p1, 360), 70);
+            S.file = file;
+
+            bar.style.width = '100%';
+            
+            setTimeout(() => {
+                $('processingArea').classList.add('hidden');
+                $('successUploadArea').classList.remove('hidden');
+                $('fileNameDisplay').textContent = file.name;
+                
+                isFileProcessed = true; 
+                sedangUpload = false;
+                
+                if (currentGuru !== null) { $('btnNext').disabled = false; }
+                $('btnPrev').classList.remove('invisible');
+                showToast("File siap diproses.");
+            }, 500);
+
+        } catch (e) {
+            console.error(e);
+            input.value = '';
             $('processingArea').classList.add('hidden');
-            $('successUploadArea').classList.remove('hidden');
-            $('fileNameDisplay').textContent = file.name;
-            
-            isFileProcessed = true; 
+            $('uploadArea').classList.remove('hidden');
             sedangUpload = false;
-            
-            if (currentGuru !== null) { $('btnNext').disabled = false; }
             $('btnPrev').classList.remove('invisible');
-            showToast("Modul berhasil dikonversi.");
-        }, 3000);
-        
-        uploadTimers = [interval, done];
+            showToast(e && e.name === 'PasswordException' ? 'PDF ini dikunci dengan kata sandi.' : 'PDF tidak dapat dibaca. Pastikan file tidak rusak.', true);
+        } finally { 
+            try { pdf && pdf.destroy(); } catch (e) {} 
+        }
     };
 
     window.gantiFile = function () {
+        S.file = null; S.cover = ''; S.halaman = 0;
         isFileProcessed = false;
         $('filePdf').value = '';
         $('successUploadArea').classList.add('hidden');
@@ -542,6 +595,10 @@
             showToast("Pilih jenjang terlebih dahulu.", true);
             return;
         }
+        if (!S.file) {
+            showToast("Pilih file PDF terlebih dahulu.", true);
+            return;
+        }
 
         sedangSimpan = true;
         const btn = $('btnNext');
@@ -551,9 +608,72 @@
         btn.disabled = true;
         $('btnPrev').classList.add('invisible');
 
+        $('formWrapper').classList.add('hidden');
+        $('stepperHeader').classList.add('hidden');
+        
+        const procArea = document.createElement('div');
+        procArea.id = 'tempProcessingArea';
+        procArea.className = 'bg-slate-900 text-white rounded-2xl p-6 text-center border-b-4 border-amber-500 relative overflow-hidden flex-grow flex flex-col justify-center min-h-[180px] m-4 fade-in';
+        procArea.innerHTML = `
+            <div class="absolute inset-0 texture-dots opacity-20 pointer-events-none"></div>
+            <div class="relative w-16 h-16 mx-auto mb-4">
+                <div class="absolute inset-0 border-[3px] border-slate-700 rounded-full"></div>
+                <div class="absolute inset-0 border-[3px] border-amber-400 rounded-full border-t-transparent animate-spin"></div>
+                <i class="fas fa-microchip absolute inset-0 flex items-center justify-center text-xl text-amber-400"></i>
+            </div>
+            <h3 class="font-bold text-sm mb-1 font-display">Sistem Bekerja...</h3>
+            <p class="text-slate-400 text-[10px] mb-4" id="tempProcessText">Mengunggah file ke server...</p>
+            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-gradient-to-r from-amber-400 to-emerald-400 h-full rounded-full ease-linear" style="width:0%;transition:width 0.3s linear" id="tempProcessBarLine"></div>
+            </div>
+        `;
+        $('mainContainer').appendChild(procArea);
+
+        const updateProc = (txt, prog) => {
+            const t = $('tempProcessText'), p = $('tempProcessBarLine');
+            if (t) t.textContent = txt;
+            if (p) p.style.width = prog + '%';
+        };
+
+        let baru = null;
         try {
+            updateProc('Mengunggah file ke server...', 10);
+            baru = await unggah(S.file);
+            
+            updateProc('Menyimpan data kelas...', 40);
+            const namaKelas = $('inputNamaKelas').value.trim();
+            const handoutRef = await addDoc(collection(db, 'handouts'), {
+                judul: namaKelas,
+                kategori: 'Modul Ajar',
+                status: 'published',
+                deskripsi: `Materi untuk kelas ${namaKelas}`,
+                fileUrl: baru.url,
+                storagePath: baru.publicId,
+                storage: 'cloudinary',
+                ukuranFile: fmtMb(S.file.size),
+                halaman: S.halaman,
+                coverImage: S.cover,
+                views: 0,
+                createdAt: serverTimestamp(),
+                uploaderUid: currentGuru.uid,
+                uploaderRole: 'teacher'
+            });
+            const handoutId = handoutRef.id;
+
+            updateProc('Mengekstrak teks menjadi modul interaktif (AI)...', 60);
+            const token = await auth.currentUser.getIdToken();
+            const r = await fetch('/api/latihan', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, 
+                body: JSON.stringify({ action: 'buat', handoutId: handoutId }) 
+            });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(d.detail_error || 'Gagal mengekstrak modul (AI).');
+            const aiPaket = d;
+
+            updateProc('Finalisasi pembuatan kelas...', 90);
             generatedCode = await withTimeout(buatKelasBaru({
-                namaKelas: $('inputNamaKelas').value.trim(),
+                namaKelas: namaKelas,
                 jenjang: jenjangEl.value,
                 cp: $('inputCP').value.trim(),
                 tp: $('inputTP').value.trim(),
@@ -561,11 +681,12 @@
                 namaGuru: currentGuru.nama,
                 status: 'active',
                 jumlahSiswa: 0,
+                handoutId: handoutId,
+                aiPaket: aiPaket,
                 createdAt: serverTimestamp()
             }), 20000);
 
-            $('formWrapper').classList.add('hidden');
-            $('stepperHeader').classList.add('hidden');
+            procArea.remove();
             $('finalClassCode').textContent = generatedCode;
             $('finalSuccessState').classList.remove('hidden');
             
@@ -577,15 +698,22 @@
 
         } catch (error) {
             console.error(error);
+            if (baru) {
+                try { await apiCloud('hapus', { publicId: baru.publicId }); } catch(e){}
+            }
+
             let isIzin = false;
             if (error && error.code === 'permission-denied') { isIzin = true; }
             
             if (isIzin) {
                 showToast("Akses ditolak. Anda tidak berwenang membuat kelas.", true);
             } else {
-                showToast("Gagal membangun kelas. Periksa koneksi lalu coba lagi.", true);
+                showToast(error.message || "Gagal membangun kelas. Periksa koneksi lalu coba lagi.", true);
             }
             
+            procArea.remove();
+            $('formWrapper').classList.remove('hidden');
+            $('stepperHeader').classList.remove('hidden');
             btn.innerHTML = teksAsli;
             btn.disabled = false;
             $('btnPrev').classList.remove('invisible');
