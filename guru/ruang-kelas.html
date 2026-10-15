@@ -33,9 +33,6 @@
         body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         .font-display { font-family: 'Playfair Display', serif; }
         .texture-dots { background-image: radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px); background-size: 16px 16px; }
-        
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -48,7 +45,7 @@
 <body class="flex justify-center h-screen h-[100dvh] overflow-hidden bg-slate-100">
 
     <!-- CONTAINER UTAMA -->
-    <div class="w-full max-w-md bg-slate-50 relative h-full shadow-2xl flex flex-col sm:border-x border-slate-200 overflow-hidden fade-in">
+    <div class="w-full max-w-md bg-slate-50 relative h-full shadow-2xl flex flex-col sm:border-x border-slate-200 overflow-hidden">
 
         <!-- HEADER STICKY -->
         <header class="flex-shrink-0 bg-slate-900 border-b-4 border-amber-500 relative z-40">
@@ -78,7 +75,7 @@
         <main class="flex-grow overflow-y-auto hide-scrollbar relative z-20 flex flex-col bg-slate-50">
             
             <!-- STATE: DASHBOARD KELAS -->
-            <div id="dashboardState" class="hidden w-full p-4 fade-in pb-10">
+            <div id="dashboardState" class="hidden w-full p-4 pb-10">
 
                 <!-- BAGIAN: INFO KELAS (CP/TP) -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-5">
