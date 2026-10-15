@@ -62,7 +62,7 @@ Bahasa Indonesia baku, teks polos (tanpa markdown). Keluarkan HANYA satu objek J
  "pilgan": [ 15 soal, urut dari mudah ke sulit:
   { "p": "pertanyaan", "opsi": ["A","B","C","D"], "j": 0, "tingkat": "mudah|sedang|sulit|hots", "waktu": 45, "bahas": "alasan jawaban benar (1-2 kalimat)" } ],
  "struktur": { "judul": "judul teks", "waktu": 300, "teks": [ 7 kalimat berurutan: { "t": "kalimat", "label": "tesis|argumen|kesimpulan", "alasan": "mengapa label itu" } ] },
- "esai": [ 6 soal "isi argumentasi": { "tesis": "pernyataan pendapat berdasar materi", "opsi": ["argumen A","argumen B","argumen C","argumen D"], "j": 0, "tingkat": "sedang|sulit|hots", "waktu": 90, "bahas": "mengapa argumen itu paling tepat dan yang lain lemah" } ],
+  "esai": [ 6 soal esai terbuka: { "p": "pertanyaan esai terbuka (mengapa/bagaimana)", "tingkat": "sedang|sulit|hots", "waktu": 300, "bahas": "kunci jawaban ideal/poin penting" } ],
  "kritis": [ 8 soal uji berpikir (teori penalaran: fakta vs opini, sebab-akibat, asumsi, sesat pikir, kredibilitas sumber, kesimpulan yang sah, dsb.) berbasis konteks materi:
   { "konsep": "nama konsep", "p": "skenario/pernyataan + pertanyaan", "opsi": ["A","B","C","D"], "j": 0, "tingkat": "sedang|sulit|hots", "waktu": 75, "bahas": "penjelasan" } ]
 }
@@ -131,7 +131,7 @@ Bahasa Indonesia baku, teks polos (tanpa markdown). Keluarkan HANYA satu objek J
  "ringkasan": "2-3 kalimat inti materi",
  "pilgan": [ 15 soal: { "p": "pertanyaan", "opsi": ["A","B","C","D"], "j": 0, "tingkat": "mudah|sedang|sulit|hots", "waktu": 45, "bahas": "alasan jawaban benar" } ],
  "struktur": { "judul": "judul teks", "waktu": 300, "teks": [ 7 kalimat: { "t": "kalimat", "label": "tesis|argumen|kesimpulan", "alasan": "mengapa label itu" } ] },
- "esai": [ 6 soal: { "tesis": "pernyataan pendapat", "opsi": ["argumen A","argumen B","argumen C","argumen D"], "j": 0, "tingkat": "sedang|sulit|hots", "waktu": 90, "bahas": "mengapa argumen itu paling tepat" } ],
+  "esai": [ 6 soal esai terbuka: { "p": "pertanyaan esai terbuka", "tingkat": "sedang|sulit|hots", "waktu": 300, "bahas": "poin kunci jawaban" } ],
  "kritis": [ 8 soal: { "konsep": "nama konsep", "p": "skenario + pertanyaan", "opsi": ["A","B","C","D"], "j": 0, "tingkat": "sedang|sulit|hots", "waktu": 75, "bahas": "penjelasan" } ]
 }
 
@@ -173,6 +173,14 @@ function soalPg(x, tingkatDefault) {
     if (x.konsep) o.konsep = bersih(x.konsep, 60);
     return o;
 }
+
+function soalEsai(x, tingkatDefault) {
+    const p = bersih(x.p || x.tesis || x.pertanyaan, 900);
+    if (!p) return null;
+    let tingkat = String(x.tingkat || '').toLowerCase(); if (!TINGKAT.includes(tingkat)) tingkat = tingkatDefault;
+    return { p, tingkat, waktu: jepit(x.waktu, [120, 600]), bahas: bersih(x.bahas || x.kunci, 1000) };
+}
+
 function urutTingkat(a) { return a.map((s, i) => [s, i]).sort((x, y) => TINGKAT.indexOf(x[0].tingkat) - TINGKAT.indexOf(y[0].tingkat) || x[1] - y[1]).map(x => x[0]); }
 const jumlah = a => a.reduce((t, s) => t + s.waktu, 0);
 
@@ -182,8 +190,8 @@ function rapikan(o) {
     const LAB = ['tesis', 'argumen', 'kesimpulan'];
     const teks = ((o.struktur && o.struktur.teks) || []).map(k => ({ t: bersih(k.t, 500), label: String(k.label || '').toLowerCase().trim(), alasan: bersih(k.alasan, 300) })).filter(k => k.t && LAB.includes(k.label)).slice(0, 9);
     if (teks.length < 5 || !LAB.every(l => teks.some(k => k.label === l))) throw new Error('Bagian struktur tidak lengkap');
-    const esai = urutTingkat((o.esai || []).map(x => soalPg(x, 'sulit')).filter(Boolean)).slice(0, 6);
-    if (esai.length < 4) throw new Error('Soal isi argumentasi kurang dari 4 (didapat ' + esai.length + ')');
+    const esai = urutTingkat((o.esai || []).map(x => soalEsai(x, 'sulit')).filter(Boolean)).slice(0, 6);
+    if (esai.length < 2) throw new Error('Soal esai kurang dari 2 (didapat ' + esai.length + ')');
     const kritis = urutTingkat((o.kritis || []).map(x => soalPg(x, 'sulit')).filter(Boolean)).slice(0, 8);
     if (kritis.length < 5) throw new Error('Soal uji berpikir kurang dari 5 (didapat ' + kritis.length + ')');
     return {
