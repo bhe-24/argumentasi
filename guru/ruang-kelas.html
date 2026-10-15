@@ -110,51 +110,38 @@
         <!-- KONTEN UTAMA: SCROLLABLE AREA -->
         <main class="flex-grow overflow-y-auto hide-scrollbar relative z-20 flex flex-col bg-slate-50">
             
-            <!-- STATE 1: SETUP ALUR (Jika belum di-setup) -->
-            <div id="setupState" class="hidden p-5 flex-grow flex flex-col items-center justify-center fade-in">
-                <div class="text-center mb-8">
-                    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 text-3xl shadow-sm border-2 border-white"><i class="fas fa-route"></i></div>
-                    <h2 class="text-xl font-display font-bold text-slate-800 mb-1">Desain Alur Materi</h2>
-                    <p class="text-[10px] text-slate-500 max-w-[250px] mx-auto">Sistem memerlukan peta (level) materi sebelum siswa bergabung.</p>
-                </div>
+            <!-- STATE: DASHBOARD KELAS -->
+            <div id="dashboardState" class="hidden w-full p-4 fade-in pb-10">
 
-                <div class="grid grid-cols-1 gap-4 w-full">
-                    <!-- Navigasi Multi-Page: Arahkan ke halaman pemilihan alur -->
-                    <a href="#" id="linkSetupBacaTulis" class="group bg-white p-4 rounded-2xl border border-slate-200 hover:border-emerald-500 shadow-sm transition-all text-left active:scale-95 block w-full">
-                        <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-lg mb-3 group-hover:bg-blue-500 group-hover:text-white transition-colors"><i class="fas fa-book-reader"></i></div>
-                        <h3 class="font-bold text-slate-800 text-sm mb-1">Membaca & Menulis</h3>
-                        <p class="text-[10px] text-slate-500 mb-3">Fokus literasi komprehensif. Menghasilkan 4 Level (Baca & Tulis).</p>
-                        <div class="flex items-center gap-1 text-[9px] font-bold text-emerald-600 uppercase tracking-widest">Pilih & Konfigurasi <i class="fas fa-arrow-right"></i></div>
-                    </a>
-                    
-                    <a href="#" id="linkSetupAnalisis" class="group bg-white p-4 rounded-2xl border border-slate-200 hover:border-emerald-500 shadow-sm transition-all text-left active:scale-95 block w-full">
-                        <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-lg mb-3 group-hover:bg-amber-500 group-hover:text-white transition-colors"><i class="fas fa-brain"></i></div>
-                        <h3 class="font-bold text-slate-800 text-sm mb-1">Analisis Kritis Teks</h3>
-                        <p class="text-[10px] text-slate-500 mb-3">Pembedahan argumen. Menghasilkan 3 Level Evaluasi Kritis.</p>
-                        <div class="flex items-center gap-1 text-[9px] font-bold text-emerald-600 uppercase tracking-widest">Pilih & Konfigurasi <i class="fas fa-arrow-right"></i></div>
-                    </a>
+                <!-- BAGIAN: INFO KELAS (CP/TP) -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-5">
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
+                        <i class="fas fa-info-circle text-blue-500"></i> Informasi Target Pembelajaran
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Capaian Pembelajaran</p>
+                            <p class="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100 leading-relaxed" id="infoCP">Memuat...</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Tujuan Pembelajaran</p>
+                            <p class="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100 leading-relaxed whitespace-pre-line" id="infoTP">Memuat...</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
-
-            <!-- STATE 2: DASHBOARD KELAS (Jika sudah di-setup) -->
-            <div id="dashboardState" class="block w-full p-4 fade-in pb-10">
                 
-                <!-- BAGIAN: PETA LEVEL PEMBELAJARAN -->
+                <!-- BAGIAN: MATERI AI -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-5">
                     <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
-                        <i class="fas fa-map-signs text-amber-500"></i> Peta Materi (Level)
+                        <i class="fas fa-wand-magic-sparkles text-violet-500"></i> Materi & Latihan Interaktif
                     </h3>
                     
-                    <div class="relative border-l-2 border-slate-200 ml-2 space-y-4" id="levelTimeline">
+                    <div class="grid grid-cols-2 gap-3" id="aiModulesContainer">
                         <!-- Skeleton Loading Level -->
-                        <div class="relative pl-5">
-                            <div class="absolute -left-2.5 top-0 w-4 h-4 bg-slate-200 rounded-full border-2 border-white skeleton-pulse"></div>
-                            <div class="bg-slate-50 h-12 rounded-xl skeleton-pulse border border-slate-100"></div>
-                        </div>
-                        <div class="relative pl-5">
-                            <div class="absolute -left-2.5 top-0 w-4 h-4 bg-slate-200 rounded-full border-2 border-white skeleton-pulse"></div>
-                            <div class="bg-slate-50 h-12 rounded-xl skeleton-pulse border border-slate-100"></div>
-                        </div>
+                        <div class="bg-slate-50 h-28 rounded-xl skeleton-pulse border border-slate-100"></div>
+                        <div class="bg-slate-50 h-28 rounded-xl skeleton-pulse border border-slate-100"></div>
+                        <div class="bg-slate-50 h-28 rounded-xl skeleton-pulse border border-slate-100"></div>
+                        <div class="bg-slate-50 h-28 rounded-xl skeleton-pulse border border-slate-100"></div>
                     </div>
                 </div>
 
@@ -243,23 +230,17 @@
                     document.getElementById('skeletonClassName').classList.add('hidden');
                     document.getElementById('classCodeDisplay').innerText = classCodeGlobal;
                     
-                    // Cek Status Alur Kelas
-                    if(!classDataGlobal.alurSetup) {
-                        // Belum Setup -> Tampilkan Opsi Pemilihan Alur
-                        document.getElementById('dashboardState').classList.add('hidden');
-                        document.getElementById('setupState').classList.remove('hidden');
-                        
-                        // Set URL dinamis untuk link setup
-                        document.getElementById('linkSetupBacaTulis').href = `alur-pembelajaran.html?id=${classCodeGlobal}&type=baca_tulis`;
-                        document.getElementById('linkSetupAnalisis').href = `alur-pembelajaran.html?id=${classCodeGlobal}&type=analisis_kritis`;
-                    } else {
-                        // Sudah Setup -> Tampilkan Peta Level & Leaderboard
-                        document.getElementById('setupState').classList.add('hidden');
-                        document.getElementById('dashboardState').classList.remove('hidden');
-                        
-                        renderLevelTimeline(classDataGlobal.alurNodes || []);
-                        mulaiListenerLeaderboard();
-                    }
+                    // Isi Info Kelas
+                    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+                    document.getElementById('infoCP').innerHTML = esc(classDataGlobal.cp) || '-';
+                    document.getElementById('infoTP').innerHTML = esc(classDataGlobal.tp) || '-';
+
+                    // Tampilkan Dashboard
+                    document.getElementById('dashboardState').classList.remove('hidden');
+                    document.getElementById('dashboardState').classList.add('block');
+                    
+                    renderLatihanAI(classDataGlobal.aiPaket || null);
+                    mulaiListenerLeaderboard();
                 } else {
                     window.location.href = "index.html";
                 }
@@ -268,36 +249,40 @@
             }
         });
 
-        // 2. RENDER PETA LEVEL (MULTI-PAGE NAVIGASI)
-        function renderLevelTimeline(nodes) {
-            const container = document.getElementById('levelTimeline');
+        // 2. RENDER MATERI & LATIHAN AI
+        function renderLatihanAI(aiPaket) {
+            const container = document.getElementById('aiModulesContainer');
             
-            if(!nodes || nodes.length === 0) {
-                container.innerHTML = `<div class="p-3 text-center text-slate-400 text-xs bg-slate-50 rounded-xl border border-slate-200">Alur kosong atau belum tersimpan sempurna.</div>`;
+            if(!aiPaket) {
+                container.innerHTML = `<div class="col-span-2 p-4 text-center text-slate-400 text-xs bg-slate-50 rounded-xl border border-slate-200">Data AI belum tersedia.</div>`;
                 return;
             }
 
-            let html = "";
-            nodes.forEach((n, idx) => {
-                const icon = n.type === 'membaca' ? 'fa-book-reader text-blue-500' : 'fa-pen-nib text-amber-500';
-                const bgIcon = n.type === 'membaca' ? 'bg-blue-100' : 'bg-amber-100';
-                
-                // MULTI-PAGE: Arahkan ke halaman kelas.html dengan param id kelas & id level
-                const targetUrl = `kelas.html?id=${classCodeGlobal}&lvl=${n.id}`;
+            const formatWaktu = s => Math.max(1, Math.round(s / 60)) + " mnt";
+            
+            const BAGIAN = [
+                { key: 'pilgan', n: 'Pilihan Ganda', ic: 'fa-circle-check', c: 'blue', d: 'Soal bertingkat s.d HOTS', meta: p => `${(p.pilgan?.soal || []).length} soal · ${formatWaktu(p.pilgan?.total || 300)}` },
+                { key: 'struktur', n: 'Bedah Struktur', ic: 'fa-layer-group', c: 'amber', d: 'Labeli struktur argumen', meta: p => `${(p.struktur?.teks || []).length} baris · ${formatWaktu(p.struktur?.waktu || 180)}` },
+                { key: 'esai', n: 'Isi Argumentasi', ic: 'fa-pen-nib', c: 'emerald', d: 'Pilih argumen terkuat', meta: p => `${(p.esai?.soal || []).length} soal · ${formatWaktu(p.esai?.total || 300)}` },
+                { key: 'kritis', n: 'Uji Berpikir', ic: 'fa-brain', c: 'rose', d: 'Teori & logika penalaran', meta: p => `${(p.kritis?.soal || []).length} soal · ${formatWaktu(p.kritis?.total || 300)}` }
+            ];
 
+            let html = "";
+            BAGIAN.forEach((b, i) => {
+                const url = `preview-latihan.html?id=${classCodeGlobal}&mod=${b.key}`;
                 html += `
-                <a href="${targetUrl}" class="relative pl-5 group block active:scale-95 transition-transform">
-                    <div class="absolute -left-2.5 top-2 w-5 h-5 ${bgIcon} rounded-full border-[3px] border-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"><i class="fas ${icon} text-[8px]"></i></div>
-                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm group-hover:border-emerald-400 transition-colors flex justify-between items-center">
-                        <div>
-                            <h4 class="font-bold text-xs text-slate-800 leading-tight">${n.title}</h4>
-                            <p class="text-[9px] text-slate-500 uppercase tracking-widest mt-1">Sesi ${n.type}</p>
-                        </div>
-                        <i class="fas fa-chevron-right text-slate-300 text-[10px]"></i>
-                    </div>
+                <a href="${url}" class="group bg-slate-50 rounded-xl border border-slate-200 p-3 flex flex-col active:scale-95 transition-transform hover:border-violet-300 relative overflow-hidden">
+                    <div class="absolute -right-4 -bottom-4 opacity-5 text-4xl group-hover:scale-125 transition-transform group-hover:rotate-12 group-hover:text-violet-500"><i class="fas ${b.ic}"></i></div>
+                    <div class="w-8 h-8 rounded-lg bg-${b.c}-100 text-${b.c}-600 flex items-center justify-center text-sm mb-2 shadow-sm relative z-10"><i class="fas ${b.ic}"></i></div>
+                    <h4 class="font-bold text-[11px] text-slate-800 leading-tight mb-1 relative z-10">${b.n}</h4>
+                    <p class="text-[9px] text-slate-500 leading-snug flex-grow relative z-10">${b.d}</p>
+                    <p class="text-[9px] font-bold text-slate-400 mt-2 relative z-10 bg-white/80 w-max px-2 py-0.5 rounded-full border border-slate-100">${b.meta(aiPaket)}</p>
                 </a>`;
             });
             container.innerHTML = html;
+            
+            // Note: url links currently point to 'preview-latihan.html' which might not exist.
+            // Adjust the href to point to the actual preview/edit page for teachers if necessary.
         }
 
         // 3. LEADERBOARD REALTIME LISTENER
