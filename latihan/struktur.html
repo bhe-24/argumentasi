@@ -11,6 +11,62 @@
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }</script>
     
+    <script>
+    (function () {
+        const LS = 'lat_v1', DBN = 'latihan-db'; let S = null, siapP = null;
+        const pad = n => String(n).padStart(2, '0');
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'x' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        const today = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+        const lsRead = () => { try { return JSON.parse(localStorage.getItem(LS)); } catch (e) { return null; } };
+        const idbOpen = () => new Promise((ok, no) => { const r = indexedDB.open(DBN, 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
+        const idbGet = async () => { try { const d = await idbOpen(); return await new Promise(ok => { const q = d.transaction('kv').objectStore('kv').get('state'); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); }); } catch (e) { return null; } };
+        const idbSet = async v => { try { const d = await idbOpen(); await new Promise(ok => { const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, 'state'); t.oncomplete = ok; t.onerror = ok; t.onabort = ok; }); } catch (e) {} };
+
+        const L = {
+            esc, today, pad,
+            siap() { return siapP || (siapP = (async () => {
+                const a = lsRead(), b = await idbGet();
+                S = [a, b].filter(x => x && x.hari).sort((x, y) => (y.u || 0) - (x.u || 0))[0] || { v: 1, id: uuid(), u: Date.now(), hari: {} };
+                L.simpan(true); try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+                return S; })()); },
+            state: () => S,
+            simpan(tetap) {
+                if (!tetap) S.u = Date.now();
+                const ks = Object.keys(S.hari).sort(); while (ks.length > 45) delete S.hari[ks.shift()];
+                try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {}
+                idbSet(JSON.parse(JSON.stringify(S)));
+            },
+            aktif() { const now = Date.now(); let best = null; for (const k in S.hari) { const h = S.hari[k]; if (h.spin && now < h.spin.ts + 864e5 && (!best || h.spin.ts > S.hari[best].spin.ts)) best = k; } return best; },
+            hari(kunci) { if (kunci === undefined || kunci === null) { const a = L.aktif(); return a ? S.hari[a] : null; } return S.hari[kunci] || null; },
+            nama: () => localStorage.getItem('namaSiswaCendekia') || 'Siswa',
+            xp: () => (parseInt(localStorage.getItem('latihanPointsCendekia') || '0') + parseInt(localStorage.getItem('kelasPointsArg') || '0')),
+            tambahXp(n) { localStorage.setItem('latihanPointsCendekia', String(parseInt(localStorage.getItem('latihanPointsCendekia') || '0') + n)); },
+            fmt(s) { s = Math.max(0, Math.round(s)); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); },
+            menit: s => Math.max(1, Math.round(s / 60)),
+            toast(msg, err) {
+                let c = document.getElementById('lToast');
+                if (!c) { c = document.createElement('div'); c.id = 'lToast'; c.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none'; document.body.appendChild(c); }
+                const t = document.createElement('div'); t.className = (err ? 'bg-red-500' : 'bg-slate-800') + ' text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 up';
+                t.innerHTML = '<i class="fas ' + (err ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400') + '"></i><span class="flex-1">' + esc(msg) + '</span>'; c.appendChild(t); setTimeout(() => t.remove(), 3000);
+            },
+            beep(jenis) {
+                try { const x = new (window.AudioContext || window.webkitAudioContext)(), o = x.createOscillator(), g = x.createGain(); o.connect(g); g.connect(x.destination);
+                    if (jenis === 'ok') { o.type = 'sine'; o.frequency.setValueAtTime(523, x.currentTime); o.frequency.exponentialRampToValueAtTime(1046, x.currentTime + .12); }
+                    else if (jenis === 'tik') { o.type = 'square'; o.frequency.setValueAtTime(900, x.currentTime); }
+                    else { o.type = 'sawtooth'; o.frequency.setValueAtTime(150, x.currentTime); }
+                    g.gain.setValueAtTime(.06, x.currentTime); g.gain.exponentialRampToValueAtTime(.001, x.currentTime + (jenis === 'tik' ? .06 : .4)); o.start(); o.stop(x.currentTime + .4); } catch (e) {}
+            },
+            async pdf(el, namaBerkas) {
+                if (!window.html2pdf) await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'; s.onload = ok; s.onerror = () => no(new Error('Pembuat PDF gagal dimuat')); document.head.appendChild(s); });
+                const c = el.cloneNode(true); c.style.cssText = 'display:block;position:static;width:700px;background:#fff;color:#0f172a';
+                await html2pdf().set({ margin: [10, 10, 12, 10], filename: namaBerkas, image: { type: 'jpeg', quality: .95 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: ['css', 'legacy'], avoid: '.nobreak' } }).from(c).save();
+            }
+        };
+        window.L = L;
+    })();
+    </script>
+    
     <style>
         body { font-family: 'Poppins', sans-serif; background: #e2e8f0; -webkit-tap-highlight-color: transparent; }
         .up { animation: up .35s ease-out both; } @keyframes up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -61,7 +117,7 @@
 
 <div id="modal" class="fixed inset-0 bg-slate-900/60 z-[99999] hidden items-end sm:items-center justify-center">
     <div class="up bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5">
-        <div id="mIkon" class="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-xl mx-auto mb-3"><i class="fas fa-triangle-exclamation"></i></div>
+        <div id="mIkon" class="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-xl mx-auto mb-3"></div>
         <h3 id="mJudul" class="font-bold text-slate-800 text-center text-sm"></h3><p id="mKet" class="text-[11px] text-slate-500 text-center mt-1.5 leading-relaxed"></p>
         <div class="grid grid-cols-2 gap-2 mt-5"><button onclick="jawabModal(false)" id="mBatal" class="py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs">Batal</button><button onclick="jawabModal(true)" id="mOk" class="py-3 rounded-xl bg-brand-green text-white font-bold text-xs">Lanjutkan</button></div>
     </div>
@@ -69,54 +125,8 @@
 
 <div id="laporan" class="rpt"></div>
 
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" });
-const db = getFirestore(app);
-window.db = db;
-
-window.L = {
-    esc: s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
-    fmt: s => { s = Math.max(0, Math.round(s)); const pad = n => String(n).padStart(2, '0'); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); },
-    menit: s => Math.max(1, Math.round(s / 60)),
-    nama: () => localStorage.getItem('namaSiswaCendekia') || 'Siswa',
-    toast: (msg, err) => {
-        let c = document.getElementById('lToast');
-        if (!c) { c = document.createElement('div'); c.id = 'lToast'; c.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none'; document.body.appendChild(c); }
-        const t = document.createElement('div'); t.className = `${err ? 'bg-red-500' : 'bg-slate-800'} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 up`;
-        t.innerHTML = `<i class="fas ${err ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400'}"></i><span class="flex-1">${window.L.esc(msg)}</span>`; c.appendChild(t); setTimeout(() => t.remove(), 3000);
-    },
-    beep: () => {},
-    pdf: async (el, namaBerkas) => {
-        if (!window.html2pdf) await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'; s.onload = ok; s.onerror = () => no(new Error('Pembuat PDF gagal dimuat')); document.head.appendChild(s); });
-        const c = el.cloneNode(true); c.style.cssText = 'display:block;position:static;width:700px;background:#fff;color:#0f172a';
-        await html2pdf().set({ margin: [10, 10, 12, 10], filename: namaBerkas, image: { type: 'jpeg', quality: .95 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: ['css', 'legacy'], avoid: '.nobreak' } }).from(c).save();
-    },
-    tambahXp: n => {
-        let current = parseInt(localStorage.getItem('kelasPointsArg') || '0');
-        localStorage.setItem('kelasPointsArg', current + n);
-    }
-};
-
-const qs = new URLSearchParams(location.search);
-const classId = qs.get('id');
-const studentId = qs.get('sid') || localStorage.getItem('studentId') || localStorage.getItem('siswa_' + classId);
-
-window.H = { hasil: {}, sesi: {}, pack: {}, spin: { ts: Date.now() } };
-window.P = null;
-window.soal = null;
-window.totalWaktu = 0;
-window.sesi = null;
-window.timer = null;
-window.aktif = false;
-window.resolveM = null;
-const TKT = { mudah: ['Mudah', 'emerald', 'fa-seedling'], sedang: ['Sedang', 'sky', 'fa-gauge'], sulit: ['Sulit', 'amber', 'fa-mountain'], hots: ['HOTS', 'rose', 'fa-fire'] };
-const HURUF = ['A', 'B', 'C', 'D', 'E'];
-const $ = id => document.getElementById(id), esc = window.L.esc;
-
+<script>
+const $ = id => document.getElementById(id), esc = L.esc;
 
 const LBL = { tesis: ['Tesis', 'violet', 'fa-lightbulb', 'Pernyataan utama/posisi'], argumen: ['Argumen', 'sky', 'fa-shield-halved', 'Bukti/alasan pendukung'], kesimpulan: ['Kesimpulan', 'amber', 'fa-flag-checkered', 'Penegasan ulang'] };
 const URUT_LBL = ['tesis', 'argumen', 'kesimpulan'];
@@ -124,134 +134,142 @@ const URUT_LBL = ['tesis', 'argumen', 'kesimpulan'];
 const NAV_BAGIAN = [
     ['pilgan', 'Pilihan Ganda', 'pilgan.html', 'fa-circle-check', 'blue'],
     ['struktur', 'Bedah Struktur', 'struktur.html', 'fa-layer-group', 'amber'],
-    ['esai', 'Isi Argumentasi', 'esai.html', 'fa-pen-nib', 'emerald'],
+    ['esai', 'Esai Argumentasi', 'esai.html', 'fa-pen-nib', 'emerald'],
     ['kritis', 'Uji Berpikir', 'kritis.html', 'fa-brain', 'rose']
 ];
 
-// Helper to determine right parsing logic
+window.H = null; window.P = null; window.soal = null; window.totalWaktu = 0; window.sesi = null; window.timer = null; window.aktif = false; window.resolveM = null;
+
 window.normSoal = function(arr) {
-    if ('struktur' === 'struktur') {
-        return (arr || []).map((s, i) => ({
-            id: i,
-            k: s.t || s.teks || '', j: String(s.label || '').toLowerCase(), bahas: s.alasan || ''
-        }));
-    } else {
-        return (arr || []).map(s => { 
-            const tk = String(s.tingkat || 'sedang').toLowerCase(); 
-            return { 
-                p: s.p ?? s.pertanyaan ?? s.pernyataan ?? s.rumpang ?? s.teks ?? 'Soal', 
-                konteks: s.tesis ?? s.klaim ?? s.konteks ?? s.kutipan ?? s.wacana ?? '', 
-                opsi: Array.isArray(s.opsi) ? s.opsi : (Array.isArray(s.pilihan) ? s.pilihan : []), 
-                j: typeof s.j === 'number' ? s.j : (HURUF.indexOf(String(s.j ?? '').trim().toUpperCase()) >= 0 ? HURUF.indexOf(String(s.j ?? '').trim().toUpperCase()) : (parseInt(s.j) || 0)), 
-                tingkat: TKT[tk] ? tk : 'sedang', 
-                fokus: s.fokus ?? s.jenis ?? '', 
-                waktu: s.waktu || 60, 
-                bahas: s.bahas ?? s.pembahasan ?? s.alasan ?? '',
-                konsep: s.konsep || ''
-            }; 
-        }); 
-    }
+    return (arr || []).map((s, i) => ({
+        id: i,
+        k: s.t || s.teks || '', 
+        j: String(s.label || '').toLowerCase(), 
+        bahas: s.alasan || ''
+    }));
 };
 
-window.modal = (judul, ket, ok, batal, ikon) => new Promise(r => { window.resolveM = r; $('mJudul').textContent = judul; $('mKet').textContent = ket; $('mOk').textContent = ok || 'Lanjutkan'; $('mBatal').textContent = batal || 'Batal'; $('mIkon').innerHTML = `<i class="fas ${ikon || 'fa-triangle-exclamation'}"></i>`; $('modal').classList.replace('hidden', 'flex'); });
+window.modal = (judul, ket, ok, batal, ikon) => new Promise(r => { window.resolveM = r; $('mJudul').textContent = judul; $('mKet').textContent = ket; $('mOk').textContent = ok || 'Lanjutkan'; $('mBatal').textContent = batal || 'Batal'; $('mIkon').innerHTML = '<i class="fas ' + (ikon || 'fa-triangle-exclamation') + '"></i>'; $('modal').classList.replace('hidden', 'flex'); });
 window.jawabModal = v => { $('modal').classList.replace('flex', 'hidden'); if (window.resolveM) { window.resolveM(v); window.resolveM = null; } };
-window.badge = t => { const [n, c, i] = LBL[t] || LBL.tesis; return `<span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-${c}-100 text-${c}-700"><i class="fas ${i}"></i>${n}</span>`; };
+window.badge = t => { const arr = LBL[t] || LBL.tesis; return '<span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-' + arr[1] + '-100 text-' + arr[1] + '-700"><i class="fas ' + arr[2] + '"></i>' + arr[0] + '</span>'; };
 
 async function initLatihan() {
-    if (!classId) return location.replace('../index.html');
+    await L.siap();
+    const H = L.hari();
     
-    const backUrl = `../ruang_belajar_siswa.html?id=${classId}` + (studentId ? `&sid=${studentId}` : '');
-    $('btnBack').href = backUrl;
+    $('btnBack').href = '../latihan.html';
     
-    try {
-        const docSnap = await getDoc(doc(db, "classes", classId));
-        if (!docSnap.exists() || !docSnap.data().aiPaket) throw new Error('Data kelas tidak valid');
-        
-        window.H.pack = docSnap.data().aiPaket;
-        window.H.pack.judul = docSnap.data().namaKelas || 'Materi Kelas';
-        if (!window.H.pack['struktur']) return location.replace(backUrl);
-        
-        window.P = window.H.pack['struktur'];
-        const dataSource = 'struktur' === 'struktur' ? window.P.teks : window.P.soal;
-        window.soal = window.normSoal(dataSource);
-        
-        if ('struktur' === 'struktur') {
-            window.totalWaktu = window.P.waktu || window.P.total || 300;
-        } else {
-            window.totalWaktu = window.P.total || window.P.waktu || window.soal.reduce((a, b) => a + (b.waktu || 60), 0) || 300;
-        }
-        
-        if($('hSub')) $('hSub').textContent = window.H.pack.judul;
-
-        if (studentId) {
-            const studentSnap = await getDoc(doc(db, `classes/${classId}/students`, studentId));
-            if (studentSnap.exists()) {
-                const sData = studentSnap.data();
-                if (sData.latihan && sData.latihan['struktur']) {
-                    window.H.hasil['struktur'] = sData.latihan['struktur'];
-                }
-            }
-        }
-
-        const localSesi = JSON.parse(localStorage.getItem('sesi_struktur_' + classId) || 'null');
-        if (localSesi && !window.H.hasil['struktur']) {
-            window.H.sesi['struktur'] = localSesi;
-        }
-
-        if (window.H.hasil['struktur']) return window.tampilHasil();
-        if (window.H.sesi['struktur']) { 
-            window.sesi = window.H.sesi['struktur']; 
-            return Date.now() >= window.sesi.batas ? window.kumpulkan(true) : window.renderUjian(); 
-        }
-        
-        window.tampilIntro();
-    } catch(e) {
-        console.error(e);
-        $('main').innerHTML = `<div class="bg-white rounded-2xl p-8 text-center border border-slate-200"><i class="fas fa-exclamation-triangle text-4xl text-slate-300 mb-3"></i><p class="text-sm font-bold text-slate-700">Gagal Memuat Latihan</p><p class="text-[11px] text-slate-500 mt-1">Latihan tidak ditemukan atau tidak tersedia.</p><a href="${backUrl}" class="inline-block mt-4 bg-brand-green text-white text-xs font-bold px-5 py-2.5 rounded-full">Kembali</a></div>`;
+    if (!H || !H.pack || !H.pack.struktur) {
+        $('main').innerHTML = [
+            '<div class="bg-white rounded-2xl p-8 text-center border border-slate-200">',
+            '<i class="fas fa-exclamation-triangle text-4xl text-slate-300 mb-3"></i>',
+            '<p class="text-sm font-bold text-slate-700">Latihan Belum Siap</p>',
+            '<p class="text-[11px] text-slate-500 mt-1">Silakan putar gacha dan siapkan soal di halaman utama terlebih dahulu.</p>',
+            '<a href="../latihan.html" class="inline-block mt-4 bg-brand-green text-white text-xs font-bold px-5 py-2.5 rounded-full">Kembali</a>',
+            '</div>'
+        ].join('');
+        return;
     }
+
+    window.H = H;
+    window.P = H.pack.struktur;
+    const dataSource = window.P.teks || window.P.soal || [];
+    window.soal = window.normSoal(dataSource);
+    window.totalWaktu = window.P.total || window.P.waktu || window.soal.reduce((a, b) => a + (b.waktu || 60), 0) || 300;
+    
+    if($('hSub')) $('hSub').textContent = H.spin.judul || 'Bedah Struktur';
+
+    if (H.hasil && H.hasil.struktur) return window.tampilHasil();
+    if (H.sesi && H.sesi.struktur) { 
+        window.sesi = H.sesi.struktur; 
+        return Date.now() >= window.sesi.batas ? window.kumpulkan(true) : window.renderUjian(); 
+    }
+    
+    window.tampilIntro();
 }
 
-/* ================= INTRO ================= */
 window.tampilIntro = function() {
-    $('main').innerHTML = `<div class="up bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-        <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-2xl mx-auto"><i class="fas fa-layer-group"></i></div>
-        <h2 class="text-center font-extrabold text-slate-800 text-base mt-3">Bedah Struktur Argumentasi</h2>
-        <p class="text-center text-[11px] text-slate-500 mt-1 leading-relaxed">Analisis peran setiap kalimat dari materi <b>${esc(window.H.pack.judul)}</b>.</p>
-        <div class="grid grid-cols-2 gap-2.5 mt-5">
-            <div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-2xl font-extrabold text-slate-800">${window.soal.length}</p><p class="text-[10px] text-slate-500 font-semibold">Kalimat</p></div>
-            <div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-2xl font-extrabold text-slate-800">${L.menit(window.totalWaktu)}</p><p class="text-[10px] text-slate-500 font-semibold">Menit total</p></div>
-        </div>
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-5 mb-2">3 Bagian Struktur</p>
-        <div class="space-y-2">${URUT_LBL.map(k => `<div class="flex items-center gap-2.5 bg-slate-50 rounded-xl p-2.5">${badge(k)}<span class="text-[11px] text-slate-600">${LBL[k][3]}</span></div>`).join('')}</div>
-        <ul class="mt-5 space-y-2 text-[11px] text-slate-600 leading-relaxed">
-            <li class="flex gap-2"><i class="fas fa-highlighter text-amber-500 mt-0.5"></i><span>Baca wacana secara utuh di bagian atas, lalu tentukan apakah tiap kalimat merupakan <b>Tesis</b>, <b>Argumen</b>, atau <b>Kesimpulan</b>.</span></li>
-            <li class="flex gap-2"><i class="fas fa-lock text-rose-500 mt-0.5"></i><span><b>Hanya bisa dikerjakan 1 kali per hari.</b> Waktu terus berjalan walau halaman ditutup.</span></li>
-            <li class="flex gap-2"><i class="fas fa-floppy-disk text-emerald-500 mt-0.5"></i><span>Pilihan labelmu otomatis tersimpan di browser ini.</span></li>
-        </ul>
-        <button onclick="mulai()" class="mt-6 w-full bg-brand-green text-white font-bold py-3.5 rounded-xl shadow-md text-sm active:scale-95 transition"><i class="fas fa-play mr-1.5"></i>Mulai Bedah Struktur</button></div>`;
+    let html = [
+        '<div class="up bg-white rounded-2xl shadow-sm border border-slate-200 p-5">',
+        '<div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-2xl mx-auto"><i class="fas fa-layer-group"></i></div>',
+        '<h2 class="text-center font-extrabold text-slate-800 text-base mt-3">Bedah Struktur Argumentasi</h2>',
+        '<p class="text-center text-[11px] text-slate-500 mt-1 leading-relaxed">Analisis peran setiap kalimat dari materi <b>' + esc(window.H.spin.judul) + '</b>.</p>',
+        '<div class="grid grid-cols-2 gap-2.5 mt-5">',
+        '<div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-2xl font-extrabold text-slate-800">' + window.soal.length + '</p><p class="text-[10px] text-slate-500 font-semibold">Kalimat</p></div>',
+        '<div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-2xl font-extrabold text-slate-800">' + L.menit(window.totalWaktu) + '</p><p class="text-[10px] text-slate-500 font-semibold">Menit total</p></div>',
+        '</div>',
+        '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-5 mb-2">3 Bagian Struktur</p>',
+        '<div class="space-y-2">'
+    ];
+    
+    URUT_LBL.forEach(k => {
+        html.push('<div class="flex items-center gap-2.5 bg-slate-50 rounded-xl p-2.5">' + badge(k) + '<span class="text-[11px] text-slate-600">' + LBL[k][3] + '</span></div>');
+    });
+    
+    html.push('</div><ul class="mt-5 space-y-2 text-[11px] text-slate-600 leading-relaxed">');
+    html.push('<li class="flex gap-2"><i class="fas fa-highlighter text-amber-500 mt-0.5"></i><span>Baca wacana secara utuh di bagian atas, lalu tentukan apakah tiap kalimat merupakan <b>Tesis</b>, <b>Argumen</b>, atau <b>Kesimpulan</b>.</span></li>');
+    html.push('<li class="flex gap-2"><i class="fas fa-lock text-rose-500 mt-0.5"></i><span><b>Hanya bisa dikerjakan 1 kali per hari.</b> Waktu terus berjalan walau halaman ditutup.</span></li>');
+    html.push('<li class="flex gap-2"><i class="fas fa-floppy-disk text-emerald-500 mt-0.5"></i><span>Pilihan labelmu otomatis tersimpan di browser ini.</span></li>');
+    html.push('</ul><button onclick="mulai()" class="mt-6 w-full bg-brand-green text-white font-bold py-3.5 rounded-xl shadow-md text-sm active:scale-95 transition"><i class="fas fa-play mr-1.5"></i>Mulai Bedah Struktur</button></div>');
+    
+    $('main').innerHTML = html.join('');
 }
+
 window.mulai = async function() {
     if (!(await modal('Mulai sekarang?', 'Waktu langsung berjalan dan latihan ini tidak bisa diulang.', 'Mulai', 'Belum', 'fa-play'))) return;
-    const t = Date.now(); window.H.sesi.struktur = sesi = { mulai: t, batas: t + window.totalWaktu * 1000, jawab: {}, keluar: 0 }; localStorage.setItem('sesi_struktur_' + classId, JSON.stringify(window.sesi)); renderUjian(); window.scrollTo({ top: 0 });
+    const t = Date.now(); 
+    window.H.sesi.struktur = window.sesi = { mulai: t, batas: t + window.totalWaktu * 1000, jawab: {}, keluar: 0 }; 
+    L.simpan(); 
+    renderUjian(); 
+    window.scrollTo({ top: 0 });
 };
-function tidakDikerjakan() { $('main').innerHTML = '<div class="bg-white rounded-2xl p-8 text-center border border-slate-200"><i class="fas fa-calendar-xmark text-4xl text-slate-300 mb-3"></i><p class="text-sm font-bold text-slate-700">Latihan ini tidak dikerjakan</p><p class="text-[11px] text-slate-500 mt-1">Latihan hanya bisa dikerjakan dalam 24 jam sejak gacha diputar.</p><a href="../latihan.html" class="inline-block mt-4 bg-brand-green text-white text-xs font-bold px-5 py-2.5 rounded-full">Kembali</a></div>'; }
 
-/* ================= UJIAN ================= */
 window.renderUjian = function() {
-    window.aktif = true; $('hTimer').classList.remove('hidden'); $('barWaktu').classList.remove('hidden'); $('bar').classList.remove('hidden'); $('btnBack').removeAttribute('href'); $('btnBack').onclick = e => { e.preventDefault(); L.toast('Ujian sedang berjalan. Selesaikan atau kumpulkan dulu.', true); };
-    $('main').innerHTML = `<div class="kertas up p-4 pl-5 mb-4"><p class="text-center text-[10px] font-extrabold tracking-[.25em] text-slate-500">LEMBAR KERJA</p><h2 class="text-center font-reading font-bold text-slate-800 text-[15px] mt-1">${esc(window.P.judul || 'Bedah Struktur Teks Argumentasi')}</h2>
-        <div class="mt-3 text-[11px] text-slate-600 space-y-0.5"><p><b class="inline-block w-14">Nama</b>: ${esc(L.nama())}</p><p><b class="inline-block w-14">Materi</b>: ${esc(window.H.pack.judul)}</p><p><b class="inline-block w-14">Petunjuk</b>: Pilih label struktur yang tepat untuk setiap kalimat.</p></div>
-        <div class="mt-3 pt-3 border-t border-slate-200/80"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5"><i class="fas fa-book-open mr-1"></i>Pratinjau Wacana Utuh (Ketuk kalimat untuk melompat)</p>
-        <p id="wacanaUtuh" class="font-reading text-[12px] text-slate-700 leading-[1.9] bg-white/80 p-3 rounded-lg border border-slate-200/70">${window.soal.map((s, i) => `<span id="sp${i}" onclick="lompat(${i})" class="kal-span ${window.sesi.jawab[i] ? 'hl-' + window.sesi.jawab[i] : ''}"><b>[${i + 1}]</b> ${esc(s.k)}</span> `).join('')}</p></div></div>
-        <div id="daftar" class="space-y-3.5">${window.soal.map((s, i) => `<article id="q${i}" class="kertas p-4 pl-5">
-            <div class="flex items-center justify-between mb-2"><span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-slate-700"><span class="w-6 h-6 rounded-full bg-slate-800 text-white text-[11px] flex items-center justify-center">${i + 1}</span>Kalimat ke-${i + 1}</span><span id="st${i}">${window.sesi.jawab[i] ? badge(window.sesi.jawab[i]) : '<span class="text-[10px] text-slate-400 font-semibold">Belum dilabeli</span>'}</span></div>
-            <p class="font-reading text-[13px] text-slate-800 leading-[1.8] mb-3">${esc(s.k)}</p>
-            <div class="grid grid-cols-3 gap-2">${URUT_LBL.map(k => `<button class="pil-lbl ${window.sesi.jawab[i] === k ? 'sel-' + k : ''}" data-i="${i}" data-k="${k}"><i class="fas ${LBL[k][2]} text-sm"></i><span>${LBL[k][0]}</span></button>`).join('')}</div></article>`).join('')}</div><div class="h-6"></div>`;
+    window.aktif = true; $('hTimer').classList.remove('hidden'); $('barWaktu').classList.remove('hidden'); $('bar').classList.remove('hidden'); $('btnBack').removeAttribute('href'); 
+    $('btnBack').onclick = e => { e.preventDefault(); L.toast('Ujian sedang berjalan. Selesaikan atau kumpulkan dulu.', true); };
+    
+    let html = [
+        '<div class="kertas up p-4 pl-5 mb-4">',
+        '<p class="text-center text-[10px] font-extrabold tracking-[.25em] text-slate-500">LEMBAR KERJA</p>',
+        '<h2 class="text-center font-reading font-bold text-slate-800 text-[15px] mt-1">' + esc(window.P.judul || 'Bedah Struktur Teks Argumentasi') + '</h2>',
+        '<div class="mt-3 text-[11px] text-slate-600 space-y-0.5">',
+        '<p><b class="inline-block w-14">Nama</b>: ' + esc(L.nama()) + '</p>',
+        '<p><b class="inline-block w-14">Materi</b>: ' + esc(window.H.spin.judul) + '</p>',
+        '<p><b class="inline-block w-14">Petunjuk</b>: Pilih label struktur yang tepat untuk setiap kalimat.</p>',
+        '</div><div class="mt-3 pt-3 border-t border-slate-200/80">',
+        '<p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5"><i class="fas fa-book-open mr-1"></i>Pratinjau Wacana Utuh (Ketuk kalimat untuk melompat)</p>',
+        '<p id="wacanaUtuh" class="font-reading text-[12px] text-slate-700 leading-[1.9] bg-white/80 p-3 rounded-lg border border-slate-200/70">'
+    ];
+    
+    window.soal.forEach((s, i) => {
+        let sel = window.sesi.jawab[i] ? ' hl-' + window.sesi.jawab[i] : '';
+        html.push('<span id="sp' + i + '" onclick="lompat(' + i + ')" class="kal-span' + sel + '"><b>[' + (i + 1) + ']</b> ' + esc(s.k) + '</span> ');
+    });
+    
+    html.push('</p></div></div><div id="daftar" class="space-y-3.5">');
+    
+    window.soal.forEach((s, i) => {
+        let lblStat = window.sesi.jawab[i] ? badge(window.sesi.jawab[i]) : '<span class="text-[10px] text-slate-400 font-semibold">Belum dilabeli</span>';
+        html.push('<article id="q' + i + '" class="kertas p-4 pl-5">');
+        html.push('<div class="flex items-center justify-between mb-2"><span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-slate-700"><span class="w-6 h-6 rounded-full bg-slate-800 text-white text-[11px] flex items-center justify-center">' + (i + 1) + '</span>Kalimat ke-' + (i + 1) + '</span><span id="st' + i + '">' + lblStat + '</span></div>');
+        html.push('<p class="font-reading text-[13px] text-slate-800 leading-[1.8] mb-3">' + esc(s.k) + '</p><div class="grid grid-cols-3 gap-2">');
+        
+        URUT_LBL.forEach(k => {
+            let sSel = window.sesi.jawab[i] === k ? ' sel-' + k : '';
+            html.push('<button class="pil-lbl' + sSel + '" data-i="' + i + '" data-k="' + k + '"><i class="fas ' + LBL[k][2] + ' text-sm"></i><span>' + LBL[k][0] + '</span></button>');
+        });
+        
+        html.push('</div></article>');
+    });
+    
+    html.push('</div><div class="h-6"></div>');
+    $('main').innerHTML = html.join('');
 
     $('daftar').addEventListener('click', e => {
         const b = e.target.closest('.pil-lbl'); if (!b || !window.aktif) return;
         const i = +b.dataset.i, k = b.dataset.k;
-        window.sesi.jawab[i] = k; localStorage.setItem('sesi_struktur_' + classId, JSON.stringify(window.sesi));
+        window.sesi.jawab[i] = k; 
+        L.simpan();
         b.parentElement.querySelectorAll('.pil-lbl').forEach(x => x.className = 'pil-lbl');
         b.classList.add('sel-' + k);
         $('st' + i).innerHTML = badge(k);
@@ -259,10 +277,14 @@ window.renderUjian = function() {
         if (navigator.vibrate) navigator.vibrate(8);
         hitungJawab();
     });
+    
     hitungJawab(); jalankanWaktu();
 }
+
 window.lompat = i => { const el = $('q' + i); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
-window.hitungJawab = function() { const n = Object.keys(window.sesi.jawab).length; $('barInfo').textContent = `${n} dari ${window.soal.length} kalimat dilabeli`; $('barJawab').style.width = (n / window.soal.length * 100) + '%'; }
+
+window.hitungJawab = function() { const n = Object.keys(window.sesi.jawab).length; $('barInfo').textContent = n + ' dari ' + window.soal.length + ' kalimat dilabeli'; $('barJawab').style.width = (n / window.soal.length * 100) + '%'; }
+
 window.jalankanWaktu = function() {
     const tot = window.sesi.batas - window.sesi.mulai; clearInterval(window.timer);
     const tik = () => { const sisa = Math.ceil((window.sesi.batas - Date.now()) / 1000); $('hTimerTxt').textContent = L.fmt(sisa); $('barWaktuIsi').style.width = Math.max(0, (window.sesi.batas - Date.now()) / tot * 100) + '%';
@@ -270,111 +292,144 @@ window.jalankanWaktu = function() {
         if (sisa <= 0) kumpulkan(true); };
     tik(); window.timer = setInterval(tik, 400);
 }
+
 window.addEventListener('beforeunload', e => { if (window.aktif) { e.preventDefault(); e.returnValue = ''; } });
-document.addEventListener('visibilitychange', () => { if (window.aktif && document.hidden && sesi) { window.sesi.keluar = (window.sesi.keluar || 0) + 1; localStorage.setItem('sesi_struktur_' + classId, JSON.stringify(window.sesi)); } });
+document.addEventListener('visibilitychange', () => { if (window.aktif && document.hidden && window.sesi) { window.sesi.keluar = (window.sesi.keluar || 0) + 1; L.simpan(); } });
+
 window.mintaKumpul = async function() {
     const sisa = window.soal.length - Object.keys(window.sesi.jawab).length;
-    if (await modal('Kumpulkan hasil struktur?', sisa ? `Masih ada ${sisa} kalimat belum dilabeli. Setelah dikumpulkan, jawaban tidak bisa diubah.` : 'Semua kalimat sudah dilabeli. Setelah dikumpulkan, jawaban tidak bisa diubah.', 'Kumpulkan', 'Periksa Lagi', 'fa-paper-plane')) kumpulkan(false);
+    if (await modal('Kumpulkan hasil struktur?', sisa ? 'Masih ada ' + sisa + ' kalimat belum dilabeli. Setelah dikumpulkan, jawaban tidak bisa diubah.' : 'Semua kalimat sudah dilabeli. Setelah dikumpulkan, jawaban tidak bisa diubah.', 'Kumpulkan', 'Periksa Lagi', 'fa-paper-plane')) kumpulkan(false);
 };
 
 window.kumpulkan = async function(auto) { 
-    if (window.H.hasil['struktur']) return; window.aktif = false; clearInterval(window.timer); 
+    if (window.H.hasil.struktur) return; 
+    window.aktif = false; clearInterval(window.timer); 
     const jawab = window.sesi.jawab; 
-    let benar = 0, skor = 0;
+    let benar = 0;
     
-    if ('struktur' === 'struktur') {
-        const d_j = window.sesi.jawab;
-        benar = window.soal.filter((s, i) => d_j[i] === s.j).length;
-        skor = Math.round(benar / window.soal.length * 100);
-    } else {
-        benar = window.soal.filter((s, i) => jawab[i] === s.j).length;
-        skor = Math.round(benar / window.soal.length * 100);
-    }
+    benar = window.soal.filter((s, i) => jawab[i] === s.j).length;
+    let skor = Math.round(benar / window.soal.length * 100);
     
     const xp = Math.round(skor / 4) + (skor >= 80 ? 10 : 0); 
     window.L.tambahXp(xp); 
     
-    window.H.hasil['struktur'] = { skor, benar, total: window.soal.length, jawab, durasi: Math.round((Math.min(Date.now(), window.sesi.batas) - window.sesi.mulai) / 1000), batas: window.totalWaktu, selesai: Date.now(), auto: !!auto, keluar: window.sesi.keluar || 0, xp }; 
+    window.H.hasil.struktur = { skor: skor, benar: benar, total: window.soal.length, jawab: jawab, durasi: Math.round((Math.min(Date.now(), window.sesi.batas) - window.sesi.mulai) / 1000), batas: window.totalWaktu, selesai: Date.now(), auto: !!auto, keluar: window.sesi.keluar || 0, xp: xp }; 
     
-    if (studentId && classId) {
-        try {
-            await setDoc(doc(db, `classes/${classId}/students`, studentId), {
-                latihan: { ['struktur']: window.H.hasil['struktur'] }
-            }, { merge: true });
-        } catch(e) { console.error("Gagal simpan ke DB", e); }
-    }
+    delete window.H.sesi.struktur;
+    L.simpan(); 
     
-    localStorage.removeItem('sesi_struktur_' + classId);
-    
-    $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden'); $('btnBack').onclick = null; 
+    $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden'); $('btnBack').onclick = null; $('btnBack').href = '../latihan.html'; 
     if (auto) window.L.toast('Waktu habis. Jawabanmu otomatis dikumpulkan.', true); 
     window.tampilHasil(true); 
 }
 
-/* ================= HASIL ================= */
+window.navLatihanHtml = function() {
+    let navHtml = '<div class="bg-white rounded-2xl border border-slate-200 p-4 mt-3"><h3 class="font-bold text-slate-800 text-xs mb-2.5"><i class="fas fa-compass text-brand-green mr-1.5"></i>Latihan Lainnya pada Materi Ini</h3><div class="grid grid-cols-2 gap-2">';
+    NAV_BAGIAN.forEach(item => {
+        const k = item[0], n = item[1], url = item[2], ic = item[3], c = item[4];
+        const hs = window.H.hasil[k], cur = k === 'struktur';
+        navHtml += '<a href="' + url + '" class="flex items-center gap-2.5 p-2.5 rounded-xl border ' + (cur ? 'border-brand-green bg-emerald-50/60' : 'border-slate-100 bg-slate-50 hover:border-slate-300') + ' transition"><div class="w-8 h-8 rounded-lg bg-' + c + '-100 text-' + c + '-600 flex items-center justify-center text-xs shrink-0"><i class="fas ' + ic + '"></i></div><div class="min-w-0 flex-1"><p class="font-bold text-[11px] text-slate-800 truncate">' + n + '</p><p class="text-[9px] font-semibold ' + (hs ? 'text-emerald-600' : 'text-slate-400') + '">' + (hs ? 'Selesai' : 'Siap dikerjakan') + '</p></div></a>';
+    });
+    navHtml += '</div></div>';
+    return navHtml;
+}
 
-window.navLatihanHtml = function() { 
-    const q = `?id=${classId}` + (studentId ? `&sid=${studentId}` : ''); 
-    return `<div class="bg-white rounded-2xl border border-slate-200 p-4 mt-3"><h3 class="font-bold text-slate-800 text-xs mb-2.5"><i class="fas fa-compass text-brand-green mr-1.5"></i>Latihan Lainnya pada Materi Ini</h3><div class="grid grid-cols-2 gap-2">${NAV_BAGIAN.map(([k, n, url, ic, c]) => { 
-        const cur = k === 'struktur'; 
-        return `<a href="${url}${q}" class="flex items-center gap-2.5 p-2.5 rounded-xl border ${cur ? 'border-brand-green bg-emerald-50/60' : 'border-slate-100 bg-slate-50 hover:border-slate-300'} transition"><div class="w-8 h-8 rounded-lg bg-${c}-100 text-${c}-600 flex items-center justify-center text-xs shrink-0"><i class="fas ${ic}"></i></div><div class="min-w-0 flex-1"><p class="font-bold text-[11px] text-slate-800 truncate">${n}</p><p class="text-[9px] font-semibold text-slate-400">Pilih Latihan</p></div></a>`; 
-    }).join('')}</div></div>`; 
-}; window.soal.forEach((s, i) => { const t = tk[s.j] = tk[s.j] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
+window.tampilHasil = function(baru) {
+    const R = window.H.hasil.struktur; window.aktif = false; $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden');
+    let tk = {}; window.soal.forEach((s, i) => { const t = tk[s.j] = tk[s.j] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
     const urut = URUT_LBL.filter(t => tk[t]);
     const lemah = urut.slice().sort((a, b) => tk[a].b / tk[a].n - tk[b].b / tk[b].n)[0], kuat = urut.slice().sort((a, b) => tk[b].b / tk[b].n - tk[a].b / tk[a].n)[0];
     const pesan = R.skor >= 80 ? ['Luar biasa!', 'Kamu sangat tajam membedakan struktur argumentasi.'] : R.skor >= 60 ? ['Bagus!', 'Pemahaman strukturmu sudah cukup baik.'] : ['Tetap semangat!', 'Pelajari kembali perbedaan tesis, argumen, dan kesimpulan.'];
     const anim = R.skor >= 80 ? '<div class="tos"><i class="fas fa-hand h hl"></i><i class="fas fa-hand h hr"></i><div class="boom"></div><i class="fas fa-star sp" style="top:8px;left:42%"></i><i class="fas fa-star sp" style="top:24px;left:58%"></i><i class="fas fa-sparkles sp" style="top:70px;left:36%"></i><i class="fas fa-star sp" style="top:78px;left:60%"></i></div>'
         : R.skor >= 60 ? '<div class="tos"><i class="fas fa-thumbs-up goyang" style="font-size:66px;color:#fcd34d;filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i></div>' : '<div class="tos"><i class="fas fa-heart detak" style="font-size:60px;color:#fda4af;filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i></div>';
-    const rek = R.skor === 100 ? 'Sempurna! Kamu berhasil mengidentifikasi seluruh bagian tesis, argumen, dan kesimpulan dengan tepat.' : `Kamu paling tepat mengenali bagian <b>${LBL[kuat][0]}</b> (${tk[kuat].b}/${tk[kuat].n}). ${lemah !== kuat || tk[lemah].b < tk[lemah].n ? `Perhatikan lagi ciri kalimat <b>${LBL[lemah][0]}</b> (${tk[lemah].b}/${tk[lemah].n}) pada pembahasan di bawah.` : ''}`;
+    const rek = R.skor === 100 ? 'Sempurna! Kamu berhasil mengidentifikasi seluruh bagian tesis, argumen, dan kesimpulan dengan tepat.' : 'Kamu paling tepat mengenali bagian <b>' + LBL[kuat][0] + '</b> (' + tk[kuat].b + '/' + tk[kuat].n + '). ' + (lemah !== kuat || tk[lemah].b < tk[lemah].n ? 'Perhatikan lagi ciri kalimat <b>' + LBL[lemah][0] + '</b> (' + tk[lemah].b + '/' + tk[lemah].n + ') pada pembahasan di bawah.' : '');
 
-    $('main').innerHTML = `<div class="up rounded-3xl p-5 text-center text-white shadow-lg" style="background:linear-gradient(135deg,#064e3b,#059669 60%,#34d399)">${anim}
-            <p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold">Skor Akhir</p><div class="flex items-end justify-center gap-1"><span id="skorAngka" class="text-6xl font-extrabold leading-none">0</span><span class="text-xl font-bold text-white/70 mb-1">/100</span></div>
-            <p class="font-extrabold text-base mt-2">${pesan[0]}</p><p class="text-[11px] text-white/80">${pesan[1]}</p>
-            <span class="inline-block mt-3 bg-white/20 rounded-full px-3 py-1 text-[11px] font-bold"><i class="fas fa-star text-amber-300 mr-1"></i>+${R.xp} XP</span>${R.auto ? '<p class="text-[10px] text-amber-200 mt-2"><i class="fas fa-clock mr-1"></i>Dikumpulkan otomatis karena waktu habis</p>' : ''}</div>
-        <div class="grid grid-cols-3 gap-2.5 mt-3"><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-emerald-600">${R.benar}</p><p class="text-[9px] font-semibold text-slate-500">Tepat</p></div><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-rose-500">${R.total - R.benar}</p><p class="text-[9px] font-semibold text-slate-500">Keliru/Kosong</p></div><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-slate-700">${L.fmt(R.durasi)}</p><p class="text-[9px] font-semibold text-slate-500">dari ${L.fmt(R.batas)}</p></div></div>
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 mt-3"><h3 class="font-bold text-slate-800 text-sm mb-3">Ketepatan per Struktur</h3><div class="space-y-3">${urut.map(t => { const p = Math.round(tk[t].b / tk[t].n * 100); return `<div><div class="flex justify-between items-center mb-1">${badge(t)}<span class="text-[11px] font-bold text-slate-600">${tk[t].b}/${tk[t].n}</span></div><div class="h-2.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-${LBL[t][1]}-500 rounded-full transition-all duration-1000" style="width:0" data-w="${p}"></div></div></div>`; }).join('')}</div>
-            <div class="mt-4 bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-[11px] text-emerald-900 leading-relaxed"><i class="fas fa-lightbulb text-amber-500 mr-1"></i>${rek}</div>${R.keluar ? `<p class="text-[10px] text-slate-400 mt-2.5"><i class="fas fa-eye-slash mr-1"></i>Kamu meninggalkan halaman ${R.keluar}× saat ujian.</p>` : ''}</div>
-        <div class="grid grid-cols-2 gap-2 mt-3"><button id="btnPdf" onclick="unduhPdf()" class="bg-white border border-slate-200 text-slate-700 font-bold py-3 rounded-xl text-xs active:scale-95 transition"><i class="fas fa-file-pdf text-red-500 mr-1.5"></i>Unduh PDF</button><a href="../latihan.html" class="bg-brand-green text-white font-bold py-3 rounded-xl text-xs shadow-md text-center active:scale-95 transition"><i class="fas fa-house mr-1.5"></i>Ruang Latihan</a></div>
-        ${navLatihanHtml()}
-        <p class="text-center text-[10px] text-slate-400 mt-4"><i class="fas fa-rotate mr-1"></i>Gacha & latihan baru dibuka setelah ${new Date(window.H.spin.ts + 864e5).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
-        <div class="flex items-center justify-between mt-6 mb-3"><h3 class="font-bold text-slate-800 text-sm">Pembahasan Kalimat</h3><div id="filter" class="flex gap-1.5"></div></div><div id="bahas" class="space-y-3"></div>`;
+    let html = [
+        '<div class="up rounded-3xl p-5 text-center text-white shadow-lg" style="background:linear-gradient(135deg,#064e3b,#059669 60%,#34d399)">',
+        anim,
+        '<p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold">Skor Akhir</p><div class="flex items-end justify-center gap-1"><span id="skorAngka" class="text-6xl font-extrabold leading-none">0</span><span class="text-xl font-bold text-white/70 mb-1">/100</span></div>',
+        '<p class="font-extrabold text-base mt-2">' + pesan[0] + '</p><p class="text-[11px] text-white/80">' + pesan[1] + '</p>',
+        '<span class="inline-block mt-3 bg-white/20 rounded-full px-3 py-1 text-[11px] font-bold"><i class="fas fa-star text-amber-300 mr-1"></i>+' + R.xp + ' XP</span>',
+        R.auto ? '<p class="text-[10px] text-amber-200 mt-2"><i class="fas fa-clock mr-1"></i>Dikumpulkan otomatis karena waktu habis</p>' : '',
+        '</div>',
+        '<div class="grid grid-cols-3 gap-2.5 mt-3"><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-emerald-600">' + R.benar + '</p><p class="text-[9px] font-semibold text-slate-500">Tepat</p></div><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-rose-500">' + (R.total - R.benar) + '</p><p class="text-[9px] font-semibold text-slate-500">Keliru/Kosong</p></div><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-slate-700">' + L.fmt(R.durasi) + '</p><p class="text-[9px] font-semibold text-slate-500">dari ' + L.fmt(R.batas) + '</p></div></div>',
+        '<div class="bg-white rounded-2xl border border-slate-200 p-4 mt-3"><h3 class="font-bold text-slate-800 text-sm mb-3">Ketepatan per Struktur</h3><div class="space-y-3">',
+        urut.map(t => { const p = Math.round(tk[t].b / tk[t].n * 100); return '<div><div class="flex justify-between items-center mb-1">' + badge(t) + '<span class="text-[11px] font-bold text-slate-600">' + tk[t].b + '/' + tk[t].n + '</span></div><div class="h-2.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-' + LBL[t][1] + '-500 rounded-full transition-all duration-1000" style="width:0" data-w="' + p + '"></div></div></div>'; }).join(''),
+        '</div><div class="mt-4 bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-[11px] text-emerald-900 leading-relaxed"><i class="fas fa-lightbulb text-amber-500 mr-1"></i>' + rek + '</div>',
+        R.keluar ? '<p class="text-[10px] text-slate-400 mt-2.5"><i class="fas fa-eye-slash mr-1"></i>Kamu meninggalkan halaman ' + R.keluar + '× saat ujian.</p>' : '',
+        '</div>',
+        '<div class="grid grid-cols-2 gap-2 mt-3"><button id="btnPdf" onclick="unduhPdf()" class="bg-white border border-slate-200 text-slate-700 font-bold py-3 rounded-xl text-xs active:scale-95 transition"><i class="fas fa-file-pdf text-red-500 mr-1.5"></i>Unduh PDF</button><a href="../latihan.html" class="bg-brand-green text-white font-bold py-3 rounded-xl text-xs shadow-md text-center active:scale-95 transition"><i class="fas fa-house mr-1.5"></i>Ruang Latihan</a></div>',
+        navLatihanHtml(),
+        '<p class="text-center text-[10px] text-slate-400 mt-4"><i class="fas fa-rotate mr-1"></i>Gacha & latihan baru dibuka setelah ' + new Date(window.H.spin.ts + 864e5).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + '</p>',
+        '<div class="flex items-center justify-between mt-6 mb-3"><h3 class="font-bold text-slate-800 text-sm">Pembahasan Kalimat</h3><div id="filter" class="flex gap-1.5"></div></div><div id="bahas" class="space-y-3"></div>'
+    ].join('');
+    
+    $('main').innerHTML = html;
     window.scrollTo({ top: 0 });
-    let c = 0; const st = Math.max(1, Math.round(R.skor / 40)), ti = setInterval(() => { c = Math.min(R.skor, c + st); $('skorAngka').textContent = c; if (c >= R.skor) clearInterval(ti); }, 30);
+    
+    let c = 0; const st = Math.max(1, Math.round(R.skor / 40)); 
+    const ti = setInterval(() => { c = Math.min(R.skor, c + st); $('skorAngka').textContent = c; if (c >= R.skor) clearInterval(ti); }, 30);
     setTimeout(() => document.querySelectorAll('[data-w]').forEach(e => e.style.width = e.dataset.w + '%'), 300);
     if (baru) { if (R.skor >= 80) { L.beep('ok'); setTimeout(() => window.confetti && confetti({ particleCount: 140, spread: 80, origin: { y: .4 }, zIndex: 100001 }), 700); } else L.beep(R.skor >= 60 ? 'ok' : 'err'); }
     filterBahas('semua');
 }
+
 window.filterBahas = function(f) {
     const R = window.H.hasil.struktur;
-    $('filter').innerHTML = [['semua', 'Semua'], ['salah', 'Keliru']].map(([k, l]) => `<button onclick="filterBahas('${k}')" class="px-3 py-1 rounded-full text-[10px] font-bold border ${f === k ? 'bg-brand-green text-white border-brand-green' : 'bg-white text-slate-500 border-slate-200'}">${l}</button>`).join('');
-    const arr = window.soal.map((s, i) => [s, i]).filter(([s, i]) => f === 'semua' || R.jawab[i] !== s.j);
-    $('bahas').innerHTML = arr.length ? arr.map(([s, i]) => { const u = R.jawab[i], ok = u === s.j;
-        return `<article class="bg-white rounded-2xl border ${ok ? 'border-emerald-200' : 'border-rose-200'} p-4"><div class="flex items-center gap-2 mb-2"><span class="w-6 h-6 rounded-full ${ok ? 'bg-emerald-500' : 'bg-rose-500'} text-white text-[11px] font-extrabold flex items-center justify-center">${i + 1}</span>${badge(s.j)}<span class="ml-auto text-[10px] font-bold ${ok ? 'text-emerald-600' : 'text-rose-500'}">${ok ? 'Benar' : u === undefined ? 'Tidak dilabeli' : 'Keliru'}</span></div>
-            <p class="font-reading text-[12px] text-slate-800 leading-[1.75] mb-2.5">${esc(s.k)}</p>
-            <div class="flex flex-wrap gap-2 text-[11px]"><span class="px-2.5 py-1 rounded-lg ${ok ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">Pilihanmu: <b>${u ? LBL[u][0] : '-'}</b></span><span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">Kunci: <b>${LBL[s.j][0]}</b></span></div>
-            ${s.bahas ? `<div class="mt-2.5 bg-slate-50 rounded-lg p-2.5 text-[11px] text-slate-600 leading-relaxed"><b class="text-slate-700">Pembahasan:</b> ${esc(s.bahas)}</div>` : ''}</article>`; }).join('')
-        : '<div class="bg-white rounded-2xl p-6 text-center text-xs text-emerald-600 font-semibold border border-emerald-100"><i class="fas fa-circle-check mr-1"></i> Semua kalimat berhasil dilabeli dengan benar!</div>';
+    $('filter').innerHTML = [['semua', 'Semua'], ['salah', 'Keliru']].map(x => '<button onclick="filterBahas(\'' + x[0] + '\')" class="px-3 py-1 rounded-full text-[10px] font-bold border ' + (f === x[0] ? 'bg-brand-green text-white border-brand-green' : 'bg-white text-slate-500 border-slate-200') + '">' + x[1] + '</button>').join('');
+    
+    const arr = window.soal.map((s, i) => [s, i]).filter(x => f === 'semua' || R.jawab[x[1]] !== x[0].j);
+    
+    if(arr.length) {
+        let htmlBahas = arr.map(x => {
+            const s = x[0], i = x[1];
+            const u = R.jawab[i], ok = u === s.j;
+            let item = '<article class="bg-white rounded-2xl border ' + (ok ? 'border-emerald-200' : 'border-rose-200') + ' p-4">';
+            item += '<div class="flex items-center gap-2 mb-2"><span class="w-6 h-6 rounded-full ' + (ok ? 'bg-emerald-500' : 'bg-rose-500') + ' text-white text-[11px] font-extrabold flex items-center justify-center">' + (i + 1) + '</span>' + badge(s.j) + '<span class="ml-auto text-[10px] font-bold ' + (ok ? 'text-emerald-600' : 'text-rose-500') + '">' + (ok ? 'Benar' : u === undefined ? 'Tidak dilabeli' : 'Keliru') + '</span></div>';
+            item += '<p class="font-reading text-[12px] text-slate-800 leading-[1.75] mb-2.5">' + esc(s.k) + '</p>';
+            item += '<div class="flex flex-wrap gap-2 text-[11px]"><span class="px-2.5 py-1 rounded-lg ' + (ok ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700') + '">Pilihanmu: <b>' + (u ? LBL[u][0] : '-') + '</b></span><span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">Kunci: <b>' + LBL[s.j][0] + '</b></span></div>';
+            if(s.bahas) item += '<div class="mt-2.5 bg-slate-50 rounded-lg p-2.5 text-[11px] text-slate-600 leading-relaxed"><b class="text-slate-700">Pembahasan:</b> ' + esc(s.bahas) + '</div>';
+            item += '</article>';
+            return item;
+        }).join('');
+        $('bahas').innerHTML = htmlBahas;
+    } else {
+        $('bahas').innerHTML = '<div class="bg-white rounded-2xl p-6 text-center text-xs text-emerald-600 font-semibold border border-emerald-100"><i class="fas fa-circle-check mr-1"></i> Semua kalimat berhasil dilabeli dengan benar!</div>';
+    }
 }
-window.filterBahas = filterBahas;
 
-/* ================= PDF ================= */
 window.isiLaporan = function() {
     const R = window.H.hasil.struktur, tk = {}; window.soal.forEach((s, i) => { const t = tk[s.j] = tk[s.j] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
     const tgls = new Date(window.H.spin.ts).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    $('laporan').innerHTML = `<div style="padding:4px"><div style="border-bottom:3px solid #059669;padding-bottom:8px;margin-bottom:12px"><div style="font-size:17px;font-weight:800;color:#064e3b">LAPORAN LATIHAN — BEDAH STRUKTUR</div><div style="color:#64748b;font-size:11px">Platform Argumentasi · Ruang Latihan</div></div>
-        <table style="width:100%;font-size:12px;margin-bottom:12px"><tr><td style="width:90px;color:#64748b">Nama</td><td><b>${esc(L.nama())}</b></td></tr><tr><td style="color:#64748b">Tanggal</td><td>${tgls}</td></tr><tr><td style="color:#64748b">Materi</td><td>${esc(window.H.pack.judul)}</td></tr><tr><td style="color:#64748b">Waktu</td><td>${L.fmt(R.durasi)} dari ${L.fmt(R.batas)}${R.auto ? ' (waktu habis)' : ''}</td></tr></table>
-        <div class="nobreak" style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:10px 14px;margin-bottom:12px"><span style="font-size:30px;font-weight:800;color:#059669">${R.skor}</span><span style="color:#64748b"> / 100</span> &nbsp;·&nbsp; Tepat <b>${R.benar}</b> dari <b>${R.total}</b> kalimat</div>
-        <table class="nobreak" style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px"><tr style="background:#f1f5f9"><th style="text-align:left;padding:5px 8px;border:1px solid #e2e8f0">Bagian Struktur</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Tepat</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Jumlah</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Ketepatan</th></tr>${URUT_LBL.filter(t => tk[t]).map(t => `<tr><td style="padding:5px 8px;border:1px solid #e2e8f0">${LBL[t][0]}</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">${tk[t].b}</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">${tk[t].n}</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">${Math.round(tk[t].b / tk[t].n * 100)}%</td></tr>`).join('')}</table>
-        <div style="font-size:13px;font-weight:800;margin-bottom:6px;color:#064e3b">Rincian Analisis Kalimat</div>
-        ${window.soal.map((s, i) => { const u = R.jawab[i], ok = u === s.j; return `<div class="nobreak" style="border:1px solid ${ok ? '#a7f3d0' : '#fecdd3'};border-radius:6px;padding:8px 10px;margin-bottom:8px"><div style="font-size:11px"><b>Kalimat ${i + 1}</b> &nbsp;·&nbsp; <b style="color:${ok ? '#059669' : '#e11d48'}">${ok ? 'TEPAT' : 'KELIRU'}</b></div><div style="margin:3px 0;font-size:12px">${esc(s.k)}</div><div style="font-size:11px"><span style="color:#64748b">Labelmu:</span> ${u ? LBL[u][0] : '-'} &nbsp;|&nbsp; <span style="color:#64748b">Kunci:</span> <b>${LBL[s.j][0]}</b></div>${s.bahas ? `<div style="font-size:11px;color:#475569;margin-top:3px"><i>Pembahasan:</i> ${esc(s.bahas)}</div>` : ''}</div>`; }).join('')}
-        <div style="font-size:9px;color:#94a3b8;margin-top:10px;text-align:center">Dihasilkan otomatis oleh Platform Argumentasi · ${new Date(R.selesai).toLocaleString('id-ID')}</div></div>`;
+    
+    let repHtml = [
+        '<div style="padding:4px"><div style="border-bottom:3px solid #059669;padding-bottom:8px;margin-bottom:12px"><div style="font-size:17px;font-weight:800;color:#064e3b">LAPORAN LATIHAN — BEDAH STRUKTUR</div><div style="color:#64748b;font-size:11px">Platform Argumentasi · Ruang Latihan</div></div>',
+        '<table style="width:100%;font-size:12px;margin-bottom:12px"><tr><td style="width:90px;color:#64748b">Nama</td><td><b>' + esc(L.nama()) + '</b></td></tr><tr><td style="color:#64748b">Tanggal</td><td>' + tgls + '</td></tr><tr><td style="color:#64748b">Materi</td><td>' + esc(window.H.spin.judul) + '</td></tr><tr><td style="color:#64748b">Waktu</td><td>' + L.fmt(R.durasi) + ' dari ' + L.fmt(R.batas) + (R.auto ? ' (waktu habis)' : '') + '</td></tr></table>',
+        '<div class="nobreak" style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:10px 14px;margin-bottom:12px"><span style="font-size:30px;font-weight:800;color:#059669">' + R.skor + '</span><span style="color:#64748b"> / 100</span> &nbsp;·&nbsp; Tepat <b>' + R.benar + '</b> dari <b>' + R.total + '</b> kalimat</div>',
+        '<table class="nobreak" style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px"><tr style="background:#f1f5f9"><th style="text-align:left;padding:5px 8px;border:1px solid #e2e8f0">Bagian Struktur</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Tepat</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Jumlah</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Ketepatan</th></tr>',
+        URUT_LBL.filter(t => tk[t]).map(t => '<tr><td style="padding:5px 8px;border:1px solid #e2e8f0">' + LBL[t][0] + '</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">' + tk[t].b + '</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">' + tk[t].n + '</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">' + Math.round(tk[t].b / tk[t].n * 100) + '%</td></tr>').join(''),
+        '</table><div style="font-size:13px;font-weight:800;margin-bottom:6px;color:#064e3b">Rincian Analisis Kalimat</div>'
+    ];
+    
+    window.soal.forEach((s, i) => { 
+        const u = R.jawab[i], ok = u === s.j; 
+        let d = '<div class="nobreak" style="border:1px solid ' + (ok ? '#a7f3d0' : '#fecdd3') + ';border-radius:6px;padding:8px 10px;margin-bottom:8px"><div style="font-size:11px"><b>Kalimat ' + (i + 1) + '</b> &nbsp;·&nbsp; <b style="color:' + (ok ? '#059669' : '#e11d48') + '">' + (ok ? 'TEPAT' : 'KELIRU') + '</b></div><div style="margin:3px 0;font-size:12px">' + esc(s.k) + '</div><div style="font-size:11px"><span style="color:#64748b">Labelmu:</span> ' + (u ? LBL[u][0] : '-') + ' &nbsp;|&nbsp; <span style="color:#64748b">Kunci:</span> <b>' + LBL[s.j][0] + '</b></div>';
+        if(s.bahas) d += '<div style="font-size:11px;color:#475569;margin-top:3px"><i>Pembahasan:</i> ' + esc(s.bahas) + '</div>';
+        d += '</div>';
+        repHtml.push(d);
+    });
+    
+    repHtml.push('<div style="font-size:9px;color:#94a3b8;margin-top:10px;text-align:center">Dihasilkan otomatis oleh Platform Argumentasi · ' + new Date(R.selesai).toLocaleString('id-ID') + '</div></div>');
+    $('laporan').innerHTML = repHtml.join('');
 }
+
 window.unduhPdf = async function() {
     const b = $('btnPdf'), isi = b.innerHTML; b.disabled = true; b.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1.5"></i>Membuat PDF…';
-    try { isiLaporan(); await L.pdf($('laporan'), `Laporan-Bedah-Struktur-${new Date(window.H.spin.ts).toISOString().slice(0, 10)}.pdf`); L.toast('PDF berhasil dibuat.'); }
+    try { isiLaporan(); await L.pdf($('laporan'), 'Laporan-Bedah-Struktur-' + new Date(window.H.spin.ts).toISOString().slice(0, 10) + '.pdf'); L.toast('PDF berhasil dibuat.'); }
     catch (e) { console.error(e); L.toast('Gagal membuat PDF. Memakai cetak browser…', true); setTimeout(() => window.print(), 600); }
     finally { b.disabled = false; b.innerHTML = isi; }
 };
+
 initLatihan();
 </script>
 </body>
