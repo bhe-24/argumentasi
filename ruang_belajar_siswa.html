@@ -50,7 +50,7 @@
         .modal-z { z-index: 99999; }
 
         .fade-in { animation: fadeIn .35s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .sk { position: relative; overflow: hidden; background: #e2e8f0; border-radius: .5rem; color: transparent !important; }
         .sk-light { background: rgba(255,255,255,.28); }
@@ -300,18 +300,18 @@
         };
 
         const BAGIAN_MISI = [
-            { key: "pilgan", n: "Pilihan Ganda", type: "Pemahaman", file: "misi-pilgan.html", c: "emerald" },
-            { key: "struktur", n: "Bedah Struktur", type: "Analisis", file: "misi-struktur.html", c: "emerald" },
-            { key: "esai", n: "Esai Argumentasi", type: "Kreasi", file: "misi-esai.html", c: "emerald" },
-            { key: "kritis", n: "Uji Berpikir", type: "Kritis", file: "misi-kritis.html", c: "emerald" },
-            { key: "peta", n: "Peta Argumen", type: "Teks", file: "misi-peta.html", c: "emerald" },
-            { key: "ilmiah", n: "Kata Ilmiah", type: "Kosa Kata", file: "misi-ilmiah.html", c: "emerald" }
+            { key: "pilgan", n: "Pilihan Ganda", type: "Pemahaman", file: "pilgan.html", c: "emerald" },
+            { key: "struktur", n: "Bedah Struktur", type: "Analisis", file: "struktur.html", c: "emerald" },
+            { key: "esai", n: "Esai Argumentasi", type: "Kreasi", file: "esai.html", c: "emerald" },
+            { key: "kritis", n: "Uji Berpikir", type: "Kritis", file: "kritis.html", c: "emerald" },
+            { key: "peta", n: "Peta Argumen", type: "Teks", file: "peta.html", c: "emerald" },
+            { key: "ilmiah", n: "Kata Ilmiah", type: "Kosa Kata", file: "ilmiah.html", c: "emerald" }
         ];
 
         const searchParams = new URLSearchParams(window.location.search);
         let globalClassId = searchParams.get("id");
         let globalHandoutId = null; 
-        let globalAiPaket = null;
+        let globalGuruPaket = null;
         let globalStudentId = searchParams.get("sid") || localStorage.getItem("siswa_" + globalClassId) || localStorage.getItem("studentId");
 
         window.showToast = function(msg, isErr = false) {
@@ -382,7 +382,7 @@
             }
         }
 
-        function renderMissions(aiPaket, sid) {
+        function renderMissions(guruPaket, sid) {
             const rawData = localStorage.getItem("lat_v1_" + globalClassId);
             const lData = rawData ? JSON.parse(rawData) : {};
             let userProg = {};
@@ -401,13 +401,13 @@
             if (!container) return;
 
             container.innerHTML = BAGIAN_MISI.map((b) => {
-                const isReady = !!aiPaket[b.key]; 
+                const isReady = !!guruPaket[b.key]; 
                 const score = userProg[b.key];
                 const isDone = score !== undefined;
                 const isFailed = isDone && score < 70;
                 
                 // FIXED BUG: Sebelumnya b.file belum ada fallback
-                const fileName = b.file || ("misi-" + b.key + ".html");
+                const fileName = b.file || (b.key + ".html");
                 const urlParamId = encodeURIComponent(globalClassId);
                 const urlParamSid = sid ? `&sid=${encodeURIComponent(sid)}` : "";
                 const targetUrl = `kelas/${fileName}?id=${urlParamId}${urlParamSid}`;
@@ -470,10 +470,10 @@
                 const btnAi = `
                 <a href="kelas/view-teks.html?id=${urlParamId}${urlParamSid}" class="flex items-center justify-between p-4 bg-white border border-emerald-200 rounded-2xl shadow-sm hover:shadow-md transition active:scale-95 group">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fas fa-robot"></i></div>
+                        <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fas fa-chalkboard-teacher"></i></div>
                         <div>
-                            <h4 class="font-bold text-emerald-900 text-sm">Modul Pintar AI</h4>
-                            <p class="text-[10px] text-emerald-600">Baca rangkuman otomatis teks.</p>
+                            <h4 class="font-bold text-emerald-900 text-sm">Modul Pintar Guru</h4>
+                            <p class="text-[10px] text-emerald-600">Baca rangkuman teks dari guru.</p>
                         </div>
                     </div>
                     <i class="fas fa-chevron-right text-emerald-300 group-hover:text-emerald-500 transition"></i>
@@ -647,9 +647,9 @@
                 const kelas = classSnap.data();
                 
                 globalHandoutId = kelas.handoutId || null;
-                globalAiPaket = kelas.aiPaket || null;
+                globalGuruPaket = kelas.aiPaket || null;
 
-                // DIKETIK ULANG MURNI: Mencegah zero-width space dari copy-paste sebelumnya
+                // Set textContent untuk nav dan teacher (tetap biarkan class sk sampai semua siap)
                 const namaKelasText = kelas.namaKelas || "Kelas";
                 const targetNav = $("navClassName");
                 if (targetNav) targetNav.textContent = namaKelasText;
@@ -658,9 +658,49 @@
                 const targetTeacher = $("teacherNameDisplay");
                 if (targetTeacher) targetTeacher.textContent = "Guru: " + namaGuruText;
 
+                // Helper: hapus class sk dan sk-light dari elemen header agar teks terlihat
+                const clearHeaderSkeletons = () => {
+                    const els = [targetNav, targetTeacher, $("studentNameDisplay")];
+                    els.forEach(el => {
+                        if (el) {
+                            el.classList.remove("sk");
+                            el.classList.remove("sk-light");
+                        }
+                    });
+                };
+
+                // Helper: sembunyikan skeletonState dan tampilkan state utama BARENGAN
+                const finalizeLoading = () => {
+                    // Hapus class sk dari header agar teks muncul bersamaan dengan konten utama
+                    clearHeaderSkeletons();
+                    
+                    // Sembunyikan skeletonState BARENGAN dengan munculnya teks header
+                    const skelState = $("skeletonState");
+                    if (skelState) skelState.classList.add("hidden");
+                    
+                    // Tampilkan state yang sesuai
+                    if (!globalGuruPaket) { 
+                        const waitState = $("waitingState");
+                        if (waitState) waitState.classList.remove("hidden"); 
+                    } else {
+                        const journeyState = $("journeyState");
+                        if (journeyState) journeyState.classList.remove("hidden");
+                        
+                        renderMateri();
+                        renderKlasemen();
+                    }
+                };
+                
+                // Render missions awal (jika paket ada)
+                if (globalGuruPaket) {
+                    renderMissions(globalGuruPaket, globalStudentId);
+                }
+                
                 if (globalStudentId) {
-                    onSnapshot(doc(db, `classes/${globalClassId}/students`, globalStudentId), (snap) => {
-                        const d = snap.exists() ? snap.data() : null;
+                    try {
+                        // Ambil data siswa sekali (initial load) agar skeleton bisa hilang barengan
+                        const studentSnap = await getDoc(doc(db, `classes/${globalClassId}/students`, globalStudentId));
+                        const d = studentSnap.exists() ? studentSnap.data() : null;
                         const n = d ? (d.nama || d.namaLengkap) : null;
                         const c = localStorage.getItem("namaSiswaCendekia") || n || "Siswa";
                         
@@ -670,18 +710,44 @@
                         updateXP(); 
                         updateBanner(c);
                         
-                        if (globalAiPaket) {
-                            renderMissions(globalAiPaket, globalStudentId);
-                            renderKlasemen();
-                        }
-                    }, () => { 
+                        // Finalize loading: hapus semua skeleton barengan
+                        finalizeLoading();
+                        
+                        // Pasang listener onSnapshot untuk update realtime (tanpa re-trigger skeleton hide)
+                        onSnapshot(doc(db, `classes/${globalClassId}/students`, globalStudentId), (snap) => {
+                            const d2 = snap.exists() ? snap.data() : null;
+                            const n2 = d2 ? (d2.nama || d2.namaLengkap) : null;
+                            const c2 = localStorage.getItem("namaSiswaCendekia") || n2 || "Siswa";
+                            
+                            const nameDisplay2 = $("studentNameDisplay");
+                            if (nameDisplay2) nameDisplay2.textContent = c2;
+                            
+                            updateXP(); 
+                            updateBanner(c2);
+                            
+                            if (globalGuruPaket) {
+                                renderMissions(globalGuruPaket, globalStudentId);
+                                renderKlasemen();
+                            }
+                        }, () => { 
+                            // Error handler: tetap pakai default
+                            const def = localStorage.getItem("namaSiswaCendekia") || "Siswa";
+                            const nameDisplay2 = $("studentNameDisplay");
+                            if (nameDisplay2) nameDisplay2.textContent = def;
+                            
+                            updateXP(); 
+                            updateBanner(def);
+                        });
+                    } catch (err) {
                         const def = localStorage.getItem("namaSiswaCendekia") || "Siswa";
                         const nameDisplay = $("studentNameDisplay");
                         if (nameDisplay) nameDisplay.textContent = def;
                         
                         updateXP(); 
                         updateBanner(def);
-                    });
+                        
+                        finalizeLoading();
+                    }
                 } else {
                     const def = localStorage.getItem("namaSiswaCendekia") || "Siswa";
                     const nameDisplay = $("studentNameDisplay");
@@ -689,22 +755,8 @@
                     
                     updateXP(); 
                     updateBanner(def);
-                }
-
-                const skelState = $("skeletonState");
-                if (skelState) skelState.classList.add("hidden");
-                
-                if (!globalAiPaket) { 
-                    const waitState = $("waitingState");
-                    if (waitState) waitState.classList.remove("hidden"); 
-                } else {
-                    renderMissions(globalAiPaket, globalStudentId);
                     
-                    const journeyState = $("journeyState");
-                    if (journeyState) journeyState.classList.remove("hidden");
-                    
-                    renderMateri();
-                    renderKlasemen();
+                    finalizeLoading();
                 }
             } catch (err) {
                 console.error(err);
