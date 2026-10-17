@@ -10,10 +10,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }</script>
-    
     <script>
     (function () {
-        // MENDETEKSI ID KELAS UNTUK MEMISAHKAN MEMORI BROWSER
         const qCore = new URLSearchParams(window.location.search);
         const cId = qCore.get('id') || 'umum';
         const LS = 'lat_v1_' + cId, DBN = 'latihan-db-' + cId; 
@@ -54,18 +52,6 @@
                 if (!c) { c = document.createElement('div'); c.id = 'lToast'; c.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none'; document.body.appendChild(c); }
                 const t = document.createElement('div'); t.className = (err ? 'bg-red-500' : 'bg-slate-800') + ' text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 up';
                 t.innerHTML = '<i class="fas ' + (err ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400') + '"></i><span class="flex-1">' + esc(msg) + '</span>'; c.appendChild(t); setTimeout(() => t.remove(), 3000);
-            },
-            beep(jenis) {
-                try { const x = new (window.AudioContext || window.webkitAudioContext)(), o = x.createOscillator(), g = x.createGain(); o.connect(g); g.connect(x.destination);
-                    if (jenis === 'ok') { o.type = 'sine'; o.frequency.setValueAtTime(523, x.currentTime); o.frequency.exponentialRampToValueAtTime(1046, x.currentTime + .12); }
-                    else if (jenis === 'tik') { o.type = 'square'; o.frequency.setValueAtTime(900, x.currentTime); }
-                    else { o.type = 'sawtooth'; o.frequency.setValueAtTime(150, x.currentTime); }
-                    g.gain.setValueAtTime(.06, x.currentTime); g.gain.exponentialRampToValueAtTime(.001, x.currentTime + (jenis === 'tik' ? .06 : .4)); o.start(); o.stop(x.currentTime + .4); } catch (e) {}
-            },
-            async pdf(el, namaBerkas) {
-                if (!window.html2pdf) await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'; s.onload = ok; s.onerror = () => no(new Error('Pembuat PDF gagal dimuat')); document.head.appendChild(s); });
-                const c = el.cloneNode(true); c.style.cssText = 'display:block;position:static;width:700px;background:#fff;color:#0f172a';
-                await html2pdf().set({ margin: [10, 10, 12, 10], filename: namaBerkas, image: { type: 'jpeg', quality: .95 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: ['css', 'legacy'], avoid: '.nobreak' } }).from(c).save();
             }
         };
         window.L = L;
@@ -94,8 +80,6 @@
         @keyframes sp { 0% { transform: scale(0) rotate(0); opacity: 0; } 40% { opacity: 1; } 100% { transform: scale(1.4) rotate(120deg); opacity: 0; } }
         .goyang { animation: goy 1.2s ease-in-out infinite; } @keyframes goy { 0%,100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-12px) rotate(6deg); } }
         .detak { animation: dtk 1.2s ease-in-out infinite; } @keyframes dtk { 0%,100% { transform: scale(1); } 50% { transform: scale(1.18); } }
-        .rpt { display: none; font-family: Arial, Helvetica, sans-serif; font-size: 12px; line-height: 1.5; }
-        @media print { body > *:not(#laporan) { display: none !important; } #laporan { display: block !important; } body { background: #fff; } }
     </style>
 </head>
 <body class="flex justify-center min-h-screen">
@@ -119,10 +103,16 @@
         <div class="grid grid-cols-2 gap-2 mt-5"><button onclick="jawabModal(false)" id="mBatal" class="py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs">Batal</button><button onclick="jawabModal(true)" id="mOk" class="py-3 rounded-xl bg-brand-green text-white font-bold text-xs">Lanjutkan</button></div>
     </div>
 </div>
-<div id="laporan" class="rpt"></div>
 
-<script>
-const $ = id => document.getElementById(id), esc = L.esc;
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" });
+const db = getFirestore(app);
+window.db = db;
+
+const $ = id => document.getElementById(id), esc = window.L.esc;
 const HURUF = ['A', 'B', 'C', 'D', 'E'];
 const TKT = { mudah: ['Mudah', 'emerald', 'fa-seedling'], sedang: ['Sedang', 'sky', 'fa-gauge'], sulit: ['Sulit', 'amber', 'fa-mountain'], hots: ['HOTS', 'rose', 'fa-fire'] };
 const NAV_BAGIAN = [
@@ -144,12 +134,12 @@ window.normSoal = function(arr) {
     return (arr || []).map(s => { 
         const tk = String(s.tingkat || 'sedang').toLowerCase(); 
         return { 
-            p: s.p ?? s.pertanyaan ?? s.pernyataan ?? s.rumpang ?? s.teks ?? 'Soal', 
+            p: s.p ?? s.pertanyaan ?? s.pernyataan ?? 'Soal', 
             opsi: Array.isArray(s.opsi) ? s.opsi : (Array.isArray(s.pilihan) ? s.pilihan : []), 
             j: typeof s.j === 'number' ? s.j : (HURUF.indexOf(String(s.j ?? '').trim().toUpperCase()) >= 0 ? HURUF.indexOf(String(s.j ?? '').trim().toUpperCase()) : (parseInt(s.j) || 0)), 
             tingkat: TKT[tk] ? tk : 'sedang', 
             waktu: s.waktu || 60, 
-            bahas: s.bahas ?? s.pembahasan ?? s.alasan ?? ''
+            bahas: s.bahas ?? s.pembahasan ?? ''
         }; 
     }); 
 };
@@ -160,19 +150,39 @@ window.badge = t => { const arr = TKT[t] || TKT.sedang; return '<span class="inl
 
 async function initLatihan() {
     await L.siap();
-    const H = L.hari();
     
     let backUrl = '../ruang_belajar_siswa.html';
     if(classId) backUrl += '?id=' + encodeURIComponent(classId);
     if(studentId) backUrl += '&sid=' + encodeURIComponent(studentId);
     $('btnBack').href = backUrl;
-    
+
+    let H = L.hari();
+    if (!H) {
+        const S = L.state();
+        const k = 'c' + Date.now();
+        S.hari[k] = { sesi: {}, hasil: {}, spin: { ts: Date.now(), judul: 'Memuat...' } };
+        H = S.hari[k];
+        L.simpan(true);
+    }
+
+    // Ambil Data Firebase Jika Belum Ada Pack
+    if (!H.pack || !H.pack.pilgan) {
+        try {
+            const docSnap = await getDoc(doc(db, "classes", classId));
+            if (docSnap.exists() && docSnap.data().aiPaket) {
+                H.pack = docSnap.data().aiPaket;
+                H.spin = { judul: docSnap.data().namaKelas, ts: Date.now() };
+                L.simpan(true);
+            }
+        } catch(e) { console.error("Firebase error:", e); }
+    }
+
     if (!H || !H.pack || !H.pack.pilgan) {
         $('main').innerHTML = [
-            '<div class="bg-white rounded-2xl p-8 text-center border border-slate-200">',
+            '<div class="bg-white rounded-2xl p-8 text-center border border-slate-200 mt-10">',
             '<i class="fas fa-exclamation-triangle text-4xl text-slate-300 mb-3"></i>',
             '<p class="text-sm font-bold text-slate-700">Latihan Belum Siap</p>',
-            '<p class="text-[11px] text-slate-500 mt-1">Silakan minta guru menyiapkan materi ini terlebih dahulu.</p>',
+            '<p class="text-[11px] text-slate-500 mt-1">Sistem belum menemukan paket latihan di kelas ini.</p>',
             '<a href="' + backUrl + '" class="inline-block mt-4 bg-brand-green text-white text-xs font-bold px-5 py-2.5 rounded-full">Kembali</a>',
             '</div>'
         ].join('');
@@ -184,6 +194,7 @@ async function initLatihan() {
     window.soal = window.normSoal(window.P.soal);
     window.totalWaktu = window.P.total || window.P.waktu || window.soal.reduce((a, b) => a + (b.waktu || 60), 0) || 300;
     if($('hSub')) $('hSub').textContent = H.spin.judul || 'Pilihan Ganda';
+    
     if (H.hasil && H.hasil.pilgan) return window.tampilHasil();
     if (H.sesi && H.sesi.pilgan) { 
         window.sesi = H.sesi.pilgan; 
@@ -197,7 +208,7 @@ window.tampilIntro = function() {
     const tkBadge = ['mudah', 'sedang', 'sulit', 'hots'].filter(t => hit[t]).map(t => '<span class="flex items-center gap-1.5">' + badge(t) + '<b class="text-[11px] text-slate-600">×' + hit[t] + '</b></span>').join('');
     
     $('main').innerHTML = [
-        '<div class="up bg-white rounded-2xl shadow-sm border border-slate-200 p-5">',
+        '<div class="up bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mt-4">',
         '<div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center text-2xl mx-auto"><i class="fas fa-circle-check"></i></div>',
         '<h2 class="text-center font-extrabold text-slate-800 text-base mt-3">Siap mengerjakan?</h2>',
         '<p class="text-center text-[11px] text-slate-500 mt-1 leading-relaxed">Soal disusun dari materi <b>' + esc(window.H.spin.judul) + '</b>.</p>',
@@ -209,8 +220,7 @@ window.tampilIntro = function() {
         '<div class="flex flex-wrap gap-2">' + tkBadge + '</div>',
         '<ul class="mt-5 space-y-2 text-[11px] text-slate-600 leading-relaxed">',
         '<li class="flex gap-2"><i class="fas fa-clock text-amber-500 mt-0.5"></i><span>Waktu ditentukan otomatis sesuai tingkat kesulitan. Hitung mundur berlaku untuk semua soal.</span></li>',
-        '<li class="flex gap-2"><i class="fas fa-lock text-rose-500 mt-0.5"></i><span><b>Hanya bisa dikerjakan 1 kali per hari.</b> Setelah dimulai, waktu terus berjalan walau halaman ditutup.</span></li>',
-        '<li class="flex gap-2"><i class="fas fa-floppy-disk text-emerald-500 mt-0.5"></i><span>Jawabanmu tersimpan otomatis di perangkat ini.</span></li>',
+        '<li class="flex gap-2"><i class="fas fa-lock text-rose-500 mt-0.5"></i><span><b>Hanya bisa dikerjakan 1 kali.</b> Setelah dimulai, waktu terus berjalan walau halaman ditutup.</span></li>',
         '</ul>',
         '<button onclick="mulai()" class="mt-6 w-full bg-brand-green text-white font-bold py-3.5 rounded-xl shadow-md text-sm active:scale-95 transition"><i class="fas fa-play mr-1.5"></i>Mulai Ujian</button>',
         '</div>'
@@ -305,7 +315,19 @@ window.kumpulkan = async function(auto) {
     delete window.H.sesi.pilgan;
     L.simpan(); 
     
-    $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden'); $('btnBack').onclick = null;
+    // Save to Firebase Database
+    if (studentId && classId) {
+        try {
+            await setDoc(doc(db, `classes/${classId}/students`, studentId), { latihan: { pilgan: window.H.hasil.pilgan } }, { merge: true });
+        } catch(e) {}
+    }
+
+    $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden'); 
+    let backUrl = '../ruang_belajar_siswa.html';
+    if(classId) backUrl += '?id=' + encodeURIComponent(classId);
+    if(studentId) backUrl += '&sid=' + encodeURIComponent(studentId);
+    $('btnBack').onclick = null; $('btnBack').href = backUrl; 
+
     if (auto) window.L.toast('Waktu habis. Jawabanmu otomatis dikumpulkan.', true); 
     window.tampilHasil(true); 
 }
