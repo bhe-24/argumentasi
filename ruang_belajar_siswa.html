@@ -381,8 +381,46 @@
             }, 3000);
         };
 
+        // Helper: ambil data profil siswa dari localStorage (disimpan oleh halaman profil.html)
+        // Profil disimpan sebagai base64 (foto) dan nama string
+        function getProfilFromLocal() {
+            // Coba beberapa kemungkinan key localStorage yang mungkin dipakai profil.html
+            const fotoBase64 = localStorage.getItem("fotoProfilBase64") 
+                || localStorage.getItem("profilFotoBase64")
+                || localStorage.getItem("fotoSiswaBase64")
+                || localStorage.getItem("avatarBase64")
+                || localStorage.getItem("profilBase64")
+                || null;
+            const namaProfil = localStorage.getItem("namaSiswaCendekia")
+                || localStorage.getItem("namaProfilSiswa")
+                || null;
+            return { fotoBase64, namaProfil };
+        }
+        
+        // Helper: ambil XP lokal siswa yang sedang login
+        // XP diambil dari localStorage (kelasPointsArg) - akumulasi XP di halaman ini
+        function getLocalXP() {
+            return parseInt(localStorage.getItem("kelasPointsArg") || "0");
+        }
+        
+        // Helper: set avatar dari data profil lokal
+        function applyProfilLokal() {
+            const { fotoBase64 } = getProfilFromLocal();
+            const avatarImg = $("avatarImage");
+            const avatarIcon = $("avatarIcon");
+            if (avatarImg && avatarIcon) {
+                if (fotoBase64) {
+                    avatarImg.src = fotoBase64;
+                    avatarImg.classList.remove("hidden");
+                    avatarIcon.classList.add("hidden");
+                    return true;
+                }
+            }
+            return false;
+        }
+        
         function updateXP() {
-            const clsXp = parseInt(localStorage.getItem("kelasPointsArg") || "0");
+            const clsXp = getLocalXP();
             const xpDisplay = $("studentXpDisplay");
             if (xpDisplay) xpDisplay.textContent = clsXp;
         }
@@ -601,21 +639,45 @@
                 const q = query(collection(db, `classes/${globalClassId}/students`));
                 const querySnapshot = await getDocs(q);
                 let students = [];
+                // Ambil profil lokal siswa yang login (foto base64 dari profil.html)
+                const profilLokal = getProfilFromLocal();
+                const localXp = getLocalXP();
                 
                 querySnapshot.forEach((docSnap) => {
                     const d = docSnap.data();
+                    const isCurrentUser = docSnap.id === globalStudentId;
                     let tXp = 0;
                     if (d.latihan) { 
                         Object.values(d.latihan).forEach(m => { tXp += (m.xp || 0); }); 
                     }
-                    // Tampilkan SEMUA siswa yang terdaftar di kelas, termasuk yang XP=0
+                    // Untuk siswa yang sedang login, override XP dengan XP lokal
+                    // (XP yang di-akumulasi di halaman ini, bukan dari Firestore yang mungkin belum sync)
+                    if (isCurrentUser) {
+                        tXp = Math.max(tXp, localXp);
+                    }
+                    
+                    // Ambil foto: untuk siswa yang login, pakai profil lokal (base64 dari profil.html)
+                    // Untuk siswa lain, fallback icon user ( Firestore mungkin tidak punya foto)
+                    let fotoUrl = null;
+                    if (isCurrentUser && profilLokal.fotoBase64) {
+                        fotoUrl = profilLokal.fotoBase64;
+                    } else if (d.fotoUrl || d.fotoProfil || d.avatar || d.photoURL || d.photoUrl) {
+                        fotoUrl = d.fotoUrl || d.fotoProfil || d.avatar || d.photoURL || d.photoUrl;
+                    }
+                    
+                    // Nama: siswa yang login pakai nama profil lokal kalau ada
+                    let nama = d.nama || d.namaLengkap || "Anonim";
+                    if (isCurrentUser && profilLokal.namaProfil) {
+                        nama = profilLokal.namaProfil;
+                    }
+                    
                     students.push({ 
                         id: docSnap.id, 
-                        nama: d.nama || d.namaLengkap || "Anonim", 
+                        nama: nama, 
                         xp: tXp, 
                         latihan: d.latihan || {},
-                        fotoUrl: d.fotoUrl || d.fotoProfil || d.avatar || d.photoURL || d.photoUrl || null,
-                        isCurrentUser: docSnap.id === globalStudentId
+                        fotoUrl: fotoUrl,
+                        isCurrentUser: isCurrentUser
                     });
                 });
 
@@ -635,40 +697,65 @@
                     return;
                 }
 
-                let topHtml = "";
-                const pod = [
-                    students[1] ? { ...students[1], r: 2, c: "rank-2", h: "h-32" } : null,
-                    students[0] ? { ...students[0], r: 1, c: "rank-1", h: "h-44" } : null,
-                    students[2] ? { ...students[2], r: 3, c: "rank-3", h: "h-28" } : null
-                ];
+                // Pisahkan siswa yang punya XP > 0 dan yang XP = 0
+                const studentsWithXp = students.filter(s => s.xp > 0);
+                const studentsWithoutXp = students.filter(s => s.xp === 0);
 
-                pod.forEach(p => {
-                    if (!p) { 
-                        topHtml += '<div class="flex-1"></div>'; 
-                        return; 
-                    }
-                    const nm = p.nama.split(" ")[0];
-                    const dataStr = encodeURIComponent(JSON.stringify(p.latihan || {}));
-                    const safeName = encodeURIComponent(p.nama);
-                    const fotoHtml = p.fotoUrl 
-                        ? `<img src="${p.fotoUrl}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(p.nama)}">` 
-                        : `<i class="fas fa-user"></i>`;
-                    const userBadge = p.isCurrentUser ? '<span class="absolute top-2 left-2 bg-white/95 text-emerald-600 text-[8px] font-black px-1.5 py-0.5 rounded-full shadow">ANDA</span>' : '';
-                    
-                    topHtml += `
-                    <div onclick="window.bukaDetailKlasemen('${safeName}', '${dataStr}')" class="flex-1 ${p.h} ${p.c} rounded-t-xl flex flex-col items-center justify-end p-2 pb-3 shadow-lg relative cursor-pointer active:scale-95 transition transform origin-bottom hover:scale-105">
-                        <div class="absolute -top-6 w-12 h-12 bg-white rounded-full flex items-center justify-center text-slate-800 text-lg shadow-md border-4 border-slate-50 overflow-hidden">${fotoHtml}</div>
-                        <h4 class="font-bold text-[11px] w-full text-center mt-2 leading-tight break-words line-clamp-2">${esc(nm)}</h4>
-                        <p class="text-[9px] font-black opacity-80">${p.xp} XP</p>
-                        <div class="absolute top-2 right-2 text-[10px] font-black opacity-50">#${p.r}</div>
-                        ${userBadge}
-                    </div>`;
-                });
+                // Top 3 podium HANYA diisi jika ada siswa dengan XP > 0
+                let topHtml = "";
+                if (studentsWithXp.length === 0) {
+                    // Belum ada siswa yang dapat XP - podium kosong dengan pesan
+                    topHtml = '<div class="w-full text-center text-xs text-slate-400 py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-300 flex flex-col items-center justify-center gap-2"><i class="fas fa-trophy text-2xl text-slate-300"></i><span>Belum ada siswa yang mendapatkan XP.<br/>Selesaikan misi untuk muncul di papan juara!</span></div>';
+                } else {
+                    // Top 3 hanya dari siswa yang punya XP > 0
+                    const pod = [
+                        studentsWithXp[1] ? { ...studentsWithXp[1], r: 2, c: "rank-2", h: "h-32" } : null,
+                        studentsWithXp[0] ? { ...studentsWithXp[0], r: 1, c: "rank-1", h: "h-44" } : null,
+                        studentsWithXp[2] ? { ...studentsWithXp[2], r: 3, c: "rank-3", h: "h-28" } : null
+                    ];
+
+                    pod.forEach(p => {
+                        if (!p) { 
+                            topHtml += '<div class="flex-1"></div>'; 
+                            return; 
+                        }
+                        const nm = p.nama.split(" ")[0];
+                        const dataStr = encodeURIComponent(JSON.stringify(p.latihan || {}));
+                        const safeName = encodeURIComponent(p.nama);
+                        const fotoHtml = p.fotoUrl 
+                            ? `<img src="${p.fotoUrl}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(p.nama)}">` 
+                            : `<i class="fas fa-user"></i>`;
+                        const userBadge = p.isCurrentUser ? '<span class="absolute top-2 left-2 bg-white/95 text-emerald-600 text-[8px] font-black px-1.5 py-0.5 rounded-full shadow">ANDA</span>' : '';
+                        
+                        topHtml += `
+                        <div onclick="window.bukaDetailKlasemen('${safeName}', '${dataStr}')" class="flex-1 ${p.h} ${p.c} rounded-t-xl flex flex-col items-center justify-end p-2 pb-3 shadow-lg relative cursor-pointer active:scale-95 transition transform origin-bottom hover:scale-105">
+                            <div class="absolute -top-6 w-12 h-12 bg-white rounded-full flex items-center justify-center text-slate-800 text-lg shadow-md border-4 border-slate-50 overflow-hidden">${fotoHtml}</div>
+                            <h4 class="font-bold text-[11px] w-full text-center mt-2 leading-tight break-words line-clamp-2">${esc(nm)}</h4>
+                            <p class="text-[9px] font-black opacity-80">${p.xp} XP</p>
+                            <div class="absolute top-2 right-2 text-[10px] font-black opacity-50">#${p.r}</div>
+                            ${userBadge}
+                        </div>`;
+                    });
+                }
                 topContainer.innerHTML = topHtml;
 
+                // "Peringkat Lainnya" tampilkan siswa peringkat 4+ (yang punya XP) + semua siswa tanpa XP
                 let otherHtml = "";
-                for (let i = 3; i < students.length; i++) {
-                    const s = students[i];
+                // Sisa dari studentsWithXp (peringkat 4 ke atas)
+                const otherRanked = studentsWithXp.slice(3).concat(studentsWithoutXp);
+                
+                otherRanked.forEach((s, idx) => {
+                    // Penomoran: jika siswa punya XP, lanjut dari peringkat 4+
+                    // Jika siswa XP=0 (belum dapat XP), tampilkan tanpa peringkat (atau strip)
+                    let rankLabel;
+                    if (s.xp > 0) {
+                        // Cari index asli di students (yang sudah di-sort)
+                        const realIdx = students.findIndex(x => x.id === s.id);
+                        rankLabel = `#${realIdx + 1}`;
+                    } else {
+                        rankLabel = '—';
+                    }
+                    
                     const dataStr = encodeURIComponent(JSON.stringify(s.latihan || {}));
                     const safeName = encodeURIComponent(s.nama);
                     const fotoLi = s.fotoUrl 
@@ -676,17 +763,18 @@
                         : `<i class="fas fa-user"></i>`;
                     const rowHighlight = s.isCurrentUser ? "bg-emerald-50 ring-1 ring-emerald-200" : "hover:bg-slate-50";
                     const andLabel = s.isCurrentUser ? '<span class="ml-1 text-[9px] font-black text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">ANDA</span>' : '';
+                    const noXpLabel = s.xp === 0 ? '<span class="ml-1 text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">BELUM ADA XP</span>' : '';
                     
                     otherHtml += `
                     <li onclick="window.bukaDetailKlasemen('${safeName}', '${dataStr}')" class="flex items-center gap-3 py-2 px-2 ${rowHighlight} cursor-pointer transition active:scale-95 rounded-lg">
-                        <div class="w-6 text-center text-slate-400 font-bold text-xs">#${i+1}</div>
+                        <div class="w-8 text-center text-slate-400 font-bold text-xs shrink-0">${rankLabel}</div>
                         <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs shrink-0 overflow-hidden">${fotoLi}</div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-xs font-bold text-slate-700 leading-tight">${esc(s.nama)}${andLabel}</p>
+                            <p class="text-xs font-bold text-slate-700 leading-tight">${esc(s.nama)}${andLabel}${noXpLabel}</p>
                         </div>
                         <div class="text-xs font-black text-amber-500 shrink-0">${s.xp} XP</div>
                     </li>`;
-                }
+                });
                 otherContainer.innerHTML = otherHtml;
 
             } catch (err) { 
@@ -767,26 +855,16 @@
                         const studentSnap = await getDoc(doc(db, `classes/${globalClassId}/students`, globalStudentId));
                         const d = studentSnap.exists() ? studentSnap.data() : null;
                         const n = d ? (d.nama || d.namaLengkap) : null;
-                        const c = localStorage.getItem("namaSiswaCendekia") || n || "Siswa";
+                        // Nama diambil dari localStorage profil.html kalau ada, fallback ke Firestore
+                        const profilLokal = getProfilFromLocal();
+                        const c = profilLokal.namaProfil || n || "Siswa";
                         
                         const nameDisplay = $("studentNameDisplay");
                         if (nameDisplay) nameDisplay.textContent = c;
                         
-                        // Set avatar foto dari Firestore (cek beberapa kemungkinan nama field)
-                        const fotoUrl = d && (d.fotoUrl || d.fotoProfil || d.avatar || d.photoURL || d.photoUrl);
-                        const avatarImg = $("avatarImage");
-                        const avatarIcon = $("avatarIcon");
-                        if (avatarImg && avatarIcon) {
-                            if (fotoUrl) {
-                                avatarImg.src = fotoUrl;
-                                avatarImg.classList.remove("hidden");
-                                avatarIcon.classList.add("hidden");
-                            } else {
-                                avatarImg.src = "";
-                                avatarImg.classList.add("hidden");
-                                avatarIcon.classList.remove("hidden");
-                            }
-                        }
+                        // Avatar diambil dari profil lokal (base64 dari halaman profil.html)
+                        // Bukan dari Firestore
+                        applyProfilLokal();
                         
                         updateXP(); 
                         updateBanner(c);
@@ -798,26 +876,14 @@
                         onSnapshot(doc(db, `classes/${globalClassId}/students`, globalStudentId), (snap) => {
                             const d2 = snap.exists() ? snap.data() : null;
                             const n2 = d2 ? (d2.nama || d2.namaLengkap) : null;
-                            const c2 = localStorage.getItem("namaSiswaCendekia") || n2 || "Siswa";
+                            const profilLokal2 = getProfilFromLocal();
+                            const c2 = profilLokal2.namaProfil || n2 || "Siswa";
                             
                             const nameDisplay2 = $("studentNameDisplay");
                             if (nameDisplay2) nameDisplay2.textContent = c2;
                             
-                            // Update avatar realtime
-                            const fotoUrl2 = d2 && (d2.fotoUrl || d2.fotoProfil || d2.avatar || d2.photoURL || d2.photoUrl);
-                            const avatarImg2 = $("avatarImage");
-                            const avatarIcon2 = $("avatarIcon");
-                            if (avatarImg2 && avatarIcon2) {
-                                if (fotoUrl2) {
-                                    avatarImg2.src = fotoUrl2;
-                                    avatarImg2.classList.remove("hidden");
-                                    avatarIcon2.classList.add("hidden");
-                                } else {
-                                    avatarImg2.src = "";
-                                    avatarImg2.classList.add("hidden");
-                                    avatarIcon2.classList.remove("hidden");
-                                }
-                            }
+                            // Avatar tetap dari profil lokal (bukan Firestore)
+                            applyProfilLokal();
                             
                             updateXP(); 
                             updateBanner(c2);
@@ -846,10 +912,12 @@
                         finalizeLoading();
                     }
                 } else {
-                    const def = localStorage.getItem("namaSiswaCendekia") || "Siswa";
+                    const profilLokalDef = getProfilFromLocal();
+                    const def = profilLokalDef.namaProfil || "Siswa";
                     const nameDisplay = $("studentNameDisplay");
                     if (nameDisplay) nameDisplay.textContent = def;
                     
+                    applyProfilLokal();
                     updateXP(); 
                     updateBanner(def);
                     
