@@ -10,10 +10,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }</script>
-    
     <script>
     (function () {
-        const LS = 'lat_v1', DBN = 'latihan-db'; let S = null, siapP = null;
+        const qCore = new URLSearchParams(window.location.search);
+        const cId = qCore.get('id') || 'umum';
+        const LS = 'lat_v1_' + cId, DBN = 'latihan-db-' + cId; 
+        
+        let S = null, siapP = null;
         const pad = n => String(n).padStart(2, '0');
         const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'x' + Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -49,13 +52,6 @@
                 if (!c) { c = document.createElement('div'); c.id = 'lToast'; c.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none'; document.body.appendChild(c); }
                 const t = document.createElement('div'); t.className = (err ? 'bg-red-500' : 'bg-slate-800') + ' text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 up';
                 t.innerHTML = '<i class="fas ' + (err ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400') + '"></i><span class="flex-1">' + esc(msg) + '</span>'; c.appendChild(t); setTimeout(() => t.remove(), 3000);
-            },
-            beep(jenis) {
-                try { const x = new (window.AudioContext || window.webkitAudioContext)(), o = x.createOscillator(), g = x.createGain(); o.connect(g); g.connect(x.destination);
-                    if (jenis === 'ok') { o.type = 'sine'; o.frequency.setValueAtTime(523, x.currentTime); o.frequency.exponentialRampToValueAtTime(1046, x.currentTime + .12); }
-                    else if (jenis === 'tik') { o.type = 'square'; o.frequency.setValueAtTime(900, x.currentTime); }
-                    else { o.type = 'sawtooth'; o.frequency.setValueAtTime(150, x.currentTime); }
-                    g.gain.setValueAtTime(.06, x.currentTime); g.gain.exponentialRampToValueAtTime(.001, x.currentTime + (jenis === 'tik' ? .06 : .4)); o.start(); o.stop(x.currentTime + .4); } catch (e) {}
             }
         };
         window.L = L;
@@ -76,19 +72,6 @@
         .kal-span.hl-argumen { background: #e0f2fe; color: #075985; border-bottom: 2px solid #0ea5e9; }
         .kal-span.hl-kesimpulan { background: #ede9fe; color: #5b21b6; border-bottom: 2px solid #8b5cf6; }
         .waktu-kritis { animation: dk 1s infinite; } @keyframes dk { 50% { background: #dc2626; } }
-        .tos { position: relative; height: 112px; display: flex; justify-content: center; align-items: center; }
-        .tos .h { position: absolute; font-size: 66px; color: #fcd34d; filter: drop-shadow(0 4px 3px rgba(0,0,0,.3)); }
-        .hl { animation: tosL 1.2s cubic-bezier(.2,.9,.3,1.15) .1s both; } .hr { animation: tosR 1.2s cubic-bezier(.2,.9,.3,1.15) .1s both; }
-        @keyframes tosL { 0% { transform: translateX(-170px) rotate(-55deg); opacity: 0; } 50% { transform: translateX(-6px) rotate(-8deg); opacity: 1; } 62% { transform: translateX(-20px) rotate(-22deg); } 100% { transform: translateX(-12px) rotate(-14deg); opacity: 1; } }
-        @keyframes tosR { 0% { transform: scaleX(-1) translateX(-170px) rotate(-55deg); opacity: 0; } 50% { transform: scaleX(-1) translateX(-6px) rotate(-8deg); opacity: 1; } 62% { transform: scaleX(-1) translateX(-20px) rotate(-22deg); } 100% { transform: scaleX(-1) translateX(-12px) rotate(-14deg); opacity: 1; } }
-        .tos .boom { position: absolute; width: 20px; height: 20px; border-radius: 9999px; border: 4px solid #fde047; opacity: 0; animation: boom .7s ease-out .62s both; }
-        @keyframes boom { 0% { transform: scale(.2); opacity: 1; } 100% { transform: scale(6); opacity: 0; } }
-        .tos .sp { position: absolute; color: #fde047; font-size: 14px; opacity: 0; animation: sp .9s ease-out .65s both; }
-        @keyframes sp { 0% { transform: scale(0) rotate(0); opacity: 0; } 40% { opacity: 1; } 100% { transform: scale(1.4) rotate(120deg); opacity: 0; } }
-        .goyang { animation: goy 1.2s ease-in-out infinite; } @keyframes goy { 0%,100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-12px) rotate(6deg); } }
-        .detak { animation: dtk 1.2s ease-in-out infinite; } @keyframes dtk { 0%,100% { transform: scale(1); } 50% { transform: scale(1.18); } }
-        .rpt { display: none; font-family: Arial, Helvetica, sans-serif; font-size: 12px; line-height: 1.5; }
-        @media print { body > *:not(#laporan) { display: none !important; } #laporan { display: block !important; } body { background: #fff; } }
     </style>
 </head>
 <body class="flex justify-center min-h-screen">
@@ -113,7 +96,14 @@
     </div>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" });
+const db = getFirestore(app);
+window.db = db;
+
 const $ = id => document.getElementById(id), esc = L.esc;
 const LBL = { tesis: ['Tesis', 'violet', 'fa-lightbulb', 'Pernyataan utama/posisi'], argumen: ['Argumen', 'sky', 'fa-shield-halved', 'Bukti/alasan pendukung'], kesimpulan: ['Kesimpulan', 'amber', 'fa-flag-checkered', 'Penegasan ulang'] };
 const URUT_LBL = ['tesis', 'argumen', 'kesimpulan'];
@@ -147,19 +137,38 @@ window.badge = t => { const arr = LBL[t] || LBL.tesis; return '<span class="inli
 
 async function initLatihan() {
     await L.siap();
-    const H = L.hari();
     
     let backUrl = '../ruang_belajar_siswa.html';
     if(classId) backUrl += '?id=' + encodeURIComponent(classId);
     if(studentId) backUrl += '&sid=' + encodeURIComponent(studentId);
     $('btnBack').href = backUrl;
-    
+
+    let H = L.hari();
+    if (!H) {
+        const S = L.state();
+        const k = 'c' + Date.now();
+        S.hari[k] = { sesi: {}, hasil: {}, spin: { ts: Date.now(), judul: 'Memuat...' } };
+        H = S.hari[k];
+        L.simpan(true);
+    }
+
+    if (!H.pack || !H.pack.struktur) {
+        try {
+            const docSnap = await getDoc(doc(db, "classes", classId));
+            if (docSnap.exists() && docSnap.data().aiPaket) {
+                H.pack = docSnap.data().aiPaket;
+                H.spin = { judul: docSnap.data().namaKelas, ts: Date.now() };
+                L.simpan(true);
+            }
+        } catch(e) { console.error("Firebase error:", e); }
+    }
+
     if (!H || !H.pack || !H.pack.struktur) {
         $('main').innerHTML = [
-            '<div class="bg-white rounded-2xl p-8 text-center border border-slate-200">',
+            '<div class="bg-white rounded-2xl p-8 text-center border border-slate-200 mt-10">',
             '<i class="fas fa-exclamation-triangle text-4xl text-slate-300 mb-3"></i>',
             '<p class="text-sm font-bold text-slate-700">Latihan Belum Siap</p>',
-            '<p class="text-[11px] text-slate-500 mt-1">Silakan minta guru menyiapkan materi ini terlebih dahulu.</p>',
+            '<p class="text-[11px] text-slate-500 mt-1">Sistem belum menemukan paket latihan di kelas ini.</p>',
             '<a href="' + backUrl + '" class="inline-block mt-4 bg-brand-green text-white text-xs font-bold px-5 py-2.5 rounded-full">Kembali</a>',
             '</div>'
         ].join('');
@@ -171,7 +180,6 @@ async function initLatihan() {
     const dataSource = window.P.teks || window.P.soal || [];
     window.soal = window.normSoal(dataSource);
     window.totalWaktu = window.P.total || window.P.waktu || window.soal.reduce((a, b) => a + (b.waktu || 60), 0) || 300;
-    
     if($('hSub')) $('hSub').textContent = H.spin.judul || 'Bedah Struktur';
     if (H.hasil && H.hasil.struktur) return window.tampilHasil();
     if (H.sesi && H.sesi.struktur) { 
@@ -183,7 +191,7 @@ async function initLatihan() {
 
 window.tampilIntro = function() {
     let html = [
-        '<div class="up bg-white rounded-2xl shadow-sm border border-slate-200 p-5">',
+        '<div class="up bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mt-4">',
         '<div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-2xl mx-auto"><i class="fas fa-layer-group"></i></div>',
         '<h2 class="text-center font-extrabold text-slate-800 text-base mt-3">Bedah Struktur Argumentasi</h2>',
         '<p class="text-center text-[11px] text-slate-500 mt-1 leading-relaxed">Analisis peran setiap kalimat dari materi <b>' + esc(window.H.spin.judul) + '</b>.</p>',
@@ -201,8 +209,7 @@ window.tampilIntro = function() {
     
     html.push('</div><ul class="mt-5 space-y-2 text-[11px] text-slate-600 leading-relaxed">');
     html.push('<li class="flex gap-2"><i class="fas fa-highlighter text-amber-500 mt-0.5"></i><span>Baca wacana secara utuh di bagian atas, lalu tentukan apakah tiap kalimat merupakan <b>Tesis</b>, <b>Argumen</b>, atau <b>Kesimpulan</b>.</span></li>');
-    html.push('<li class="flex gap-2"><i class="fas fa-lock text-rose-500 mt-0.5"></i><span><b>Hanya bisa dikerjakan 1 kali per hari.</b> Waktu terus berjalan walau halaman ditutup.</span></li>');
-    html.push('<li class="flex gap-2"><i class="fas fa-floppy-disk text-emerald-500 mt-0.5"></i><span>Pilihan labelmu otomatis tersimpan di browser ini.</span></li>');
+    html.push('<li class="flex gap-2"><i class="fas fa-lock text-rose-500 mt-0.5"></i><span><b>Hanya bisa dikerjakan 1 kali.</b> Waktu terus berjalan walau halaman ditutup.</span></li>');
     html.push('</ul><button onclick="mulai()" class="mt-6 w-full bg-brand-green text-white font-bold py-3.5 rounded-xl shadow-md text-sm active:scale-95 transition"><i class="fas fa-play mr-1.5"></i>Mulai Bedah Struktur</button></div>');
     
     $('main').innerHTML = html.join('');
@@ -310,7 +317,18 @@ window.kumpulkan = async function(auto) {
     delete window.H.sesi.struktur;
     L.simpan(); 
     
-    $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden'); $('btnBack').onclick = null;
+    if (studentId && classId) {
+        try {
+            await setDoc(doc(db, `classes/${classId}/students`, studentId), { latihan: { struktur: window.H.hasil.struktur } }, { merge: true });
+        } catch(e) {}
+    }
+
+    $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden');$('bar').classList.add('hidden'); 
+    let backUrl = '../ruang_belajar_siswa.html';
+    if(classId) backUrl += '?id=' + encodeURIComponent(classId);
+    if(studentId) backUrl += '&sid=' + encodeURIComponent(studentId);
+    $('btnBack').onclick = null; $('btnBack').href = backUrl; 
+
     if (auto) window.L.toast('Waktu habis. Jawabanmu otomatis dikumpulkan.', true); 
     window.tampilHasil(true); 
 }
@@ -329,7 +347,7 @@ window.navLatihanHtml = function() {
 }
 
 window.tampilHasil = function(baru) {
-    const R = window.H.hasil.struktur; window.aktif = false; $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden');
+    const R = window.H.hasil.struktur; window.aktif = false; $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden');$('bar').classList.add('hidden');
     let tk = {}; window.soal.forEach((s, i) => { const t = tk[s.j] = tk[s.j] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
     const urut = URUT_LBL.filter(t => tk[t]);
     const lemah = urut.slice().sort((a, b) => tk[a].b / tk[a].n - tk[b].b / tk[b].n)[0], kuat = urut.slice().sort((a, b) => tk[b].b / tk[b].n - tk[a].b / tk[a].n)[0];
@@ -387,39 +405,6 @@ window.filterBahas = function(f) {
         $('bahas').innerHTML = '<div class="bg-white rounded-2xl p-6 text-center text-xs text-emerald-600 font-semibold border border-emerald-100"><i class="fas fa-circle-check mr-1"></i> Semua kalimat berhasil dilabeli dengan benar!</div>';
     }
 }
-
-window.isiLaporan = function() {
-    const R = window.H.hasil.struktur, tk = {}; window.soal.forEach((s, i) => { const t = tk[s.j] = tk[s.j] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
-    const tgls = new Date(window.H.spin.ts).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    
-    let repHtml = [
-        '<div style="padding:4px"><div style="border-bottom:3px solid #059669;padding-bottom:8px;margin-bottom:12px"><div style="font-size:17px;font-weight:800;color:#064e3b">LAPORAN LATIHAN — BEDAH STRUKTUR</div><div style="color:#64748b;font-size:11px">Platform Argumentasi · Ruang Latihan</div></div>',
-        '<table style="width:100%;font-size:12px;margin-bottom:12px"><tr><td style="width:90px;color:#64748b">Nama</td><td><b>' + esc(L.nama()) + '</b></td></tr><tr><td style="color:#64748b">Tanggal</td><td>' + tgls + '</td></tr><tr><td style="color:#64748b">Materi</td><td>' + esc(window.H.spin.judul) + '</td></tr><tr><td style="color:#64748b">Waktu</td><td>' + L.fmt(R.durasi) + ' dari ' + L.fmt(R.batas) + (R.auto ? ' (waktu habis)' : '') + '</td></tr></table>',
-        '<div class="nobreak" style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:10px 14px;margin-bottom:12px"><span style="font-size:30px;font-weight:800;color:#059669">' + R.skor + '</span><span style="color:#64748b"> / 100</span> &nbsp;·&nbsp; Tepat <b>' + R.benar + '</b> dari <b>' + R.total + '</b> kalimat</div>',
-        '<table class="nobreak" style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px"><tr style="background:#f1f5f9"><th style="text-align:left;padding:5px 8px;border:1px solid #e2e8f0">Bagian Struktur</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Tepat</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Jumlah</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Ketepatan</th></tr>',
-        URUT_LBL.filter(t => tk[t]).map(t => '<tr><td style="padding:5px 8px;border:1px solid #e2e8f0">' + LBL[t][0] + '</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">' + tk[t].b + '</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">' + tk[t].n + '</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">' + Math.round(tk[t].b / tk[t].n * 100) + '%</td></tr>').join(''),
-        '</table><div style="font-size:13px;font-weight:800;margin-bottom:6px;color:#064e3b">Rincian Analisis Kalimat</div>'
-    ];
-    
-    window.soal.forEach((s, i) => { 
-        const u = R.jawab[i], ok = u === s.j; 
-        let d = '<div class="nobreak" style="border:1px solid ' + (ok ? '#a7f3d0' : '#fecdd3') + ';border-radius:6px;padding:8px 10px;margin-bottom:8px"><div style="font-size:11px"><b>Kalimat ' + (i + 1) + '</b> &nbsp;·&nbsp; <b style="color:' + (ok ? '#059669' : '#e11d48') + '">' + (ok ? 'TEPAT' : 'KELIRU') + '</b></div><div style="margin:3px 0;font-size:12px">' + esc(s.k) + '</div><div style="font-size:11px"><span style="color:#64748b">Labelmu:</span> ' + (u ? LBL[u][0] : '-') + ' &nbsp;|&nbsp; <span style="color:#64748b">Kunci:</span> <b>' + LBL[s.j][0] + '</b></div>';
-        if(s.bahas) d += '<div style="font-size:11px;color:#475569;margin-top:3px"><i>Pembahasan:</i> ' + esc(s.bahas) + '</div>';
-        d += '</div>';
-        repHtml.push(d);
-    });
-    
-    repHtml.push('<div style="font-size:9px;color:#94a3b8;margin-top:10px;text-align:center">Dihasilkan otomatis oleh Platform Argumentasi · ' + new Date(R.selesai).toLocaleString('id-ID') + '</div></div>');
-    $('laporan').innerHTML = repHtml.join('');
-}
-
-window.unduhPdf = async function() {
-    const b = $('btnPdf'), isi = b.innerHTML; b.disabled = true; b.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1.5"></i>Membuat PDF…';
-    try { isiLaporan(); await L.pdf($('laporan'), 'Laporan-Bedah-Struktur-' + new Date(window.H.spin.ts).toISOString().slice(0, 10) + '.pdf'); L.toast('PDF berhasil dibuat.'); }
-    catch (e) { console.error(e); L.toast('Gagal membuat PDF. Memakai cetak browser…', true); setTimeout(() => window.print(), 600); }
-    finally { b.disabled = false; b.innerHTML = isi; }
-};
-
 initLatihan();
 </script>
 </body>
