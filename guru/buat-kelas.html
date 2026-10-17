@@ -71,7 +71,7 @@
     <main id="mainContainer" class="flex-grow overflow-y-auto hide-scrollbar relative bg-slate-50 flex flex-col" style="overscroll-behavior:contain">
         <div class="p-4 flex-grow flex flex-col">
 
-            <!-- Stepper Progress Bar (4 Steps) -->
+            <!-- Stepper Progress Bar -->
             <div class="mb-5 shrink-0" id="stepperHeader">
                 <div class="flex justify-between mb-2">
                     <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest" id="stepLabel">Langkah 1 dari 4</span>
@@ -206,7 +206,7 @@
                     <div id="step4" class="p-5 hidden flex-grow flex flex-col items-center justify-center text-center">
                         <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mb-4 shadow-sm border border-emerald-200"><i class="fas fa-rocket"></i></div>
                         <h2 class="text-xl font-bold font-display text-slate-800 mb-2">Semua Data Siap!</h2>
-                        <p class="text-xs text-slate-500 mb-8 max-w-[260px]">Sistem AI akan menyusun 6 jenis misi latihan (Pilihan Ganda, Struktur, Esai, Kritis, Peta Argumen, Kata Ilmiah) khusus untuk kelas Anda.</p>
+                        <p class="text-xs text-slate-500 mb-8 max-w-[260px]">Sistem AI akan menyusun 6 jenis misi latihan khusus untuk kelas Anda.</p>
                     </div>
 
                     <!-- NAVIGASI BAWAH -->
@@ -278,7 +278,7 @@
     };
 
     let currentStep = 1, currentGuru = null, generatedCode = "", sedangProses = false;
-    let urlPdfModul = ""; // URL Cloudinary jika upload
+    let urlPdfModul = "";
     let publicIdModul = ""; 
 
     const MAX_BYTES = 10 * 1024 * 1024;
@@ -330,7 +330,7 @@
             const m4 = $('contohTeks').value.trim();
             isComplete = (m1 !== '' && m2 !== '' && m3 !== '' && m4 !== '');
         } else if (currentStep === 4) {
-            isComplete = true; // Langsung bisa submit
+            isComplete = true;
         }
 
         $('btnNext').disabled = !isComplete;
@@ -349,7 +349,8 @@
 
         const conf = STEPS[currentStep];
         $('progressBar').style.width = conf[0];
-        $('stepLabel').textContent = conf[1];$('stepTitleText').textContent = conf[2];
+        $('stepLabel').textContent = conf[1];
+        $('stepTitleText').textContent = conf[2];
 
         if (currentStep === 1) $('btnPrev').classList.add('invisible');
         else $('btnPrev').classList.remove('invisible');
@@ -398,11 +399,12 @@
             showToast("Ukuran melebihi 10MB.", true); input.value = ''; return; 
         }
 
-        $('uploadArea').classList.add('hidden');$('extractionLoading').classList.remove('hidden');
-        $('btnPrev').classList.add('invisible');$('btnNext').disabled = true;
+        $('uploadArea').classList.add('hidden');
+        $('extractionLoading').classList.remove('hidden');
+        $('btnPrev').classList.add('invisible');
+        $('btnNext').disabled = true;
 
         try {
-            // 1. Upload ke Cloudinary dulu agar API backend bisa unduh
             $('ekstrakTeksProses').textContent = "Mengunggah file...";
             const t = await apiCloud('tanda', { namaFile: file.name });
             
@@ -410,14 +412,13 @@
             fd.append('file', file); fd.append('api_key', t.api_key); fd.append('timestamp', t.timestamp); 
             fd.append('public_id', t.public_id); fd.append('signature', t.signature);
             
-            const rCloud = await fetch(`https://api.cloudinary.com/v1_1/${t.cloud_name}/raw/upload`, { method: 'POST', body: fd });
+            const rCloud = await fetch('https://api.cloudinary.com/v1_1/' + t.cloud_name + '/raw/upload', { method: 'POST', body: fd });
             const jCloud = await rCloud.json();
             if(!rCloud.ok) throw new Error("Gagal mengunggah file PDF.");
             
             urlPdfModul = jCloud.secure_url;
             publicIdModul = jCloud.public_id;
 
-            // 2. Minta API backend Ekstrak via Gemini
             $('ekstrakTeksProses').textContent = "Gemini sedang membedah dokumen...";
             const token = await auth.currentUser.getIdToken();
             const rApi = await fetch('/api/modul', {
@@ -428,9 +429,11 @@
             const dApi = await rApi.json();
             if (!rApi.ok) throw new Error(dApi.detail_error || "Gagal ekstraksi teks dari PDF.");
 
-            // 3. Masukkan ke Form
-            $('materiInti').value = dApi.materiInti \vert{}\vert{} '';$('ciriTeks').value = dApi.ciriTeks || '';
-            $('strukturTeks').value = dApi.strukturTeks \vert{}\vert{} '';$('contohTeks').value = dApi.contohTeks || '';
+            // FIX: Menggunakan logika OR (||) konvensional untuk mencegah error sintaks \vert
+            $('materiInti').value = dApi.materiInti || '';
+            $('ciriTeks').value = dApi.ciriTeks || '';
+            $('strukturTeks').value = dApi.strukturTeks || '';
+            $('contohTeks').value = dApi.contohTeks || '';
             
             showToast("Berhasil mengekstrak materi!");
             checkInputs();
@@ -440,7 +443,8 @@
             showToast(error.message, true);
         } finally {
             $('extractionLoading').classList.add('hidden');
-            $('uploadArea').classList.remove('hidden');$('btnPrev').classList.remove('invisible');
+            $('uploadArea').classList.remove('hidden');
+            $('btnPrev').classList.remove('invisible');
             input.value = '';
         }
     };
@@ -450,8 +454,10 @@
         if (sedangProses || !currentGuru) return;
         sedangProses = true;
 
-        $('navBottom').classList.add('hidden');$('formWrapper').classList.add('hidden');
-        $('stepperHeader').classList.add('hidden');$('finalProcessState').classList.remove('hidden');
+        $('navBottom').classList.add('hidden');
+        $('formWrapper').classList.add('hidden');
+        $('stepperHeader').classList.add('hidden');
+        $('finalProcessState').classList.remove('hidden');
 
         const pBar = $('buildProcessBar');
         const pTxt = $('buildProcessText');
@@ -459,7 +465,6 @@
         try {
             pBar.style.width = '20%';
             
-            // 1. Susun Payload Materi
             const payloadMateri = {
                 materiInti: $('materiInti').value.trim(),
                 ciriTeks: $('ciriTeks').value.trim(),
@@ -469,7 +474,6 @@
                 tp: $('inputTP').value.trim()
             };
 
-            // 2. Minta API Generate 6 Latihan
             pTxt.textContent = "Groq Llama-3.3-70B merancang 6 Misi interaktif...";
             pBar.style.width = '60%';
             
@@ -484,7 +488,6 @@
             
             const aiPaket = dApi;
 
-            // 3. Simpan Materi Utama (Handout)
             pTxt.textContent = "Menyimpan kelas ke pangkalan data...";
             pBar.style.width = '80%';
             
@@ -498,7 +501,6 @@
             });
             const handoutId = handoutRef.id;
 
-            // 4. Generate Class Code & Finalize
             pBar.style.width = '95%';
             let classCode = "";
             for (let i = 0; i < 8; i++) {
@@ -523,12 +525,12 @@
             }
             if (!classCode) throw new Error("Kehabisan kode unik kelas.");
 
-            // SELESAI
             pBar.style.width = '100%';
             generatedCode = classCode;
             
             setTimeout(() => {
-                $('stateLoadingUI').classList.add('hidden');$('finalClassCode').textContent = classCode;
+                $('stateLoadingUI').classList.add('hidden');
+                $('finalClassCode').textContent = classCode;
                 $('stateSuccessUI').classList.remove('hidden');
                 
                 if(window.confetti) {
@@ -540,9 +542,10 @@
             console.error(error);
             showToast(error.message || "Gagal membangun kelas. Silakan coba lagi.", true);
             
-            // Kembalikan View
-            $('finalProcessState').classList.add('hidden');$('formWrapper').classList.remove('hidden');
-            $('stepperHeader').classList.remove('hidden');$('navBottom').classList.remove('hidden');
+            $('finalProcessState').classList.add('hidden');
+            $('formWrapper').classList.remove('hidden');
+            $('stepperHeader').classList.remove('hidden');
+            $('navBottom').classList.remove('hidden');
             sedangProses = false;
         }
     }
