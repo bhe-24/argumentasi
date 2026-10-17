@@ -15,7 +15,19 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['Poppins', 'sans-serif'], display: ['Playfair Display', 'serif'] },
-                    colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } }
+                    colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } },
+                    animation: {
+                        'float-up': 'floatUp 4s infinite ease-in-out',
+                        'float-up-slow': 'floatUp 6s infinite ease-in-out',
+                        'float-up-fast': 'floatUp 3s infinite ease-in-out'
+                    },
+                    keyframes: {
+                        floatUp: {
+                            '0%': { transform: 'translateY(100%) scale(0.5)', opacity: '0' },
+                            '50%': { opacity: '0.4' },
+                            '100%': { transform: 'translateY(-150%) scale(1.2)', opacity: '0' }
+                        }
+                    }
                 }
             }
         }
@@ -24,8 +36,9 @@
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #e2e8f0; -webkit-tap-highlight-color: transparent; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; min-height: 100dvh; }
 
+        /* Outline/border desktop dihapus sesuai permintaan */
         .mobile-frame { width: 100%; max-width: 448px; height: 100vh; height: 100dvh; background: #f8fafc; display: flex; flex-direction: column; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,.25); overflow: hidden; }
-        @media (min-width: 640px) { .mobile-frame { height: 90vh; border-radius: 1.5rem; border: 8px solid #334155; } }
+        @media (min-width: 640px) { .mobile-frame { height: 90vh; border-radius: 1.5rem; } }
 
         .font-display { font-family: 'Playfair Display', serif; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -33,7 +46,7 @@
         .modal-z { z-index: 99999; }
 
         .fade-in { animation: fadeIn .35s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Skeleton shimmer */
         .sk { position: relative; overflow: hidden; background: #e2e8f0; border-radius: .5rem; color: transparent !important; }
@@ -44,6 +57,30 @@
         /* Garis timeline dinamis */
         .journey-line { position: relative; }
         .journey-line::before { content: ''; position: absolute; top: 56px; bottom: 56px; left: 23px; width: 4px; background: #e2e8f0; border-radius: 10px; z-index: 0; }
+
+        /* Efek Kotak Gelembung */
+        .bubble-bg {
+            position: relative;
+            background: linear-gradient(135deg, #059669, #10b981);
+            overflow: hidden;
+            color: white;
+            border-radius: 1rem;
+            padding: 1rem 1.2rem;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+        }
+        .bubble {
+            position: absolute;
+            bottom: -20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+        }
+        .typing-effect {
+            display: inline-block;
+            overflow: hidden;
+            white-space: normal; /* Biar bisa turun baris jika panjang */
+        }
     </style>
 </head>
 <body>
@@ -83,10 +120,30 @@
             </section>
 
             <!-- Konten -->
-            <div class="flex-1 px-4 pt-5 pb-8">
+            <div class="flex-1 px-4 pt-1 pb-8">
+                
+                <!-- BANNER MOTIVASI BERGELEMBUNG (Dinamic) -->
+                <div id="motivationalBanner" class="bubble-bg fade-in hidden">
+                    <!-- Gelembung Animasi -->
+                    <div class="bubble w-4 h-4 left-4 animate-float-up"></div>
+                    <div class="bubble w-8 h-8 left-1/4 animate-float-up-slow" style="animation-delay: 1s;"></div>
+                    <div class="bubble w-3 h-3 right-10 animate-float-up-fast"></div>
+                    <div class="bubble w-6 h-6 right-1/3 animate-float-up" style="animation-delay: 0.5s;"></div>
+                    <div class="bubble w-5 h-5 right-4 animate-float-up-slow" style="animation-delay: 1.5s;"></div>
+                    
+                    <div class="relative z-10 flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white shrink-0 mt-0.5" id="bannerIcon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-display font-bold text-sm leading-tight text-white mb-1" id="bannerTitle">Siap Belajar?</h3>
+                            <p class="text-[11px] text-white/90 leading-snug typing-effect" id="bannerMessage">Selesaikan misi di bawah ini secara berurutan untuk memenangkan kelas ini!</p>
+                        </div>
+                    </div>
+                </div>
 
-                <!-- SKELETON LOADING (Diperbarui untuk 6 Misi) -->
-                <div id="skeletonState" aria-busy="true">
+                <!-- SKELETON LOADING -->
+                <div id="skeletonState" aria-busy="true" class="mt-4">
                     <div class="h-16 flex flex-col items-center justify-center gap-2 mb-2">
                         <div class="sk h-6 w-44"></div>
                         <div class="sk h-3 w-52"></div>
@@ -117,7 +174,7 @@
                 </div>
 
                 <!-- Peta misi (Diperbarui dengan 6 Menu Latihan) -->
-                <div id="journeyState" class="hidden fade-in">
+                <div id="journeyState" class="hidden fade-in mt-4">
                     <div class="h-16 flex flex-col items-center justify-center mb-2 text-center">
                         <h3 class="font-display font-bold text-xl text-slate-800 leading-6">Peta Misi Belajar</h3>
                         <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1 leading-3">Selesaikan misi secara berurutan</p>
@@ -205,9 +262,61 @@
             $('errorState').classList.remove('hidden');
         }
 
+        // FUNGSI UPDATE BANNER MOTIVASI
+        function updateMotivationalBanner(namaSiswa) {
+            // Ambil data progres dari modul latihan-core di localStorage
+            const localData = JSON.parse(localStorage.getItem('lat_v1') || '{}');
+            let completedP = 0;
+            let totalScore = 0;
+            let lastCompleted = '';
+            
+            // Loop data hari untuk mencari progres
+            if (localData.hari) {
+                for(let k in localData.hari) {
+                    const h = localData.hari[k];
+                    if (h.hasil) {
+                        for(let misi in h.hasil) {
+                            completedP++;
+                            totalScore += (h.hasil[misi].skor || 0);
+                            lastCompleted = misi;
+                        }
+                    }
+                }
+            }
+
+            const banner = $('motivationalBanner');
+            const bTitle = $('bannerTitle');
+            const bMsg = $('bannerMessage');
+            const bIcon = $('bannerIcon');
+            const shortName = namaSiswa.split(' ')[0]; // Ambil nama panggilan
+
+            banner.classList.remove('hidden');
+
+            if (completedP === 0) {
+                bTitle.textContent = 'Siap Beraksi?';
+                bMsg.textContent = `Ayo ${shortName}, selesaikan misi di bawah ini secara berurutan dan kumpulkan XP!`;
+                bIcon.innerHTML = '<i class="fas fa-bolt"></i>';
+            } else {
+                let averageScore = totalScore / completedP;
+                
+                if (averageScore >= 80) {
+                    bTitle.textContent = 'Great Job! 🌟';
+                    bMsg.textContent = `Luar biasa, ${shortName}! Kamu sukses menyelesaikan misi sebelumnya dengan nilai bagus. Lanjut terus ya!`;
+                    bIcon.innerHTML = '<i class="fas fa-star text-amber-300"></i>';
+                } else if (averageScore >= 60) {
+                    bTitle.textContent = 'Kerja Bagus! 👍';
+                    bMsg.textContent = `Pertahankan semangatmu, ${shortName}. Misi selanjutnya sudah menunggumu!`;
+                    bIcon.innerHTML = '<i class="fas fa-thumbs-up"></i>';
+                } else {
+                    bTitle.textContent = 'Jangan Menyerah! 💪';
+                    bMsg.textContent = `Tetap semangat, ${shortName}. Jangan ragu baca kembali materinya sebelum lanjut!`;
+                    bIcon.innerHTML = '<i class="fas fa-fire"></i>';
+                }
+            }
+        }
+
         // MENGGAMBAR 6 MISI
         function renderMissions(aiPaket, sid) {
-            // Urutan misi ditambahkan "Peta Argumen" dan "Kata Ilmiah" sesuai instruksi
             const BAGIAN = [
                 { key: 'pilgan', file: 'pilgan.html', n: 'Pilihan Ganda', ic: 'fa-circle-check', c: 'blue', type: 'Pemahaman' },
                 { key: 'struktur', file: 'struktur.html', n: 'Bedah Struktur', ic: 'fa-layer-group', c: 'amber', type: 'Analisis' },
@@ -218,11 +327,9 @@
             ];
 
             $('missionNodesContainer').innerHTML = BAGIAN.map((b) => {
-                // Semua menu akan SELALU DITAMPILKAN. Jika datanya kosong, halaman tujuannya yang akan menanganinya
                 const isReady = !!aiPaket[b.key]; 
                 const url = `kelas/${b.file}?id=${encodeURIComponent(classId)}` + (sid ? `&sid=${encodeURIComponent(sid)}` : '');
                 
-                // Jika materi ada, warnanya hidup. Jika belum ada (kosong di database), agak pudar.
                 const opacityClass = isReady ? 'hover:shadow-md' : 'opacity-80 grayscale-[30%]';
                 const buttonText = isReady ? `<i class="fas fa-play text-emerald-500 mr-1"></i> Mulai Misi` : `<i class="fas fa-lock text-slate-400 mr-1"></i> Buka Misi`;
 
@@ -247,6 +354,9 @@
 
             const namaFinal = namaLokal || namaDariFirebase || 'Siswa';
             isiTeks('studentNameDisplay', namaFinal);
+            
+            // Panggil banner motivasi setelah nama diload
+            updateMotivationalBanner(namaFinal);
 
             const avatarContainer = $('avatarContainer');
             const avatarImage = $('avatarImage');
