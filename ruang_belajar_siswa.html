@@ -216,7 +216,7 @@
                 <!-- TAB 3: KLASEMEN -->
                 <div id="contentKlasemen" class="px-4 py-6 hidden absolute inset-0 overflow-y-auto hide-scrollbar bg-slate-50">
                     <h3 class="font-display font-bold text-xl text-slate-800 mb-1 text-center">Papan Klasemen</h3>
-                    <p class="text-xs text-slate-500 mb-6 text-center">Top Peringkat Tertinggi Kelas Ini (Min 70 XP)</p>
+                    <p class="text-xs text-slate-500 mb-6 text-center">Top Peringkat Tertinggi (Minimal 70 XP)</p>
 
                     <div id="topRankContainer" class="flex justify-center items-end gap-2 h-44 mb-6 relative">
                         <div class="sk h-full w-full rounded-2xl"></div>
@@ -373,7 +373,7 @@
                 playText: "text-rose-500"
             },
             { 
-                key: "peta", n: "Peta Argumen", type: "Teks", file: "peta_argumentasi.html", 
+                key: "peta", n: "Peta Argumen", type: "Teks", file: "peta_argumen.html", 
                 ic: "fa-diagram-project",
                 iconBg: "bg-amber-50", iconText: "text-amber-600",
                 dotBg: "bg-amber-500", borderHover: "hover:border-amber-400",
@@ -413,7 +413,6 @@
             }, 3000);
         };
 
-        // Helper: Data profil tersinkronisasi murni dengan profil.html
         function getProfilFromLocal() {
             const fotoBase64 = localStorage.getItem("fotoSiswaCendekia") 
                 || localStorage.getItem("fotoProfilBase64")
@@ -423,7 +422,6 @@
             return { fotoBase64, namaProfil };
         }
         
-        // Helper: Ambil XP KHUSUS KELAS INI SAJA (Bukan global)
         function getLocalXP() {
             let tXp = 0;
             const rawData = localStorage.getItem("lat_v1_" + globalClassId);
@@ -442,14 +440,12 @@
                 } catch(e) {}
             }
             
-            // Backup cek apakah ada record poin spesifik kelas
             let spesifikKelas = parseInt(localStorage.getItem("kelasPointsArg_" + globalClassId) || "0");
             if(spesifikKelas > tXp) tXp = spesifikKelas;
             
             return tXp;
         }
         
-        // Helper: set avatar dari data profil lokal
         function applyProfilLokal() {
             const { fotoBase64 } = getProfilFromLocal();
             const avatarImg = $("avatarImage");
@@ -687,17 +683,45 @@
                 
                 const profilLokal = getProfilFromLocal();
                 const localXp = getLocalXP();
+
+                // Object Latihan Detail secara lokal untuk akurasi data sendiri
+                let localLatihanObj = {};
+                const rawData = localStorage.getItem("lat_v1_" + globalClassId);
+                if (rawData) {
+                    try {
+                        const lData = JSON.parse(rawData);
+                        if (lData.hari) {
+                            for (let k in lData.hari) {
+                                if (lData.hari[k].hasil) {
+                                    for (let m in lData.hari[k].hasil) {
+                                        localLatihanObj[m] = lData.hari[k].hasil[m];
+                                    }
+                                }
+                            }
+                        }
+                    } catch(e) {}
+                }
+
+                let currentUserFound = false;
                 
                 querySnapshot.forEach((docSnap) => {
                     const d = docSnap.data();
                     const isCurrentUser = docSnap.id === globalStudentId;
+                    
+                    if(isCurrentUser) currentUserFound = true;
+
                     let tXp = 0;
                     if (d.latihan) { 
                         Object.values(d.latihan).forEach(m => { tXp += (m.xp || 0); }); 
                     }
                     
+                    let finalLatihan = d.latihan || {};
+
                     if (isCurrentUser) {
                         tXp = Math.max(tXp, localXp);
+                        if (Object.keys(localLatihanObj).length > 0) {
+                            finalLatihan = localLatihanObj;
+                        }
                     }
                     
                     let fotoUrl = null;
@@ -716,33 +740,47 @@
                         id: docSnap.id, 
                         nama: nama, 
                         xp: tXp, 
-                        latihan: d.latihan || {},
+                        latihan: finalLatihan,
                         fotoUrl: fotoUrl,
                         isCurrentUser: isCurrentUser
                     });
                 });
 
+                // Injeksi manual jika current user tidak ada di database tapi sedang akses halaman ini
+                if (!currentUserFound && globalStudentId) {
+                    students.push({
+                        id: globalStudentId,
+                        nama: profilLokal.namaProfil || "Siswa (Anda)",
+                        xp: localXp,
+                        latihan: localLatihanObj,
+                        fotoUrl: profilLokal.fotoBase64 || null,
+                        isCurrentUser: true
+                    });
+                }
+
+                // Sorting ALL terurut berdasarkan XP tertinggi
                 students.sort((a, b) => b.xp - a.xp);
                 
                 const topContainer = $("topRankContainer");
                 const otherContainer = $("otherRankContainer");
                 if (!topContainer || !otherContainer) return;
 
-                // FILTER: Hanya tampilkan yang Minimal 70 XP
-                const studentsWithXp = students.filter(s => s.xp >= 70);
-                
+                // Tampilkan total semua siswa yang terdaftar di kelas (Biar yang 0 XP juga terhitung)
                 const countEl = $("totalStudentsCount");
-                if (countEl) countEl.textContent = `${studentsWithXp.length} Siswa Terkualifikasi`;
+                if (countEl) countEl.textContent = `${students.length} Siswa Terdaftar`;
 
-                if (studentsWithXp.length === 0) {
+                // FILTER: Hanya tampilkan di podium jika >= 70 XP
+                const eligibleForPodium = students.filter(s => s.xp >= 70);
+                const podiumStudents = eligibleForPodium.slice(0, 3);
+
+                if (podiumStudents.length === 0) {
                     topContainer.innerHTML = '<div class="w-full text-center text-xs text-slate-400 py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-300 flex flex-col items-center justify-center gap-2"><i class="fas fa-trophy text-2xl text-slate-300"></i><span>Belum ada siswa yang mencapai 70 XP.<br/>Jadilah yang pertama masuk klasemen!</span></div>';
-                    otherContainer.innerHTML = "";
                 } else {
                     let topHtml = "";
                     const pod = [
-                        studentsWithXp[1] ? { ...studentsWithXp[1], r: 2, c: "rank-2", h: "h-32" } : null,
-                        studentsWithXp[0] ? { ...studentsWithXp[0], r: 1, c: "rank-1", h: "h-44" } : null,
-                        studentsWithXp[2] ? { ...studentsWithXp[2], r: 3, c: "rank-3", h: "h-28" } : null
+                        podiumStudents[1] ? { ...podiumStudents[1], r: 2, c: "rank-2", h: "h-32" } : null,
+                        podiumStudents[0] ? { ...podiumStudents[0], r: 1, c: "rank-1", h: "h-44" } : null,
+                        podiumStudents[2] ? { ...podiumStudents[2], r: 3, c: "rank-3", h: "h-28" } : null
                     ];
 
                     pod.forEach(p => {
@@ -768,40 +806,49 @@
                         </div>`;
                     });
                     topContainer.innerHTML = topHtml;
+                }
 
-                    let otherHtml = "";
-                    const otherRanked = studentsWithXp.slice(3);
-                    
-                    // Kalau current user belum masuk 70XP, pancing tempelkan di posisi paling bawah
-                    const currentUser = students.find(s => s.isCurrentUser);
-                    if (currentUser && currentUser.xp < 70) {
-                        otherRanked.push(currentUser);
+                // Tampilkan siswa sisanya di list (Tidak masuk Top 3, Atau di bawah 70 XP)
+                let otherHtml = "";
+                const otherRanked = students.filter(s => !podiumStudents.includes(s));
+
+                if (otherRanked.length === 0 && students.length > 0) {
+                     otherHtml = '<li class="text-center text-[10px] text-slate-400 py-3">Tidak ada daftar siswa lainnya.</li>';
+                }
+
+                otherRanked.forEach((s) => {
+                    // Cek urutan peringkat (hanya yang min 70 XP yang mendapat nomor rank)
+                    let rankLabel = '—';
+                    if (s.xp >= 70) {
+                        const idxRank = eligibleForPodium.findIndex(x => x.id === s.id) + 1;
+                        rankLabel = `#${idxRank}`;
                     }
 
-                    otherRanked.forEach((s) => {
-                        let rankLabel = s.xp >= 70 ? `#${studentsWithXp.findIndex(x => x.id === s.id) + 1}` : '—';
-                        const dataStr = encodeURIComponent(JSON.stringify(s.latihan || {}));
-                        const safeName = encodeURIComponent(s.nama);
-                        const fotoLi = s.fotoUrl 
-                            ? `<img src="${s.fotoUrl}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(s.nama)}">` 
-                            : `<i class="fas fa-user"></i>`;
-                        const rowHighlight = s.isCurrentUser ? "bg-emerald-50 ring-1 ring-emerald-200" : "hover:bg-slate-50";
-                        const andLabel = s.isCurrentUser ? '<span class="ml-1 text-[9px] font-black text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">ANDA</span>' : '';
-                        
-                        // Badge untuk dibawah 70XP
-                        const noXpLabel = s.xp < 70 ? '<span class="ml-1 text-[8.5px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">BUTUH 70 XP</span>' : '';
-                        
-                        otherHtml += `
-                        <li onclick="window.bukaDetailKlasemen('${safeName}', '${dataStr}')" class="flex items-center gap-3 py-2 px-2 ${rowHighlight} cursor-pointer transition active:scale-95 rounded-lg">
-                            <div class="w-8 text-center text-slate-400 font-bold text-xs shrink-0">${rankLabel}</div>
-                            <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs shrink-0 overflow-hidden">${fotoLi}</div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-xs font-bold text-slate-700 leading-tight">${esc(s.nama)}${andLabel}${noXpLabel}</p>
-                            </div>
-                            <div class="text-xs font-black text-amber-500 shrink-0">${s.xp} XP</div>
-                        </li>`;
-                    });
-                    otherContainer.innerHTML = otherHtml;
+                    const dataStr = encodeURIComponent(JSON.stringify(s.latihan || {}));
+                    const safeName = encodeURIComponent(s.nama);
+                    const fotoLi = s.fotoUrl 
+                        ? `<img src="${s.fotoUrl}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(s.nama)}">` 
+                        : `<i class="fas fa-user"></i>`;
+                    const rowHighlight = s.isCurrentUser ? "bg-emerald-50 ring-1 ring-emerald-200" : "hover:bg-slate-50";
+                    const andLabel = s.isCurrentUser ? '<span class="ml-1 text-[9px] font-black text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">ANDA</span>' : '';
+                    
+                    // Label Peringatan di Bawah 70 XP
+                    const noXpLabel = s.xp < 70 ? '<span class="ml-1 text-[8.5px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">BELUM LULUS (Min 70)</span>' : '';
+                    
+                    otherHtml += `
+                    <li onclick="window.bukaDetailKlasemen('${safeName}', '${dataStr}')" class="flex items-center gap-3 py-2 px-2 ${rowHighlight} cursor-pointer transition active:scale-95 rounded-lg mb-1">
+                        <div class="w-8 text-center text-slate-400 font-bold text-xs shrink-0">${rankLabel}</div>
+                        <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs shrink-0 overflow-hidden">${fotoLi}</div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-bold text-slate-700 leading-tight flex items-center flex-wrap gap-y-1">${esc(s.nama)}${andLabel}</p>
+                            ${noXpLabel ? `<div class="mt-0.5">${noXpLabel}</div>` : ''}
+                        </div>
+                        <div class="text-xs font-black ${s.xp >= 70 ? 'text-amber-500' : 'text-slate-400'} shrink-0">${s.xp} XP</div>
+                    </li>`;
+                });
+                
+                if (otherHtml !== "") {
+                     otherContainer.innerHTML = otherHtml;
                 }
 
             } catch (err) { 
