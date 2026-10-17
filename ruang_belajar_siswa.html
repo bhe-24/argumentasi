@@ -211,9 +211,22 @@
         </div>
     </div>
 
+    <!-- MODAL KONFIRMASI KELUAR -->
+    <div id="modalConfirm" class="fixed inset-0 bg-black/60 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300 backdrop-blur-sm p-4" onclick="if(event.target === this) tutupModal('modalConfirm')">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 transform scale-95 transition-transform duration-300 flex flex-col items-center text-center shadow-2xl">
+            <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-3xl mb-4"><i class="fas fa-door-open"></i></div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">Kembali ke Beranda?</h3>
+            <p class="text-sm text-slate-500 mb-6">Progres belajar Anda akan tetap tersimpan dengan aman.</p>
+            <div class="flex gap-3 w-full">
+                <button onclick="tutupModal('modalConfirm')" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors active:scale-95 text-xs">Batal</button>
+                <button id="btnConfirmAction" class="flex-1 bg-slate-800 text-white font-bold py-3.5 rounded-xl hover:bg-slate-900 transition-colors shadow-md active:scale-95 text-xs">Ya, Keluar</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, collection, query, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, query, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" });
         const db = getFirestore(app);
@@ -251,6 +264,11 @@
             const m = $(id), bx = m.querySelector('div'); m.classList.add('opacity-0'); bx.classList.remove('scale-100'); bx.classList.add('scale-95');
             setTimeout(() => m.classList.add('hidden'), 300);
         };
+        window.konfirmasiKeluar = function() {
+            $('btnConfirmAction').onclick = () => { window.location.href = 'index.html'; };
+            bukaModal('modalConfirm');
+        };
+
         window.switchTab = function(tabName) {
             ['Misi', 'Materi', 'Klasemen'].forEach(n => {
                 $('tab' + n).classList.remove('active');$('content' + n).classList.add('hidden');
@@ -291,15 +309,6 @@
         }
 
         function renderMissions(aiPaket, sid) {
-            const BAGIAN = [
-                { key: 'pilgan', file: 'pilgan.html', n: 'Pilihan Ganda', ic: 'fa-circle-check', c: 'blue', type: 'Pemahaman' },
-                { key: 'struktur', file: 'struktur.html', n: 'Bedah Struktur', ic: 'fa-layer-group', c: 'amber', type: 'Analisis' },
-                { key: 'esai', file: 'esai.html', n: 'Esai Argumentasi', ic: 'fa-pen-nib', c: 'emerald', type: 'Kreasi' },
-                { key: 'kritis', file: 'kritis.html', n: 'Uji Berpikir', ic: 'fa-brain', c: 'rose', type: 'Kritis' },
-                { key: 'peta', file: 'peta_argumen.html', n: 'Peta Argumen', ic: 'fa-map-signs', c: 'indigo', type: 'Melengkapi Teks' },
-                { key: 'ilmiah', file: 'kata_ilmiah.html', n: 'Kata Ilmiah', ic: 'fa-flask', c: 'teal', type: 'Kosakata' }
-            ];
-
             const lData = JSON.parse(localStorage.getItem('lat_v1_' + globalClassId) || '{}');
             let userProg = {};
             if (lData.hari) {
@@ -310,18 +319,18 @@
                 }
             }
 
-            $('missionNodesContainer').innerHTML = BAGIAN.map((b) => {
+            $('missionNodesContainer').innerHTML = BAGIAN_MISI.map((b) => {
                 const isReady = !!aiPaket[b.key]; 
                 const score = userProg[b.key];
                 const isDone = score !== undefined;
                 const isFailed = isDone && score < 70;
                 
-                const url = `kelas/${b.file}?id=${encodeURIComponent(globalClassId)}` + (sid ? `&sid=${encodeURIComponent(sid)}` : '');
+                const url = `kelas/${b.key}.html?id=${encodeURIComponent(globalClassId)}` + (sid ? `&sid=${encodeURIComponent(sid)}` : '');
                 
                 let opacityClass = isReady ? 'hover:shadow-md' : 'opacity-80 grayscale-[30%] pointer-events-none';
                 let btnTxt = isReady ? `<i class="fas fa-play text-emerald-500 mr-1"></i> Mulai Misi` : `<i class="fas fa-lock text-slate-400 mr-1"></i> Belum Siap`;
-                let cClass = `h-[112px] w-full bg-white rounded-2xl px-4 shadow-sm border border-slate-200 flex items-center gap-4 active:scale-[.98] transition hover:border-${b.c}-400 ${opacityClass}`;
-                let dotClass = `bg-${b.c}-500`;
+                let cClass = `h-[112px] w-full bg-white rounded-2xl px-4 shadow-sm border border-slate-200 flex items-center gap-4 active:scale-[.98] transition hover:border-emerald-400 ${opacityClass}`;
+                let dotClass = `bg-emerald-500`;
 
                 if (isDone) {
                     if (isFailed) {
@@ -337,11 +346,13 @@
                     }
                 }
 
+                let iconColor = isDone ? (isFailed ? 'amber' : 'emerald') : 'emerald';
+
                 return `
                 <div class="relative pl-12 group">
                     <div class="absolute left-[13px] top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-4 border-white ${dotClass} shadow-md z-10 group-hover:scale-125 transition-transform"></div>
                     <a href="${url}" class="${cClass}">
-                        <div class="w-12 h-12 rounded-xl bg-${b.c}-50 text-${b.c}-600 flex items-center justify-center text-xl shrink-0"><i class="fas ${b.ic}"></i></div>
+                        <div class="w-12 h-12 rounded-xl bg-${iconColor}-50 text-${iconColor}-600 flex items-center justify-center text-xl shrink-0"><i class="fas ${b.ic || 'fa-star'}"></i></div>
                         <div class="flex-1 min-w-0">
                             <h4 class="font-bold text-slate-800 text-sm leading-5 truncate">${b.n}</h4>
                             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 leading-3">Latihan ${b.type}</p>
@@ -359,7 +370,7 @@
                 if (!docSnap.exists()) throw new Error('Data handout tidak valid');
                 const d = docSnap.data();
                 
-                const btnAi = `<a href="kelas/view-teks.html?id=${globalClassId}" class="flex items-center justify-between p-4 bg-white border border-emerald-200 rounded-2xl shadow-sm hover:shadow-md transition active:scale-95 group">
+                const btnAi = `<a href="kelas/view-teks.html?id=${encodeURIComponent(globalClassId)}${globalStudentId ? '&sid=' + encodeURIComponent(globalStudentId) : ''}" class="flex items-center justify-between p-4 bg-white border border-emerald-200 rounded-2xl shadow-sm hover:shadow-md transition active:scale-95 group">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fas fa-robot"></i></div>
                         <div>
@@ -435,9 +446,8 @@
                     return;
                 }
 
-                // Render Top 3 (Podium)
+                // Render Top 3
                 let topHtml = '';
-                const hgt = [32, 44, 28]; // [Perak, Emas, Perunggu] height logic
                 const pod = [
                     students[1] ? { ...students[1], r: 2, c: 'rank-2', h: 'h-32' } : null,
                     students[0] ? { ...students[0], r: 1, c: 'rank-1', h: 'h-44' } : null,
@@ -486,14 +496,31 @@
                 globalHandoutId = kelas.handoutId || null;
                 globalAiPaket = kelas.aiPaket || null;
 
+                // FIXED SYNTAX ERROR: Use standard || instead of \vert
                 $('navClassName').textContent = kelas.namaKelas \vert{}\vert{} 'Kelas';$('teacherNameDisplay').textContent = `Guru: ${kelas.namaGuru || '-'}`;
 
                 if (globalStudentId) {
-                    const d = (await getDoc(doc(db, `classes/${globalClassId}/students`, globalStudentId))).data();
-                    const n = d ? (d.nama || d.namaLengkap) : null;
-                    const c = localStorage.getItem('namaSiswaCendekia') || n || 'Siswa';
-                    $('studentNameDisplay').textContent = c;
-                    updateXP(); updateBanner(c);
+                    onSnapshot(doc(db, `classes/${globalClassId}/students`, globalStudentId), (snap) => {
+                        const d = snap.exists() ? snap.data() : null;
+                        const n = d ? (d.nama || d.namaLengkap) : null;
+                        const c = localStorage.getItem('namaSiswaCendekia') || n || 'Siswa';
+                        $('studentNameDisplay').textContent = c;
+                        updateXP(); updateBanner(c);
+                        
+                        // Perbarui Misi & Klasemen setiap kali ada progres baru
+                        if(globalAiPaket) {
+                            renderMissions(globalAiPaket, globalStudentId);
+                            renderKlasemen();
+                        }
+                    }, () => { 
+                        const def = localStorage.getItem('namaSiswaCendekia') || 'Siswa';
+                        $('studentNameDisplay').textContent = def;
+                        updateXP(); updateBanner(def);
+                    });
+                } else {
+                    const def = localStorage.getItem('namaSiswaCendekia') || 'Siswa';
+                    $('studentNameDisplay').textContent = def;
+                    updateXP(); updateBanner(def);
                 }
 
                 $('skeletonState').classList.add('hidden');
