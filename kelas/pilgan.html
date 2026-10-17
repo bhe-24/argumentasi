@@ -13,7 +13,12 @@
     
     <script>
     (function () {
-        const LS = 'lat_v1', DBN = 'latihan-db'; let S = null, siapP = null;
+        // MENDETEKSI ID KELAS UNTUK MEMISAHKAN MEMORI BROWSER
+        const qCore = new URLSearchParams(window.location.search);
+        const cId = qCore.get('id') || 'umum';
+        const LS = 'lat_v1_' + cId, DBN = 'latihan-db-' + cId; 
+        
+        let S = null, siapP = null;
         const pad = n => String(n).padStart(2, '0');
         const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'x' + Math.random().toString(36).slice(2) + Date.now().toString(36);
