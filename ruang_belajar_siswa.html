@@ -80,7 +80,7 @@
 
         .sk { position: relative; overflow: hidden; background: #e2e8f0; border-radius: .5rem; color: transparent !important; }
         .sk-light { background: rgba(255,255,255,.28); }
-        .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), animation: shimmer 1.4s infinite; }
+        .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent); animation: shimmer 1.4s infinite; }
         @keyframes shimmer { 100% { transform: translateX(100%); } }
 
         .journey-line { position: relative; }
@@ -373,7 +373,7 @@
                 playText: "text-rose-500"
             },
             { 
-                key: "peta", n: "Peta Argumen", type: "Teks", file: "peta_argumen.html", 
+                key: "peta", n: "Peta Argumen", type: "Teks", file: "kelas/peta_argumen.html", 
                 ic: "fa-diagram-project",
                 iconBg: "bg-amber-50", iconText: "text-amber-600",
                 dotBg: "bg-amber-500", borderHover: "hover:border-amber-400",
@@ -537,7 +537,11 @@
                 const fileName = b.file;
                 const urlParamId = encodeURIComponent(globalClassId);
                 const urlParamSid = sid ? `&sid=${encodeURIComponent(sid)}` : "";
-                const targetUrl = `kelas/${fileName}?id=${urlParamId}${urlParamSid}`;
+                
+                // Cek jika key "peta" karena pathnya sudah spesifik
+                const targetUrl = (b.key === "peta") 
+                                  ? `${fileName}?id=${urlParamId}${urlParamSid}` 
+                                  : `kelas/${fileName}?id=${urlParamId}${urlParamSid}`;
                 
                 let opacityClass = isReady ? b.borderHover : "opacity-80 grayscale-[30%] pointer-events-none";
                 let btnTxt = isReady 
@@ -718,6 +722,7 @@
                     let finalLatihan = d.latihan || {};
 
                     if (isCurrentUser) {
+                        // Tumpuk XP dari server dengan XP di lokal HP untuk realtime update
                         tXp = Math.max(tXp, localXp);
                         if (Object.keys(localLatihanObj).length > 0) {
                             finalLatihan = localLatihanObj;
@@ -746,7 +751,7 @@
                     });
                 });
 
-                // Injeksi manual jika current user tidak ada di database tapi sedang akses halaman ini
+                // Injeksi manual jika current user belum tersimpan di database tapi sedang akses halaman ini
                 if (!currentUserFound && globalStudentId) {
                     students.push({
                         id: globalStudentId,
@@ -765,7 +770,7 @@
                 const otherContainer = $("otherRankContainer");
                 if (!topContainer || !otherContainer) return;
 
-                // Tampilkan total semua siswa yang terdaftar di kelas
+                // Tampilkan total semua siswa yang terdaftar di kelas (Biar yang 0 XP juga terhitung)
                 const countEl = $("totalStudentsCount");
                 if (countEl) countEl.textContent = `${students.length} Siswa Terdaftar`;
 
@@ -808,7 +813,7 @@
                     topContainer.innerHTML = topHtml;
                 }
 
-                // Tampilkan siswa sisanya di list
+                // Tampilkan siswa sisanya di list bawah podium
                 let otherHtml = "";
                 const otherRanked = students.filter(s => !podiumStudents.includes(s));
 
