@@ -3,28 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Modul AI - Materi Kelas</title>
+    <title>Modul Pintar Guru - Materi Kelas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
+        :root { --fs: 15px; }
+        body {
+            font-family: 'Poppins', sans-serif; background: #f1f5f9; margin: 0;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none; -webkit-user-select: none; -moz-user-select: none; user-select: none;
+        }
         .font-reading { font-family: 'Merriweather', serif; }
+        .font-display { font-family: 'Playfair Display', serif; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .reading { font-size: var(--fs); line-height: 1.85; color: #334155; }
+        .reading p { margin: 0 0 .85em; }
+        .reading p:last-child { margin-bottom: 0; }
+        .reading ul, .reading ol { margin: 0 0 .85em 1.25em; padding: 0; }
+        .reading ul { list-style: disc; } .reading ol { list-style: decimal; }
+        .reading li { margin-bottom: .35em; padding-left: .2em; }
+        .reading strong { color: #0f172a; }
+
+        /* Kartu section yang bisa dilipat */
+        .sec-collapse { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .35s ease; }
+        .sec-card.closed .sec-collapse { grid-template-rows: 0fr; }
+        .sec-inner { overflow: hidden; min-height: 0; }
+        .sec-card.closed .chev { transform: rotate(-90deg); }
+        .chev { transition: transform .3s; }
+
+        .fade-up { animation: fadeUp .5s ease-out both; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+        .sk { position: relative; overflow: hidden; background: #e2e8f0; border-radius: 1rem; }
+        .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent); animation: shimmer 1.4s infinite; }
+        @keyframes shimmer { 100% { transform: translateX(100%); } }
+
+        /* Label struktur (mode tebak) */
+        .lbl .lbl-q { display: none; }
+        .quiz-on .lbl:not(.revealed) { background: #f1f5f9 !important; color: #64748b !important; border-color: #cbd5e1 !important; border-style: dashed !important; }
+        .quiz-on .lbl:not(.revealed) .lbl-text { display: none; }
+        .quiz-on .lbl:not(.revealed) .lbl-q { display: inline; }
+
+        /* Kata rumpang pada kutipan */
+        .blank { display: inline-block; min-width: 74px; padding: 0 .55em; margin: 0 .1em; border-radius: .5rem; font-family: 'Poppins', sans-serif; font-weight: 700; font-size: .78em; line-height: 1.9; text-align: center; background: #fef3c7; color: #b45309; border: 1.5px dashed #f59e0b; cursor: pointer; transition: all .2s; }
+        .blank:active { transform: scale(.95); }
+        .blank.revealed { background: #d1fae5; color: #047857; border: 1.5px solid #10b981; cursor: default; }
+
+        .pop { animation: pop .45s ease-out; }
+        @keyframes pop { 0% { transform: scale(.9); } 55% { transform: scale(1.08); } 100% { transform: scale(1); } }
     </style>
 </head>
-<body class="flex justify-center min-h-screen">
+<body>
 
-<div class="w-full max-w-md bg-white relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
-    <header class="sticky top-0 z-50 bg-emerald-600 h-14 px-4 flex items-center gap-3 shadow-md">
-        <a id="btnBack" href="#" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition"><i class="fas fa-arrow-left"></i></a>
-        <h1 class="text-white font-bold text-sm truncate flex-1">Materi Pembelajaran AI</h1>
+<div class="w-full max-w-md mx-auto bg-slate-50 relative min-h-screen shadow-2xl sm:border-x border-slate-200" id="frame">
+
+    <!-- HEADER -->
+    <header class="sticky top-0 z-50 bg-emerald-600 shadow-md">
+        <div class="h-14 px-4 flex items-center gap-3">
+            <a id="btnBack" href="#" class="w-9 h-9 rounded-full bg-white/15 border border-white/20 flex items-center justify-center text-white active:scale-95 transition" aria-label="Kembali"><i class="fas fa-arrow-left text-sm"></i></a>
+            <div class="flex-1 min-w-0">
+                <p class="text-[9px] font-bold text-emerald-100 uppercase tracking-widest leading-3">Modul Pintar Guru</p>
+                <h1 id="hdrTitle" class="text-white font-bold text-sm truncate leading-tight">Materi Pembelajaran</h1>
+            </div>
+            <button onclick="window.cycleFont()" class="h-9 px-3 rounded-full bg-white/15 border border-white/20 text-white text-xs font-extrabold active:scale-95 transition flex items-center gap-1" aria-label="Ukuran huruf">
+                <i class="fas fa-text-height text-[11px]"></i><span id="fontLbl">M</span>
+            </button>
+        </div>
+        <div class="h-1 bg-emerald-800/40"><div id="readBar" class="h-full bg-amber-300 transition-[width] duration-150" style="width:0%"></div></div>
     </header>
 
-    <main class="flex-grow overflow-y-auto hide-scrollbar p-5" id="kontenMateri">
-        <div class="text-center py-20 text-emerald-500"><i class="fas fa-circle-notch fa-spin text-3xl"></i><p class="mt-3 text-xs font-bold text-slate-500">Membaca data server...</p></div>
+    <main id="app" class="px-4 pt-4 pb-24">
+        <!-- Skeleton -->
+        <div id="skeleton" class="space-y-4">
+            <div class="sk h-36"></div>
+            <div class="sk h-10"></div>
+            <div class="sk h-52"></div>
+            <div class="sk h-52"></div>
+        </div>
     </main>
+
+    <!-- TOMBOL KE ATAS -->
+    <button id="btnTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" class="fixed bottom-5 z-40 w-11 h-11 rounded-full bg-emerald-600 text-white shadow-lg flex items-center justify-center opacity-0 pointer-events-none transition active:scale-90" style="right:max(1rem, calc(50vw - 14rem + 1rem))" aria-label="Ke atas"><i class="fas fa-arrow-up"></i></button>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-6 z-[60] w-[90%] max-w-sm pointer-events-none"></div>
 </div>
 
 <script type="module">
@@ -34,63 +100,386 @@
     const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" });
     const db = getFirestore(app);
 
-    const classId = new URLSearchParams(window.location.search).get('id');
-    const sid = new URLSearchParams(window.location.search).get('sid');
-    
-    let backUrl = '../ruang_belajar_siswa.html';
-    if(classId) backUrl += '?id=' + encodeURIComponent(classId);
-    if(sid) backUrl += '&sid=' + encodeURIComponent(sid);
-    document.getElementById('btnBack').href = backUrl;
+    /* ===== UTILITAS ===== */
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])).replace(/\n/g, '<br>');
+    // Teks bebas -> HTML rapi. Tag sederhana (b, i, u, br) yang tersimpan sebagai teks dijadikan format sungguhan.
+    function inline(text) {
+        let t = esc(text);
+        t = t.replace(/&lt;(\/?)(b|strong|i|em|u)&gt;/gi, "<$1$2>").replace(/&lt;br\s*\/?&gt;/gi, "<br>");
+        t = t.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+        t = t.replace(/(^|[\s(])\*(?!\s)(.+?)\*(?=[\s).,;:!?]|$)/g, "$1<em>$2</em>");
+        return t;
+    }
+    // Paragraf, daftar bullet, dan daftar bernomor
+    function rich(text) {
+        const raw = String(text ?? "").replace(/\r/g, "").trim();
+        if (!raw) return "";
+        return raw.split(/\n{2,}/).map((block) => {
+            const lines = block.split("\n").map((l) => l.trim()).filter(Boolean);
+            if (lines.length && lines.every((l) => /^[-•*]\s+/.test(l))) {
+                return "<ul>" + lines.map((l) => `<li>${inline(l.replace(/^[-•*]\s+/, ""))}</li>`).join("") + "</ul>";
+            }
+            if (lines.length && lines.every((l) => /^\d+[.)]\s+/.test(l))) {
+                return "<ol>" + lines.map((l) => `<li>${inline(l.replace(/^\d+[.)]\s+/, ""))}</li>`).join("") + "</ol>";
+            }
+            return `<p>${lines.map(inline).join("<br>")}</p>`;
+        }).join("");
+    }
+    const kata = (s) => String(s ?? "").trim().split(/\s+/).filter(Boolean).length;
 
-    function drawSection(title, content, icon, color) {
-        if (!content) return '';
+    /* ===== PARAMETER & NAVIGASI ===== */
+    const params = new URLSearchParams(window.location.search);
+    const classId = params.get("id");
+    const sid = params.get("sid");
+    {
+        const qs = new URLSearchParams();
+        if (classId) qs.set("id", classId);
+        if (sid) qs.set("sid", sid);
+        $("btnBack").href = "../ruang_belajar_siswa.html" + (qs.toString() ? "?" + qs.toString() : "");
+    }
+
+    /* ===== TEMA WARNA ===== */
+    const C = {
+        amber:   { bg: "bg-amber-50",   bd: "border-amber-200",   tx: "text-amber-800",   ic: "bg-amber-100 text-amber-600",     btn: "bg-amber-500" },
+        blue:    { bg: "bg-blue-50",    bd: "border-blue-200",    tx: "text-blue-800",    ic: "bg-blue-100 text-blue-600",       btn: "bg-blue-500" },
+        emerald: { bg: "bg-emerald-50", bd: "border-emerald-200", tx: "text-emerald-800", ic: "bg-emerald-100 text-emerald-600", btn: "bg-emerald-500" }
+    };
+    const LABEL_STYLE = [
+        [/tesis|pernyataan|pendapat|posisi/i,                       "bg-emerald-100 text-emerald-700 border-emerald-300"],
+        [/argumen|alasan|penalaran/i,                               "bg-blue-100 text-blue-700 border-blue-300"],
+        [/bukti|fakta|data|contoh|ilustrasi/i,                      "bg-cyan-100 text-cyan-700 border-cyan-300"],
+        [/penegas|simpul|kesimpul|penutup|ulang/i,                  "bg-purple-100 text-purple-700 border-purple-300"],
+        [/pengantar|pendahulu|isu|latar|pembuka|orientasi/i,        "bg-amber-100 text-amber-700 border-amber-300"],
+        [/rekomendasi|saran|solusi|harapan/i,                       "bg-rose-100 text-rose-700 border-rose-300"]
+    ];
+    const labelCls = (l) => (LABEL_STYLE.find(([re]) => re.test(l || "")) || [null, "bg-slate-100 text-slate-600 border-slate-300"])[1];
+
+    /* ===== STATE LOKAL ===== */
+    const doneKey = "vt_done_" + classId;
+    let done = [];
+    try { done = JSON.parse(localStorage.getItem(doneKey) || "[]"); } catch (e) { done = []; }
+    let sectionIds = [];
+    let blanksShown = false;
+
+    const FONTS = [["S", "13.5px"], ["M", "15px"], ["L", "17px"], ["XL", "19px"]];
+    let fontIdx = parseInt(localStorage.getItem("vt_font") || "1", 10);
+    if (!(fontIdx >= 0 && fontIdx < FONTS.length)) fontIdx = 1;
+    function applyFont() {
+        document.documentElement.style.setProperty("--fs", FONTS[fontIdx][1]);
+        const l = $("fontLbl"); if (l) l.textContent = FONTS[fontIdx][0];
+        try { localStorage.setItem("vt_font", String(fontIdx)); } catch (e) {}
+    }
+    applyFont();
+
+    function toast(msg, icon = "fa-check-circle text-emerald-400") {
+        const t = $("toast");
+        t.innerHTML = `<div class="bg-slate-800 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-xl flex items-center justify-center gap-2 pop"><i class="fas ${icon}"></i><span>${esc(msg)}</span></div>`;
+        clearTimeout(toast._t);
+        toast._t = setTimeout(() => { t.innerHTML = ""; }, 2600);
+    }
+
+    /* ===== AKSI INTERAKTIF ===== */
+    window.cycleFont = () => { fontIdx = (fontIdx + 1) % FONTS.length; applyFont(); };
+
+    window.toggleSec = (id) => {
+        const el = $("sec-" + id);
+        if (el) el.classList.toggle("closed");
+    };
+
+    window.gotoSec = (id) => {
+        const el = $("sec-" + id);
+        if (!el) return;
+        el.classList.remove("closed");
+        const y = el.getBoundingClientRect().top + window.scrollY - 118;
+        window.scrollTo({ top: y, behavior: "smooth" });
+    };
+
+    window.toggleQuiz = (btn) => {
+        const box = $("strukturList");
+        if (!box) return;
+        const on = box.classList.toggle("quiz-on");
+        if (!on) box.querySelectorAll(".lbl").forEach((b) => b.classList.remove("revealed"));
+        btn.innerHTML = on
+            ? '<i class="fas fa-eye mr-1.5"></i> Tampilkan semua label'
+            : '<i class="fas fa-eye-slash mr-1.5"></i> Mode tebak label';
+        if (on) toast("Ketuk label untuk membuka jawabannya", "fa-lightbulb text-amber-300");
+    };
+    window.revealLbl = (b) => { b.classList.add("revealed", "pop"); };
+
+    window.revealBlank = (b) => {
+        if (b.classList.contains("revealed")) return;
+        b.textContent = b.dataset.ans || "—";
+        b.classList.add("revealed", "pop");
+    };
+    window.toggleBlanks = (btn) => {
+        blanksShown = !blanksShown;
+        document.querySelectorAll("#petaList .blank").forEach((b) => {
+            if (blanksShown) { b.textContent = b.dataset.ans || "—"; b.classList.add("revealed"); }
+            else { b.textContent = "ketuk • • •"; b.classList.remove("revealed"); }
+        });
+        btn.innerHTML = blanksShown
+            ? '<i class="fas fa-rotate-left mr-1.5"></i> Sembunyikan jawaban'
+            : '<i class="fas fa-wand-magic-sparkles mr-1.5"></i> Tampilkan semua jawaban';
+    };
+
+    window.tandai = (id) => {
+        const i = done.indexOf(id);
+        if (i === -1) done.push(id); else done.splice(i, 1);
+        try { localStorage.setItem(doneKey, JSON.stringify(done)); } catch (e) {}
+        paintDone();
+        if (i === -1) {
+            const sec = $("sec-" + id);
+            if (sec) sec.classList.add("closed");
+            const next = sectionIds.find((x) => !done.includes(x));
+            if (next) { setTimeout(() => window.gotoSec(next), 380); toast("Bagian selesai! Lanjut ke berikutnya.", "fa-circle-check text-emerald-400"); }
+            else toast("Semua materi sudah dibaca. Saatnya kerjakan misi! 🎉", "fa-trophy text-amber-300");
+        }
+    };
+
+    function paintDone() {
+        const total = sectionIds.length || 1;
+        const n = sectionIds.filter((x) => done.includes(x)).length;
+        const ring = $("ringArc");
+        if (ring) ring.setAttribute("stroke-dasharray", `${(n / total) * 100.5} 100.5`);
+        const rt = $("ringTxt"); if (rt) rt.textContent = `${n}/${sectionIds.length}`;
+        const rs = $("ringSub");
+        if (rs) rs.textContent = n === sectionIds.length ? "Semua materi selesai dibaca!" : `${sectionIds.length - n} bagian lagi untuk dibaca`;
+        const cta = $("ctaDone"); if (cta) cta.classList.toggle("hidden", n !== sectionIds.length);
+        sectionIds.forEach((id) => {
+            const isDone = done.includes(id);
+            const b = $("btnDone-" + id);
+            if (b) {
+                b.className = "w-full mt-4 py-3 rounded-xl text-xs font-bold active:scale-95 transition flex items-center justify-center gap-2 " +
+                    (isDone ? "bg-emerald-100 text-emerald-700 border border-emerald-300" : "bg-slate-800 text-white shadow");
+                b.innerHTML = isDone ? '<i class="fas fa-circle-check"></i> Sudah dibaca (ketuk untuk batal)' : '<i class="far fa-circle-check"></i> Tandai sudah dibaca';
+            }
+            const chip = $("chip-" + id);
+            if (chip) {
+                const ic = chip.querySelector(".chip-ic");
+                if (ic) ic.className = "chip-ic fas " + (isDone ? "fa-circle-check text-emerald-500" : "fa-circle text-slate-300") + " text-[9px]";
+            }
+        });
+    }
+
+    /* ===== BANGUN BAGIAN-BAGIAN ===== */
+    function sectionCard(id, title, subtitle, icon, color, bodyHtml) {
+        const c = C[color];
         return `
-        <div class="mb-6 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-            <div class="bg-${color}-50 px-4 py-3 border-b border-${color}-100 flex items-center gap-2">
-                <i class="fas ${icon} text-${color}-600"></i>
-                <h2 class="font-bold text-${color}-800 text-sm">${title}</h2>
+        <section id="sec-${id}" data-sec="${id}" class="sec-card mb-5 bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm fade-up">
+            <button onclick="window.toggleSec('${id}')" class="w-full ${c.bg} px-4 py-3.5 border-b ${c.bd} flex items-center gap-3 text-left active:opacity-80">
+                <span class="w-10 h-10 rounded-xl ${c.ic} flex items-center justify-center text-base shrink-0"><i class="fas ${icon}"></i></span>
+                <span class="flex-1 min-w-0">
+                    <span class="block font-bold ${c.tx} text-sm leading-tight">${esc(title)}</span>
+                    <span class="block text-[10px] text-slate-500 mt-0.5 leading-tight">${esc(subtitle)}</span>
+                </span>
+                <i class="fas fa-chevron-down chev ${c.tx} opacity-60 text-xs"></i>
+            </button>
+            <div class="sec-collapse"><div class="sec-inner">
+                <div class="p-4">
+                    ${bodyHtml}
+                    <button id="btnDone-${id}" onclick="window.tandai('${id}')"></button>
+                </div>
+            </div></div>
+        </section>`;
+    }
+
+    function buildRingkasan(ap) {
+        const body = `<div class="reading font-reading">${rich(ap.ringkasan)}</div>`;
+        return sectionCard("ringkasan", "Ringkasan Inti", `${kata(ap.ringkasan)} kata · intisari materi`, "fa-lightbulb", "amber", body);
+    }
+
+    function buildStruktur(teks) {
+        const items = teks.map((x, i) => {
+            const t = typeof x === "string" ? x : (x && x.t) || "";
+            const l = typeof x === "string" ? "" : (x && x.label) || "";
+            const cls = labelCls(l);
+            const badge = l
+                ? `<button class="lbl ${cls} inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border mb-2 active:scale-95 transition" onclick="window.revealLbl(this)"><span class="lbl-text"><i class="fas fa-tag text-[9px] mr-1"></i>${esc(l)}</span><span class="lbl-q"><i class="fas fa-circle-question mr-1"></i>Ketuk untuk menebak</span></button>`
+                : "";
+            return `
+            <div class="flex gap-3 ${i < teks.length - 1 ? "mb-4" : ""}">
+                <div class="flex flex-col items-center shrink-0">
+                    <span class="w-7 h-7 rounded-full bg-blue-500 text-white text-xs font-extrabold flex items-center justify-center shadow">${i + 1}</span>
+                    ${i < teks.length - 1 ? '<span class="flex-1 w-0.5 bg-blue-100 mt-1 rounded"></span>' : ""}
+                </div>
+                <div class="flex-1 min-w-0 pb-1">
+                    ${badge}
+                    <div class="reading font-reading bg-slate-50 border border-slate-100 rounded-2xl px-3.5 py-3">${rich(t)}</div>
+                </div>
+            </div>`;
+        }).join("");
+
+        const body = `
+            <p class="text-[11px] text-slate-500 mb-3 leading-snug">Baca tiap paragraf, lalu coba tebak fungsinya dengan <b>mode tebak label</b>.</p>
+            <button onclick="window.toggleQuiz(this)" class="mb-4 text-[11px] font-bold px-3.5 py-2 rounded-full bg-blue-50 text-blue-600 border border-blue-200 active:scale-95 transition"><i class="fas fa-eye-slash mr-1.5"></i> Mode tebak label</button>
+            <div id="strukturList">${items}</div>`;
+        return sectionCard("struktur", "Bedah Wacana & Struktur", `${teks.length} paragraf · kenali fungsinya`, "fa-layer-group", "blue", body);
+    }
+
+    function buildPeta(soal) {
+        const items = soal.map((s, i) => {
+            const p = String((s && s.p) || "");
+            const opsi = Array.isArray(s && s.opsi) ? s.opsi : [];
+            let ans = opsi[s.j];
+            if (ans === undefined && typeof s.j === "string") {
+                const idx = s.j.trim().toUpperCase().charCodeAt(0) - 65;
+                ans = opsi[idx];
+            }
+            ans = ans === undefined ? "" : String(ans);
+            const re = /\[\.{3,}\]/g;
+            const parts = p.split(re);
+            let html = "";
+            parts.forEach((part, k) => {
+                html += inline(part).replace(/\n/g, "<br>");
+                if (k < parts.length - 1) html += `<button class="blank" data-ans="${esc(ans)}" onclick="window.revealBlank(this)">ketuk • • •</button>`;
+            });
+            return `
+            <div class="flex gap-3 ${i < soal.length - 1 ? "mb-3" : ""}">
+                <span class="w-7 h-7 rounded-full bg-emerald-500 text-white text-xs font-extrabold flex items-center justify-center shrink-0 shadow mt-1">${i + 1}</span>
+                <div class="reading font-reading flex-1 min-w-0 bg-emerald-50/60 border border-emerald-100 rounded-2xl px-3.5 py-3 relative">
+                    <i class="fas fa-quote-left text-emerald-200 text-lg absolute top-2 right-3"></i>
+                    <div class="relative">${html}</div>
+                </div>
+            </div>`;
+        }).join("");
+
+        const body = `
+            <p class="text-[11px] text-slate-500 mb-3 leading-snug">Ketuk bagian rumpang untuk melihat kata yang tepat. Coba tebak dulu sebelum membukanya.</p>
+            <button onclick="window.toggleBlanks(this)" class="mb-4 text-[11px] font-bold px-3.5 py-2 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 active:scale-95 transition"><i class="fas fa-wand-magic-sparkles mr-1.5"></i> Tampilkan semua jawaban</button>
+            <div id="petaList">${items}</div>`;
+        return sectionCard("peta", "Kutipan Paragraf Argumentasi", `${soal.length} kutipan · latihan melengkapi`, "fa-quote-left", "emerald", body);
+    }
+
+    /* ===== RENDER UTAMA ===== */
+    function render(kelas) {
+        const ap = kelas.aiPaket || {};
+        const secs = [];
+        if (ap.ringkasan) secs.push({ id: "ringkasan", label: "Ringkasan", html: buildRingkasan(ap), words: kata(ap.ringkasan) });
+        if (ap.struktur && Array.isArray(ap.struktur.teks) && ap.struktur.teks.length) {
+            const w = ap.struktur.teks.reduce((a, x) => a + kata(typeof x === "string" ? x : x && x.t), 0);
+            secs.push({ id: "struktur", label: "Struktur", html: buildStruktur(ap.struktur.teks), words: w });
+        }
+        if (ap.peta && Array.isArray(ap.peta.soal) && ap.peta.soal.length) {
+            const w = ap.peta.soal.reduce((a, s) => a + kata(s && s.p), 0);
+            secs.push({ id: "peta", label: "Kutipan", html: buildPeta(ap.peta.soal), words: w });
+        }
+
+        const app = $("app");
+        if (!secs.length) {
+            app.innerHTML = `
+            <div class="text-center py-16 fade-up">
+                <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-slate-100 border border-slate-200 text-slate-400 flex items-center justify-center text-4xl"><i class="fas fa-book-open"></i></div>
+                <h2 class="font-display font-bold text-xl text-slate-800 mb-2">Teks Materi Belum Tersedia</h2>
+                <p class="text-xs text-slate-500 max-w-[260px] mx-auto">Silakan buka File PDF asli di tab Materi.</p>
+            </div>`;
+            return;
+        }
+
+        sectionIds = secs.map((s) => s.id);
+        done = done.filter((x) => sectionIds.includes(x));
+        const totalWords = secs.reduce((a, s) => a + s.words, 0);
+        const mins = Math.max(1, Math.round(totalWords / 180));
+        const judul = kelas.namaKelas ? `Materi ${kelas.namaKelas}` : "Materi Pembelajaran";
+        $("hdrTitle").textContent = judul;
+
+        app.innerHTML = `
+        <!-- HERO -->
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 to-emerald-500 text-white p-5 shadow-lg fade-up">
+            <div class="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10"></div>
+            <div class="absolute right-10 -bottom-10 w-24 h-24 rounded-full bg-white/10"></div>
+            <div class="relative flex items-center gap-4">
+                <div class="flex-1 min-w-0">
+                    <p class="text-[10px] font-bold text-emerald-100 uppercase tracking-widest">Modul Pintar Guru</p>
+                    <h2 class="font-display font-extrabold text-xl leading-tight mt-1 break-words">${esc(judul)}</h2>
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        <span class="text-[10px] font-bold bg-white/20 px-2.5 py-1 rounded-full"><i class="far fa-clock mr-1"></i>±${mins} menit</span>
+                        <span class="text-[10px] font-bold bg-white/20 px-2.5 py-1 rounded-full"><i class="fas fa-layer-group mr-1"></i>${secs.length} bagian</span>
+                    </div>
+                </div>
+                <div class="relative w-[72px] h-[72px] shrink-0">
+                    <svg viewBox="0 0 36 36" class="w-full h-full -rotate-90">
+                        <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="3.5"></circle>
+                        <circle id="ringArc" cx="18" cy="18" r="16" fill="none" stroke="#fcd34d" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="0 100.5" style="transition:stroke-dasharray .6s ease"></circle>
+                    </svg>
+                    <span id="ringTxt" class="absolute inset-0 flex items-center justify-center text-sm font-extrabold">0/${secs.length}</span>
+                </div>
             </div>
-            <div class="p-4 font-reading text-sm text-slate-700 leading-relaxed">
-                ${esc(content)}
-            </div>
+            <p id="ringSub" class="relative text-[11px] text-emerald-50 mt-3"></p>
+        </div>
+
+        <!-- NAVIGASI BAGIAN -->
+        <nav class="sticky top-[60px] z-30 -mx-4 px-4 py-2.5 bg-slate-50/95 backdrop-blur flex gap-2 overflow-x-auto hide-scrollbar mt-3 mb-2">
+            ${secs.map((s) => `<button id="chip-${s.id}" data-chip="${s.id}" onclick="window.gotoSec('${s.id}')" class="shrink-0 flex items-center gap-1.5 text-[11px] font-bold px-3.5 py-2 rounded-full bg-white border border-slate-200 text-slate-600 shadow-sm active:scale-95 transition"><i class="chip-ic fas fa-circle text-slate-300 text-[9px]"></i>${esc(s.label)}</button>`).join("")}
+        </nav>
+
+        ${secs.map((s) => s.html).join("")}
+
+        <div id="ctaDone" class="hidden mb-5 rounded-3xl bg-gradient-to-br from-amber-400 to-amber-500 text-amber-950 p-5 text-center shadow-lg pop">
+            <i class="fas fa-trophy text-3xl mb-2"></i>
+            <h3 class="font-display font-extrabold text-lg">Materi Selesai Dibaca!</h3>
+            <p class="text-xs mt-1 mb-4">Kamu siap mengerjakan misi latihan dan mengumpulkan XP.</p>
+            <a href="${esc($("btnBack").getAttribute("href"))}" class="inline-block bg-amber-950 text-white text-xs font-bold px-6 py-3 rounded-full active:scale-95 transition"><i class="fas fa-play mr-1.5"></i> Mulai Misi Latihan</a>
+        </div>
+
+        <p class="py-6 text-center text-[10px] text-slate-400 font-medium">&copy; 2026 Argumentasi App</p>`;
+
+        paintDone();
+        initObserver();
+    }
+
+    /* ===== CHIP AKTIF SAAT SCROLL ===== */
+    function setActiveChip(id) {
+        document.querySelectorAll("[data-chip]").forEach((c) => {
+            const on = c.dataset.chip === id;
+            c.classList.toggle("!bg-emerald-600", on);
+            c.classList.toggle("!text-white", on);
+            c.classList.toggle("!border-emerald-600", on);
+        });
+    }
+    function initObserver() {
+        if (!("IntersectionObserver" in window)) return;
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach((e) => { if (e.isIntersecting) setActiveChip(e.target.dataset.sec); });
+        }, { rootMargin: "-30% 0px -60% 0px" });
+        document.querySelectorAll("[data-sec]").forEach((s) => io.observe(s));
+        setActiveChip(sectionIds[0]);
+    }
+
+    /* ===== PROGRESS BACA & TOMBOL KE ATAS ===== */
+    function onScroll() {
+        const h = document.documentElement.scrollHeight - window.innerHeight;
+        const pct = h > 0 ? Math.min(100, Math.max(0, (window.scrollY / h) * 100)) : 0;
+        $("readBar").style.width = pct + "%";
+        const bt = $("btnTop");
+        const show = window.scrollY > 400;
+        bt.classList.toggle("opacity-0", !show);
+        bt.classList.toggle("pointer-events-none", !show);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    /* ===== MUAT DATA ===== */
+    function showError(msg) {
+        $("app").innerHTML = `
+        <div class="text-center p-8 mt-6 bg-red-50 text-red-500 rounded-3xl border border-red-100 fade-up">
+            <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
+            <p class="font-bold text-sm">Gagal Memuat Materi</p>
+            <p class="text-[11px] mt-1 text-red-400">${esc(msg)}</p>
+            <button onclick="location.reload()" class="mt-4 bg-red-500 text-white text-xs font-bold px-5 py-2.5 rounded-full active:scale-95 transition">Coba Lagi</button>
         </div>`;
     }
 
     async function loadData() {
+        if (!classId) { showError("Kelas tidak ditemukan. Buka halaman ini dari Ruang Belajar."); return; }
         try {
-            const classSnap = await getDoc(doc(db, "classes", classId));
-            if(!classSnap.exists() || !classSnap.data().aiPaket) throw new Error("Data materi tidak ditemukan.");
-            
-            // Format fallback JSON ke string HTML
-            const ap = classSnap.data().aiPaket;
-            
-            let htmlStr = '';
-            
-            // 1. Jika guru isi manual (ada string `materiInti` dkk di database, sayangnya kita gak simpan ini kemarin secara statis kecuali di pdf asli)
-            // Sebagai kompensasi, kita render "Ringkasan" dan "Contoh Teks" dari aiPaket.
-            
-            if (ap.ringkasan) {
-                htmlStr += drawSection('Ringkasan Inti', ap.ringkasan, 'fa-lightbulb', 'amber');
-            }
-            
-            if (ap.struktur && ap.struktur.teks) {
-                let stTeks = ap.struktur.teks.map((x,i) => `<b>${i+1}.</b> ${x.t} <i>(${x.label})</i>`).join('\n\n');
-                htmlStr += drawSection('Bedah Wacana & Struktur', stTeks, 'fa-layer-group', 'blue');
-            }
-
-            if (ap.peta && ap.peta.soal) {
-                let ct = ap.peta.soal.map((s,i) => `${i+1}. ${s.p.replace(/\[\.\.\.\.\.\.\.\]/g, s.opsi[s.j])}`).join('\n\n');
-                htmlStr += drawSection('Kutipan Paragraf Argumentasi', ct, 'fa-quote-left', 'emerald');
-            }
-
-            if(htmlStr === '') htmlStr = '<div class="text-center p-6 text-slate-400 border border-dashed rounded-xl border-slate-300">Teks materi tidak tersedia. Silakan cek File PDF asli.</div>';
-
-            document.getElementById('kontenMateri').innerHTML = htmlStr;
-
+            const snap = await getDoc(doc(db, "classes", classId));
+            if (!snap.exists() || !snap.data().aiPaket) throw new Error("Data materi tidak ditemukan.");
+            render(snap.data());
+            onScroll();
         } catch (err) {
-            document.getElementById('kontenMateri').innerHTML = `<div class="text-center p-8 bg-red-50 text-red-500 rounded-2xl"><i class="fas fa-exclamation-triangle text-3xl mb-2"></i><p class="font-bold text-sm">Gagal Memuat Materi</p><p class="text-[10px] mt-1">${err.message}</p></div>`;
+            console.error(err);
+            showError(err.message || "Periksa koneksi internet Anda.");
         }
     }
 
