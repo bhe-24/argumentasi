@@ -274,7 +274,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" });
         const db = getFirestore(app);
@@ -624,6 +624,92 @@
             tampilkanDetail(s.nama, s.latihan, s.fotoUrl);
         };
 
+        /* ===== PEMBACA XP FLEKSIBEL (bentuk data di Firestore bisa berbeda-beda) ===== */
+        const XP_FIELD_NAMES = ["xp", "xpTotal", "totalXp", "totalXP", "points", "poin", "kelasPointsArg", "kelasPoints", "xpKelas"];
+        const MISI_KEYS = BAGIAN_MISI.map((b) => b.key);
+
+        // Jumlahkan semua properti "xp" di dalam objek bersarang (datar maupun hari -> hasil -> misi)
+        function sumXp(node, depth = 0) {
+            if (!node || typeof node !== "object" || depth > 8) return 0;
+            let t = 0;
+            for (const k in node) {
+                const v = node[k];
+                if (k === "xp" && (typeof v === "number" || (typeof v === "string" && v !== "" && !isNaN(v)))) t += Number(v);
+                else if (v && typeof v === "object") t += sumXp(v, depth + 1);
+            }
+            return t;
+        }
+
+        // Ambil XP total satu dokumen siswa: nilai tertinggi dari semua kemungkinan sumber (tanpa dobel hitung)
+        function extractXp(d) {
+            let best = 0;
+            for (const k in d) {
+                const v = d[k];
+                let c = 0;
+                if (typeof v === "number" || (typeof v === "string" && v !== "" && !isNaN(v))) {
+                    if (XP_FIELD_NAMES.includes(k)) c = Number(v) || 0;
+                } else if (v && typeof v === "object") {
+                    c = sumXp(v);
+                }
+                if (c > best) best = c;
+            }
+            return best;
+        }
+
+        // Ambil rincian misi { pilgan: {skor, xp}, ... } dari struktur apa pun
+        function collectMisi(node, out, depth = 0) {
+            if (!node || typeof node !== "object" || depth > 8) return;
+            for (const k in node) {
+                const v = node[k];
+                if (v && typeof v === "object") {
+                    if (MISI_KEYS.includes(k) && ("xp" in v || "skor" in v)) {
+                        const old = out[k];
+                        if (!old || (Number(v.xp) || 0) >= (Number(old.xp) || 0)) out[k] = v;
+                    } else {
+                        collectMisi(v, out, depth + 1);
+                    }
+                }
+            }
+        }
+        function extractLatihan(d) {
+            const out = {};
+            collectMisi(d, out);
+            return out;
+        }
+
+        /* ===== KENALI SISWA YANG SEDANG LOGIN ===== */
+        const normNama = (s) => String(s || "").trim().toLowerCase().replace(/\s+/g, " ");
+        function resolveMeId(profilLokal) {
+            if (globalStudentId) {
+                const byId = cachedStudentDocs.find((x) => x.id === globalStudentId);
+                if (byId) return byId.id;
+                const byField = cachedStudentDocs.find((x) =>
+                    ["studentId", "sid", "uid", "id", "nis"].some((f) => x.data[f] !== undefined && String(x.data[f]) === String(globalStudentId)));
+                if (byField) return byField.id;
+            }
+            const nm = normNama(profilLokal.namaProfil);
+            if (nm) {
+                const byName = cachedStudentDocs.filter((x) => normNama(x.data.nama || x.data.namaLengkap) === nm);
+                if (byName.length === 1) return byName[0].id;
+            }
+            return null;
+        }
+
+        /* ===== KIRIM XP SENDIRI KE SERVER (supaya terlihat di HP teman) ===== */
+        let lastPushedXp = null;
+        function pushMyXp(studentDocId, xp, latihan) {
+            if (!studentDocId || lastPushedXp === xp) return;
+            lastPushedXp = xp;
+            setDoc(
+                doc(db, `classes/${globalClassId}/students`, studentDocId),
+                { xpTotal: xp, latihanSync: latihan || {}, xpUpdatedAt: Date.now() },
+                { merge: true }
+            ).catch((e) => {
+                console.warn("Sinkron XP ke server gagal (cek Firestore rules):", e);
+                lastPushedXp = null;
+            });
+        }
+
         /* ===== KLASEMEN (REALTIME) ===== */
         function startKlasemenRealtime() {
             if (klasemenUnsub || !globalClassId) return;
@@ -652,21 +738,21 @@
                 const hasLocalLatihan = Object.keys(localLatihan).length > 0;
 
                 const students = [];
-                let currentUserFound = false;
+                const meId = resolveMeId(profilLokal);
+                let currentUserFound = meId !== null;
 
                 cachedStudentDocs.forEach(({ id, data: d }) => {
-                    const isCurrentUser = id === globalStudentId;
-                    if (isCurrentUser) currentUserFound = true;
+                    const isCurrentUser = id === meId;
 
-                    let xp = 0;
-                    if (d.latihan && typeof d.latihan === "object") {
-                        Object.values(d.latihan).forEach((m) => { xp += Number(m && m.xp) || 0; });
-                    }
+                    let xp = extractXp(d);
+                    let latihan = extractLatihan(d);
 
-                    let latihan = d.latihan || {};
                     if (isCurrentUser) {
+                        const serverXp = xp;
                         xp = Math.max(xp, localXp); // XP sendiri = XP di header
                         if (hasLocalLatihan) latihan = localLatihan;
+                        // XP lokal lebih tinggi dari server -> kirim ke server agar teman bisa melihat
+                        if (localXp > serverXp) pushMyXp(id, localXp, localLatihan);
                     }
 
                     let fotoUrl = d.fotoUrl || d.fotoProfil || d.avatar || d.photoURL || d.photoUrl || null;
