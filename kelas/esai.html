@@ -10,10 +10,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }</script>
-    
     <script>
     (function () {
-        const LS = 'lat_v1', DBN = 'latihan-db'; let S = null, siapP = null;
+        const qCore = new URLSearchParams(window.location.search);
+        const cId = qCore.get('id') || 'umum';
+        const LS = 'lat_v1_' + cId, DBN = 'latihan-db-' + cId; 
+        
+        let S = null, siapP = null;
         const pad = n => String(n).padStart(2, '0');
         const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'x' + Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -49,13 +52,6 @@
                 if (!c) { c = document.createElement('div'); c.id = 'lToast'; c.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none'; document.body.appendChild(c); }
                 const t = document.createElement('div'); t.className = (err ? 'bg-red-500' : 'bg-slate-800') + ' text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 up';
                 t.innerHTML = '<i class="fas ' + (err ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400') + '"></i><span class="flex-1">' + esc(msg) + '</span>'; c.appendChild(t); setTimeout(() => t.remove(), 3000);
-            },
-            beep(jenis) {
-                try { const x = new (window.AudioContext || window.webkitAudioContext)(), o = x.createOscillator(), g = x.createGain(); o.connect(g); g.connect(x.destination);
-                    if (jenis === 'ok') { o.type = 'sine'; o.frequency.setValueAtTime(523, x.currentTime); o.frequency.exponentialRampToValueAtTime(1046, x.currentTime + .12); }
-                    else if (jenis === 'tik') { o.type = 'square'; o.frequency.setValueAtTime(900, x.currentTime); }
-                    else { o.type = 'sawtooth'; o.frequency.setValueAtTime(150, x.currentTime); }
-                    g.gain.setValueAtTime(.06, x.currentTime); g.gain.exponentialRampToValueAtTime(.001, x.currentTime + (jenis === 'tik' ? .06 : .4)); o.start(); o.stop(x.currentTime + .4); } catch (e) {}
             }
         };
         window.L = L;
@@ -79,8 +75,6 @@
         @keyframes sp { 0% { transform: scale(0) rotate(0); opacity: 0; } 40% { opacity: 1; } 100% { transform: scale(1.4) rotate(120deg); opacity: 0; } }
         .goyang { animation: goy 1.2s ease-in-out infinite; } @keyframes goy { 0%,100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-12px) rotate(6deg); } }
         .detak { animation: dtk 1.2s ease-in-out infinite; } @keyframes dtk { 0%,100% { transform: scale(1); } 50% { transform: scale(1.18); } }
-        .rpt { display: none; font-family: Arial, Helvetica, sans-serif; font-size: 12px; line-height: 1.5; }
-        @media print { body > *:not(#laporan) { display: none !important; } #laporan { display: block !important; } body { background: #fff; } }
     </style>
 </head>
 <body class="flex justify-center min-h-screen">
@@ -105,7 +99,14 @@
     </div>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" });
+const db = getFirestore(app);
+window.db = db;
+
 const $ = id => document.getElementById(id), esc = L.esc;
 const TKT = { mudah: ['Mudah', 'emerald', 'fa-seedling'], sedang: ['Sedang', 'sky', 'fa-gauge'], sulit: ['Sulit', 'amber', 'fa-mountain'], hots: ['HOTS', 'rose', 'fa-fire'] };
 const NAV_BAGIAN = [
@@ -141,19 +142,38 @@ window.badge = t => { const arr = TKT[t] || TKT.sedang; return '<span class="inl
 
 async function initLatihan() {
     await L.siap();
-    const H = L.hari();
     
     let backUrl = '../ruang_belajar_siswa.html';
     if(classId) backUrl += '?id=' + encodeURIComponent(classId);
     if(studentId) backUrl += '&sid=' + encodeURIComponent(studentId);
     $('btnBack').href = backUrl;
-    
+
+    let H = L.hari();
+    if (!H) {
+        const S = L.state();
+        const k = 'c' + Date.now();
+        S.hari[k] = { sesi: {}, hasil: {}, spin: { ts: Date.now(), judul: 'Memuat...' } };
+        H = S.hari[k];
+        L.simpan(true);
+    }
+
+    if (!H.pack || !H.pack.esai) {
+        try {
+            const docSnap = await getDoc(doc(db, "classes", classId));
+            if (docSnap.exists() && docSnap.data().aiPaket) {
+                H.pack = docSnap.data().aiPaket;
+                H.spin = { judul: docSnap.data().namaKelas, ts: Date.now() };
+                L.simpan(true);
+            }
+        } catch(e) { console.error("Firebase error:", e); }
+    }
+
     if (!H || !H.pack || !H.pack.esai) {
         $('main').innerHTML = [
-            '<div class="bg-white rounded-2xl p-8 text-center border border-slate-200">',
+            '<div class="bg-white rounded-2xl p-8 text-center border border-slate-200 mt-10">',
             '<i class="fas fa-exclamation-triangle text-4xl text-slate-300 mb-3"></i>',
             '<p class="text-sm font-bold text-slate-700">Latihan Belum Siap</p>',
-            '<p class="text-[11px] text-slate-500 mt-1">Silakan minta guru menyiapkan materi ini terlebih dahulu.</p>',
+            '<p class="text-[11px] text-slate-500 mt-1">Sistem belum menemukan paket latihan di kelas ini.</p>',
             '<a href="' + backUrl + '" class="inline-block mt-4 bg-brand-green text-white text-xs font-bold px-5 py-2.5 rounded-full">Kembali</a>',
             '</div>'
         ].join('');
@@ -178,7 +198,7 @@ window.tampilIntro = function() {
     const tkBadge = ['mudah', 'sedang', 'sulit', 'hots'].filter(t => hit[t]).map(t => '<span class="flex items-center gap-1.5">' + badge(t) + '<b class="text-[11px] text-slate-600">×' + hit[t] + '</b></span>').join('');
     
     $('main').innerHTML = [
-        '<div class="up bg-white rounded-2xl shadow-sm border border-slate-200 p-5">',
+        '<div class="up bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mt-4">',
         '<div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl mx-auto"><i class="fas fa-pen-nib"></i></div>',
         '<h2 class="text-center font-extrabold text-slate-800 text-base mt-3">Esai Argumentasi</h2>',
         '<p class="text-center text-[11px] text-slate-500 mt-1 leading-relaxed">Susun argumenmu sendiri berdasarkan materi <b>' + esc(window.H.spin.judul) + '</b>.</p>',
@@ -190,8 +210,7 @@ window.tampilIntro = function() {
         '<div class="flex flex-wrap gap-2">' + tkBadge + '</div>',
         '<ul class="mt-5 space-y-2 text-[11px] text-slate-600 leading-relaxed">',
         '<li class="flex gap-2"><i class="fas fa-quote-left text-emerald-500 mt-0.5"></i><span>Jawab setiap pertanyaan esai secara mendalam dan jelas.</span></li>',
-        '<li class="flex gap-2"><i class="fas fa-lock text-rose-500 mt-0.5"></i><span><b>Hanya bisa dikerjakan 1 kali per hari.</b> Waktu terus berjalan walau halaman ditutup.</span></li>',
-        '<li class="flex gap-2"><i class="fas fa-floppy-disk text-emerald-500 mt-0.5"></i><span>Jawabanmu otomatis tersimpan di perangkat ini.</span></li>',
+        '<li class="flex gap-2"><i class="fas fa-lock text-rose-500 mt-0.5"></i><span><b>Hanya bisa dikerjakan 1 kali.</b> Waktu terus berjalan walau halaman ditutup.</span></li>',
         '</ul>',
         '<button onclick="mulai()" class="mt-6 w-full bg-brand-green text-white font-bold py-3.5 rounded-xl shadow-md text-sm active:scale-95 transition"><i class="fas fa-play mr-1.5"></i>Mulai Latihan</button>',
         '</div>'
@@ -278,7 +297,18 @@ window.kumpulkan = async function(auto) {
     delete window.H.sesi.esai;
     L.simpan(); 
     
-    $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden'); $('btnBack').onclick = null; 
+    if (studentId && classId) {
+        try {
+            await setDoc(doc(db, `classes/${classId}/students`, studentId), { latihan: { esai: window.H.hasil.esai } }, { merge: true });
+        } catch(e) {}
+    }
+
+    $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden');$('bar').classList.add('hidden'); 
+    let backUrl = '../ruang_belajar_siswa.html';
+    if(classId) backUrl += '?id=' + encodeURIComponent(classId);
+    if(studentId) backUrl += '&sid=' + encodeURIComponent(studentId);
+    $('btnBack').onclick = null; $('btnBack').href = backUrl; 
+
     if (auto) L.toast('Waktu habis. Jawabanmu otomatis dikumpulkan.', true); 
     window.tampilHasil(true); 
 }
@@ -297,7 +327,7 @@ window.navLatihanHtml = function() {
 }
 
 window.tampilHasil = function(baru) { 
-    const R = window.H.hasil.esai; window.aktif = false; $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden'); 
+    const R = window.H.hasil.esai; window.aktif = false; $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden');$('bar').classList.add('hidden'); 
     
     const pesan = R.benar > 0 ? ['Luar biasa!', 'Kamu telah menyelesaikan latihan esai ini.'] : ['Tetap semangat!', 'Lain kali coba isi jawabanmu dengan lebih lengkap.']; 
     const anim = R.benar > 0 ? '<div class="tos"><i class="fas fa-hand h hl"></i><i class="fas fa-hand h hr"></i><div class="boom"></div><i class="fas fa-star sp" style="top:8px;left:42%"></i><i class="fas fa-star sp" style="top:24px;left:58%"></i><i class="fas fa-sparkles sp" style="top:70px;left:36%"></i><i class="fas fa-star sp" style="top:78px;left:60%"></i></div>' 
