@@ -12,6 +12,14 @@
 
     <script>
         tailwind.config = {
+            safelist: [
+                'bg-emerald-50', 'bg-emerald-100', 'bg-emerald-500', 'hover:border-emerald-400', 'text-emerald-500', 'text-emerald-600',
+                'bg-blue-50', 'bg-blue-100', 'bg-blue-500', 'hover:border-blue-400', 'text-blue-500', 'text-blue-600',
+                'bg-purple-50', 'bg-purple-100', 'bg-purple-500', 'hover:border-purple-400', 'text-purple-500', 'text-purple-600',
+                'bg-rose-50', 'bg-rose-100', 'bg-rose-500', 'hover:border-rose-400', 'text-rose-500', 'text-rose-600',
+                'bg-amber-50', 'bg-amber-100', 'bg-amber-500', 'hover:border-amber-400', 'text-amber-500', 'text-amber-600',
+                'bg-cyan-50', 'bg-cyan-100', 'bg-cyan-500', 'hover:border-cyan-400', 'text-cyan-500', 'text-cyan-600'
+            ],
             theme: {
                 extend: {
                     fontFamily: { 
@@ -39,10 +47,10 @@
     </script>
 
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #e2e8f0; -webkit-tap-highlight-color: transparent; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; min-height: 100dvh; }
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; margin: 0; display: flex; justify-content: center; align-items: stretch; min-height: 100vh; min-height: 100dvh; }
 
         .mobile-frame { width: 100%; max-width: 448px; height: 100vh; height: 100dvh; background: #f8fafc; display: flex; flex-direction: column; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,.25); overflow: hidden; }
-        @media (min-width: 640px) { .mobile-frame { height: 90vh; border-radius: 1.5rem; } }
+        @media (min-width: 640px) { .mobile-frame { height: 100vh; height: 100dvh; } }
 
         .font-display { font-family: 'Playfair Display', serif; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -75,6 +83,10 @@
         .btn-failed { background-color: #f59e0b !important; color: white !important; }
 
         .rank-1 { background: linear-gradient(135deg, #fef08a, #f59e0b); color: #78350f; }
+        
+        /* Line clamp utility untuk nama yang panjang */
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
         .rank-2 { background: linear-gradient(135deg, #e2e8f0, #94a3b8); color: #1e293b; }
         .rank-3 { background: linear-gradient(135deg, #fed7aa, #ea580c); color: #431407; }
     </style>
@@ -88,7 +100,7 @@
             </button>
             <div class="min-w-0 text-center">
                 <p class="text-[9px] font-bold text-emerald-100 uppercase tracking-widest leading-3">Ruang Belajar</p>
-                <h1 id="navClassName" class="sk sk-light mx-auto mt-1 h-5 w-28 text-sm font-bold leading-5 truncate">Memuat</h1>
+                <h1 id="navClassName" class="sk sk-light mx-auto mt-1 text-sm font-bold leading-tight break-words max-w-[140px]">Memuat</h1>
             </div>
             <div class="min-w-[64px] h-9 px-3 rounded-full bg-white/15 border border-white/20 flex items-center justify-center gap-1.5" title="XP Anda">
                 <i class="fas fa-star text-amber-300 text-[11px]"></i>
@@ -97,14 +109,14 @@
         </header>
 
         <main class="flex-1 overflow-y-auto hide-scrollbar bg-slate-50 flex flex-col relative" id="scrollArea">
-            <section class="shrink-0 h-20 bg-white border-b border-slate-200 px-4 flex items-center gap-3">
+            <section class="shrink-0 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
                 <div id="avatarContainer" class="w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 border-2 border-white shadow flex items-center justify-center text-white text-xl overflow-hidden relative">
-                    <img id="avatarImage" src="" alt="Foto Siswa" class="w-full h-full object-cover hidden absolute inset-0 z-10">
+                    <img id="avatarImage" src="" alt="Foto Siswa" class="w-full h-full object-cover hidden absolute inset-0 z-10" referrerpolicy="no-referrer">
                     <i id="avatarIcon" class="fas fa-user-astronaut relative z-0"></i>
                 </div>
                 <div class="min-w-0 flex-1">
-                    <h2 id="studentNameDisplay" class="sk h-5 w-32 text-sm font-bold text-slate-800 leading-5 truncate">Memuat</h2>
-                    <p id="teacherNameDisplay" class="sk h-4 w-24 mt-1 text-[11px] font-medium text-slate-500 leading-4 truncate">Memuat</p>
+                    <h2 id="studentNameDisplay" class="sk text-sm font-bold text-slate-800 leading-tight break-words">Memuat</h2>
+                    <p id="teacherNameDisplay" class="sk mt-0.5 text-[11px] font-medium text-slate-500 leading-tight break-words">Memuat</p>
                 </div>
             </section>
 
@@ -300,12 +312,48 @@
         };
 
         const BAGIAN_MISI = [
-            { key: "pilgan", n: "Pilihan Ganda", type: "Pemahaman", file: "pilgan.html", c: "emerald" },
-            { key: "struktur", n: "Bedah Struktur", type: "Analisis", file: "struktur.html", c: "emerald" },
-            { key: "esai", n: "Esai Argumentasi", type: "Kreasi", file: "esai.html", c: "emerald" },
-            { key: "kritis", n: "Uji Berpikir", type: "Kritis", file: "kritis.html", c: "emerald" },
-            { key: "peta", n: "Peta Argumen", type: "Teks", file: "peta.html", c: "emerald" },
-            { key: "ilmiah", n: "Kata Ilmiah", type: "Kosa Kata", file: "ilmiah.html", c: "emerald" }
+            { 
+                key: "pilgan", n: "Pilihan Ganda", type: "Pemahaman", file: "pilgan.html", 
+                ic: "fa-list-check",
+                iconBg: "bg-emerald-50", iconText: "text-emerald-600",
+                dotBg: "bg-emerald-500", borderHover: "hover:border-emerald-400",
+                playText: "text-emerald-500"
+            },
+            { 
+                key: "struktur", n: "Bedah Struktur", type: "Analisis", file: "struktur.html", 
+                ic: "fa-sitemap",
+                iconBg: "bg-blue-50", iconText: "text-blue-600",
+                dotBg: "bg-blue-500", borderHover: "hover:border-blue-400",
+                playText: "text-blue-500"
+            },
+            { 
+                key: "esai", n: "Esai Argumentasi", type: "Kreasi", file: "esai.html", 
+                ic: "fa-pen-fancy",
+                iconBg: "bg-purple-50", iconText: "text-purple-600",
+                dotBg: "bg-purple-500", borderHover: "hover:border-purple-400",
+                playText: "text-purple-500"
+            },
+            { 
+                key: "kritis", n: "Uji Berpikir", type: "Kritis", file: "kritis.html", 
+                ic: "fa-brain",
+                iconBg: "bg-rose-50", iconText: "text-rose-600",
+                dotBg: "bg-rose-500", borderHover: "hover:border-rose-400",
+                playText: "text-rose-500"
+            },
+            { 
+                key: "peta", n: "Peta Argumen", type: "Teks", file: "peta.html", 
+                ic: "fa-diagram-project",
+                iconBg: "bg-amber-50", iconText: "text-amber-600",
+                dotBg: "bg-amber-500", borderHover: "hover:border-amber-400",
+                playText: "text-amber-500"
+            },
+            { 
+                key: "ilmiah", n: "Kata Ilmiah", type: "Kosa Kata", file: "ilmiah.html", 
+                ic: "fa-flask",
+                iconBg: "bg-cyan-50", iconText: "text-cyan-600",
+                dotBg: "bg-cyan-500", borderHover: "hover:border-cyan-400",
+                playText: "text-cyan-500"
+            }
         ];
 
         const searchParams = new URLSearchParams(window.location.search);
@@ -406,18 +454,22 @@
                 const isDone = score !== undefined;
                 const isFailed = isDone && score < 70;
                 
-                // FIXED BUG: Sebelumnya b.file belum ada fallback
                 const fileName = b.file || (b.key + ".html");
                 const urlParamId = encodeURIComponent(globalClassId);
                 const urlParamSid = sid ? `&sid=${encodeURIComponent(sid)}` : "";
                 const targetUrl = `kelas/${fileName}?id=${urlParamId}${urlParamSid}`;
                 
-                let opacityClass = isReady ? "hover:shadow-md" : "opacity-80 grayscale-[30%] pointer-events-none";
-                let btnTxt = isReady ? `<i class="fas fa-play text-emerald-500 mr-1"></i> Mulai Misi` : `<i class="fas fa-lock text-slate-400 mr-1"></i> Belum Siap`;
+                let opacityClass = isReady ? b.borderHover : "opacity-80 grayscale-[30%] pointer-events-none";
+                let btnTxt = isReady 
+                    ? `<i class="fas fa-play ${b.playText} mr-1"></i> Mulai Misi` 
+                    : `<i class="fas fa-lock text-slate-400 mr-1"></i> Belum Siap`;
                 
-                let colorTheme = b.c || "emerald";
-                let cClass = `h-[112px] w-full bg-white rounded-2xl px-4 shadow-sm border border-slate-200 flex items-center gap-4 active:scale-[.98] transition hover:border-${colorTheme}-400 ${opacityClass}`;
-                let dotClass = `bg-${colorTheme}-500`;
+                // Warna kustom per kartu (dari konfigurasi BAGIAN_MISI)
+                let cClass = `h-[112px] w-full bg-white rounded-2xl px-4 shadow-sm border border-slate-200 flex items-center gap-4 active:scale-[.98] transition ${opacityClass}`;
+                let dotClass = b.dotBg;
+                let iconBgClass = b.iconBg;
+                let iconTextClass = b.iconText;
+                let iconSymbol = b.ic || "fa-star";
 
                 if (isDone) {
                     if (isFailed) {
@@ -425,22 +477,25 @@
                         btnTxt = `<i class="fas fa-exclamation-triangle text-white mr-1"></i> Nilai ${score}, Baca Materi!`;
                         opacityClass = "btn-failed";
                         dotClass = "bg-amber-500";
+                        iconBgClass = "bg-amber-100";
+                        iconTextClass = "text-amber-600";
+                        iconSymbol = "fa-exclamation-triangle";
                     } else {
                         cClass = `h-[112px] w-full rounded-2xl px-4 shadow-sm flex items-center gap-4 active:scale-[.98] transition card-completed`;
                         btnTxt = `<i class="fas fa-check-circle text-white mr-1"></i> Skor ${score} (Lulus)`;
                         opacityClass = "btn-completed";
                         dotClass = "bg-emerald-500";
+                        iconBgClass = "bg-emerald-100";
+                        iconTextClass = "text-emerald-600";
+                        iconSymbol = "fa-check-circle";
                     }
                 }
-
-                let iconColor = isDone ? (isFailed ? "amber" : "emerald") : "emerald";
-                let iconSymbol = b.ic || "fa-star";
 
                 return `
                 <div class="relative pl-12 group">
                     <div class="absolute left-[13px] top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-4 border-white ${dotClass} shadow-md z-10 group-hover:scale-125 transition-transform"></div>
                     <a href="${targetUrl}" class="${cClass}">
-                        <div class="w-12 h-12 rounded-xl bg-${iconColor}-50 text-${iconColor}-600 flex items-center justify-center text-xl shrink-0"><i class="fas ${iconSymbol}"></i></div>
+                        <div class="w-12 h-12 rounded-xl ${iconBgClass} ${iconTextClass} flex items-center justify-center text-xl shrink-0"><i class="fas ${iconSymbol}"></i></div>
                         <div class="flex-1 min-w-0">
                             <h4 class="font-bold text-slate-800 text-sm leading-5 truncate">${b.n}</h4>
                             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 leading-3">Latihan ${b.type}</p>
@@ -553,14 +608,15 @@
                     if (d.latihan) { 
                         Object.values(d.latihan).forEach(m => { tXp += (m.xp || 0); }); 
                     }
-                    if (tXp > 0) {
-                        students.push({ 
-                            id: docSnap.id, 
-                            nama: d.nama || d.namaLengkap || "Anonim", 
-                            xp: tXp, 
-                            latihan: d.latihan 
-                        });
-                    }
+                    // Tampilkan SEMUA siswa yang terdaftar di kelas, termasuk yang XP=0
+                    students.push({ 
+                        id: docSnap.id, 
+                        nama: d.nama || d.namaLengkap || "Anonim", 
+                        xp: tXp, 
+                        latihan: d.latihan || {},
+                        fotoUrl: d.fotoUrl || d.fotoProfil || d.avatar || d.photoURL || d.photoUrl || null,
+                        isCurrentUser: docSnap.id === globalStudentId
+                    });
                 });
 
                 students.sort((a, b) => b.xp - a.xp);
@@ -574,7 +630,7 @@
                 if (!topContainer || !otherContainer) return;
 
                 if (students.length === 0) {
-                    topContainer.innerHTML = '<div class="w-full text-center text-xs text-slate-400 py-10 bg-slate-50 rounded-2xl border border-slate-200">Belum ada data klasemen.</div>';
+                    topContainer.innerHTML = '<div class="w-full text-center text-xs text-slate-400 py-10 bg-slate-50 rounded-2xl border border-slate-200">Belum ada siswa di kelas ini.</div>';
                     otherContainer.innerHTML = "";
                     return;
                 }
@@ -593,15 +649,19 @@
                     }
                     const nm = p.nama.split(" ")[0];
                     const dataStr = encodeURIComponent(JSON.stringify(p.latihan || {}));
-                    // Mencegah error jika ada tanda kutip di nama saat klik HTML
                     const safeName = encodeURIComponent(p.nama);
+                    const fotoHtml = p.fotoUrl 
+                        ? `<img src="${p.fotoUrl}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(p.nama)}">` 
+                        : `<i class="fas fa-user"></i>`;
+                    const userBadge = p.isCurrentUser ? '<span class="absolute top-2 left-2 bg-white/95 text-emerald-600 text-[8px] font-black px-1.5 py-0.5 rounded-full shadow">ANDA</span>' : '';
                     
                     topHtml += `
                     <div onclick="window.bukaDetailKlasemen('${safeName}', '${dataStr}')" class="flex-1 ${p.h} ${p.c} rounded-t-xl flex flex-col items-center justify-end p-2 pb-3 shadow-lg relative cursor-pointer active:scale-95 transition transform origin-bottom hover:scale-105">
-                        <div class="absolute -top-6 w-12 h-12 bg-white rounded-full flex items-center justify-center text-slate-800 text-lg shadow-md border-4 border-slate-50 overflow-hidden"><i class="fas fa-user"></i></div>
-                        <h4 class="font-bold text-[11px] truncate w-full text-center mt-2">${esc(nm)}</h4>
+                        <div class="absolute -top-6 w-12 h-12 bg-white rounded-full flex items-center justify-center text-slate-800 text-lg shadow-md border-4 border-slate-50 overflow-hidden">${fotoHtml}</div>
+                        <h4 class="font-bold text-[11px] w-full text-center mt-2 leading-tight break-words line-clamp-2">${esc(nm)}</h4>
                         <p class="text-[9px] font-black opacity-80">${p.xp} XP</p>
                         <div class="absolute top-2 right-2 text-[10px] font-black opacity-50">#${p.r}</div>
+                        ${userBadge}
                     </div>`;
                 });
                 topContainer.innerHTML = topHtml;
@@ -611,15 +671,20 @@
                     const s = students[i];
                     const dataStr = encodeURIComponent(JSON.stringify(s.latihan || {}));
                     const safeName = encodeURIComponent(s.nama);
+                    const fotoLi = s.fotoUrl 
+                        ? `<img src="${s.fotoUrl}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(s.nama)}">` 
+                        : `<i class="fas fa-user"></i>`;
+                    const rowHighlight = s.isCurrentUser ? "bg-emerald-50 ring-1 ring-emerald-200" : "hover:bg-slate-50";
+                    const andLabel = s.isCurrentUser ? '<span class="ml-1 text-[9px] font-black text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">ANDA</span>' : '';
                     
                     otherHtml += `
-                    <li onclick="window.bukaDetailKlasemen('${safeName}', '${dataStr}')" class="flex items-center gap-3 py-2 px-2 hover:bg-slate-50 cursor-pointer transition active:scale-95 rounded-lg">
+                    <li onclick="window.bukaDetailKlasemen('${safeName}', '${dataStr}')" class="flex items-center gap-3 py-2 px-2 ${rowHighlight} cursor-pointer transition active:scale-95 rounded-lg">
                         <div class="w-6 text-center text-slate-400 font-bold text-xs">#${i+1}</div>
-                        <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs shrink-0"><i class="fas fa-user"></i></div>
+                        <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs shrink-0 overflow-hidden">${fotoLi}</div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-xs font-bold text-slate-700 truncate">${esc(s.nama)}</p>
+                            <p class="text-xs font-bold text-slate-700 leading-tight">${esc(s.nama)}${andLabel}</p>
                         </div>
-                        <div class="text-xs font-black text-amber-500">${s.xp} XP</div>
+                        <div class="text-xs font-black text-amber-500 shrink-0">${s.xp} XP</div>
                     </li>`;
                 }
                 otherContainer.innerHTML = otherHtml;
@@ -707,6 +772,22 @@
                         const nameDisplay = $("studentNameDisplay");
                         if (nameDisplay) nameDisplay.textContent = c;
                         
+                        // Set avatar foto dari Firestore (cek beberapa kemungkinan nama field)
+                        const fotoUrl = d && (d.fotoUrl || d.fotoProfil || d.avatar || d.photoURL || d.photoUrl);
+                        const avatarImg = $("avatarImage");
+                        const avatarIcon = $("avatarIcon");
+                        if (avatarImg && avatarIcon) {
+                            if (fotoUrl) {
+                                avatarImg.src = fotoUrl;
+                                avatarImg.classList.remove("hidden");
+                                avatarIcon.classList.add("hidden");
+                            } else {
+                                avatarImg.src = "";
+                                avatarImg.classList.add("hidden");
+                                avatarIcon.classList.remove("hidden");
+                            }
+                        }
+                        
                         updateXP(); 
                         updateBanner(c);
                         
@@ -721,6 +802,22 @@
                             
                             const nameDisplay2 = $("studentNameDisplay");
                             if (nameDisplay2) nameDisplay2.textContent = c2;
+                            
+                            // Update avatar realtime
+                            const fotoUrl2 = d2 && (d2.fotoUrl || d2.fotoProfil || d2.avatar || d2.photoURL || d2.photoUrl);
+                            const avatarImg2 = $("avatarImage");
+                            const avatarIcon2 = $("avatarIcon");
+                            if (avatarImg2 && avatarIcon2) {
+                                if (fotoUrl2) {
+                                    avatarImg2.src = fotoUrl2;
+                                    avatarImg2.classList.remove("hidden");
+                                    avatarIcon2.classList.add("hidden");
+                                } else {
+                                    avatarImg2.src = "";
+                                    avatarImg2.classList.add("hidden");
+                                    avatarIcon2.classList.remove("hidden");
+                                }
+                            }
                             
                             updateXP(); 
                             updateBanner(c2);
