@@ -22,12 +22,12 @@
             ],
             theme: {
                 extend: {
-                    fontFamily: { 
-                        sans: ['Poppins', 'sans-serif'], 
-                        display: ['Playfair Display', 'serif'] 
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        display: ['Playfair Display', 'serif']
                     },
-                    colors: { 
-                        brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } 
+                    colors: {
+                        brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' }
                     },
                     animation: {
                         'float-up': 'floatUp 4s infinite ease-in-out',
@@ -47,19 +47,18 @@
     </script>
 
     <style>
-        /* Anti-Copas dan Anti-Select */
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            background-color: #f8fafc; 
-            -webkit-tap-highlight-color: transparent; 
-            margin: 0; 
-            display: flex; 
-            justify-content: center; 
-            align-items: stretch; 
-            min-height: 100vh; 
-            min-height: 100dvh; 
-            
-            /* Anti Copas Property */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            min-height: 100vh;
+            min-height: 100dvh;
+
+            /* Anti copas */
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -68,7 +67,6 @@
         }
 
         .mobile-frame { width: 100%; max-width: 448px; height: 100vh; height: 100dvh; background: #f8fafc; display: flex; flex-direction: column; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,.25); overflow: hidden; }
-        @media (min-width: 640px) { .mobile-frame { height: 100vh; height: 100dvh; } }
 
         .font-display { font-family: 'Playfair Display', serif; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -91,7 +89,7 @@
             border-radius: 1rem; padding: 1rem 1.2rem; margin-top: 1rem; margin-bottom: 0.5rem; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
         }
         .bubble { position: absolute; bottom: -20px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; }
-        
+
         .tab-btn { color: #64748b; border-bottom: 2px solid transparent; transition: all 0.2s; }
         .tab-btn.active { color: #059669; border-bottom-color: #059669; font-weight: 700; }
 
@@ -103,9 +101,13 @@
         .rank-1 { background: linear-gradient(135deg, #fef08a, #f59e0b); color: #78350f; }
         .rank-2 { background: linear-gradient(135deg, #e2e8f0, #94a3b8); color: #1e293b; }
         .rank-3 { background: linear-gradient(135deg, #fed7aa, #ea580c); color: #431407; }
-        
+
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* Animasi singkat saat XP berubah */
+        .xp-pop { animation: xpPop .5s ease-out; }
+        @keyframes xpPop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body oncontextmenu="return false;" oncopy="return false;" oncut="return false;" onpaste="return false;">
@@ -191,7 +193,6 @@
                         <div class="journey-line space-y-6" id="missionNodesContainer"></div>
                     </div>
 
-                    <!-- Footer Apps -->
                     <div class="py-8 text-center text-[10px] text-slate-400 font-medium">
                         &copy; 2026 Argumentasi App
                     </div>
@@ -201,13 +202,12 @@
                 <div id="contentMateri" class="px-4 py-6 hidden absolute inset-0 overflow-y-auto hide-scrollbar bg-slate-50">
                     <h3 class="font-display font-bold text-xl text-slate-800 mb-1">Materi Referensi</h3>
                     <p class="text-xs text-slate-500 mb-6">Pelajari materi ini sebelum mengerjakan misi latihan.</p>
-                    
+
                     <div id="materiContainer" class="space-y-3 min-h-[50vh]">
                         <div class="sk h-[80px] w-full rounded-2xl mb-3"></div>
                         <div class="sk h-[80px] w-full rounded-2xl"></div>
                     </div>
 
-                    <!-- Footer Apps -->
                     <div class="py-8 mt-10 text-center text-[10px] text-slate-400 font-medium">
                         &copy; 2026 Argumentasi App
                     </div>
@@ -232,7 +232,6 @@
                         </ul>
                     </div>
 
-                    <!-- Footer Apps -->
                     <div class="py-8 mt-6 text-center text-[10px] text-slate-400 font-medium">
                         &copy; 2026 Argumentasi App
                     </div>
@@ -249,7 +248,7 @@
         <div class="bg-white w-full max-w-sm rounded-3xl p-5 transform scale-95 transition-transform duration-300 shadow-2xl relative" onclick="event.stopPropagation()">
             <button onclick="window.tutupModal('modalKlasemenDetail')" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 active:scale-95"><i class="fas fa-times"></i></button>
             <div class="text-center mb-4">
-                <div id="mkAvatar" class="w-16 h-16 rounded-full mx-auto mb-2 text-2xl flex items-center justify-center shadow-md text-white bg-slate-800"><i class="fas fa-user"></i></div>
+                <div id="mkAvatar" class="w-16 h-16 rounded-full mx-auto mb-2 text-2xl flex items-center justify-center shadow-md text-white bg-slate-800 overflow-hidden"><i class="fas fa-user"></i></div>
                 <h3 id="mkNama" class="text-lg font-bold text-slate-800 font-display">Nama Siswa</h3>
                 <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase mt-0.5">Total: <span id="mkTotal" class="text-amber-500">0</span> XP</p>
             </div>
@@ -275,47 +274,44 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, collection, query, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" });
         const db = getFirestore(app);
-        
-        // Utilitas seleksi elemen dan sanitasi HTML
+
+        /* ===== UTILITAS ===== */
         const $ = (id) => document.getElementById(id);
         const esc = (s) => {
-            if (!s) return "";
-            return String(s).replace(/[&<>"']/g, function(c) {
-                const map = { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" };
-                return map[c];
-            });
+            if (s === null || s === undefined) return "";
+            return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        };
+        const safeParse = (raw, fallback) => {
+            try { return raw ? JSON.parse(raw) : fallback; } catch (e) { return fallback; }
         };
 
-        // GLOBAL UI EXPORT
-        window.bukaModal = function(id) {
+        /* ===== UI GLOBAL ===== */
+        window.bukaModal = function (id) {
             const m = $(id);
             if (!m) return;
-            const bx = m.querySelector("div"); 
+            const bx = m.querySelector("div");
             m.classList.remove("hidden");
-            requestAnimationFrame(() => { 
-                m.classList.remove("opacity-0"); 
-                bx.classList.remove("scale-95"); 
-                bx.classList.add("scale-100"); 
+            requestAnimationFrame(() => {
+                m.classList.remove("opacity-0");
+                if (bx) { bx.classList.remove("scale-95"); bx.classList.add("scale-100"); }
             });
         };
 
-        window.tutupModal = function(id) {
+        window.tutupModal = function (id) {
             const m = $(id);
             if (!m) return;
-            const bx = m.querySelector("div"); 
-            m.classList.add("opacity-0"); 
-            bx.classList.remove("scale-100"); 
-            bx.classList.add("scale-95");
+            const bx = m.querySelector("div");
+            m.classList.add("opacity-0");
+            if (bx) { bx.classList.remove("scale-100"); bx.classList.add("scale-95"); }
             setTimeout(() => m.classList.add("hidden"), 300);
         };
 
-        window.switchTab = function(tabName) {
-            const tabs = ["Misi", "Materi", "Klasemen"];
-            tabs.forEach(n => {
+        window.switchTab = function (tabName) {
+            ["Misi", "Materi", "Klasemen"].forEach((n) => {
                 const btn = $("tab" + n);
                 const cnt = $("content" + n);
                 if (btn && cnt) {
@@ -323,231 +319,170 @@
                     cnt.classList.add("hidden");
                 }
             });
-            
             const targetName = tabName.charAt(0).toUpperCase() + tabName.slice(1);
             const targetBtn = $("tab" + targetName);
             const targetCnt = $("content" + targetName);
-            
             if (targetBtn && targetCnt) {
                 targetBtn.classList.add("active");
                 targetCnt.classList.remove("hidden");
                 targetCnt.classList.add("fade-in");
             }
+            if (targetName === "Klasemen") renderKlasemen();
         };
 
-        window.konfirmasiKeluar = function() {
+        window.konfirmasiKeluar = function () {
             const btnAction = $("btnConfirmAction");
-            if (btnAction) {
-                btnAction.onclick = () => { window.location.href = "index.html"; };
-            }
+            if (btnAction) btnAction.onclick = () => { window.location.href = "index.html"; };
             window.bukaModal("modalConfirm");
         };
 
-        const BAGIAN_MISI = [
-            { 
-                key: "pilgan", n: "Pilihan Ganda", type: "Pemahaman", file: "pilgan.html", 
-                ic: "fa-list-check",
-                iconBg: "bg-emerald-50", iconText: "text-emerald-600",
-                dotBg: "bg-emerald-500", borderHover: "hover:border-emerald-400",
-                playText: "text-emerald-500"
-            },
-            { 
-                key: "struktur", n: "Bedah Struktur", type: "Analisis", file: "struktur.html", 
-                ic: "fa-sitemap",
-                iconBg: "bg-blue-50", iconText: "text-blue-600",
-                dotBg: "bg-blue-500", borderHover: "hover:border-blue-400",
-                playText: "text-blue-500"
-            },
-            { 
-                key: "esai", n: "Esai Argumentasi", type: "Kreasi", file: "esai.html", 
-                ic: "fa-pen-fancy",
-                iconBg: "bg-purple-50", iconText: "text-purple-600",
-                dotBg: "bg-purple-500", borderHover: "hover:border-purple-400",
-                playText: "text-purple-500"
-            },
-            { 
-                key: "kritis", n: "Uji Berpikir", type: "Kritis", file: "kritis.html", 
-                ic: "fa-brain",
-                iconBg: "bg-rose-50", iconText: "text-rose-600",
-                dotBg: "bg-rose-500", borderHover: "hover:border-rose-400",
-                playText: "text-rose-500"
-            },
-            { 
-                key: "peta", n: "Peta Argumen", type: "Teks", file: "kelas/peta_argumen.html", 
-                ic: "fa-diagram-project",
-                iconBg: "bg-amber-50", iconText: "text-amber-600",
-                dotBg: "bg-amber-500", borderHover: "hover:border-amber-400",
-                playText: "text-amber-500"
-            },
-            { 
-                key: "ilmiah", n: "Kata Ilmiah", type: "Kosa Kata", file: "kata_ilmiah.html", 
-                ic: "fa-flask",
-                iconBg: "bg-cyan-50", iconText: "text-cyan-600",
-                dotBg: "bg-cyan-500", borderHover: "hover:border-cyan-400",
-                playText: "text-cyan-500"
-            }
-        ];
-
-        const searchParams = new URLSearchParams(window.location.search);
-        let globalClassId = searchParams.get("id");
-        let globalHandoutId = null; 
-        let globalGuruPaket = null;
-        let globalStudentId = searchParams.get("sid") || localStorage.getItem("siswa_" + globalClassId) || localStorage.getItem("studentId");
-
-        window.showToast = function(msg, isErr = false) {
-            const container = $("toastContainer"); 
+        window.showToast = function (msg, isErr = false) {
+            const container = $("toastContainer");
             if (!container) return;
             const t = document.createElement("div");
-            
             const baseClass = isErr ? "bg-red-600" : "bg-slate-800";
             const iconClass = isErr ? "fa-exclamation-circle" : "fa-check-circle text-emerald-400";
-            
             t.className = baseClass + " text-white px-4 py-3 rounded-xl shadow-xl text-xs font-bold flex items-center justify-center gap-2 translate-y-5 opacity-0 transition-all duration-300 w-full text-center";
             t.innerHTML = `<i class="fas ${iconClass}"></i> ${esc(msg)}`;
-            container.appendChild(t); 
-            
+            container.appendChild(t);
             requestAnimationFrame(() => t.classList.remove("translate-y-5", "opacity-0"));
-            setTimeout(() => { 
-                t.classList.add("translate-y-5", "opacity-0"); 
-                setTimeout(() => t.remove(), 300); 
+            setTimeout(() => {
+                t.classList.add("translate-y-5", "opacity-0");
+                setTimeout(() => t.remove(), 300);
             }, 3000);
         };
 
+        /* ===== DATA MISI ===== */
+        const BAGIAN_MISI = [
+            { key: "pilgan",   n: "Pilihan Ganda",   type: "Pemahaman", file: "pilgan.html",        ic: "fa-list-check",     iconBg: "bg-emerald-50", iconText: "text-emerald-600", dotBg: "bg-emerald-500", borderHover: "hover:border-emerald-400", playText: "text-emerald-500" },
+            { key: "struktur", n: "Bedah Struktur",  type: "Analisis",  file: "struktur.html",      ic: "fa-sitemap",        iconBg: "bg-blue-50",    iconText: "text-blue-600",    dotBg: "bg-blue-500",    borderHover: "hover:border-blue-400",    playText: "text-blue-500" },
+            { key: "esai",     n: "Esai Argumentasi", type: "Kreasi",   file: "esai.html",          ic: "fa-pen-fancy",      iconBg: "bg-purple-50",  iconText: "text-purple-600",  dotBg: "bg-purple-500",  borderHover: "hover:border-purple-400",  playText: "text-purple-500" },
+            { key: "kritis",   n: "Uji Berpikir",    type: "Kritis",    file: "kritis.html",        ic: "fa-brain",          iconBg: "bg-rose-50",    iconText: "text-rose-600",    dotBg: "bg-rose-500",    borderHover: "hover:border-rose-400",    playText: "text-rose-500" },
+            { key: "peta",     n: "Peta Argumen",    type: "Teks",      file: "peta_argumen.html",  ic: "fa-diagram-project", iconBg: "bg-amber-50",  iconText: "text-amber-600",   dotBg: "bg-amber-500",   borderHover: "hover:border-amber-400",   playText: "text-amber-500" },
+            { key: "ilmiah",   n: "Kata Ilmiah",     type: "Kosa Kata", file: "kata_ilmiah.html",   ic: "fa-flask",          iconBg: "bg-cyan-50",    iconText: "text-cyan-600",    dotBg: "bg-cyan-500",    borderHover: "hover:border-cyan-400",    playText: "text-cyan-500" }
+        ];
+
+        /* ===== STATE GLOBAL ===== */
+        const searchParams = new URLSearchParams(window.location.search);
+        const globalClassId = searchParams.get("id");
+        let globalHandoutId = null;
+        let globalGuruPaket = null;
+        const globalStudentId = searchParams.get("sid") || localStorage.getItem("siswa_" + globalClassId) || localStorage.getItem("studentId");
+
+        let cachedStudentDocs = [];      // snapshot realtime seluruh siswa di kelas
+        let klasemenList = [];           // daftar hasil render (untuk modal detail)
+        let klasemenUnsub = null;
+        let lastXp = null;
+
+        /* ===== DATA LOKAL ===== */
         function getProfilFromLocal() {
-            const fotoBase64 = localStorage.getItem("fotoSiswaCendekia") 
-                || localStorage.getItem("fotoProfilBase64")
-                || null;
-            const namaProfil = localStorage.getItem("namaSiswaCendekia")
-                || null;
+            const fotoBase64 = localStorage.getItem("fotoSiswaCendekia") || localStorage.getItem("fotoProfilBase64") || null;
+            const namaProfil = localStorage.getItem("namaSiswaCendekia") || null;
             return { fotoBase64, namaProfil };
         }
-        
+
+        // Kumpulan hasil misi lokal: { pilgan: {skor, xp}, ... }
+        function getLocalLatihan() {
+            const out = {};
+            const lData = safeParse(localStorage.getItem("lat_v1_" + globalClassId), {});
+            if (lData && lData.hari) {
+                for (const k in lData.hari) {
+                    const hasil = (lData.hari[k] && lData.hari[k].hasil) || {};
+                    for (const m in hasil) out[m] = hasil[m];
+                }
+            }
+            return out;
+        }
+
+        // XP lokal: sumber tunggal untuk header DAN klasemen (agar selalu sama)
         function getLocalXP() {
             let tXp = 0;
-            const rawData = localStorage.getItem("lat_v1_" + globalClassId);
-            if (rawData) {
-                try {
-                    const lData = JSON.parse(rawData);
-                    if (lData.hari) {
-                        for (let k in lData.hari) {
-                            if (lData.hari[k].hasil) {
-                                for (let m in lData.hari[k].hasil) {
-                                    tXp += (lData.hari[k].hasil[m].xp || 0);
-                                }
-                            }
-                        }
-                    }
-                } catch(e) {}
-            }
-            
-            let spesifikKelas = parseInt(localStorage.getItem("kelasPointsArg_" + globalClassId) || "0");
-            if(spesifikKelas > tXp) tXp = spesifikKelas;
-            
-            return tXp;
+            const lat = getLocalLatihan();
+            for (const m in lat) tXp += Number(lat[m] && lat[m].xp) || 0;
+            const spesifik = parseInt(localStorage.getItem("kelasPointsArg_" + globalClassId) || "0", 10) || 0;
+            return Math.max(tXp, spesifik);
         }
-        
+
         function applyProfilLokal() {
             const { fotoBase64 } = getProfilFromLocal();
             const avatarImg = $("avatarImage");
             const avatarIcon = $("avatarIcon");
-            if (avatarImg && avatarIcon) {
-                if (fotoBase64) {
-                    avatarImg.src = fotoBase64;
-                    avatarImg.classList.remove("hidden");
-                    avatarIcon.classList.add("hidden");
-                    return true;
-                }
+            if (avatarImg && avatarIcon && fotoBase64) {
+                avatarImg.src = fotoBase64;
+                avatarImg.classList.remove("hidden");
+                avatarIcon.classList.add("hidden");
             }
-            return false;
         }
-        
+
         function updateXP() {
-            const clsXp = getLocalXP();
-            const xpDisplay = $("studentXpDisplay");
-            if (xpDisplay) xpDisplay.textContent = clsXp;
+            const xp = getLocalXP();
+            const el = $("studentXpDisplay");
+            if (!el) return;
+            el.textContent = xp;
+            if (lastXp !== null && lastXp !== xp) {
+                el.classList.remove("xp-pop");
+                void el.offsetWidth;
+                el.classList.add("xp-pop");
+            }
+            lastXp = xp;
         }
 
         function updateBanner(namaSiswa) {
-            const rawData = localStorage.getItem("lat_v1_" + globalClassId);
-            const lData = rawData ? JSON.parse(rawData) : {};
-            let comp = 0, score = 0, fail = 0;
-            
-            if (lData.hari) {
-                for (let k in lData.hari) {
-                    if (lData.hari[k].hasil) {
-                        for (let m in lData.hari[k].hasil) {
-                            comp++;
-                            let sk = lData.hari[k].hasil[m].skor || 0;
-                            score += sk;
-                            if (sk < 70) fail++;
-                        }
-                    }
-                }
+            const lat = getLocalLatihan();
+            let comp = 0, fail = 0;
+            for (const m in lat) {
+                comp++;
+                if ((Number(lat[m] && lat[m].skor) || 0) < 70) fail++;
             }
-            
+
             const banner = $("motivationalBanner");
             if (banner) banner.classList.remove("hidden");
-            
-            const nm = namaSiswa.split(" ")[0] || "Siswa";
+
+            const nm = (namaSiswa || "Siswa").split(" ")[0] || "Siswa";
             const titleEl = $("bannerTitle");
             const msgEl = $("bannerMessage");
             const iconEl = $("bannerIcon");
-            
-            if (titleEl && msgEl && iconEl) {
-                if (comp === 0) {
-                    titleEl.textContent = "Siap Beraksi?";
-                    msgEl.textContent = `Ayo ${nm}, selesaikan misi dan kumpulkan XP!`; 
-                    iconEl.innerHTML = '<i class="fas fa-bolt"></i>';
-                } else if (fail > 0) {
-                    titleEl.textContent = "Fokus Lagi yuk! 💪"; 
-                    msgEl.textContent = `Ada nilai yang kurang nih ${nm}. Baca materi lagi lalu perbaiki ya!`; 
-                    iconEl.innerHTML = '<i class="fas fa-fire text-amber-300"></i>';
-                } else {
-                    titleEl.textContent = "Hebat, " + nm + "! 🌟"; 
-                    msgEl.textContent = "Rekor nilaimu bagus! Lanjutkan misi yang belum terselesaikan."; 
-                    iconEl.innerHTML = '<i class="fas fa-star text-amber-300"></i>';
-                }
+            if (!titleEl || !msgEl || !iconEl) return;
+
+            if (comp === 0) {
+                titleEl.textContent = "Siap Beraksi?";
+                msgEl.textContent = `Ayo ${nm}, selesaikan misi dan kumpulkan XP!`;
+                iconEl.innerHTML = '<i class="fas fa-bolt"></i>';
+            } else if (fail > 0) {
+                titleEl.textContent = "Fokus Lagi yuk! 💪";
+                msgEl.textContent = `Ada nilai yang kurang nih ${nm}. Baca materi lagi lalu perbaiki ya!`;
+                iconEl.innerHTML = '<i class="fas fa-fire text-amber-300"></i>';
+            } else {
+                titleEl.textContent = "Hebat, " + nm + "! 🌟";
+                msgEl.textContent = "Rekor nilaimu bagus! Lanjutkan misi yang belum terselesaikan.";
+                iconEl.innerHTML = '<i class="fas fa-star text-amber-300"></i>';
             }
         }
 
+        /* ===== MISI ===== */
         function renderMissions(guruPaket, sid) {
-            const rawData = localStorage.getItem("lat_v1_" + globalClassId);
-            const lData = rawData ? JSON.parse(rawData) : {};
-            let userProg = {};
-            
-            if (lData.hari) {
-                for (let k in lData.hari) {
-                    if (lData.hari[k].hasil) {
-                        Object.keys(lData.hari[k].hasil).forEach(misiKey => { 
-                            userProg[misiKey] = lData.hari[k].hasil[misiKey].skor; 
-                        });
-                    }
-                }
-            }
-
             const container = $("missionNodesContainer");
-            if (!container) return;
+            if (!container || !guruPaket) return;
+
+            const userProg = {};
+            const lat = getLocalLatihan();
+            for (const m in lat) userProg[m] = lat[m].skor;
 
             container.innerHTML = BAGIAN_MISI.map((b) => {
-                const isReady = !!guruPaket[b.key]; 
+                const isReady = !!guruPaket[b.key];
                 const score = userProg[b.key];
                 const isDone = score !== undefined;
                 const isFailed = isDone && score < 70;
-                
-                const fileName = b.file;
+
                 const urlParamId = encodeURIComponent(globalClassId);
                 const urlParamSid = sid ? `&sid=${encodeURIComponent(sid)}` : "";
-                
-                // Cek jika key "peta" karena pathnya sudah spesifik
-                const targetUrl = (b.key === "peta") 
-                                  ? `${fileName}?id=${urlParamId}${urlParamSid}` 
-                                  : `kelas/${fileName}?id=${urlParamId}${urlParamSid}`;
-                
+                const targetUrl = `kelas/${b.file}?id=${urlParamId}${urlParamSid}`;
+
                 let opacityClass = isReady ? b.borderHover : "opacity-80 grayscale-[30%] pointer-events-none";
-                let btnTxt = isReady 
-                    ? `<i class="fas fa-play ${b.playText} mr-1"></i> Mulai Misi` 
+                let btnTxt = isReady
+                    ? `<i class="fas fa-play ${b.playText} mr-1"></i> Mulai Misi`
                     : `<i class="fas fa-lock text-slate-400 mr-1"></i> Belum Siap`;
-                
+
                 let cClass = `h-[112px] w-full bg-white rounded-2xl px-4 shadow-sm border border-slate-200 flex items-center gap-4 active:scale-[.98] transition ${opacityClass}`;
                 let dotClass = b.dotBg;
                 let iconBgClass = b.iconBg;
@@ -557,7 +492,7 @@
                 if (isDone) {
                     if (isFailed) {
                         cClass = `h-[112px] w-full rounded-2xl px-4 shadow-sm flex items-center gap-4 active:scale-[.98] transition card-failed`;
-                        btnTxt = `<i class="fas fa-exclamation-triangle text-white mr-1"></i> Nilai ${score}, Baca Materi!`;
+                        btnTxt = `<i class="fas fa-exclamation-triangle text-white mr-1"></i> Nilai ${esc(score)}, Baca Materi!`;
                         opacityClass = "btn-failed";
                         dotClass = "bg-amber-500";
                         iconBgClass = "bg-amber-100";
@@ -565,7 +500,7 @@
                         iconSymbol = "fa-exclamation-triangle";
                     } else {
                         cClass = `h-[112px] w-full rounded-2xl px-4 shadow-sm flex items-center gap-4 active:scale-[.98] transition card-completed`;
-                        btnTxt = `<i class="fas fa-check-circle text-white mr-1"></i> Skor ${score} (Lulus)`;
+                        btnTxt = `<i class="fas fa-check-circle text-white mr-1"></i> Skor ${esc(score)} (Lulus)`;
                         opacityClass = "btn-completed";
                         dotClass = "bg-emerald-500";
                         iconBgClass = "bg-emerald-100";
@@ -589,22 +524,23 @@
             }).join("");
         }
 
+        /* ===== MATERI ===== */
         async function renderMateri() {
             const container = $("materiContainer");
             if (!container) return;
 
-            if (!globalHandoutId) { 
-                container.innerHTML = '<p class="text-xs text-slate-500 text-center py-5 border border-dashed border-slate-300 rounded-xl">Guru belum menautkan materi.</p>'; 
-                return; 
+            if (!globalHandoutId) {
+                container.innerHTML = '<p class="text-xs text-slate-500 text-center py-5 border border-dashed border-slate-300 rounded-xl">Guru belum menautkan materi.</p>';
+                return;
             }
             try {
                 const docSnap = await getDoc(doc(db, "handouts", globalHandoutId));
                 if (!docSnap.exists()) throw new Error("Data handout tidak valid");
-                
+
                 const d = docSnap.data();
                 const urlParamId = encodeURIComponent(globalClassId);
                 const urlParamSid = globalStudentId ? `&sid=${encodeURIComponent(globalStudentId)}` : "";
-                
+
                 const btnAi = `
                 <a href="kelas/view-teks.html?id=${urlParamId}${urlParamSid}" class="flex items-center justify-between p-4 bg-white border border-emerald-200 rounded-2xl shadow-sm hover:shadow-md transition active:scale-95 group">
                     <div class="flex items-center gap-3">
@@ -620,12 +556,12 @@
                 let btnPdf = "";
                 if (d.fileUrl) {
                     btnPdf = `
-                    <a href="${d.fileUrl}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition active:scale-95 group mt-3">
+                    <a href="${esc(d.fileUrl)}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition active:scale-95 group mt-3">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center"><i class="fas fa-file-pdf"></i></div>
                             <div>
                                 <h4 class="font-bold text-slate-800 text-sm">File PDF Asli</h4>
-                                <p class="text-[10px] text-slate-500">Unduh & baca materi utuh dari guru.</p>
+                                <p class="text-[10px] text-slate-500">Unduh &amp; baca materi utuh dari guru.</p>
                             </div>
                         </div>
                         <i class="fas fa-external-link-alt text-slate-300 group-hover:text-slate-500 transition"></i>
@@ -633,27 +569,32 @@
                 }
 
                 container.innerHTML = btnAi + btnPdf;
-            } catch(e) { 
-                console.error(e); 
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<p class="text-xs text-slate-500 text-center py-5 border border-dashed border-slate-300 rounded-xl">Materi gagal dimuat.</p>';
             }
         }
 
-        window.bukaDetailKlasemen = function(encNama, strData) {
-            const nama = decodeURIComponent(encNama);
-            const dataMisi = JSON.parse(decodeURIComponent(strData));
-            
+        /* ===== DETAIL KLASEMEN (MODAL) ===== */
+        function tampilkanDetail(nama, dataMisi, fotoUrl) {
             const mkNama = $("mkNama");
             if (mkNama) mkNama.textContent = nama;
-            
+
+            const mkAvatar = $("mkAvatar");
+            if (mkAvatar) {
+                mkAvatar.innerHTML = fotoUrl
+                    ? `<img src="${esc(fotoUrl)}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(nama)}">`
+                    : '<i class="fas fa-user"></i>';
+            }
+
             let totalXp = 0;
             let htmlList = "";
-            
-            BAGIAN_MISI.forEach(b => {
-                if (dataMisi[b.key]) {
-                    const sk = dataMisi[b.key].skor || 0;
-                    const xp = dataMisi[b.key].xp || 0;
+            BAGIAN_MISI.forEach((b) => {
+                const m = dataMisi && dataMisi[b.key];
+                if (m) {
+                    const sk = Number(m.skor) || 0;
+                    const xp = Number(m.xp) || 0;
                     totalXp += xp;
-                    
                     const textColor = sk >= 70 ? "text-emerald-600" : "text-amber-500";
                     htmlList += `
                     <div class="flex justify-between items-center bg-white p-2 rounded-lg shadow-sm mb-1.5 border border-slate-100">
@@ -665,322 +606,269 @@
                     </div>`;
                 }
             });
-            
-            if (htmlList === "") {
-                htmlList = '<p class="text-center text-[10px] text-slate-400 py-3">Belum ada misi dikerjakan.</p>';
-            }
-            
+
+            if (htmlList === "") htmlList = '<p class="text-center text-[10px] text-slate-400 py-3">Belum ada misi dikerjakan.</p>';
+
             const mkTotal = $("mkTotal");
             if (mkTotal) mkTotal.textContent = totalXp;
-            
             const mkDetailList = $("mkDetailList");
             if (mkDetailList) mkDetailList.innerHTML = htmlList;
-            
+
             window.bukaModal("modalKlasemenDetail");
+        }
+
+        // Dipanggil lewat indeks (aman untuk nama yang mengandung tanda kutip)
+        window.bukaDetailKlasemenIdx = function (i) {
+            const s = klasemenList[i];
+            if (!s) return;
+            tampilkanDetail(s.nama, s.latihan, s.fotoUrl);
         };
 
-        async function renderKlasemen() {
+        /* ===== KLASEMEN (REALTIME) ===== */
+        function startKlasemenRealtime() {
+            if (klasemenUnsub || !globalClassId) return;
+            klasemenUnsub = onSnapshot(
+                collection(db, `classes/${globalClassId}/students`),
+                (snap) => {
+                    cachedStudentDocs = snap.docs.map((d) => ({ id: d.id, data: d.data() || {} }));
+                    renderKlasemen();
+                },
+                (err) => {
+                    console.error("Klasemen realtime error:", err);
+                    renderKlasemen(); // tetap tampilkan data lokal milik sendiri
+                }
+            );
+        }
+
+        function renderKlasemen() {
+            const topContainer = $("topRankContainer");
+            const otherContainer = $("otherRankContainer");
+            if (!topContainer || !otherContainer) return;
+
             try {
-                const q = query(collection(db, `classes/${globalClassId}/students`));
-                const querySnapshot = await getDocs(q);
-                let students = [];
-                
                 const profilLokal = getProfilFromLocal();
                 const localXp = getLocalXP();
+                const localLatihan = getLocalLatihan();
+                const hasLocalLatihan = Object.keys(localLatihan).length > 0;
 
-                // Object Latihan Detail secara lokal untuk akurasi data sendiri
-                let localLatihanObj = {};
-                const rawData = localStorage.getItem("lat_v1_" + globalClassId);
-                if (rawData) {
-                    try {
-                        const lData = JSON.parse(rawData);
-                        if (lData.hari) {
-                            for (let k in lData.hari) {
-                                if (lData.hari[k].hasil) {
-                                    for (let m in lData.hari[k].hasil) {
-                                        localLatihanObj[m] = lData.hari[k].hasil[m];
-                                    }
-                                }
-                            }
-                        }
-                    } catch(e) {}
-                }
-
+                const students = [];
                 let currentUserFound = false;
-                
-                querySnapshot.forEach((docSnap) => {
-                    const d = docSnap.data();
-                    const isCurrentUser = docSnap.id === globalStudentId;
-                    
-                    if(isCurrentUser) currentUserFound = true;
 
-                    let tXp = 0;
-                    if (d.latihan) { 
-                        Object.values(d.latihan).forEach(m => { tXp += (m.xp || 0); }); 
+                cachedStudentDocs.forEach(({ id, data: d }) => {
+                    const isCurrentUser = id === globalStudentId;
+                    if (isCurrentUser) currentUserFound = true;
+
+                    let xp = 0;
+                    if (d.latihan && typeof d.latihan === "object") {
+                        Object.values(d.latihan).forEach((m) => { xp += Number(m && m.xp) || 0; });
                     }
-                    
-                    let finalLatihan = d.latihan || {};
 
+                    let latihan = d.latihan || {};
                     if (isCurrentUser) {
-                        // Tumpuk XP dari server dengan XP di lokal HP untuk realtime update
-                        tXp = Math.max(tXp, localXp);
-                        if (Object.keys(localLatihanObj).length > 0) {
-                            finalLatihan = localLatihanObj;
-                        }
+                        xp = Math.max(xp, localXp); // XP sendiri = XP di header
+                        if (hasLocalLatihan) latihan = localLatihan;
                     }
-                    
-                    let fotoUrl = null;
-                    if (isCurrentUser && profilLokal.fotoBase64) {
-                        fotoUrl = profilLokal.fotoBase64;
-                    } else if (d.fotoUrl || d.fotoProfil || d.avatar || d.photoURL || d.photoUrl) {
-                        fotoUrl = d.fotoUrl || d.fotoProfil || d.avatar || d.photoURL || d.photoUrl;
-                    }
-                    
+
+                    let fotoUrl = d.fotoUrl || d.fotoProfil || d.avatar || d.photoURL || d.photoUrl || null;
+                    if (isCurrentUser && profilLokal.fotoBase64) fotoUrl = profilLokal.fotoBase64;
+
                     let nama = d.nama || d.namaLengkap || "Anonim";
-                    if (isCurrentUser && profilLokal.namaProfil) {
-                        nama = profilLokal.namaProfil;
-                    }
-                    
-                    students.push({ 
-                        id: docSnap.id, 
-                        nama: nama, 
-                        xp: tXp, 
-                        latihan: finalLatihan,
-                        fotoUrl: fotoUrl,
-                        isCurrentUser: isCurrentUser
-                    });
+                    if (isCurrentUser && profilLokal.namaProfil) nama = profilLokal.namaProfil;
+
+                    students.push({ id, nama, xp, latihan, fotoUrl, isCurrentUser });
                 });
 
-                // Injeksi manual jika current user belum tersimpan di database tapi sedang akses halaman ini
+                // Jika belum ada di database, tetap tampilkan sebagai "Anda"
                 if (!currentUserFound && globalStudentId) {
                     students.push({
                         id: globalStudentId,
-                        nama: profilLokal.namaProfil || "Siswa (Anda)",
+                        nama: profilLokal.namaProfil || "Siswa",
                         xp: localXp,
-                        latihan: localLatihanObj,
+                        latihan: localLatihan,
                         fotoUrl: profilLokal.fotoBase64 || null,
                         isCurrentUser: true
                     });
                 }
 
-                // Sorting ALL terurut berdasarkan XP tertinggi
-                students.sort((a, b) => b.xp - a.xp);
-                
-                const topContainer = $("topRankContainer");
-                const otherContainer = $("otherRankContainer");
-                if (!topContainer || !otherContainer) return;
+                // Urut XP tertinggi; XP sama diurutkan berdasarkan nama
+                students.sort((a, b) => (b.xp - a.xp) || String(a.nama).localeCompare(String(b.nama)));
 
-                // Tampilkan total semua siswa yang terdaftar di kelas (Biar yang 0 XP juga terhitung)
+                // Simpan agar bisa dibuka lewat indeks di modal detail
+                klasemenList = students;
+                const idxOf = new Map(students.map((s, i) => [s.id, i]));
+
                 const countEl = $("totalStudentsCount");
                 if (countEl) countEl.textContent = `${students.length} Siswa Terdaftar`;
 
-                // FILTER: Hanya tampilkan di podium jika >= 70 XP
-                const eligibleForPodium = students.filter(s => s.xp >= 70);
-                const podiumStudents = eligibleForPodium.slice(0, 3);
+                const eligible = students.filter((s) => s.xp >= 70);
+                const podium = eligible.slice(0, 3);
 
-                if (podiumStudents.length === 0) {
+                /* ----- PODIUM ----- */
+                if (podium.length === 0) {
                     topContainer.innerHTML = '<div class="w-full text-center text-xs text-slate-400 py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-300 flex flex-col items-center justify-center gap-2"><i class="fas fa-trophy text-2xl text-slate-300"></i><span>Belum ada siswa yang mencapai 70 XP.<br/>Jadilah yang pertama masuk klasemen!</span></div>';
                 } else {
-                    let topHtml = "";
                     const pod = [
-                        podiumStudents[1] ? { ...podiumStudents[1], r: 2, c: "rank-2", h: "h-32" } : null,
-                        podiumStudents[0] ? { ...podiumStudents[0], r: 1, c: "rank-1", h: "h-44" } : null,
-                        podiumStudents[2] ? { ...podiumStudents[2], r: 3, c: "rank-3", h: "h-28" } : null
+                        podium[1] ? { ...podium[1], r: 2, c: "rank-2", h: "h-32" } : null,
+                        podium[0] ? { ...podium[0], r: 1, c: "rank-1", h: "h-44" } : null,
+                        podium[2] ? { ...podium[2], r: 3, c: "rank-3", h: "h-28" } : null
                     ];
-
-                    pod.forEach(p => {
-                        if (!p) { 
-                            topHtml += '<div class="flex-1"></div>'; 
-                            return; 
-                        }
-                        const nm = p.nama.split(" ")[0];
-                        const dataStr = encodeURIComponent(JSON.stringify(p.latihan || {}));
-                        const safeName = encodeURIComponent(p.nama);
-                        const fotoHtml = p.fotoUrl 
-                            ? `<img src="${p.fotoUrl}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(p.nama)}">` 
+                    topContainer.innerHTML = pod.map((p) => {
+                        if (!p) return '<div class="flex-1"></div>';
+                        const nm = String(p.nama).split(" ")[0];
+                        const fotoHtml = p.fotoUrl
+                            ? `<img src="${esc(p.fotoUrl)}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(p.nama)}">`
                             : `<i class="fas fa-user"></i>`;
-                        const userBadge = p.isCurrentUser ? '<span class="absolute top-2 left-2 bg-white/95 text-emerald-600 text-[8px] font-black px-1.5 py-0.5 rounded-full shadow z-20">ANDA</span>' : '';
-                        
-                        topHtml += `
-                        <div onclick="window.bukaDetailKlasemen('${safeName}', '${dataStr}')" class="flex-1 ${p.h} ${p.c} rounded-t-xl flex flex-col items-center justify-end p-2 pb-3 shadow-lg relative cursor-pointer active:scale-95 transition transform origin-bottom hover:scale-105">
-                            <div class="absolute -top-6 w-12 h-12 bg-white rounded-full flex items-center justify-center text-slate-800 text-lg shadow-md border-4 border-slate-50 overflow-hidden z-10">${fotoHtml}</div>
+                        const badge = p.isCurrentUser
+                            ? '<span class="absolute top-2 left-2 bg-white/95 text-emerald-600 text-[8px] font-black px-1.5 py-0.5 rounded-full shadow">ANDA</span>' : "";
+                        return `
+                        <div onclick="window.bukaDetailKlasemenIdx(${idxOf.get(p.id)})" class="flex-1 ${p.h} ${p.c} rounded-t-xl flex flex-col items-center justify-end p-2 pb-3 shadow-lg relative cursor-pointer active:scale-95 transition transform origin-bottom hover:scale-105">
+                            <div class="absolute -top-6 w-12 h-12 bg-white rounded-full flex items-center justify-center text-slate-800 text-lg shadow-md border-4 border-slate-50 overflow-hidden">${fotoHtml}</div>
                             <h4 class="font-bold text-[11px] w-full text-center mt-2 leading-tight break-words line-clamp-2">${esc(nm)}</h4>
                             <p class="text-[9px] font-black opacity-80">${p.xp} XP</p>
                             <div class="absolute top-2 right-2 text-[10px] font-black opacity-50">#${p.r}</div>
-                            ${userBadge}
+                            ${badge}
                         </div>`;
-                    });
-                    topContainer.innerHTML = topHtml;
+                    }).join("");
                 }
 
-                // Tampilkan siswa sisanya di list bawah podium
-                let otherHtml = "";
-                const otherRanked = students.filter(s => !podiumStudents.includes(s));
+                /* ----- PERINGKAT LAINNYA (semua di luar podium, termasuk 0 XP / 30 XP) ----- */
+                const podiumIds = new Set(podium.map((s) => s.id));
+                const others = students.filter((s) => !podiumIds.has(s.id));
 
-                if (otherRanked.length === 0 && students.length > 0) {
-                     otherHtml = '<li class="text-center text-[10px] text-slate-400 py-3">Tidak ada daftar siswa lainnya.</li>';
+                if (others.length === 0) {
+                    otherContainer.innerHTML = '<li class="text-center text-[10px] text-slate-400 py-3">Tidak ada daftar siswa lainnya.</li>';
+                    return;
                 }
 
-                otherRanked.forEach((s) => {
-                    let rankLabel = '—';
-                    if (s.xp >= 70) {
-                        const idxRank = eligibleForPodium.findIndex(x => x.id === s.id) + 1;
-                        rankLabel = `#${idxRank}`;
-                    }
-
-                    const dataStr = encodeURIComponent(JSON.stringify(s.latihan || {}));
-                    const safeName = encodeURIComponent(s.nama);
-                    const fotoLi = s.fotoUrl 
-                        ? `<img src="${s.fotoUrl}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(s.nama)}">` 
+                otherContainer.innerHTML = others.map((s) => {
+                    const rankLabel = s.xp >= 70 ? `#${eligible.findIndex((x) => x.id === s.id) + 1}` : "—";
+                    const fotoLi = s.fotoUrl
+                        ? `<img src="${esc(s.fotoUrl)}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(s.nama)}">`
                         : `<i class="fas fa-user"></i>`;
-                    const rowHighlight = s.isCurrentUser ? "bg-emerald-50 ring-1 ring-emerald-200" : "hover:bg-slate-50";
-                    const andLabel = s.isCurrentUser ? '<span class="text-[8px] font-black text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded uppercase ml-1">Anda</span>' : '';
-                    
-                    const noXpLabel = s.xp < 70 ? '<span class="text-[8px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100 uppercase ml-1">Butuh 70 XP</span>' : '';
-                    
-                    otherHtml += `
-                    <li onclick="window.bukaDetailKlasemen('${safeName}', '${dataStr}')" class="flex items-center gap-3 py-2 px-2 ${rowHighlight} cursor-pointer transition active:scale-95 rounded-lg mb-1">
+                    const rowCls = s.isCurrentUser ? "bg-emerald-50 ring-1 ring-emerald-200" : "hover:bg-slate-50";
+                    const andaTag = s.isCurrentUser
+                        ? '<span class="ml-1 text-[9px] font-black text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">ANDA</span>' : "";
+                    const belumLulus = s.xp < 70
+                        ? '<div class="mt-0.5"><span class="text-[8.5px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">BELUM LULUS (Min 70)</span></div>' : "";
+                    return `
+                    <li onclick="window.bukaDetailKlasemenIdx(${idxOf.get(s.id)})" class="flex items-center gap-3 py-2 px-2 ${rowCls} cursor-pointer transition active:scale-95 rounded-lg mb-1">
                         <div class="w-8 text-center text-slate-400 font-bold text-xs shrink-0">${rankLabel}</div>
                         <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs shrink-0 overflow-hidden">${fotoLi}</div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-xs font-bold text-slate-700 leading-tight truncate flex items-center">${esc(s.nama)}</p>
-                            <div class="flex gap-1 mt-0.5 flex-wrap">
-                                ${andLabel}
-                                ${noXpLabel}
-                            </div>
+                            <p class="text-xs font-bold text-slate-700 leading-tight flex items-center flex-wrap gap-y-1">${esc(s.nama)}${andaTag}</p>
+                            ${belumLulus}
                         </div>
-                        <div class="text-xs font-black ${s.xp >= 70 ? 'text-amber-500' : 'text-slate-400'} shrink-0">${s.xp} XP</div>
+                        <div class="text-xs font-black ${s.xp >= 70 ? "text-amber-500" : "text-slate-500"} shrink-0">${s.xp} XP</div>
                     </li>`;
-                });
-                
-                if (otherHtml !== "") {
-                     otherContainer.innerHTML = otherHtml;
-                }
-
-            } catch (err) { 
-                console.error(err); 
+                }).join("");
+            } catch (err) {
+                console.error("renderKlasemen error:", err);
             }
         }
 
+        /* ===== SINKRONISASI XP LOKAL ===== */
+        function syncSemua() {
+            if (!globalClassId) return;
+            updateXP();
+            if (globalGuruPaket) renderMissions(globalGuruPaket, globalStudentId);
+            if (klasemenUnsub) renderKlasemen();
+        }
+        window.addEventListener("pageshow", syncSemua);   // kembali dari halaman misi / bfcache
+        document.addEventListener("visibilitychange", () => { if (!document.hidden) syncSemua(); });
+        window.addEventListener("storage", syncSemua);    // tab lain mengubah localStorage
+
+        /* ===== INIT ===== */
         async function init() {
-            if (!globalClassId) { 
-                window.location.href = "index.html"; 
-                return; 
+            if (!globalClassId) {
+                window.location.href = "index.html";
+                return;
             }
-            
+
             try {
                 const classSnap = await getDoc(doc(db, "classes", globalClassId));
-                
-                if (!classSnap.exists()) { 
-                    showToast("Kelas tidak ada!", true); 
-                    setTimeout(() => { window.location.href = "index.html"; }, 1500); 
-                    return; 
+
+                if (!classSnap.exists()) {
+                    window.showToast("Kelas tidak ada!", true);
+                    setTimeout(() => { window.location.href = "index.html"; }, 1500);
+                    return;
                 }
-                
-                const kelas = classSnap.data();
-                
+
+                const kelas = classSnap.data() || {};
                 globalHandoutId = kelas.handoutId || null;
                 globalGuruPaket = kelas.aiPaket || null;
 
-                const namaKelasText = kelas.namaKelas || "Kelas";
                 const targetNav = $("navClassName");
-                if (targetNav) targetNav.textContent = namaKelasText;
+                if (targetNav) targetNav.textContent = kelas.namaKelas || "Kelas";
 
-                const namaGuruText = kelas.namaGuru || "-";
                 const targetTeacher = $("teacherNameDisplay");
-                if (targetTeacher) targetTeacher.textContent = "Guru: " + namaGuruText;
+                if (targetTeacher) targetTeacher.textContent = "Guru: " + (kelas.namaGuru || "-");
 
                 const clearHeaderSkeletons = () => {
-                    const els = [targetNav, targetTeacher, $("studentNameDisplay")];
-                    els.forEach(el => {
-                        if (el) {
-                            el.classList.remove("sk");
-                            el.classList.remove("sk-light");
-                        }
+                    [targetNav, targetTeacher, $("studentNameDisplay")].forEach((el) => {
+                        if (el) { el.classList.remove("sk"); el.classList.remove("sk-light"); }
                     });
                 };
 
+                let sudahFinal = false;
                 const finalizeLoading = () => {
+                    if (sudahFinal) return;
+                    sudahFinal = true;
                     clearHeaderSkeletons();
                     const skelState = $("skeletonState");
                     if (skelState) skelState.classList.add("hidden");
-                    
-                    if (!globalGuruPaket) { 
+
+                    if (!globalGuruPaket) {
                         const waitState = $("waitingState");
-                        if (waitState) waitState.classList.remove("hidden"); 
+                        if (waitState) waitState.classList.remove("hidden");
                     } else {
                         const journeyState = $("journeyState");
                         if (journeyState) journeyState.classList.remove("hidden");
-                        
+                        renderMissions(globalGuruPaket, globalStudentId);
                         renderMateri();
-                        renderKlasemen();
+                        startKlasemenRealtime();
                     }
                 };
-                
-                if (globalGuruPaket) {
-                    renderMissions(globalGuruPaket, globalStudentId);
-                }
-                
+
                 if (globalStudentId) {
+                    const setNama = (nDb) => {
+                        const c = getProfilFromLocal().namaProfil || nDb || "Siswa";
+                        const nameDisplay = $("studentNameDisplay");
+                        if (nameDisplay) nameDisplay.textContent = c;
+                        applyProfilLokal();
+                        updateXP();
+                        updateBanner(c);
+                    };
+
                     try {
                         const studentSnap = await getDoc(doc(db, `classes/${globalClassId}/students`, globalStudentId));
                         const d = studentSnap.exists() ? studentSnap.data() : null;
-                        const n = d ? (d.nama || d.namaLengkap) : null;
-                        
-                        const profilLokal = getProfilFromLocal();
-                        const c = profilLokal.namaProfil || n || "Siswa";
-                        
-                        const nameDisplay = $("studentNameDisplay");
-                        if (nameDisplay) nameDisplay.textContent = c;
-                        
-                        applyProfilLokal();
-                        updateXP(); 
-                        updateBanner(c);
-                        
-                        finalizeLoading();
-                        
-                        onSnapshot(doc(db, `classes/${globalClassId}/students`, globalStudentId), (snap) => {
-                            const d2 = snap.exists() ? snap.data() : null;
-                            const n2 = d2 ? (d2.nama || d2.namaLengkap) : null;
-                            const profilLokal2 = getProfilFromLocal();
-                            const c2 = profilLokal2.namaProfil || n2 || "Siswa";
-                            
-                            const nameDisplay2 = $("studentNameDisplay");
-                            if (nameDisplay2) nameDisplay2.textContent = c2;
-                            
-                            applyProfilLokal();
-                            updateXP(); 
-                            updateBanner(c2);
-                            
-                            if (globalGuruPaket) {
-                                renderMissions(globalGuruPaket, globalStudentId);
-                                renderKlasemen();
-                            }
-                        }, () => { 
-                            const def = localStorage.getItem("namaSiswaCendekia") || "Siswa";
-                            const nameDisplay2 = $("studentNameDisplay");
-                            if (nameDisplay2) nameDisplay2.textContent = def;
-                            
-                            updateXP(); 
-                            updateBanner(def);
-                        });
+                        setNama(d ? (d.nama || d.namaLengkap) : null);
                     } catch (err) {
-                        const def = localStorage.getItem("namaSiswaCendekia") || "Siswa";
-                        const nameDisplay = $("studentNameDisplay");
-                        if (nameDisplay) nameDisplay.textContent = def;
-                        
-                        updateXP(); 
-                        updateBanner(def);
-                        finalizeLoading();
+                        console.error(err);
+                        setNama(null);
                     }
+
+                    finalizeLoading();
+
+                    // Pantau dokumen siswa sendiri (nama / XP berubah dari server)
+                    onSnapshot(
+                        doc(db, `classes/${globalClassId}/students`, globalStudentId),
+                        (snap) => {
+                            const d2 = snap.exists() ? snap.data() : null;
+                            setNama(d2 ? (d2.nama || d2.namaLengkap) : null);
+                            if (globalGuruPaket) renderMissions(globalGuruPaket, globalStudentId);
+                        },
+                        (err) => {
+                            console.error(err);
+                            setNama(null);
+                        }
+                    );
                 } else {
-                    const profilLokalDef = getProfilFromLocal();
-                    const def = profilLokalDef.namaProfil || "Siswa";
+                    const def = getProfilFromLocal().namaProfil || "Siswa";
                     const nameDisplay = $("studentNameDisplay");
                     if (nameDisplay) nameDisplay.textContent = def;
-                    
                     applyProfilLokal();
-                    updateXP(); 
+                    updateXP();
                     updateBanner(def);
                     finalizeLoading();
                 }
@@ -988,7 +876,6 @@
                 console.error(err);
                 const skelState = $("skeletonState");
                 if (skelState) skelState.classList.add("hidden");
-                
                 const errState = $("errorState");
                 if (errState) errState.classList.remove("hidden");
             }
