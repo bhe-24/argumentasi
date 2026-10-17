@@ -80,7 +80,7 @@
 
         .sk { position: relative; overflow: hidden; background: #e2e8f0; border-radius: .5rem; color: transparent !important; }
         .sk-light { background: rgba(255,255,255,.28); }
-        .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent); animation: shimmer 1.4s infinite; }
+        .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), animation: shimmer 1.4s infinite; }
         @keyframes shimmer { 100% { transform: translateX(100%); } }
 
         .journey-line { position: relative; }
@@ -765,7 +765,7 @@
                 const otherContainer = $("otherRankContainer");
                 if (!topContainer || !otherContainer) return;
 
-                // Tampilkan total semua siswa yang terdaftar di kelas (Biar yang 0 XP juga terhitung)
+                // Tampilkan total semua siswa yang terdaftar di kelas
                 const countEl = $("totalStudentsCount");
                 if (countEl) countEl.textContent = `${students.length} Siswa Terdaftar`;
 
@@ -794,11 +794,11 @@
                         const fotoHtml = p.fotoUrl 
                             ? `<img src="${p.fotoUrl}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(p.nama)}">` 
                             : `<i class="fas fa-user"></i>`;
-                        const userBadge = p.isCurrentUser ? '<span class="absolute top-2 left-2 bg-white/95 text-emerald-600 text-[8px] font-black px-1.5 py-0.5 rounded-full shadow">ANDA</span>' : '';
+                        const userBadge = p.isCurrentUser ? '<span class="absolute top-2 left-2 bg-white/95 text-emerald-600 text-[8px] font-black px-1.5 py-0.5 rounded-full shadow z-20">ANDA</span>' : '';
                         
                         topHtml += `
                         <div onclick="window.bukaDetailKlasemen('${safeName}', '${dataStr}')" class="flex-1 ${p.h} ${p.c} rounded-t-xl flex flex-col items-center justify-end p-2 pb-3 shadow-lg relative cursor-pointer active:scale-95 transition transform origin-bottom hover:scale-105">
-                            <div class="absolute -top-6 w-12 h-12 bg-white rounded-full flex items-center justify-center text-slate-800 text-lg shadow-md border-4 border-slate-50 overflow-hidden">${fotoHtml}</div>
+                            <div class="absolute -top-6 w-12 h-12 bg-white rounded-full flex items-center justify-center text-slate-800 text-lg shadow-md border-4 border-slate-50 overflow-hidden z-10">${fotoHtml}</div>
                             <h4 class="font-bold text-[11px] w-full text-center mt-2 leading-tight break-words line-clamp-2">${esc(nm)}</h4>
                             <p class="text-[9px] font-black opacity-80">${p.xp} XP</p>
                             <div class="absolute top-2 right-2 text-[10px] font-black opacity-50">#${p.r}</div>
@@ -808,7 +808,7 @@
                     topContainer.innerHTML = topHtml;
                 }
 
-                // Tampilkan siswa sisanya di list (Tidak masuk Top 3, Atau di bawah 70 XP)
+                // Tampilkan siswa sisanya di list
                 let otherHtml = "";
                 const otherRanked = students.filter(s => !podiumStudents.includes(s));
 
@@ -817,7 +817,6 @@
                 }
 
                 otherRanked.forEach((s) => {
-                    // Cek urutan peringkat (hanya yang min 70 XP yang mendapat nomor rank)
                     let rankLabel = '—';
                     if (s.xp >= 70) {
                         const idxRank = eligibleForPodium.findIndex(x => x.id === s.id) + 1;
@@ -830,18 +829,20 @@
                         ? `<img src="${s.fotoUrl}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(s.nama)}">` 
                         : `<i class="fas fa-user"></i>`;
                     const rowHighlight = s.isCurrentUser ? "bg-emerald-50 ring-1 ring-emerald-200" : "hover:bg-slate-50";
-                    const andLabel = s.isCurrentUser ? '<span class="ml-1 text-[9px] font-black text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">ANDA</span>' : '';
+                    const andLabel = s.isCurrentUser ? '<span class="text-[8px] font-black text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded uppercase ml-1">Anda</span>' : '';
                     
-                    // Label Peringatan di Bawah 70 XP
-                    const noXpLabel = s.xp < 70 ? '<span class="ml-1 text-[8.5px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">BELUM LULUS (Min 70)</span>' : '';
+                    const noXpLabel = s.xp < 70 ? '<span class="text-[8px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100 uppercase ml-1">Butuh 70 XP</span>' : '';
                     
                     otherHtml += `
                     <li onclick="window.bukaDetailKlasemen('${safeName}', '${dataStr}')" class="flex items-center gap-3 py-2 px-2 ${rowHighlight} cursor-pointer transition active:scale-95 rounded-lg mb-1">
                         <div class="w-8 text-center text-slate-400 font-bold text-xs shrink-0">${rankLabel}</div>
                         <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs shrink-0 overflow-hidden">${fotoLi}</div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-xs font-bold text-slate-700 leading-tight flex items-center flex-wrap gap-y-1">${esc(s.nama)}${andLabel}</p>
-                            ${noXpLabel ? `<div class="mt-0.5">${noXpLabel}</div>` : ''}
+                            <p class="text-xs font-bold text-slate-700 leading-tight truncate flex items-center">${esc(s.nama)}</p>
+                            <div class="flex gap-1 mt-0.5 flex-wrap">
+                                ${andLabel}
+                                ${noXpLabel}
+                            </div>
                         </div>
                         <div class="text-xs font-black ${s.xp >= 70 ? 'text-amber-500' : 'text-slate-400'} shrink-0">${s.xp} XP</div>
                     </li>`;
