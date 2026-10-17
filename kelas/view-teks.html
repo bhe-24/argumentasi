@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Modul AI - Materi Kelas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
+        .font-reading { font-family: 'Merriweather', serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen">
+
+<div class="w-full max-w-md bg-white relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
+    <header class="sticky top-0 z-50 bg-emerald-600 h-14 px-4 flex items-center gap-3 shadow-md">
+        <a id="btnBack" href="#" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition"><i class="fas fa-arrow-left"></i></a>
+        <h1 class="text-white font-bold text-sm truncate flex-1">Materi Pembelajaran AI</h1>
+    </header>
+
+    <main class="flex-grow overflow-y-auto hide-scrollbar p-5" id="kontenMateri">
+        <div class="text-center py-20 text-emerald-500"><i class="fas fa-circle-notch fa-spin text-3xl"></i><p class="mt-3 text-xs font-bold text-slate-500">Membaca data server...</p></div>
+    </main>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" });
+    const db = getFirestore(app);
+
+    const classId = new URLSearchParams(window.location.search).get('id');
+    const sid = new URLSearchParams(window.location.search).get('sid');
+    
+    let backUrl = '../ruang_belajar_siswa.html';
+    if(classId) backUrl += '?id=' + encodeURIComponent(classId);
+    if(sid) backUrl += '&sid=' + encodeURIComponent(sid);
+    document.getElementById('btnBack').href = backUrl;
+
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])).replace(/\n/g, '<br>');
+
+    function drawSection(title, content, icon, color) {
+        if (!content) return '';
+        return `
+        <div class="mb-6 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <div class="bg-${color}-50 px-4 py-3 border-b border-${color}-100 flex items-center gap-2">
+                <i class="fas ${icon} text-${color}-600"></i>
+                <h2 class="font-bold text-${color}-800 text-sm">${title}</h2>
+            </div>
+            <div class="p-4 font-reading text-sm text-slate-700 leading-relaxed">
+                ${esc(content)}
+            </div>
+        </div>`;
+    }
+
+    async function loadData() {
+        try {
+            const classSnap = await getDoc(doc(db, "classes", classId));
+            if(!classSnap.exists() || !classSnap.data().aiPaket) throw new Error("Data materi tidak ditemukan.");
+            
+            // Format fallback JSON ke string HTML
+            const ap = classSnap.data().aiPaket;
+            
+            let htmlStr = '';
+            
+            // 1. Jika guru isi manual (ada string `materiInti` dkk di database, sayangnya kita gak simpan ini kemarin secara statis kecuali di pdf asli)
+            // Sebagai kompensasi, kita render "Ringkasan" dan "Contoh Teks" dari aiPaket.
+            
+            if (ap.ringkasan) {
+                htmlStr += drawSection('Ringkasan Inti', ap.ringkasan, 'fa-lightbulb', 'amber');
+            }
+            
+            if (ap.struktur && ap.struktur.teks) {
+                let stTeks = ap.struktur.teks.map((x,i) => `<b>${i+1}.</b> ${x.t} <i>(${x.label})</i>`).join('\n\n');
+                htmlStr += drawSection('Bedah Wacana & Struktur', stTeks, 'fa-layer-group', 'blue');
+            }
+
+            if (ap.peta && ap.peta.soal) {
+                let ct = ap.peta.soal.map((s,i) => `${i+1}. ${s.p.replace(/\[\.\.\.\.\.\.\.\]/g, s.opsi[s.j])}`).join('\n\n');
+                htmlStr += drawSection('Kutipan Paragraf Argumentasi', ct, 'fa-quote-left', 'emerald');
+            }
+
+            if(htmlStr === '') htmlStr = '<div class="text-center p-6 text-slate-400 border border-dashed rounded-xl border-slate-300">Teks materi tidak tersedia. Silakan cek File PDF asli.</div>';
+
+            document.getElementById('kontenMateri').innerHTML = htmlStr;
+
+        } catch (err) {
+            document.getElementById('kontenMateri').innerHTML = `<div class="text-center p-8 bg-red-50 text-red-500 rounded-2xl"><i class="fas fa-exclamation-triangle text-3xl mb-2"></i><p class="font-bold text-sm">Gagal Memuat Materi</p><p class="text-[10px] mt-1">${err.message}</p></div>`;
+        }
+    }
+
+    loadData();
+</script>
+</body>
+</html>
