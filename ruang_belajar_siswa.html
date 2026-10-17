@@ -44,9 +44,8 @@
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .modal-z { z-index: 99999; }
 
-        /* Fade-in diperbaiki agar KOKOH, tidak nyembul dari bawah */
-        .fade-in { animation: fadeIn .3s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .fade-in { animation: fadeIn .35s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         .sk { position: relative; overflow: hidden; background: #e2e8f0; border-radius: .5rem; color: transparent !important; }
         .sk-light { background: rgba(255,255,255,.28); }
@@ -78,7 +77,6 @@
 <body>
 
     <div class="mobile-frame">
-        <!-- HEADER -->
         <header class="shrink-0 h-16 bg-brand-green text-white px-4 grid grid-cols-[40px_1fr_auto] items-center gap-2 shadow-md relative z-40">
             <button onclick="window.konfirmasiKeluar()" class="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center active:scale-95 transition" aria-label="Kembali">
                 <i class="fas fa-chevron-left text-sm"></i>
@@ -93,110 +91,104 @@
             </div>
         </header>
 
-        <!-- PROFIL SISWA -->
-        <section class="shrink-0 h-20 bg-white border-b border-slate-200 px-4 flex items-center gap-3 z-30">
-            <div id="avatarContainer" class="w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 border-2 border-white shadow flex items-center justify-center text-white text-xl overflow-hidden relative">
-                <img id="avatarImage" src="" alt="Foto Siswa" class="w-full h-full object-cover hidden absolute inset-0 z-10">
-                <i id="avatarIcon" class="fas fa-user-astronaut relative z-0"></i>
-            </div>
-            <div class="min-w-0 flex-1">
-                <h2 id="studentNameDisplay" class="sk h-5 w-32 text-sm font-bold text-slate-800 leading-5 truncate">Memuat</h2>
-                <p id="teacherNameDisplay" class="sk h-4 w-24 mt-1 text-[11px] font-medium text-slate-500 leading-4 truncate">Memuat</p>
-            </div>
-        </section>
+        <main class="flex-1 overflow-y-auto hide-scrollbar bg-slate-50 flex flex-col relative" id="scrollArea">
+            <section class="shrink-0 h-20 bg-white border-b border-slate-200 px-4 flex items-center gap-3">
+                <div id="avatarContainer" class="w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 border-2 border-white shadow flex items-center justify-center text-white text-xl overflow-hidden relative">
+                    <img id="avatarImage" src="" alt="Foto Siswa" class="w-full h-full object-cover hidden absolute inset-0 z-10">
+                    <i id="avatarIcon" class="fas fa-user-astronaut relative z-0"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <h2 id="studentNameDisplay" class="sk h-5 w-32 text-sm font-bold text-slate-800 leading-5 truncate">Memuat</h2>
+                    <p id="teacherNameDisplay" class="sk h-4 w-24 mt-1 text-[11px] font-medium text-slate-500 leading-4 truncate">Memuat</p>
+                </div>
+            </section>
 
-        <!-- TABS HEADER -->
-        <div class="flex border-b border-slate-200 bg-white shrink-0 z-30 shadow-sm">
-            <button onclick="window.switchTab('misi')" id="tabMisi" class="flex-1 py-3 text-xs font-medium tab-btn active">Misi Latihan</button>
-            <button onclick="window.switchTab('materi')" id="tabMateri" class="flex-1 py-3 text-xs font-medium tab-btn">Materi</button>
-            <button onclick="window.switchTab('klasemen')" id="tabKlasemen" class="flex-1 py-3 text-xs font-medium tab-btn">Klasemen</button>
-        </div>
+            <!-- TABS -->
+            <div class="flex border-b border-slate-200 bg-white shrink-0 sticky top-0 z-30">
+                <button onclick="window.switchTab('misi')" id="tabMisi" class="flex-1 py-3 text-xs font-medium tab-btn active">Misi Latihan</button>
+                <button onclick="window.switchTab('materi')" id="tabMateri" class="flex-1 py-3 text-xs font-medium tab-btn">Materi</button>
+                <button onclick="window.switchTab('klasemen')" id="tabKlasemen" class="flex-1 py-3 text-xs font-medium tab-btn">Klasemen</button>
+            </div>
 
-        <!-- AREA KONTEN (Telah diubah menjadi layout yang KOKOH tanpa absolute tumpuk) -->
-        <main class="flex-1 overflow-y-auto bg-slate-50 relative hide-scrollbar">
-            
-            <!-- TAB 1: MISI LATIHAN -->
-            <div id="contentMisi" class="px-4 pb-8 fade-in">
-                <div id="motivationalBanner" class="bubble-bg hidden">
-                    <div class="bubble w-4 h-4 left-4 animate-float-up"></div>
-                    <div class="bubble w-8 h-8 left-1/4 animate-float-up-slow" style="animation-delay: 1s;"></div>
-                    <div class="bubble w-3 h-3 right-10 animate-float-up-fast"></div>
-                    <div class="bubble w-6 h-6 right-1/3 animate-float-up" style="animation-delay: 0.5s;"></div>
-                    <div class="bubble w-5 h-5 right-4 animate-float-up-slow" style="animation-delay: 1.5s;"></div>
-                    <div class="relative z-10 flex items-start gap-3">
-                        <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white shrink-0 mt-0.5" id="bannerIcon"><i class="fas fa-bolt"></i></div>
-                        <div class="flex-1">
-                            <h3 class="font-display font-bold text-sm leading-tight text-white mb-1" id="bannerTitle">Siap Belajar?</h3>
-                            <p class="text-[11px] text-white/90 leading-snug" id="bannerMessage">Selesaikan misi di bawah ini secara berurutan!</p>
+            <div class="flex-1 relative">
+                <!-- TAB 1: MISI LATIHAN -->
+                <div id="contentMisi" class="px-4 pb-8 fade-in absolute inset-0 overflow-y-auto hide-scrollbar bg-slate-50">
+                    <div id="motivationalBanner" class="bubble-bg hidden">
+                        <div class="bubble w-4 h-4 left-4 animate-float-up"></div>
+                        <div class="bubble w-8 h-8 left-1/4 animate-float-up-slow" style="animation-delay: 1s;"></div>
+                        <div class="bubble w-3 h-3 right-10 animate-float-up-fast"></div>
+                        <div class="bubble w-6 h-6 right-1/3 animate-float-up" style="animation-delay: 0.5s;"></div>
+                        <div class="bubble w-5 h-5 right-4 animate-float-up-slow" style="animation-delay: 1.5s;"></div>
+                        <div class="relative z-10 flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white shrink-0 mt-0.5" id="bannerIcon"><i class="fas fa-bolt"></i></div>
+                            <div class="flex-1">
+                                <h3 class="font-display font-bold text-sm leading-tight text-white mb-1" id="bannerTitle">Siap Belajar?</h3>
+                                <p class="text-[11px] text-white/90 leading-snug" id="bannerMessage">Selesaikan misi di bawah ini secara berurutan!</p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div id="skeletonState" aria-busy="true" class="mt-4">
-                    <div class="h-16 flex flex-col items-center justify-center gap-2 mb-2"><div class="sk h-6 w-44"></div><div class="sk h-3 w-52"></div></div>
-                    <div class="journey-line space-y-6">
-                        <div class="relative pl-12"><div class="absolute left-[13px] top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-4 border-white bg-slate-300 z-10"></div><div class="sk h-[112px] w-full !rounded-2xl"></div></div>
-                        <div class="relative pl-12"><div class="absolute left-[13px] top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-4 border-white bg-slate-300 z-10"></div><div class="sk h-[112px] w-full !rounded-2xl"></div></div>
+                    <div id="skeletonState" aria-busy="true" class="mt-4">
+                        <div class="h-16 flex flex-col items-center justify-center gap-2 mb-2"><div class="sk h-6 w-44"></div><div class="sk h-3 w-52"></div></div>
+                        <div class="journey-line space-y-6">
+                            <div class="relative pl-12"><div class="absolute left-[13px] top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-4 border-white bg-slate-300 z-10"></div><div class="sk h-[112px] w-full !rounded-2xl"></div></div>
+                            <div class="relative pl-12"><div class="absolute left-[13px] top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-4 border-white bg-slate-300 z-10"></div><div class="sk h-[112px] w-full !rounded-2xl"></div></div>
+                        </div>
+                    </div>
+
+                    <div id="waitingState" class="hidden py-16 text-center">
+                        <div class="w-24 h-24 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-inner border border-slate-200"><i class="fas fa-tools"></i></div>
+                        <h3 class="font-display font-bold text-xl text-slate-800 mb-2">Materi Belum Siap</h3>
+                        <p class="text-xs text-slate-500 max-w-[250px] mx-auto">Guru Anda belum mempublikasikan materi.</p>
+                    </div>
+
+                    <div id="errorState" class="hidden py-16 text-center">
+                        <div class="w-24 h-24 bg-red-50 text-red-400 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl border border-red-100"><i class="fas fa-wifi"></i></div>
+                        <h3 class="font-display font-bold text-xl text-slate-800 mb-2">Gagal Memuat</h3>
+                        <p class="text-xs text-slate-500 max-w-[250px] mx-auto mb-5" id="errorText">Periksa koneksi internet Anda lalu coba lagi.</p>
+                        <button onclick="location.reload()" class="bg-brand-green text-white text-xs font-bold px-6 py-2.5 rounded-full active:scale-95 transition">Coba Lagi</button>
+                    </div>
+
+                    <div id="journeyState" class="hidden mt-4 pb-10">
+                        <div class="h-16 flex flex-col items-center justify-center mb-2 text-center">
+                            <h3 class="font-display font-bold text-xl text-slate-800 leading-6">Peta Misi Belajar</h3>
+                            <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1 leading-3">Tembus batas minimal 70!</p>
+                        </div>
+                        <div class="journey-line space-y-6" id="missionNodesContainer"></div>
                     </div>
                 </div>
 
-                <div id="waitingState" class="hidden py-16 text-center">
-                    <div class="w-24 h-24 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-inner border border-slate-200"><i class="fas fa-tools"></i></div>
-                    <h3 class="font-display font-bold text-xl text-slate-800 mb-2">Materi Belum Siap</h3>
-                    <p class="text-xs text-slate-500 max-w-[250px] mx-auto">Guru Anda belum mempublikasikan materi.</p>
-                </div>
-
-                <div id="errorState" class="hidden py-16 text-center">
-                    <div class="w-24 h-24 bg-red-50 text-red-400 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl border border-red-100"><i class="fas fa-wifi"></i></div>
-                    <h3 class="font-display font-bold text-xl text-slate-800 mb-2">Gagal Memuat</h3>
-                    <p class="text-xs text-slate-500 max-w-[250px] mx-auto mb-5" id="errorText">Periksa koneksi internet Anda lalu coba lagi.</p>
-                    <button onclick="location.reload()" class="bg-brand-green text-white text-xs font-bold px-6 py-2.5 rounded-full active:scale-95 transition">Coba Lagi</button>
-                </div>
-
-                <div id="journeyState" class="hidden mt-4 pb-4">
-                    <div class="h-16 flex flex-col items-center justify-center mb-2 text-center">
-                        <h3 class="font-display font-bold text-xl text-slate-800 leading-6">Peta Misi Belajar</h3>
-                        <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1 leading-3">Tembus batas minimal 70!</p>
+                <!-- TAB 2: MATERI -->
+                <div id="contentMateri" class="px-4 py-6 hidden absolute inset-0 overflow-y-auto hide-scrollbar bg-slate-50">
+                    <h3 class="font-display font-bold text-xl text-slate-800 mb-1">Materi Referensi</h3>
+                    <p class="text-xs text-slate-500 mb-6">Pelajari materi ini sebelum mengerjakan misi latihan.</p>
+                    
+                    <div id="materiContainer" class="space-y-3">
+                        <div class="sk h-[80px] w-full rounded-2xl mb-3"></div>
+                        <div class="sk h-[80px] w-full rounded-2xl"></div>
                     </div>
-                    <div class="journey-line space-y-6" id="missionNodesContainer"></div>
-                </div>
-            </div>
-
-            <!-- TAB 2: MATERI -->
-            <div id="contentMateri" class="px-4 py-6 hidden">
-                <h3 class="font-display font-bold text-xl text-slate-800 mb-1">Materi Referensi</h3>
-                <p class="text-xs text-slate-500 mb-6">Pelajari materi ini sebelum mengerjakan misi latihan.</p>
-                
-                <div id="materiContainer" class="space-y-3">
-                    <div class="sk h-[80px] w-full rounded-2xl mb-3"></div>
-                    <div class="sk h-[80px] w-full rounded-2xl"></div>
-                </div>
-            </div>
-
-            <!-- TAB 3: KLASEMEN -->
-            <div id="contentKlasemen" class="px-4 py-6 hidden">
-                <h3 class="font-display font-bold text-xl text-slate-800 mb-1 text-center">Papan Klasemen</h3>
-                <p class="text-xs text-slate-500 mb-6 text-center">Top 3 Peringkat Tertinggi Kelas Ini</p>
-
-                <div id="topRankContainer" class="flex justify-center items-end gap-2 h-44 mb-6 relative">
-                    <div class="sk h-full w-full rounded-2xl"></div>
                 </div>
 
-                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm mb-4">
-                    <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
-                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Peringkat Lainnya</span>
-                        <span id="totalStudentsCount" class="text-[10px] font-bold text-slate-500">0 Siswa</span>
+                <!-- TAB 3: KLASEMEN -->
+                <div id="contentKlasemen" class="px-4 py-6 hidden absolute inset-0 overflow-y-auto hide-scrollbar bg-slate-50">
+                    <h3 class="font-display font-bold text-xl text-slate-800 mb-1 text-center">Papan Klasemen</h3>
+                    <p class="text-xs text-slate-500 mb-6 text-center">Top 3 Peringkat Tertinggi Kelas Ini</p>
+
+                    <div id="topRankContainer" class="flex justify-center items-end gap-2 h-44 mb-6 relative">
+                        <div class="sk h-full w-full rounded-2xl"></div>
                     </div>
-                    <ul id="otherRankContainer" class="divide-y divide-slate-100 p-2">
-                        <li class="sk h-12 w-full rounded-lg mb-2"></li>
-                    </ul>
+
+                    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                        <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Peringkat Lainnya</span>
+                            <span id="totalStudentsCount" class="text-[10px] font-bold text-slate-500">0 Siswa</span>
+                        </div>
+                        <ul id="otherRankContainer" class="divide-y divide-slate-100 p-2">
+                            <li class="sk h-12 w-full rounded-lg mb-2"></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
-
-            <!-- FOOTER -->
-            <footer class="shrink-0 border-t border-slate-200 bg-slate-50 px-5 py-5 text-center mt-auto">
-                <p class="text-[10px] text-slate-400 font-medium tracking-wide">&copy; 2026 Argumentasi</p>
-            </footer>
         </main>
     </div>
 
@@ -227,12 +219,11 @@
             <p class="text-sm text-slate-500 mb-6">Progres belajar Anda akan tetap tersimpan dengan aman.</p>
             <div class="flex gap-3 w-full">
                 <button onclick="window.tutupModal('modalConfirm')" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3.5 rounded-xl hover:bg-slate-200 transition-colors active:scale-95 text-xs">Batal</button>
-                <button onclick="window.location.href='index.html'" class="flex-1 bg-slate-800 text-white font-bold py-3.5 rounded-xl hover:bg-slate-900 transition-colors shadow-md active:scale-95 text-xs">Ya, Keluar</button>
+                <button id="btnConfirmAction" class="flex-1 bg-slate-800 text-white font-bold py-3.5 rounded-xl hover:bg-slate-900 transition-colors shadow-md active:scale-95 text-xs">Ya, Keluar</button>
             </div>
         </div>
     </div>
 
-    <!-- SCRIPT INTI -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, collection, query, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -242,7 +233,7 @@
         const $ = (id) => document.getElementById(id);
         const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
-        // GLOBAL EXPOSE (Menghindari Uncaught ReferenceError)
+        // GLOBAL UI EXPORT
         window.bukaModal = function(id) {
             const m = $(id), bx = m.querySelector('div'); 
             m.classList.remove('hidden');
@@ -259,15 +250,15 @@
             ['Misi', 'Materi', 'Klasemen'].forEach(n => {
                 $('tab' + n).classList.remove('active');$('content' + n).classList.add('hidden');
             });
-            $('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');$('content' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.remove('hidden');
-            // Menghapus animasi fade-in agar transisi tab kokoh dan solid
+            $('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
+            $('content' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.remove('hidden');$('content' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('fade-in');
         };
 
         window.konfirmasiKeluar = function() {
+            $('btnConfirmAction').onclick = () => { window.location.href = 'index.html'; };
             window.bukaModal('modalConfirm');
         };
 
-        // VARIABEL GLOBAL EKSKLUSIF
         const BAGIAN_MISI = [
             { key: 'pilgan', n: 'Pilihan Ganda', type: 'Pemahaman' },
             { key: 'struktur', n: 'Bedah Struktur', type: 'Analisis' },
@@ -339,12 +330,14 @@
                 const isDone = score !== undefined;
                 const isFailed = isDone && score < 70;
                 
-                const url = `kelas/${b.key}.html?id=${encodeURIComponent(globalClassId)}` + (sid ? `&sid=${encodeURIComponent(sid)}` : '');
+                const url = `kelas/${b.file}?id=${encodeURIComponent(globalClassId)}` + (sid ? `&sid=${encodeURIComponent(sid)}` : '');
                 
                 let opacityClass = isReady ? 'hover:shadow-md' : 'opacity-80 grayscale-[30%] pointer-events-none';
                 let btnTxt = isReady ? `<i class="fas fa-play text-emerald-500 mr-1"></i> Mulai Misi` : `<i class="fas fa-lock text-slate-400 mr-1"></i> Belum Siap`;
-                let cClass = `h-[112px] w-full bg-white rounded-2xl px-4 shadow-sm border border-slate-200 flex items-center gap-4 active:scale-[.98] transition hover:border-${b.c}-400 ${opacityClass}`;
-                let dotClass = `bg-${b.c}-500`;
+                
+                // FIXED: Menambahkan default fallback b.c || 'emerald' untuk mencegah nilai undefined
+                let cClass = `h-[112px] w-full bg-white rounded-2xl px-4 shadow-sm border border-slate-200 flex items-center gap-4 active:scale-[.98] transition hover:border-${b.c || 'emerald'}-400 ${opacityClass}`;
+                let dotClass = `bg-${b.c || 'emerald'}-500`;
 
                 if (isDone) {
                     if (isFailed) {
