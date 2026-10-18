@@ -7,15 +7,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }</script>
+
     <script>
+    /* ===== PUSTAKA LATIHAN (LocalStorage + IndexedDB) ===== */
     (function () {
         const qCore = new URLSearchParams(window.location.search);
         const cId = qCore.get('id') || 'umum';
-        const LS = 'lat_v1_' + cId, DBN = 'latihan-db-' + cId; 
-        
+        const LS = 'lat_v1_' + cId, DBN = 'latihan-db-' + cId;
+
         let S = null, siapP = null;
         const pad = n => String(n).padStart(2, '0');
         const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -47,31 +51,72 @@
             tambahXp(n) { localStorage.setItem('latihanPointsCendekia', String(parseInt(localStorage.getItem('latihanPointsCendekia') || '0') + n)); },
             fmt(s) { s = Math.max(0, Math.round(s)); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); },
             menit: s => Math.max(1, Math.round(s / 60)),
+            // Nada singkat saat hasil keluar (sebelumnya fungsi ini belum ada sehingga pembahasan bisa gagal tampil)
+            beep(t) {
+                try {
+                    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+                    const c = new AC(), seq = t === 'ok' ? [523, 659, 784] : [330, 262];
+                    seq.forEach((f, i) => { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.value = .07; o.connect(g); g.connect(c.destination); o.start(c.currentTime + i * .14); o.stop(c.currentTime + i * .14 + .12); });
+                    setTimeout(() => { try { c.close(); } catch (e) {} }, 900);
+                } catch (e) {}
+            },
             toast(msg, err) {
                 let c = document.getElementById('lToast');
                 if (!c) { c = document.createElement('div'); c.id = 'lToast'; c.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none'; document.body.appendChild(c); }
-                const t = document.createElement('div'); t.className = (err ? 'bg-red-500' : 'bg-slate-800') + ' text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 up';
-                t.innerHTML = '<i class="fas ' + (err ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400') + '"></i><span class="flex-1">' + esc(msg) + '</span>'; c.appendChild(t); setTimeout(() => t.remove(), 3000);
+                const t = document.createElement('div'); t.className = (err ? 'bg-red-500' : 'bg-slate-800') + ' text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2';
+                t.innerHTML = '<i class="fas ' + (err ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400') + '"></i><span class="flex-1">' + esc(msg) + '</span>'; c.appendChild(t); setTimeout(() => t.remove(), 3200);
             }
         };
         window.L = L;
     })();
     </script>
+
     <style>
         body { font-family: 'Poppins', sans-serif; background: #e2e8f0; -webkit-tap-highlight-color: transparent; }
-        .up { animation: up .35s ease-out both; } @keyframes up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-        .kertas { background: #fffdf8; background-image: repeating-linear-gradient(transparent 0 31px, rgba(148,163,184,.18) 31px 32px); border: 1px solid #e7e5e4; border-left: 3px solid #fca5a5; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-        .pil-lbl { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .25rem; padding: .55rem .4rem; border: 2px solid #e2e8f0; border-radius: .75rem; background: #fff; font-size: 11px; font-weight: 700; color: #64748b; transition: all .18s; }
-        .pil-lbl:active { transform: scale(.96); }
-        .pil-lbl.sel-tesis { border-color: #f59e0b; background: #fffbeb; color: #b45309; animation: pop .25s ease-out; }
-        .pil-lbl.sel-argumen { border-color: #0ea5e9; background: #f0f9ff; color: #0369a1; animation: pop .25s ease-out; }
-        .pil-lbl.sel-kesimpulan { border-color: #8b5cf6; background: #f5f3ff; color: #6d28d9; animation: pop .25s ease-out; }
-        @keyframes pop { 0% { transform: scale(.96); } 60% { transform: scale(1.03); } 100% { transform: scale(1); } }
-        .kal-span { transition: all .2s; border-radius: 4px; padding: 1px 3px; cursor: pointer; }
-        .kal-span.hl-tesis { background: #fef3c7; color: #92400e; border-bottom: 2px solid #f59e0b; }
-        .kal-span.hl-argumen { background: #e0f2fe; color: #075985; border-bottom: 2px solid #0ea5e9; }
-        .kal-span.hl-kesimpulan { background: #ede9fe; color: #5b21b6; border-bottom: 2px solid #8b5cf6; }
+
+        /* Kepala lembar kerja bergaya kertas bergaris */
+        .kertas-head { background: #fffdf8; background-image: repeating-linear-gradient(transparent 0 27px, rgba(148,163,184,.2) 27px 28px); border-left: 3px solid #fca5a5; }
+
+        /* Kartu soal */
+        .q-card { background: #fff; border: 1px solid #e2e8f0; border-left: 5px solid var(--c, #0ea5e9); border-radius: 16px; box-shadow: 0 1px 3px rgba(15,23,42,.08); }
+        .q-no { width: 2rem; height: 2rem; border-radius: 9999px; background: var(--c, #0ea5e9); color: #fff; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+        /* Pilihan jawaban (tanpa animasi masuk, langsung kokoh) */
+        .opsi { display: flex; gap: .7rem; align-items: flex-start; width: 100%; text-align: left; padding: .7rem .8rem; border: 2px solid #e2e8f0; border-radius: .9rem; background: #fff; transition: background-color .12s, border-color .12s; position: relative; }
+        .opsi:active { background: #f8fafc; }
+        .opsi .huruf { width: 1.7rem; height: 1.7rem; flex-shrink: 0; border-radius: 9999px; background: #f1f5f9; color: #64748b; font-weight: 800; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+        .opsi .cek { display: none; margin-left: auto; color: #059669; font-size: 14px; padding-top: 4px; }
+        .opsi.sel { border-color: #059669; background: #ecfdf5; }
+        .opsi.sel .huruf { background: #059669; color: #fff; }
+        .opsi.sel .cek { display: block; }
+        .opsi.benar { border-color: #10b981; background: #ecfdf5; } .opsi.benar .huruf { background: #10b981; color: #fff; }
+        .opsi.salah { border-color: #fb7185; background: #fff1f2; } .opsi.salah .huruf { background: #fb7185; color: #fff; }
+        .tag { display: inline-block; font-size: 8.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; padding: 1px 7px; border-radius: 9999px; margin-left: 6px; vertical-align: middle; }
+        .tag-benar { background: #10b981; color: #fff; } .tag-salah { background: #fb7185; color: #fff; }
+
+        /* Tombol ragu-ragu */
+        .flag { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; padding: 5px 10px; border-radius: 9999px; border: 1.5px solid #e2e8f0; color: #94a3b8; background: #fff; }
+        .flag.on { border-color: #f59e0b; background: #fffbeb; color: #b45309; }
+
+        /* Navigator soal */
+        .nav-n { position: relative; height: 2.6rem; border-radius: .8rem; border: 2px solid #e2e8f0; background: #fff; font-weight: 800; font-size: 13px; color: #64748b; }
+        .nav-n.nav-a { background: #059669; border-color: #059669; color: #fff; }
+        .nav-n.nav-r { border-color: #f59e0b; }
+        .nav-n i { position: absolute; top: -6px; right: -4px; font-size: 10px; color: #f59e0b; background: #fff; border-radius: 9999px; padding: 2px; }
+
         .waktu-kritis { animation: dk 1s infinite; } @keyframes dk { 50% { background: #dc2626; } }
+
+        .bahas-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: .8rem; }
+    
+        .pil-lbl { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .3rem; padding: .7rem .4rem; border: 2px solid #e2e8f0; border-radius: .85rem; background: #fff; font-size: 11px; font-weight: 700; color: #64748b; transition: background-color .12s, border-color .12s, color .12s; }
+        .pil-lbl:active { background: #f8fafc; }
+        .pil-lbl.sel-tesis { border-color: #8b5cf6; background: #f5f3ff; color: #6d28d9; }
+        .pil-lbl.sel-argumen { border-color: #0ea5e9; background: #f0f9ff; color: #0369a1; }
+        .pil-lbl.sel-kesimpulan { border-color: #f59e0b; background: #fffbeb; color: #b45309; }
+        .kal-span { border-radius: 5px; padding: 1px 3px; cursor: pointer; }
+        .kal-span.hl-tesis { background: #ede9fe; color: #5b21b6; border-bottom: 2px solid #8b5cf6; }
+        .kal-span.hl-argumen { background: #e0f2fe; color: #075985; border-bottom: 2px solid #0ea5e9; }
+        .kal-span.hl-kesimpulan { background: #fef3c7; color: #92400e; border-bottom: 2px solid #f59e0b; }
     </style>
 </head>
 <body class="flex justify-center min-h-screen">
@@ -82,14 +127,35 @@
         <span id="hTimer" class="hidden shrink-0 bg-white text-brand-green px-3 py-1 rounded-full text-xs font-extrabold tabular-nums"><i class="far fa-clock mr-1"></i><span id="hTimerTxt">00:00</span></span>
     </header>
     <div id="barWaktu" class="hidden sticky top-14 z-40 h-1.5 bg-slate-300"><div id="barWaktuIsi" class="h-full bg-brand-green transition-all duration-500" style="width:100%"></div></div>
+
     <main id="main" class="flex-grow px-3 py-4"><div class="text-center py-16 text-slate-400"><i class="fas fa-circle-notch fa-spin text-2xl"></i></div></main>
-    <div id="bar" class="hidden sticky bottom-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200 p-3 flex items-center gap-3">
+
+    <div id="bar" class="hidden sticky bottom-0 z-40 bg-white border-t border-slate-200 p-3 flex items-center gap-2.5">
+        <button onclick="bukaNav()" class="shrink-0 w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center active:scale-95 transition relative" aria-label="Daftar Kalimat"><i class="fas fa-table-cells-large"></i><span id="barRagu" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-extrabold flex items-center justify-center">0</span></button>
         <div class="flex-1 min-w-0"><p id="barInfo" class="text-[11px] font-semibold text-slate-600"></p><div class="h-1.5 bg-slate-200 rounded-full overflow-hidden mt-1.5"><div id="barJawab" class="h-full bg-brand-green rounded-full transition-all" style="width:0"></div></div></div>
-        <button onclick="mintaKumpul()" class="shrink-0 bg-brand-green text-white font-bold px-5 py-3 rounded-xl text-xs shadow-md active:scale-95 transition"><i class="fas fa-paper-plane mr-1.5"></i>Kumpulkan</button>
+        <button onclick="mintaKumpul()" class="shrink-0 bg-brand-green text-white font-bold px-4 py-3 rounded-xl text-xs shadow-md active:scale-95 transition"><i class="fas fa-paper-plane mr-1.5"></i>Kumpulkan</button>
     </div>
 </div>
+
+<!-- NAVIGATOR SOAL -->
+<div id="sheet" class="fixed inset-0 bg-slate-900/60 z-[99998] hidden items-end sm:items-center justify-center" onclick="if(event.target===this) tutupNav()">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-slate-800 text-sm"><i class="fas fa-table-cells-large text-brand-green mr-1.5"></i>Daftar Kalimat</h3>
+            <button onclick="tutupNav()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center" aria-label="Tutup"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div class="flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-semibold text-slate-500 mb-3">
+            <span><i class="fas fa-square text-brand-green mr-1"></i>Sudah dilabeli</span>
+            <span><i class="far fa-square text-slate-400 mr-1"></i>Belum dijawab</span>
+            <span><i class="fas fa-flag text-amber-500 mr-1"></i>Ragu-ragu</span>
+        </div>
+        <div id="navGrid" class="grid grid-cols-5 gap-2.5 max-h-[50vh] overflow-y-auto p-1"></div>
+    </div>
+</div>
+
+<!-- MODAL KONFIRMASI -->
 <div id="modal" class="fixed inset-0 bg-slate-900/60 z-[99999] hidden items-end sm:items-center justify-center">
-    <div class="up bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5">
         <div id="mIkon" class="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-xl mx-auto mb-3"></div>
         <h3 id="mJudul" class="font-bold text-slate-800 text-center text-sm"></h3><p id="mKet" class="text-[11px] text-slate-500 text-center mt-1.5 leading-relaxed"></p>
         <div class="grid grid-cols-2 gap-2 mt-5"><button onclick="jawabModal(false)" id="mBatal" class="py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs">Batal</button><button onclick="jawabModal(true)" id="mOk" class="py-3 rounded-xl bg-brand-green text-white font-bold text-xs">Lanjutkan</button></div>
@@ -104,9 +170,17 @@ const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", p
 const db = getFirestore(app);
 window.db = db;
 
-const $ = id => document.getElementById(id), esc = L.esc;
-const LBL = { tesis: ['Tesis', 'violet', 'fa-lightbulb', 'Pernyataan utama/posisi'], argumen: ['Argumen', 'sky', 'fa-shield-halved', 'Bukti/alasan pendukung'], kesimpulan: ['Kesimpulan', 'amber', 'fa-flag-checkered', 'Penegasan ulang'] };
-const URUT_LBL = ['tesis', 'argumen', 'kesimpulan'];
+const $ = id => document.getElementById(id), esc = window.L.esc;
+const KEY = 'struktur';
+const JENIS = 'Bedah Struktur';
+const SATUAN = 'kalimat';
+const AKSI = 'dilabeli';
+const DEF_WAKTU = 60;
+const FALLBACK_WAKTU = 300;
+const PREFIX_FILE = 'Hasil-Struktur';
+
+const TKT = { mudah: ['Mudah', 'emerald', 'fa-seedling'], sedang: ['Sedang', 'sky', 'fa-gauge'], sulit: ['Sulit', 'amber', 'fa-mountain'], hots: ['HOTS', 'rose', 'fa-fire'] };
+const TKT_HEX = { mudah: '#10b981', sedang: '#0ea5e9', sulit: '#f59e0b', hots: '#f43f5e' };
 const NAV_BAGIAN = [
     ['pilgan', 'Pilihan Ganda', 'pilgan.html', 'fa-circle-check', 'blue'],
     ['struktur', 'Bedah Struktur', 'struktur.html', 'fa-layer-group', 'amber'],
@@ -122,25 +196,34 @@ const qsParams = new URLSearchParams(window.location.search);
 const classId = qsParams.get('id') || '';
 const studentId = qsParams.get('sid') || localStorage.getItem('studentId') || localStorage.getItem('siswa_' + classId) || '';
 
-window.normSoal = function(arr) {
-    return (arr || []).map((s, i) => ({
-        id: i,
-        k: s.t || s.teks || '', 
-        j: String(s.label || '').toLowerCase(), 
-        bahas: s.alasan || s.bahas || ''
-    }));
-};
+function urlKembali() {
+    const qs = new URLSearchParams();
+    if (classId) qs.set('id', classId);
+    if (studentId) qs.set('sid', studentId);
+    return '../ruang_belajar_siswa.html' + (qs.toString() ? '?' + qs.toString() : '');
+}
+const tglIndo = (t) => new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
 window.modal = (judul, ket, ok, batal, ikon) => new Promise(r => { window.resolveM = r; $('mJudul').textContent = judul; $('mKet').textContent = ket; $('mOk').textContent = ok || 'Lanjutkan'; $('mBatal').textContent = batal || 'Batal'; $('mIkon').innerHTML = '<i class="fas ' + (ikon || 'fa-triangle-exclamation') + '"></i>'; $('modal').classList.replace('hidden', 'flex'); });
 window.jawabModal = v => { $('modal').classList.replace('flex', 'hidden'); if (window.resolveM) { window.resolveM(v); window.resolveM = null; } };
-window.badge = t => { const arr = LBL[t] || LBL.tesis; return '<span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-' + arr[1] + '-100 text-' + arr[1] + '-700"><i class="fas ' + arr[2] + '"></i>' + arr[0] + '</span>'; };
+window.badgeTk = t => { const arr = TKT[t] || TKT.sedang; return '<span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-' + arr[1] + '-100 text-' + arr[1] + '-700"><i class="fas ' + arr[2] + '"></i>' + arr[0] + '</span>'; };
 
+/* ===== KIRIM HASIL KE SERVER (tidak menahan tampilan hasil) ===== */
+async function kirimServer() {
+    const R = window.H && window.H.hasil && window.H.hasil[KEY];
+    if (!R || R.sync || !studentId || !classId) return;
+    try {
+        await setDoc(doc(db, `classes/${classId}/students`, studentId), { latihan: { [KEY]: R } }, { merge: true });
+        R.sync = true; L.simpan(true);
+    } catch (e) {
+        console.warn('Gagal menyimpan hasil ke server (akan dicoba lagi saat halaman dibuka):', e);
+    }
+}
+
+/* ===== INISIALISASI ===== */
 async function initLatihan() {
     await L.siap();
-    
-    let backUrl = '../ruang_belajar_siswa.html';
-    if(classId) backUrl += '?id=' + encodeURIComponent(classId);
-    if(studentId) backUrl += '&sid=' + encodeURIComponent(studentId);
+    const backUrl = urlKembali();
     $('btnBack').href = backUrl;
 
     let H = L.hari();
@@ -152,7 +235,7 @@ async function initLatihan() {
         L.simpan(true);
     }
 
-    if (!H.pack || !H.pack.struktur) {
+    if (!H.pack || !H.pack[KEY]) {
         try {
             const docSnap = await getDoc(doc(db, "classes", classId));
             if (docSnap.exists() && docSnap.data().aiPaket) {
@@ -160,10 +243,10 @@ async function initLatihan() {
                 H.spin = { judul: docSnap.data().namaKelas, ts: Date.now() };
                 L.simpan(true);
             }
-        } catch(e) { console.error("Firebase error:", e); }
+        } catch (e) { console.error("Firebase error:", e); }
     }
 
-    if (!H || !H.pack || !H.pack.struktur) {
+    if (!H || !H.pack || !H.pack[KEY]) {
         $('main').innerHTML = [
             '<div class="bg-white rounded-2xl p-8 text-center border border-slate-200 mt-10">',
             '<i class="fas fa-exclamation-triangle text-4xl text-slate-300 mb-3"></i>',
@@ -176,162 +259,122 @@ async function initLatihan() {
     }
 
     window.H = H;
-    window.P = H.pack.struktur;
-    const dataSource = window.P.teks || window.P.soal || [];
-    window.soal = window.normSoal(dataSource);
-    window.totalWaktu = window.P.total || window.P.waktu || window.soal.reduce((a, b) => a + (b.waktu || 60), 0) || 300;
-    if($('hSub')) $('hSub').textContent = H.spin.judul || 'Bedah Struktur';
-    if (H.hasil && H.hasil.struktur) return window.tampilHasil();
-    if (H.sesi && H.sesi.struktur) { 
-        window.sesi = H.sesi.struktur; 
-        return Date.now() >= window.sesi.batas ? window.kumpulkan(true) : window.renderUjian(); 
+    window.P = H.pack[KEY];
+    window.soal = window.normSoal(window.P);
+    window.totalWaktu = window.P.total || window.P.waktu || window.soal.reduce((a, b) => a + (b.waktu || DEF_WAKTU), 0) || FALLBACK_WAKTU;
+    if ($('hSub')) $('hSub').textContent = (H.spin && H.spin.judul) || JENIS;
+
+    if (H.hasil && H.hasil[KEY]) return window.tampilHasil();
+    if (H.sesi && H.sesi[KEY]) {
+        window.sesi = H.sesi[KEY];
+        return Date.now() >= window.sesi.batas ? window.kumpulkan(true) : window.renderUjian();
     }
     window.tampilIntro();
 }
 
-window.tampilIntro = function() {
-    let html = [
-        '<div class="up bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mt-4">',
-        '<div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-2xl mx-auto"><i class="fas fa-layer-group"></i></div>',
-        '<h2 class="text-center font-extrabold text-slate-800 text-base mt-3">Bedah Struktur Argumentasi</h2>',
-        '<p class="text-center text-[11px] text-slate-500 mt-1 leading-relaxed">Analisis peran setiap kalimat dari materi <b>' + esc(window.H.spin.judul) + '</b>.</p>',
-        '<div class="grid grid-cols-2 gap-2.5 mt-5">',
-        '<div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-2xl font-extrabold text-slate-800">' + window.soal.length + '</p><p class="text-[10px] text-slate-500 font-semibold">Kalimat</p></div>',
-        '<div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-2xl font-extrabold text-slate-800">' + L.menit(window.totalWaktu) + '</p><p class="text-[10px] text-slate-500 font-semibold">Menit total</p></div>',
-        '</div>',
-        '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-5 mb-2">3 Bagian Struktur</p>',
-        '<div class="space-y-2">'
-    ];
-    
-    URUT_LBL.forEach(k => {
-        html.push('<div class="flex items-center gap-2.5 bg-slate-50 rounded-xl p-2.5">' + badge(k) + '<span class="text-[11px] text-slate-600">' + LBL[k][3] + '</span></div>');
-    });
-    
-    html.push('</div><ul class="mt-5 space-y-2 text-[11px] text-slate-600 leading-relaxed">');
-    html.push('<li class="flex gap-2"><i class="fas fa-highlighter text-amber-500 mt-0.5"></i><span>Baca wacana secara utuh di bagian atas, lalu tentukan apakah tiap kalimat merupakan <b>Tesis</b>, <b>Argumen</b>, atau <b>Kesimpulan</b>.</span></li>');
-    html.push('<li class="flex gap-2"><i class="fas fa-lock text-rose-500 mt-0.5"></i><span><b>Hanya bisa dikerjakan 1 kali.</b> Waktu terus berjalan walau halaman ditutup.</span></li>');
-    html.push('</ul><button onclick="mulai()" class="mt-6 w-full bg-brand-green text-white font-bold py-3.5 rounded-xl shadow-md text-sm active:scale-95 transition"><i class="fas fa-play mr-1.5"></i>Mulai Bedah Struktur</button></div>');
-    
-    $('main').innerHTML = html.join('');
-}
-
 window.mulai = async function() {
     if (!(await modal('Mulai sekarang?', 'Waktu langsung berjalan dan latihan ini tidak bisa diulang.', 'Mulai', 'Belum', 'fa-play'))) return;
-    const t = Date.now(); 
-    window.H.sesi.struktur = window.sesi = { mulai: t, batas: t + window.totalWaktu * 1000, jawab: {}, keluar: 0 }; 
-    L.simpan(); 
-    renderUjian(); 
+    const t = Date.now();
+    window.H.sesi[KEY] = window.sesi = { mulai: t, batas: t + window.totalWaktu * 1000, jawab: {}, ragu: {}, keluar: 0 };
+    L.simpan();
+    window.renderUjian();
     window.scrollTo({ top: 0 });
 };
 
-window.renderUjian = function() {
-    window.aktif = true; $('hTimer').classList.remove('hidden'); $('barWaktu').classList.remove('hidden'); $('bar').classList.remove('hidden'); $('btnBack').onclick = e => { e.preventDefault(); L.toast('Ujian sedang berjalan. Selesaikan atau kumpulkan dulu.', true); };
-    
-    let html = [
-        '<div class="kertas up p-4 pl-5 mb-4">',
-        '<p class="text-center text-[10px] font-extrabold tracking-[.25em] text-slate-500">LEMBAR KERJA</p>',
-        '<h2 class="text-center font-reading font-bold text-slate-800 text-[15px] mt-1">' + esc(window.P.judul || 'Bedah Struktur Teks Argumentasi') + '</h2>',
-        '<div class="mt-3 text-[11px] text-slate-600 space-y-0.5">',
-        '<p><b class="inline-block w-14">Nama</b>: ' + esc(L.nama()) + '</p>',
-        '<p><b class="inline-block w-14">Materi</b>: ' + esc(window.H.spin.judul) + '</p>',
-        '<p><b class="inline-block w-14">Petunjuk</b>: Pilih label struktur yang tepat untuk setiap kalimat.</p>',
-        '</div><div class="mt-3 pt-3 border-t border-slate-200/80">',
-        '<p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5"><i class="fas fa-book-open mr-1"></i>Pratinjau Wacana Utuh (Ketuk kalimat untuk melompat)</p>',
-        '<p id="wacanaUtuh" class="font-reading text-[12px] text-slate-700 leading-[1.9] bg-white/80 p-3 rounded-lg border border-slate-200/70">'
-    ];
-    
+/* ===== BAGIAN UMUM LEMBAR KERJA ===== */
+window.siapkanUjian = function() {
+    window.aktif = true;
+    window.sesi.ragu = window.sesi.ragu || {};
+    $('hTimer').classList.remove('hidden'); $('barWaktu').classList.remove('hidden'); $('bar').classList.remove('hidden');
+    $('btnBack').onclick = e => { e.preventDefault(); L.toast('Ujian sedang berjalan. Selesaikan atau kumpulkan dulu.', true); };
+    $('navGrid').onclick = e => {
+        const b = e.target.closest('[data-go]'); if (!b) return;
+        tutupNav();
+        const el = $('q' + b.dataset.go);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+};
+
+// Tombol ragu-ragu; mengembalikan true bila klik ditangani
+window.tanganiFlag = function(e) {
+    const fl = e.target.closest('.flag');
+    if (!fl) return false;
+    const i = +fl.dataset.flag;
+    if (window.sesi.ragu[i]) delete window.sesi.ragu[i]; else window.sesi.ragu[i] = 1;
+    fl.classList.toggle('on', !!window.sesi.ragu[i]);
+    L.simpan(); window.hitungJawab();
+    return true;
+};
+window.flagHtml = function(i) { return '<button class="flag ml-auto' + (window.sesi.ragu[i] ? ' on' : '') + '" data-flag="' + i + '"><i class="fas fa-flag"></i><span>Ragu</span></button>'; };
+
+window.hitungJawab = function() {
+    const n = window.soal.filter((s, i) => window.isAnswered(i)).length;
+    $('barInfo').textContent = n + ' dari ' + window.soal.length + ' ' + SATUAN + ' ' + AKSI;
+    $('barJawab').style.width = (n / window.soal.length * 100) + '%';
+    const r = Object.keys(window.sesi.ragu || {}).length, br = $('barRagu');
+    br.textContent = r; br.classList.toggle('hidden', r === 0);
+};
+
+window.bukaNav = function() {
+    let h = '';
     window.soal.forEach((s, i) => {
-        let sel = window.sesi.jawab[i] ? ' hl-' + window.sesi.jawab[i] : '';
-        html.push('<span id="sp' + i + '" onclick="lompat(' + i + ')" class="kal-span' + sel + '"><b>[' + (i + 1) + ']</b> ' + esc(s.k) + '</span> ');
+        const a = window.isAnswered(i), r = !!(window.sesi.ragu && window.sesi.ragu[i]);
+        h += '<button data-go="' + i + '" class="nav-n' + (a ? ' nav-a' : '') + (r ? ' nav-r' : '') + '">' + (i + 1) + (r ? '<i class="fas fa-flag"></i>' : '') + '</button>';
     });
-    
-    html.push('</p></div></div><div id="daftar" class="space-y-3.5">');
-    
-    window.soal.forEach((s, i) => {
-        let lblStat = window.sesi.jawab[i] ? badge(window.sesi.jawab[i]) : '<span class="text-[10px] text-slate-400 font-semibold">Belum dilabeli</span>';
-        html.push('<article id="q' + i + '" class="kertas p-4 pl-5">');
-        html.push('<div class="flex items-center justify-between mb-2"><span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-slate-700"><span class="w-6 h-6 rounded-full bg-slate-800 text-white text-[11px] flex items-center justify-center">' + (i + 1) + '</span>Kalimat ke-' + (i + 1) + '</span><span id="st' + i + '">' + lblStat + '</span></div>');
-        html.push('<p class="font-reading text-[13px] text-slate-800 leading-[1.8] mb-3">' + esc(s.k) + '</p><div class="grid grid-cols-3 gap-2">');
-        
-        URUT_LBL.forEach(k => {
-            let sSel = window.sesi.jawab[i] === k ? ' sel-' + k : '';
-            html.push('<button class="pil-lbl' + sSel + '" data-i="' + i + '" data-k="' + k + '"><i class="fas ' + LBL[k][2] + ' text-sm"></i><span>' + LBL[k][0] + '</span></button>');
-        });
-        
-        html.push('</div></article>');
-    });
-    
-    html.push('</div><div class="h-6"></div>');
-    $('main').innerHTML = html.join('');
-
-    $('daftar').addEventListener('click', e => {
-        const b = e.target.closest('.pil-lbl'); if (!b || !window.aktif) return;
-        const i = +b.dataset.i, k = b.dataset.k;
-        window.sesi.jawab[i] = k; 
-        L.simpan();
-        b.parentElement.querySelectorAll('.pil-lbl').forEach(x => x.className = 'pil-lbl');
-        b.classList.add('sel-' + k);
-        $('st' + i).innerHTML = badge(k);
-        const sp = $('sp' + i); if (sp) sp.className = 'kal-span hl-' + k;
-        if (navigator.vibrate) navigator.vibrate(8);
-        hitungJawab();
-    });
-    
-    hitungJawab(); jalankanWaktu();
-}
-
-window.lompat = i => { const el = $('q' + i); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
-
-window.hitungJawab = function() { const n = Object.keys(window.sesi.jawab).length; $('barInfo').textContent = n + ' dari ' + window.soal.length + ' kalimat dilabeli'; $('barJawab').style.width = (n / window.soal.length * 100) + '%'; }
+    $('navGrid').innerHTML = h;
+    $('sheet').classList.replace('hidden', 'flex');
+};
+window.tutupNav = function() { $('sheet').classList.replace('flex', 'hidden'); };
 
 window.jalankanWaktu = function() {
     const tot = window.sesi.batas - window.sesi.mulai; clearInterval(window.timer);
-    const tik = () => { const sisa = Math.ceil((window.sesi.batas - Date.now()) / 1000); $('hTimerTxt').textContent = L.fmt(sisa); $('barWaktuIsi').style.width = Math.max(0, (window.sesi.batas - Date.now()) / tot * 100) + '%';
-        const krit = sisa <= 60 || (window.sesi.batas - Date.now()) / tot < .1; $('hTimer').classList.toggle('waktu-kritis', krit); $('hTimer').classList.toggle('text-white', krit); $('hTimer').classList.toggle('text-brand-green', !krit); $('barWaktuIsi').className = 'h-full transition-all duration-500 ' + (krit ? 'bg-red-500' : 'bg-brand-green');
-        if (sisa <= 0) kumpulkan(true); };
+    const tik = () => {
+        const sisa = Math.ceil((window.sesi.batas - Date.now()) / 1000);
+        $('hTimerTxt').textContent = L.fmt(sisa);
+        $('barWaktuIsi').style.width = Math.max(0, (window.sesi.batas - Date.now()) / tot * 100) + '%';
+        const krit = sisa <= 60 || (window.sesi.batas - Date.now()) / tot < .1;
+        $('hTimer').classList.toggle('waktu-kritis', krit); $('hTimer').classList.toggle('text-white', krit); $('hTimer').classList.toggle('text-brand-green', !krit);
+        $('barWaktuIsi').className = 'h-full transition-all duration-500 ' + (krit ? 'bg-red-500' : 'bg-brand-green');
+        if (sisa <= 0) window.kumpulkan(true);
+    };
     tik(); window.timer = setInterval(tik, 400);
-}
+};
 
 window.addEventListener('beforeunload', e => { if (window.aktif) { e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('pagehide', () => { if (window.aktif && window.sesi) L.simpan(); });
 document.addEventListener('visibilitychange', () => { if (window.aktif && document.hidden && window.sesi) { window.sesi.keluar = (window.sesi.keluar || 0) + 1; L.simpan(); } });
 
 window.mintaKumpul = async function() {
-    const sisa = window.soal.length - Object.keys(window.sesi.jawab).length;
-    if (await modal('Kumpulkan hasil struktur?', sisa ? 'Masih ada ' + sisa + ' kalimat belum dilabeli. Setelah dikumpulkan, jawaban tidak bisa diubah.' : 'Semua kalimat sudah dilabeli. Setelah dikumpulkan, jawaban tidak bisa diubah.', 'Kumpulkan', 'Periksa Lagi', 'fa-paper-plane')) kumpulkan(false);
+    const sisa = window.soal.filter((s, i) => !window.isAnswered(i)).length;
+    const ragu = Object.keys(window.sesi.ragu || {}).length;
+    let ket = sisa ? 'Masih ada ' + sisa + ' ' + SATUAN + ' yang belum selesai. ' : 'Semua ' + SATUAN + ' sudah dikerjakan. ';
+    if (ragu) ket += 'Ada ' + ragu + ' yang kamu tandai ragu-ragu. ';
+    ket += 'Setelah dikumpulkan, jawaban tidak bisa diubah.';
+    if (await modal('Kumpulkan jawaban?', ket, 'Kumpulkan', 'Periksa Lagi', 'fa-paper-plane')) window.kumpulkan(false);
 };
 
-window.kumpulkan = async function(auto) { 
-    if (window.H.hasil.struktur) return; 
-    window.aktif = false; clearInterval(window.timer); 
-    const jawab = window.sesi.jawab; 
-    let benar = 0;
-    
-    benar = window.soal.filter((s, i) => jawab[i] === s.j).length;
-    let skor = Math.round(benar / window.soal.length * 100);
-    
-    const xp = Math.round(skor / 4) + (skor >= 80 ? 10 : 0); 
-    window.L.tambahXp(xp); 
-    
-    window.H.hasil.struktur = { skor: skor, benar: benar, total: window.soal.length, jawab: jawab, durasi: Math.round((Math.min(Date.now(), window.sesi.batas) - window.sesi.mulai) / 1000), batas: window.totalWaktu, selesai: Date.now(), auto: !!auto, keluar: window.sesi.keluar || 0, xp: xp }; 
-    
-    delete window.H.sesi.struktur;
-    L.simpan(); 
-    
-    if (studentId && classId) {
-        try {
-            await setDoc(doc(db, `classes/${classId}/students`, studentId), { latihan: { struktur: window.H.hasil.struktur } }, { merge: true });
-        } catch(e) {}
-    }
+window.kumpulkan = async function(auto) {
+    if (window.H.hasil[KEY]) return;
+    window.aktif = false; clearInterval(window.timer); tutupNav();
+    const jawab = window.sesi.jawab;
+    const h = window.hitungSkor(jawab);
+    window.L.tambahXp(h.xp);
 
-    $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden');$('bar').classList.add('hidden'); 
-    let backUrl = '../ruang_belajar_siswa.html';
-    if(classId) backUrl += '?id=' + encodeURIComponent(classId);
-    if(studentId) backUrl += '&sid=' + encodeURIComponent(studentId);
-    $('btnBack').onclick = null; $('btnBack').href = backUrl; 
+    window.H.hasil[KEY] = { skor: h.skor, benar: h.benar, total: window.soal.length, jawab: jawab, durasi: Math.round((Math.min(Date.now(), window.sesi.batas) - window.sesi.mulai) / 1000), batas: window.totalWaktu, selesai: Date.now(), auto: !!auto, keluar: window.sesi.keluar || 0, xp: h.xp };
+    delete window.H.sesi[KEY];
+    L.simpan();
 
-    if (auto) window.L.toast('Waktu habis. Jawabanmu otomatis dikumpulkan.', true); 
-    window.tampilHasil(true); 
-}
+    $('btnBack').onclick = null; $('btnBack').href = urlKembali();
+    if (auto) window.L.toast('Waktu habis. Jawabanmu otomatis dikumpulkan.', true);
+    window.tampilHasil(true);
+};
+
+/* ===== HALAMAN HASIL: BAGIAN UMUM ===== */
+window.sembunyikanUjian = function() {
+    window.aktif = false;
+    $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden');
+    $('btnBack').onclick = null; $('btnBack').href = urlKembali();
+};
 
 window.navLatihanHtml = function() {
     let q = '?id=' + encodeURIComponent(classId);
@@ -339,73 +382,394 @@ window.navLatihanHtml = function() {
     let navHtml = '<div class="bg-white rounded-2xl border border-slate-200 p-4 mt-3"><h3 class="font-bold text-slate-800 text-xs mb-2.5"><i class="fas fa-compass text-brand-green mr-1.5"></i>Latihan Lainnya</h3><div class="grid grid-cols-2 gap-2">';
     NAV_BAGIAN.forEach(item => {
         const k = item[0], n = item[1], url = item[2], ic = item[3], c = item[4];
-        const hs = window.H.hasil[k], cur = k === 'struktur';
+        const hs = window.H.hasil[k], cur = k === KEY;
         navHtml += '<a href="' + url + q + '" class="flex items-center gap-2.5 p-2.5 rounded-xl border ' + (cur ? 'border-brand-green bg-emerald-50/60' : 'border-slate-100 bg-slate-50 hover:border-slate-300') + ' transition"><div class="w-8 h-8 rounded-lg bg-' + c + '-100 text-' + c + '-600 flex items-center justify-center text-xs shrink-0"><i class="fas ' + ic + '"></i></div><div class="min-w-0 flex-1"><p class="font-bold text-[11px] text-slate-800 truncate">' + n + '</p><p class="text-[9px] font-semibold ' + (hs ? 'text-emerald-600' : 'text-slate-400') + '">' + (hs ? 'Selesai' : 'Siap dikerjakan') + '</p></div></a>';
     });
     navHtml += '</div></div>';
     return navHtml;
+};
+
+window.raporHtml = function(R) {
+    return [
+        '<div class="bg-white rounded-2xl border border-slate-200 mt-3 overflow-hidden">',
+        '<div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200"><h3 class="font-bold text-slate-800 text-xs"><i class="fas fa-id-card text-brand-green mr-1.5"></i>Rapor Tugas</h3></div>',
+        '<div class="p-4 text-[11px] text-slate-600 space-y-1.5">',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Nama</b><span class="mr-1">:</span><span class="font-semibold text-slate-800 break-words min-w-0">' + esc(L.nama()) + '</span></p>',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Jenis tugas</b><span class="mr-1">:</span><span>' + esc(JENIS) + '</span></p>',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Materi</b><span class="mr-1">:</span><span class="break-words min-w-0">' + esc(window.H.spin.judul) + '</span></p>',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Tanggal</b><span class="mr-1">:</span><span>' + esc(tglIndo(R.selesai)) + '</span></p>',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Waktu</b><span class="mr-1">:</span><span>' + L.fmt(R.durasi) + ' dari ' + L.fmt(R.batas) + '</span></p>',
+        R.keluar ? '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Keluar halaman</b><span class="mr-1">:</span><span>' + R.keluar + ' kali</span></p>' : '',
+        '</div>',
+        '<div class="px-4 pb-4"><button onclick="unduhPdf()" class="w-full bg-rose-500 text-white font-bold py-3.5 rounded-xl shadow-md text-xs active:scale-95 transition"><i class="fas fa-file-pdf mr-1.5"></i>Unduh Hasil &amp; Pembahasan (PDF)</button></div>',
+        '</div>'
+    ].join('');
+};
+
+window.statHtml = function(arr) {
+    return '<div class="grid grid-cols-' + arr.length + ' gap-2 mt-3">' + arr.map(x => '<div class="bg-white rounded-xl p-2.5 text-center border border-slate-200"><p class="text-lg font-extrabold ' + x[2] + '">' + x[0] + '</p><p class="text-[9px] font-semibold text-slate-500">' + x[1] + '</p></div>').join('') + '</div>';
+};
+
+window.efekHasil = function(baru, tingkat) {
+    window.scrollTo({ top: 0 });
+    if (baru) {
+        try {
+            if (tingkat === 'great') { L.beep('ok'); setTimeout(() => window.confetti && confetti({ particleCount: 140, spread: 80, origin: { y: .4 }, zIndex: 100001 }), 400); }
+            else L.beep(tingkat === 'ok' ? 'ok' : 'err');
+        } catch (e) {}
+    }
+    kirimServer();
+};
+
+/* ===== PDF (pdfMake, teks asli) ===== */
+const WR = { gelap: '#064e3b', hijau: '#059669', hijauMuda: '#d1fae5', merah: '#e11d48', merahMuda: '#ffe4e6', amber: '#d97706', amberMuda: '#fffbeb', abu: '#64748b', garis: '#e2e8f0', latar: '#f8fafc', biruMuda: '#e0f2fe', biru: '#0369a1' };
+const pdfLbl = t => ({ text: t, fontSize: 7.5, bold: true, color: '#ffffff', fillColor: WR.hijau, margin: [7, 5, 7, 5] });
+const pdfVal = t => ({ text: String(t), bold: true, fontSize: 10, color: WR.gelap, fillColor: WR.latar, margin: [7, 7, 7, 7] });
+const layoutKotak = { hLineWidth: () => 0.7, vLineWidth: () => 0.7, hLineColor: () => WR.hijau, vLineColor: () => '#ffffff', paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 };
+const noPad = { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 };
+const pdfJudul = t => ({ stack: [{ text: t, bold: true, fontSize: 12, color: WR.gelap }, { canvas: [{ type: 'line', x1: 0, y1: 3, x2: 523, y2: 3, lineWidth: 1.2, lineColor: WR.hijau }] }], margin: [0, 16, 0, 8] });
+const pdfSel = (label, nilai, fill, warnaTeks, ukuran) => ({ fillColor: fill, margin: [7, 8, 7, 8], stack: [
+    { text: label, fontSize: 7.5, bold: true, color: warnaTeks, characterSpacing: 0.5 },
+    { text: String(nilai), fontSize: ukuran || 16, bold: true, color: warnaTeks, margin: [0, 2, 0, 0] }
+] });
+const pdfTh = t => ({ text: t, bold: true, fontSize: 8.5, color: '#ffffff', fillColor: WR.gelap, margin: [7, 5, 7, 5] });
+const layoutTipis = { hLineWidth: () => 0.6, vLineWidth: () => 0.6, hLineColor: () => WR.garis, vLineColor: () => WR.garis, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 };
+const pdfBar = (p, warna) => ({ width: 110, canvas: [{ type: 'rect', x: 0, y: 3, w: 110, h: 7, r: 3, color: WR.garis }, { type: 'rect', x: 0, y: 3, w: Math.max(0.1, 110 * p / 100), h: 7, r: 3, color: warna }] });
+
+function pdfBanner() {
+    return { table: { widths: ['*'], body: [[{ stack: [
+        { text: 'LEMBAR HASIL LATIHAN', fontSize: 8.5, bold: true, color: '#a7f3d0', characterSpacing: 2 },
+        { text: JENIS, fontSize: 22, bold: true, color: '#ffffff', margin: [0, 3, 0, 2] },
+        { text: 'Ruang Belajar Argumentasi', fontSize: 9.5, color: '#d1fae5' }
+    ], fillColor: WR.gelap, margin: [18, 16, 18, 16] }]] }, layout: 'noBorders' };
+}
+function pdfIdentitas(R) {
+    return { margin: [0, 12, 0, 0], table: { widths: ['*', '*', '*', '*'], body: [
+        [pdfLbl('NAMA SISWA'), pdfLbl('JENIS TUGAS'), pdfLbl('MATERI'), pdfLbl('TANGGAL')],
+        [pdfVal(L.nama()), pdfVal(JENIS), pdfVal((window.H.spin && window.H.spin.judul) || '-'), pdfVal(tglIndo(R.selesai))]
+    ] }, layout: layoutKotak };
+}
+// Kartu satu butir; rows = baris tabel; warna = warna garis tepi
+function pdfKartu(warna, rows, tahan) {
+    const o = { margin: [0, 0, 0, 12], table: { dontBreakRows: true, widths: ['*'], body: rows }, layout: { hLineWidth: () => 0.8, vLineWidth: () => 0.8, hLineColor: () => warna, vLineColor: () => warna, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 } };
+    if (tahan) o.unbreakable = true;
+    return o;
+}
+function pdfKepala(warna, kiri, kanan) {
+    return [{ fillColor: warna, margin: [10, 6, 10, 6], columns: [
+        { text: kiri, bold: true, fontSize: 9, color: '#ffffff' },
+        { text: kanan, bold: true, fontSize: 9, color: '#ffffff', alignment: 'right' }
+    ] }];
+}
+function pdfDoc(content) {
+    const nama = L.nama();
+    content.push({ text: 'Dokumen ini dibuat otomatis oleh Argumentasi App pada ' + tglIndo(Date.now()) + '.', fontSize: 8, color: WR.abu, alignment: 'center', margin: [0, 8, 0, 0] });
+    return {
+        info: { title: 'Hasil Latihan ' + JENIS + ' - ' + nama, author: 'Argumentasi App', subject: (window.H.spin && window.H.spin.judul) || '' },
+        pageSize: 'A4', pageMargins: [36, 36, 36, 46],
+        defaultStyle: { fontSize: 10, lineHeight: 1.2, color: '#334155' },
+        footer: (cur, total) => ({ columns: [
+            { text: 'Argumentasi App  •  ' + nama + '  •  ' + JENIS, fontSize: 8, color: WR.abu, margin: [36, 0, 0, 0] },
+            { text: 'Halaman ' + cur + ' dari ' + total, fontSize: 8, color: WR.abu, alignment: 'right', margin: [0, 0, 36, 0] }
+        ], margin: [0, 18, 0, 0] }),
+        content
+    };
 }
 
+window.unduhPdf = function() {
+    if (typeof pdfMake === 'undefined') { L.toast('Pustaka PDF belum termuat. Periksa koneksi lalu coba lagi.', true); return; }
+    try {
+        const R = window.H.hasil[KEY];
+        const d = new Date(R.selesai);
+        const tgl = d.getFullYear() + '-' + L.pad(d.getMonth() + 1) + '-' + L.pad(d.getDate());
+        const nama = (PREFIX_FILE + '_' + L.nama() + '_' + tgl + '.pdf').replace(/[^\w\-.]+/g, '_');
+        pdfMake.createPdf(window.buatDokumenPdf()).download(nama);
+        L.toast('PDF sedang diunduh…');
+    } catch (e) {
+        console.error(e);
+        L.toast('Gagal membuat PDF.', true);
+    }
+};
+
+
+/* ===== KHUSUS BEDAH STRUKTUR ===== */
+const LBL = {
+    tesis: ['Tesis', 'violet', 'fa-lightbulb', 'Pernyataan utama / posisi penulis'],
+    argumen: ['Argumen', 'sky', 'fa-shield-halved', 'Bukti atau alasan pendukung'],
+    kesimpulan: ['Kesimpulan', 'amber', 'fa-flag-checkered', 'Penegasan ulang / penutup']
+};
+const URUT_LBL = ['tesis', 'argumen', 'kesimpulan'];
+const LBL_HEX = { tesis: '#8b5cf6', argumen: '#0ea5e9', kesimpulan: '#f59e0b' };
+const LBL_GELAP = { tesis: '#5b21b6', argumen: '#075985', kesimpulan: '#92400e' };
+const LBL_MUDA = { tesis: '#ede9fe', argumen: '#e0f2fe', kesimpulan: '#fef3c7' };
+
+// Label dari data bisa berbeda tulisan (mis. "Penegasan Ulang"); samakan ke tiga jenis baku
+function normLabel(x) {
+    const s = String(x || '').toLowerCase();
+    if (/tesis|pernyataan|pendapat|posisi/.test(s)) return 'tesis';
+    if (/kesimpul|simpul|penegas|penutup|ulang/.test(s)) return 'kesimpulan';
+    return 'argumen';
+}
+window.badgeLbl = t => { const a = LBL[t] || LBL.tesis; return '<span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-' + a[1] + '-100 text-' + a[1] + '-700"><i class="fas ' + a[2] + '"></i>' + a[0] + '</span>'; };
+
+window.normSoal = function(P) {
+    const arr = P.teks || P.soal || [];
+    return arr.map((s, i) => ({
+        id: i,
+        k: typeof s === 'string' ? s : (s.t || s.teks || ''),
+        j: normLabel(typeof s === 'string' ? '' : s.label),
+        bahas: typeof s === 'string' ? '' : (s.alasan || s.bahas || s.pembahasan || '')
+    }));
+};
+window.isAnswered = i => !!(window.sesi && window.sesi.jawab[i]);
+window.hitungSkor = function(jawab) {
+    const benar = window.soal.filter((s, i) => jawab[i] === s.j).length;
+    const skor = Math.round(benar / window.soal.length * 100);
+    return { skor, benar, xp: Math.round(skor / 4) + (skor >= 80 ? 10 : 0) };
+};
+
+/* ===== INTRO ===== */
+window.tampilIntro = function() {
+    const html = [
+        '<div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mt-2">',
+        '<div class="px-5 py-6 text-center text-white" style="background:linear-gradient(135deg,#064e3b,#059669 65%,#34d399)">',
+        '<div class="w-16 h-16 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center text-3xl mx-auto"><i class="fas fa-layer-group"></i></div>',
+        '<p class="text-[10px] font-bold tracking-[.25em] text-white/70 mt-3">LEMBAR KERJA</p>',
+        '<h2 class="font-extrabold text-lg leading-tight mt-0.5">Bedah Struktur Argumentasi</h2>',
+        '<p class="text-[11px] text-white/80 mt-1.5 leading-relaxed">Materi: <b>' + esc(window.H.spin.judul) + '</b></p>',
+        '</div><div class="p-5">',
+        '<div class="grid grid-cols-3 gap-2.5">',
+        '<div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-xl font-extrabold text-slate-800">' + window.soal.length + '</p><p class="text-[10px] text-slate-500 font-semibold">Kalimat</p></div>',
+        '<div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-xl font-extrabold text-slate-800">' + L.menit(window.totalWaktu) + '</p><p class="text-[10px] text-slate-500 font-semibold">Menit</p></div>',
+        '<div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-xl font-extrabold text-amber-500">100</p><p class="text-[10px] text-slate-500 font-semibold">Skor maks</p></div>',
+        '</div>',
+        '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-5 mb-2">3 bagian struktur</p><div class="space-y-2">'
+    ];
+    URUT_LBL.forEach(k => html.push('<div class="flex items-center gap-2.5 bg-slate-50 rounded-xl p-2.5">' + badgeLbl(k) + '<span class="text-[11px] text-slate-600">' + LBL[k][3] + '</span></div>'));
+    html.push('</div><ul class="mt-5 space-y-2.5 text-[11px] text-slate-600 leading-relaxed">');
+    html.push('<li class="flex gap-2.5"><i class="fas fa-highlighter text-amber-500 mt-0.5 w-4 text-center"></i><span>Baca <b>wacana utuh</b>, lalu tentukan peran tiap kalimat. Warna di wacana ikut berubah saat kamu memilih label.</span></li>');
+    html.push('<li class="flex gap-2.5"><i class="fas fa-lightbulb text-emerald-500 mt-0.5 w-4 text-center"></i><span>Setelah selesai, <b>peta wacana dan pembahasan langsung muncul</b> dan bisa diunduh sebagai PDF.</span></li>');
+    html.push('<li class="flex gap-2.5"><i class="fas fa-lock text-rose-500 mt-0.5 w-4 text-center"></i><span><b>Hanya bisa dikerjakan 1 kali.</b> Waktu terus berjalan walau halaman ditutup.</span></li>');
+    html.push('</ul><button onclick="mulai()" class="mt-6 w-full bg-brand-green text-white font-bold py-3.5 rounded-xl shadow-md text-sm active:scale-95 transition"><i class="fas fa-play mr-1.5"></i>Mulai Mengerjakan</button></div></div>');
+    $('main').innerHTML = html.join('');
+};
+
+/* ===== LEMBAR KERJA ===== */
+window.lompat = i => { const el = $('q' + i); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+window.toggleWacana = () => {
+    const w = $('wacanaIsi'), b = $('btnWacana');
+    const tutup = !w.classList.contains('hidden');
+    w.classList.toggle('hidden', tutup);
+    b.innerHTML = tutup ? '<i class="fas fa-chevron-down mr-1"></i>Buka' : '<i class="fas fa-chevron-up mr-1"></i>Tutup';
+};
+
+function cat(i) {
+    const k = window.sesi.jawab[i];
+    const card = $('q' + i);
+    if (card) {
+        card.style.setProperty('--c', k ? LBL_HEX[k] : '#94a3b8');
+        card.querySelectorAll('.pil-lbl').forEach(b => { b.className = 'pil-lbl' + (b.dataset.k === k ? ' sel-' + k : ''); });
+    }
+    const st = $('st' + i); if (st) st.innerHTML = k ? badgeLbl(k) : '<span class="text-[10px] text-slate-400 font-semibold">Belum dilabeli</span>';
+    const sp = $('sp' + i); if (sp) sp.className = 'kal-span' + (k ? ' hl-' + k : '');
+}
+
+window.renderUjian = function() {
+    window.siapkanUjian();
+
+    const html = [
+        '<div class="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm">',
+        '<div class="px-4 py-3 text-white" style="background:linear-gradient(135deg,#064e3b,#059669)">',
+        '<p class="text-[9px] font-extrabold tracking-[.3em] text-white/70">LEMBAR KERJA SISWA</p>',
+        '<h2 class="font-reading font-bold text-base leading-tight mt-0.5">' + esc(window.P.judul || 'Bedah Struktur Teks Argumentasi') + '</h2></div>',
+        '<div class="kertas-head px-4 py-3 text-[11px] text-slate-600 space-y-1.5">',
+        '<p class="flex"><b class="w-20 shrink-0 text-slate-700">Nama</b><span class="mr-1">:</span><span class="font-semibold text-slate-800 break-words min-w-0">' + esc(L.nama()) + '</span></p>',
+        '<p class="flex"><b class="w-20 shrink-0 text-slate-700">Materi</b><span class="mr-1">:</span><span class="break-words min-w-0">' + esc(window.H.spin.judul) + '</span></p>',
+        '<p class="flex"><b class="w-20 shrink-0 text-slate-700">Jumlah</b><span class="mr-1">:</span><span>' + window.soal.length + ' kalimat</span></p>',
+        '<p class="flex"><b class="w-20 shrink-0 text-slate-700">Petunjuk</b><span class="mr-1">:</span><span>Pilih label struktur yang tepat untuk tiap kalimat.</span></p>',
+        '</div></div>',
+
+        '<div class="mt-4 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">',
+        '<div class="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-200"><p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500"><i class="fas fa-book-open mr-1.5"></i>Wacana Utuh <span class="font-semibold normal-case text-slate-400">(ketuk kalimat untuk melompat)</span></p><button id="btnWacana" onclick="toggleWacana()" class="text-[10px] font-bold text-brand-green"><i class="fas fa-chevron-up mr-1"></i>Tutup</button></div>',
+        '<div id="wacanaIsi" class="p-4"><p class="font-reading text-[12.5px] text-slate-700 leading-[2]">'
+    ];
+    window.soal.forEach((s, i) => html.push('<span id="sp' + i + '" onclick="lompat(' + i + ')" class="kal-span"><b>[' + (i + 1) + ']</b> ' + esc(s.k) + '</span> '));
+    html.push('</p><div class="flex flex-wrap gap-x-3 gap-y-1 mt-3 pt-3 border-t border-slate-100 text-[10px] font-semibold text-slate-500">');
+    URUT_LBL.forEach(k => html.push('<span><i class="fas fa-square mr-1" style="color:' + LBL_HEX[k] + '"></i>' + LBL[k][0] + '</span>'));
+    html.push('</div></div></div><div id="daftar" class="space-y-3.5 mt-4">');
+
+    window.soal.forEach((s, i) => {
+        html.push('<article id="q' + i + '" class="q-card scroll-mt-24 p-4" style="--c:#94a3b8">');
+        html.push('<div class="flex items-center gap-2 mb-2.5"><span class="q-no">' + (i + 1) + '</span><span class="text-[11px] font-extrabold text-slate-600">Kalimat ke-' + (i + 1) + '</span><span id="st' + i + '" class="ml-1"></span>' + flagHtml(i) + '</div>');
+        html.push('<p class="font-reading text-[13.5px] text-slate-800 leading-[1.85] mb-3.5">' + esc(s.k) + '</p><div class="grid grid-cols-3 gap-2">');
+        URUT_LBL.forEach(k => html.push('<button class="pil-lbl" data-i="' + i + '" data-k="' + k + '"><i class="fas ' + LBL[k][2] + ' text-sm"></i><span>' + LBL[k][0] + '</span></button>'));
+        html.push('</div></article>');
+    });
+    html.push('</div><div class="h-6"></div>');
+    $('main').innerHTML = html.join('');
+
+    $('daftar').addEventListener('click', e => {
+        if (!window.aktif) return;
+        if (tanganiFlag(e)) return;
+        const b = e.target.closest('.pil-lbl'); if (!b) return;
+        const i = +b.dataset.i, k = b.dataset.k;
+        if (window.sesi.jawab[i] === k) delete window.sesi.jawab[i];     // ketuk lagi untuk membatalkan
+        else { window.sesi.jawab[i] = k; if (navigator.vibrate) navigator.vibrate(8); }
+        L.simpan(); cat(i); hitungJawab();
+    });
+
+    window.soal.forEach((s, i) => cat(i));
+    hitungJawab(); jalankanWaktu();
+};
+
+/* ===== HASIL + PEMBAHASAN ===== */
 window.tampilHasil = function(baru) {
-    const R = window.H.hasil.struktur; window.aktif = false; $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden');$('bar').classList.add('hidden');
-    let tk = {}; window.soal.forEach((s, i) => { const t = tk[s.j] = tk[s.j] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
+    const R = window.H.hasil[KEY];
+    sembunyikanUjian();
+    const status = i => R.jawab[i] === undefined ? 'kosong' : (R.jawab[i] === window.soal[i].j ? 'benar' : 'salah');
+    const kosong = window.soal.filter((s, i) => status(i) === 'kosong').length;
+    const salah = R.total - R.benar - kosong;
+
+    const tk = {}; window.soal.forEach((s, i) => { const t = tk[s.j] = tk[s.j] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
     const urut = URUT_LBL.filter(t => tk[t]);
-    const lemah = urut.slice().sort((a, b) => tk[a].b / tk[a].n - tk[b].b / tk[b].n)[0], kuat = urut.slice().sort((a, b) => tk[b].b / tk[b].n - tk[a].b / tk[a].n)[0];
-    const pesan = R.skor >= 80 ? ['Luar biasa!', 'Kamu sangat tajam membedakan struktur argumentasi.'] : R.skor >= 60 ? ['Bagus!', 'Pemahaman strukturmu sudah cukup baik.'] : ['Tetap semangat!', 'Pelajari kembali perbedaan tesis, argumen, dan kesimpulan.'];
-    const anim = R.skor >= 80 ? '<div class="tos"><i class="fas fa-hand h hl"></i><i class="fas fa-hand h hr"></i><div class="boom"></div><i class="fas fa-star sp" style="top:8px;left:42%"></i><i class="fas fa-star sp" style="top:24px;left:58%"></i><i class="fas fa-sparkles sp" style="top:70px;left:36%"></i><i class="fas fa-star sp" style="top:78px;left:60%"></i></div>'
-        : R.skor >= 60 ? '<div class="tos"><i class="fas fa-thumbs-up goyang" style="font-size:66px;color:#fcd34d;filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i></div>' : '<div class="tos"><i class="fas fa-heart detak" style="font-size:60px;color:#fda4af;filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i></div>';
-    
-    let html = [
-        '<div class="up rounded-3xl p-5 text-center text-white shadow-lg" style="background:linear-gradient(135deg,#064e3b,#059669 60%,#34d399)">',
-        anim,
-        '<p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold">Skor Akhir</p><div class="flex items-end justify-center gap-1"><span id="skorAngka" class="text-6xl font-extrabold leading-none">0</span><span class="text-xl font-bold text-white/70 mb-1">/100</span></div>',
+    const pesan = R.skor >= 80 ? ['Luar biasa!', 'Kamu sangat tajam membedakan struktur argumentasi.', 'fa-trophy']
+        : R.skor >= 60 ? ['Bagus!', 'Pemahaman strukturmu sudah cukup baik.', 'fa-thumbs-up']
+        : ['Tetap semangat!', 'Pelajari kembali perbedaan tesis, argumen, dan kesimpulan.', 'fa-heart'];
+
+    // Peta wacana: warna sesuai KUNCI, tanda silang untuk kalimat yang keliru
+    let peta = '<p class="font-reading text-[12.5px] text-slate-700 leading-[2]">';
+    window.soal.forEach((s, i) => {
+        const st = status(i);
+        peta += '<span class="kal-span hl-' + s.j + '"><b>[' + (i + 1) + ']</b> ' + esc(s.k) + (st === 'benar' ? '' : ' <i class="fas fa-circle-xmark text-rose-500"></i>') + '</span> ';
+    });
+    peta += '</p><div class="flex flex-wrap gap-x-3 gap-y-1 mt-3 pt-3 border-t border-slate-100 text-[10px] font-semibold text-slate-500">' +
+        URUT_LBL.map(k => '<span><i class="fas fa-square mr-1" style="color:' + LBL_HEX[k] + '"></i>' + LBL[k][0] + '</span>').join('') +
+        '<span><i class="fas fa-circle-xmark text-rose-500 mr-1"></i>Pilihanmu keliru / kosong</span></div>';
+
+    $('main').innerHTML = [
+        '<div class="rounded-3xl p-5 text-center text-white shadow-lg" style="background:linear-gradient(135deg,#064e3b,#059669 60%,#34d399)">',
+        '<i class="fas ' + pesan[2] + '" style="font-size:54px;color:' + (R.skor >= 60 ? '#fcd34d' : '#fda4af') + ';filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i>',
+        '<p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold mt-3">Skor Akhir</p>',
+        '<div class="flex items-end justify-center gap-1"><span class="text-6xl font-extrabold leading-none">' + R.skor + '</span><span class="text-xl font-bold text-white/70 mb-1">/100</span></div>',
         '<p class="font-extrabold text-base mt-2">' + pesan[0] + '</p><p class="text-[11px] text-white/80">' + pesan[1] + '</p>',
         '<span class="inline-block mt-3 bg-white/20 rounded-full px-3 py-1 text-[11px] font-bold"><i class="fas fa-star text-amber-300 mr-1"></i>+' + R.xp + ' XP</span>',
         R.auto ? '<p class="text-[10px] text-amber-200 mt-2"><i class="fas fa-clock mr-1"></i>Dikumpulkan otomatis karena waktu habis</p>' : '',
         '</div>',
-        '<div class="grid grid-cols-3 gap-2.5 mt-3"><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-emerald-600">' + R.benar + '</p><p class="text-[9px] font-semibold text-slate-500">Tepat</p></div><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-rose-500">' + (R.total - R.benar) + '</p><p class="text-[9px] font-semibold text-slate-500">Keliru/Kosong</p></div><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-slate-700">' + L.fmt(R.durasi) + '</p><p class="text-[9px] font-semibold text-slate-500">dari ' + L.fmt(R.batas) + '</p></div></div>',
+        statHtml([[R.benar, 'Tepat', 'text-emerald-600'], [salah, 'Keliru', 'text-rose-500'], [kosong, 'Kosong', 'text-slate-400'], [L.fmt(R.durasi), 'Durasi', 'text-slate-700']]),
+        raporHtml(R),
+
         '<div class="bg-white rounded-2xl border border-slate-200 p-4 mt-3"><h3 class="font-bold text-slate-800 text-sm mb-3">Ketepatan per Struktur</h3><div class="space-y-3">',
-        urut.map(t => { const p = Math.round(tk[t].b / tk[t].n * 100); return '<div><div class="flex justify-between items-center mb-1">' + badge(t) + '<span class="text-[11px] font-bold text-slate-600">' + tk[t].b + '/' + tk[t].n + '</span></div><div class="h-2.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-' + LBL[t][1] + '-500 rounded-full transition-all duration-1000" style="width:0" data-w="' + p + '"></div></div></div>'; }).join(''),
+        urut.map(t => { const p = Math.round(tk[t].b / tk[t].n * 100); return '<div><div class="flex justify-between items-center mb-1">' + badgeLbl(t) + '<span class="text-[11px] font-bold text-slate-600">' + tk[t].b + '/' + tk[t].n + '</span></div><div class="h-2.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:' + p + '%;background:' + LBL_HEX[t] + '"></div></div></div>'; }).join(''),
         '</div></div>',
-        '<div class="grid grid-cols-2 gap-2 mt-3"><button id="btnPdf" onclick="unduhPdf()" class="bg-white border border-slate-200 text-slate-700 font-bold py-3 rounded-xl text-xs active:scale-95 transition"><i class="fas fa-file-pdf text-red-500 mr-1.5"></i>Unduh PDF</button><a href="../latihan.html" class="bg-brand-green text-white font-bold py-3 rounded-xl text-xs shadow-md text-center active:scale-95 transition"><i class="fas fa-house mr-1.5"></i>Ruang Latihan</a></div>',
-        navLatihanHtml(),
-        '<div class="flex items-center justify-between mt-6 mb-3"><h3 class="font-bold text-slate-800 text-sm">Pembahasan Kalimat</h3><div id="filter" class="flex gap-1.5"></div></div><div id="bahas" class="space-y-3"></div>'
+
+        '<div class="bg-white rounded-2xl border border-slate-200 mt-3 overflow-hidden"><div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200"><h3 class="font-bold text-slate-800 text-xs"><i class="fas fa-map text-brand-green mr-1.5"></i>Peta Wacana (sesuai kunci)</h3></div><div class="p-4">' + peta + '</div></div>',
+
+        '<div class="flex items-center justify-between mt-6 mb-3"><h3 class="font-bold text-slate-800 text-sm"><i class="fas fa-lightbulb text-amber-500 mr-1.5"></i>Pembahasan Kalimat</h3></div>',
+        '<div id="filter" class="flex gap-1.5 mb-3 flex-wrap"></div><div id="bahas" class="space-y-3"></div>',
+        navLatihanHtml()
     ].join('');
-    
-    $('main').innerHTML = html;
-    window.scrollTo({ top: 0 });
-    
-    let c = 0; const st = Math.max(1, Math.round(R.skor / 40)); 
-    const ti = setInterval(() => { c = Math.min(R.skor, c + st); $('skorAngka').textContent = c; if (c >= R.skor) clearInterval(ti); }, 30);
-    setTimeout(() => document.querySelectorAll('[data-w]').forEach(e => e.style.width = e.dataset.w + '%'), 300);
-    if (baru) { if (R.skor >= 80) { L.beep('ok'); setTimeout(() => window.confetti && confetti({ particleCount: 140, spread: 80, origin: { y: .4 }, zIndex: 100001 }), 700); } else L.beep(R.skor >= 60 ? 'ok' : 'err'); }
+
     filterBahas('semua');
-}
+    efekHasil(baru, R.skor >= 80 ? 'great' : R.skor >= 60 ? 'ok' : 'err');
+};
 
 window.filterBahas = function(f) {
-    const R = window.H.hasil.struktur;
-    $('filter').innerHTML = [['semua', 'Semua'], ['salah', 'Keliru']].map(x => '<button onclick="filterBahas(\'' + x[0] + '\')" class="px-3 py-1 rounded-full text-[10px] font-bold border ' + (f === x[0] ? 'bg-brand-green text-white border-brand-green' : 'bg-white text-slate-500 border-slate-200') + '">' + x[1] + '</button>').join('');
-    
-    const arr = window.soal.map((s, i) => [s, i]).filter(x => f === 'semua' || R.jawab[x[1]] !== x[0].j);
-    
-    if(arr.length) {
-        let htmlBahas = arr.map(x => {
-            const s = x[0], i = x[1];
-            const u = R.jawab[i], ok = u === s.j;
-            let item = '<article class="bg-white rounded-2xl border ' + (ok ? 'border-emerald-200' : 'border-rose-200') + ' p-4">';
-            item += '<div class="flex items-center gap-2 mb-2"><span class="w-6 h-6 rounded-full ' + (ok ? 'bg-emerald-500' : 'bg-rose-500') + ' text-white text-[11px] font-extrabold flex items-center justify-center">' + (i + 1) + '</span>' + badge(s.j) + '<span class="ml-auto text-[10px] font-bold ' + (ok ? 'text-emerald-600' : 'text-rose-500') + '">' + (ok ? 'Benar' : u === undefined ? 'Tidak dilabeli' : 'Keliru') + '</span></div>';
-            item += '<p class="font-reading text-[12px] text-slate-800 leading-[1.75] mb-2.5">' + esc(s.k) + '</p>';
-            item += '<div class="flex flex-wrap gap-2 text-[11px]"><span class="px-2.5 py-1 rounded-lg ' + (ok ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700') + '">Pilihanmu: <b>' + (u ? LBL[u][0] : '-') + '</b></span><span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">Kunci: <b>' + LBL[s.j][0] + '</b></span></div>';
-            if(s.bahas) item += '<div class="mt-2.5 bg-slate-50 rounded-lg p-2.5 text-[11px] text-slate-600 leading-relaxed"><b class="text-slate-700">Pembahasan:</b> ' + esc(s.bahas) + '</div>';
-            item += '</article>';
-            return item;
-        }).join('');
-        $('bahas').innerHTML = htmlBahas;
-    } else {
-        $('bahas').innerHTML = '<div class="bg-white rounded-2xl p-6 text-center text-xs text-emerald-600 font-semibold border border-emerald-100"><i class="fas fa-circle-check mr-1"></i> Semua kalimat berhasil dilabeli dengan benar!</div>';
+    const R = window.H.hasil[KEY];
+    const status = i => R.jawab[i] === undefined ? 'kosong' : (R.jawab[i] === window.soal[i].j ? 'benar' : 'salah');
+    const cnt = { semua: window.soal.length, salah: 0, benar: 0 };
+    window.soal.forEach((s, i) => { if (status(i) === 'benar') cnt.benar++; else cnt.salah++; });
+
+    $('filter').innerHTML = [['semua', 'Semua'], ['salah', 'Keliru / Kosong'], ['benar', 'Tepat']].map(x =>
+        '<button onclick="filterBahas(\'' + x[0] + '\')" class="px-3 py-1.5 rounded-full text-[10px] font-bold border ' + (f === x[0] ? 'bg-brand-green text-white border-brand-green' : 'bg-white text-slate-500 border-slate-200') + '">' + x[1] + ' (' + cnt[x[0]] + ')</button>').join('');
+
+    const arr = window.soal.map((s, i) => [s, i]).filter(x => { const st = status(x[1]); return f === 'semua' || (f === 'benar' ? st === 'benar' : st !== 'benar'); });
+    if (!arr.length) {
+        $('bahas').innerHTML = '<div class="bg-white rounded-2xl p-6 text-center text-xs text-emerald-600 font-semibold border border-emerald-100"><i class="fas fa-circle-check mr-1"></i> Tidak ada kalimat pada kategori ini.</div>';
+        return;
     }
-}
+
+    $('bahas').innerHTML = arr.map(x => {
+        const s = x[0], i = x[1], u = R.jawab[i], st = status(i), ok = st === 'benar';
+        const label = ok ? 'Tepat' : st === 'kosong' ? 'Tidak dilabeli' : 'Keliru';
+        let item = '<article class="bg-white rounded-2xl border ' + (ok ? 'border-emerald-200' : 'border-rose-200') + ' p-4" style="border-left:5px solid ' + (ok ? '#10b981' : '#f43f5e') + '">';
+        item += '<div class="flex items-center gap-2 mb-2.5"><span class="w-7 h-7 rounded-full ' + (ok ? 'bg-emerald-500' : 'bg-rose-500') + ' text-white text-xs font-extrabold flex items-center justify-center">' + (i + 1) + '</span>' + badgeLbl(s.j) + '<span class="ml-auto text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full ' + (ok ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600') + '">' + label + '</span></div>';
+        item += '<p class="font-reading text-[12.5px] text-slate-800 leading-[1.8] mb-3">' + esc(s.k) + '</p>';
+        item += '<div class="grid grid-cols-2 gap-2 text-[11px]"><div class="rounded-xl p-2.5 ' + (ok ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700') + '"><p class="text-[9px] font-extrabold uppercase tracking-wider opacity-70">Pilihanmu</p><p class="font-bold mt-0.5">' + (u ? LBL[u][0] : '—') + '</p></div><div class="rounded-xl p-2.5 bg-emerald-50 text-emerald-700"><p class="text-[9px] font-extrabold uppercase tracking-wider opacity-70">Kunci</p><p class="font-bold mt-0.5">' + LBL[s.j][0] + '</p></div></div>';
+        item += '<div class="bahas-box mt-3 p-3"><p class="text-[10px] font-extrabold uppercase tracking-wider text-amber-600 mb-1"><i class="fas fa-lightbulb mr-1"></i>Pembahasan</p><p class="text-[11.5px] text-slate-700 leading-relaxed">' + (s.bahas ? esc(s.bahas) : '<span class="text-slate-400">Pembahasan belum tersedia untuk kalimat ini.</span>') + '</p></div>';
+        item += '</article>';
+        return item;
+    }).join('');
+};
+
+/* ===== PDF ===== */
+window.buatDokumenPdf = function() {
+    const R = window.H.hasil[KEY];
+    const status = i => R.jawab[i] === undefined ? 'kosong' : (R.jawab[i] === window.soal[i].j ? 'benar' : 'salah');
+    const kosong = window.soal.filter((s, i) => status(i) === 'kosong').length;
+    const salah = R.total - R.benar - kosong;
+    const warnaSkor = R.skor >= 80 ? WR.hijau : R.skor >= 60 ? '#f59e0b' : WR.merah;
+    const content = [pdfBanner(), pdfIdentitas(R)];
+
+    content.push({ margin: [0, 8, 0, 0], table: { widths: ['*', '*', '*', '*', '*'], body: [[
+        pdfSel('SKOR AKHIR', R.skor + ' / 100', warnaSkor, '#ffffff', 18),
+        pdfSel('TEPAT', R.benar, WR.hijauMuda, WR.gelap),
+        pdfSel('KELIRU', salah, WR.merahMuda, WR.merah),
+        pdfSel('KOSONG', kosong, WR.latar, WR.abu),
+        pdfSel('XP DIPEROLEH', '+' + R.xp, WR.amberMuda, WR.amber)
+    ]] }, layout: layoutKotak });
+    content.push({ text: 'Durasi pengerjaan ' + L.fmt(R.durasi) + ' dari ' + L.fmt(R.batas) + (R.auto ? '  •  dikumpulkan otomatis (waktu habis)' : ''), fontSize: 8.5, color: WR.abu, margin: [0, 6, 0, 0] });
+
+    // Ketepatan per struktur
+    const tk = {}; window.soal.forEach((s, i) => { const t = tk[s.j] = tk[s.j] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
+    content.push(pdfJudul('Ketepatan per Struktur'));
+    content.push({ table: { widths: [90, 60, '*'], body: [
+        [pdfTh('Struktur'), pdfTh('Tepat / Total'), pdfTh('Persentase')],
+        ...URUT_LBL.filter(t => tk[t]).map(t => {
+            const p = Math.round(tk[t].b / tk[t].n * 100);
+            return [
+                { text: LBL[t][0], bold: true, color: LBL_GELAP[t], fillColor: LBL_MUDA[t], margin: [7, 6, 7, 6] },
+                { text: tk[t].b + ' / ' + tk[t].n, margin: [7, 6, 7, 6] },
+                { margin: [7, 6, 7, 6], columns: [pdfBar(p, LBL_HEX[t]), { text: p + '%', bold: true, margin: [6, 1, 0, 0] }] }
+            ];
+        })
+    ] }, layout: layoutTipis });
+
+    // Peta wacana
+    content.push(pdfJudul('Peta Wacana (sesuai kunci)'));
+    content.push({ table: { widths: ['*'], body: [[{ fillColor: WR.latar, margin: [10, 9, 10, 9], lineHeight: 1.5, text: window.soal.map((s, i) => ({
+        text: '[' + (i + 1) + '] ' + s.k + (status(i) === 'benar' ? '' : '  (x)') + '  ',
+        color: LBL_GELAP[s.j], background: LBL_MUDA[s.j]
+    })) }]] }, layout: layoutTipis });
+    const ket = [{ text: 'Keterangan:  ', bold: true, fontSize: 8.5 }];
+    URUT_LBL.forEach(k => { ket.push({ text: ' ' + LBL[k][0] + ' ', bold: true, fontSize: 8.5, color: LBL_GELAP[k], background: LBL_MUDA[k] }); ket.push({ text: '   ', fontSize: 8.5 }); });
+    ket.push({ text: '(x) = pilihanmu keliru atau kosong', fontSize: 8.5, color: WR.abu });
+    content.push({ margin: [0, 5, 0, 0], text: ket });
+
+    // Pembahasan tiap kalimat
+    content.push(pdfJudul('Pembahasan per Kalimat'));
+    window.soal.forEach((s, i) => {
+        const st = status(i), u = R.jawab[i], c = st === 'benar' ? WR.hijau : WR.merah;
+        const label = st === 'benar' ? 'TEPAT' : st === 'kosong' ? 'TIDAK DILABELI' : 'KELIRU';
+        const rows = [
+            pdfKepala(c, 'KALIMAT ' + (i + 1) + '   |   KUNCI: ' + LBL[s.j][0].toUpperCase(), label),
+            [{ text: String(s.k), bold: true, fontSize: 10.5, lineHeight: 1.35, color: '#0f172a', fillColor: WR.latar, margin: [10, 8, 10, 8] }],
+            [{ table: { widths: ['*', '*'], body: [[
+                { fillColor: WR.biruMuda, margin: [10, 6, 10, 6], stack: [{ text: 'PILIHAN SISWA', fontSize: 7.5, bold: true, color: WR.biru }, { text: u ? LBL[u][0] : 'Tidak dilabeli', fontSize: 10, bold: true, color: u ? '#0f172a' : WR.abu, margin: [0, 2, 0, 0] }] },
+                { fillColor: WR.hijauMuda, margin: [10, 6, 10, 6], stack: [{ text: 'KUNCI JAWABAN', fontSize: 7.5, bold: true, color: WR.hijau }, { text: LBL[s.j][0], fontSize: 10, bold: true, color: WR.gelap, margin: [0, 2, 0, 0] }] }
+            ]] }, layout: noPad }],
+            [{ fillColor: WR.amberMuda, margin: [10, 7, 10, 8], stack: [
+                { text: 'PENJELASAN / PEMBAHASAN', fontSize: 7.5, bold: true, color: WR.amber },
+                { text: s.bahas ? String(s.bahas) : 'Pembahasan belum tersedia untuk kalimat ini.', fontSize: 9.5, lineHeight: 1.35, color: s.bahas ? '#334155' : WR.abu, margin: [0, 3, 0, 0] }
+            ] }]
+        ];
+        content.push(pdfKartu(c, rows, true));
+    });
+
+    return pdfDoc(content);
+};
+
 initLatihan();
+
 </script>
 </body>
 </html>
