@@ -1,645 +1,168 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Upload Flipbook — Argumentasi Admin</title>
-<script src="https://cdn.tailwindcss.com/3.4.17"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','sans-serif']}}}}</script>
-<style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:'Poppins',sans-serif;background:#0f172a;color:#f1f5f9;min-height:100dvh}
-.drop-zone{border:2px dashed rgba(245,158,11,.35);border-radius:16px;transition:.25s;cursor:pointer;background:rgba(245,158,11,.04)}
-.drop-zone.drag-over{border-color:#f59e0b;background:rgba(245,158,11,.1);transform:scale(1.01)}
-.inp{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 14px;color:#f1f5f9;font-size:13px;outline:none;font-family:inherit;transition:.2s}
-.inp:focus{border-color:#f59e0b;background:rgba(245,158,11,.07)}
-.inp::placeholder{color:rgba(255,255,255,.25)}
-label.lbl{display:block;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-#prog-bar{height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden}
-#prog-fill{height:100%;width:0%;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:3px;transition:width .3s}
-.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px}
-.btn-primary{background:#f59e0b;color:#fff;font-weight:700;border-radius:12px;padding:12px 20px;width:100%;font-size:14px;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;border:none;font-family:inherit}
-.btn-primary:hover{background:#d97706}.btn-primary:active{transform:scale(.97)}.btn-primary:disabled{opacity:.45;cursor:default}
-.btn-ghost{background:rgba(255,255,255,.06);color:#f1f5f9;font-weight:700;border-radius:12px;padding:12px 20px;font-size:13px;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;border:1px solid rgba(255,255,255,.1);font-family:inherit}
-.btn-ghost:hover{background:rgba(255,255,255,.1)}
-.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
-.badge-ok{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.25)}
-.badge-err{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
-.badge-pending{background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.2)}
-.yt-tag{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 12px}
-#qr-prev-wrap{background:#fff;border-radius:12px;padding:8px;width:140px;height:140px;display:flex;align-items:center;justify-content:center}
-#toast{position:fixed;top:72px;left:50%;transform:translateX(-50%);z-index:999;pointer-events:none;width:90%;max-width:380px;display:flex;flex-direction:column;align-items:center;gap:6px}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
-.tab-btn{flex:1;text-align:center;font-size:12px;font-weight:700;color:#64748b;border-bottom:2px solid transparent;transition:.2s;cursor:pointer;padding:10px 4px}
-.tab-btn.on{color:#f59e0b;border-color:#f59e0b}
-.sk{position:relative;overflow:hidden;background:rgba(255,255,255,.06)}
-.sk::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);animation:sh 1.3s infinite}
-@keyframes sh{100%{transform:translateX(100%)}}
-#gate{position:fixed;inset:0;background:#0f172a;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-.spin{width:44px;height:44px;border:3px solid rgba(245,158,11,.2);border-top-color:#f59e0b;border-radius:50%;animation:spin .9s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.step-row{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;color:#cbd5e1}
-.step-ok{color:#10b981}.step-err{color:#ef4444}.step-wait{color:#64748b}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kelola Handout - Argumentasi Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] } } } }
+        // Pintasan: ?action=create / ?action=edit langsung ke formulir
+        const p = new URLSearchParams(location.search);
+        if (p.get('action') === 'create' || p.get('action') === 'edit') location.replace('form_handout.html' + location.search);
+    </script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { scrollbar-width: none; }
+        .lc2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .up { animation: up .3s ease-out both; } @keyframes up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .sk { position: relative; overflow: hidden; background: #e2e8f0; }
+        .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent); animation: sh 1.3s infinite; } @keyframes sh { 100% { transform: translateX(100%); } }
+    </style>
 </head>
-<body>
+<body class="flex justify-center min-h-screen">
+<div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
 
-<!-- AUTH GATE -->
-<div id="gate">
-  <div class="spin"></div>
-  <p class="text-sm font-semibold text-amber-400">Memeriksa akses admin…</p>
+    <div class="sticky top-0 z-50 shadow-md">
+        <header class="bg-amber-500 h-14 px-4 flex items-center gap-3">
+            <a href="index.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 active:scale-95 transition"><i class="fas fa-arrow-left text-sm"></i></a>
+            <div class="flex-1 min-w-0"><h1 class="text-white font-bold text-sm leading-tight truncate">Kelola Handout</h1><p id="sub" class="text-white/80 text-[10px] leading-tight truncate">Memuat…</p></div>
+            <button onclick="bukaTes()" title="Cek penyimpanan" aria-label="Cek penyimpanan" class="shrink-0 w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 active:scale-95 transition"><i class="fas fa-stethoscope text-sm"></i></button>
+            <a href="form_handout.html?action=create" class="shrink-0 bg-white text-amber-600 hover:bg-amber-50 text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm active:scale-95 transition flex items-center gap-1.5"><i class="fas fa-plus"></i> Unggah</a>
+        </header>
+        <div class="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center gap-2">
+            <div class="flex-1 flex items-center bg-slate-100 rounded-lg px-3 py-2"><i class="fas fa-search text-slate-400 text-xs mr-2"></i><input id="q" oninput="saring()" placeholder="Cari judul…" class="w-full bg-transparent outline-none text-xs text-slate-700"></div>
+            <div id="chips" class="flex gap-1.5"></div>
+        </div>
+    </div>
+
+    <main class="flex-grow p-4">
+        <div id="sMuat" class="flex flex-col gap-3">
+            <div class="flex gap-3 bg-white p-3 rounded-xl border border-slate-100"><div class="sk w-16 h-20 rounded-lg"></div><div class="flex-1 space-y-2 py-1"><div class="sk h-3 w-1/3 rounded"></div><div class="sk h-4 w-full rounded"></div><div class="sk h-3 w-2/3 rounded"></div></div></div>
+        </div>
+        <div id="sKosong" class="hidden flex-col items-center justify-center py-16 text-center">
+            <div class="w-16 h-16 bg-white border border-slate-200 rounded-full flex items-center justify-center text-3xl mb-3 text-slate-300 shadow-sm"><i class="fas fa-folder-open"></i></div>
+            <h3 id="kosongJ" class="font-bold text-slate-700 text-sm mb-1">Belum ada handout</h3><p id="kosongP" class="text-[11px] text-slate-500 max-w-[240px]">Unggah PDF pertamamu. Sampul dan ringkasan dibuat otomatis.</p>
+            <a id="kosongA" href="form_handout.html?action=create" class="mt-4 bg-amber-500 text-white text-xs font-bold px-5 py-2.5 rounded-full active:scale-95"><i class="fas fa-cloud-arrow-up mr-1.5"></i>Unggah PDF</a>
+        </div>
+        <div id="list" class="hidden flex-col gap-3"></div>
+    </main>
 </div>
 
-<!-- APP (hidden until authorized) -->
-<div id="app" class="hidden">
-
-<header class="sticky top-0 z-50 bg-slate-900/95 backdrop-blur border-b border-white/6 flex items-center px-4 gap-3" style="height:52px">
-  <a href="handout.html" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:bg-white/10 transition"><i class="fas fa-chevron-left text-sm"></i></a>
-  <div class="flex-1">
-    <h1 class="text-white font-bold text-[13px]">Upload Flipbook</h1>
-    <p class="text-white/40 text-[10px]">Admin • Argumentasi Platform</p>
-  </div>
-  <button onclick="openDiag()" title="Cek penyimpanan" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-amber-400 hover:bg-white/10 transition"><i class="fas fa-stethoscope text-sm"></i></button>
-  <div id="auth-chip" class="badge badge-ok"><i class="fas fa-circle-check text-[9px]"></i><span id="auth-email">Admin</span></div>
-</header>
-
-<div class="sticky top-[52px] z-40 bg-slate-900/95 backdrop-blur border-b border-white/6 flex px-2">
-  <button class="tab-btn on" id="tab-upload" onclick="setTab('upload')">Upload / Edit</button>
-  <button class="tab-btn" id="tab-library" onclick="setTab('library')">Koleksi Flipbook</button>
+<!-- CEK PENYIMPANAN -->
+<div id="tes" class="fixed inset-0 bg-slate-900/60 z-[99999] hidden items-end sm:items-center justify-center" onclick="if(event.target===this) tutupTes()">
+    <div class="up bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 max-h-[88vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-1"><h3 class="font-bold text-slate-800 text-sm"><i class="fas fa-stethoscope text-amber-500 mr-2"></i>Cek Penyimpanan</h3><button onclick="tutupTes()" class="text-slate-400"><i class="fas fa-xmark text-lg"></i></button></div>
+        <p class="text-[11px] text-slate-500 leading-relaxed">Mencoba mengunggah, membaca, lalu menghapus satu file kecil di Cloudinary untuk memastikan penyimpanan siap dipakai.</p>
+        <div id="tesList" class="mt-4 space-y-2"></div>
+        <button id="tesMulai" onclick="jalankanTes()" class="w-full mt-4 bg-amber-500 text-white font-bold py-3 rounded-xl text-xs active:scale-95 transition disabled:opacity-50"><i class="fas fa-play mr-1.5"></i>Jalankan Tes</button>
+    </div>
 </div>
-
-<div class="max-w-lg mx-auto px-4 pb-24 pt-5">
-
-<!-- ═══ UPLOAD / EDIT TAB ═══ -->
-<div id="pane-upload">
-
-  <div id="edit-banner" class="hidden mb-4 bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-2.5 flex items-center gap-2">
-    <i class="fas fa-pen text-amber-400 text-xs"></i>
-    <p class="text-xs text-amber-300 flex-1">Mengedit: <span id="edit-banner-title" class="font-bold"></span></p>
-    <button onclick="resetForm()" class="text-amber-300/70 hover:text-amber-200 text-xs"><i class="fas fa-xmark"></i></button>
-  </div>
-
-  <div class="drop-zone p-8 text-center mb-5" id="drop" onclick="$('file-in').click()">
-    <div id="drop-icon" class="text-5xl text-amber-500/50 mb-3"><i class="fas fa-cloud-upload-alt"></i></div>
-    <p id="drop-label" class="font-bold text-white/70 text-sm">Klik atau seret PDF ke sini</p>
-    <p class="text-xs text-white/30 mt-1" id="drop-sub">Maks. 50 MB • Format PDF</p>
-    <input type="file" id="file-in" accept=".pdf,application/pdf" class="hidden" onchange="onFile(this.files[0])">
-  </div>
-
-  <div id="file-info" class="card mb-4 hidden">
-    <div class="flex items-start gap-3">
-      <div class="w-10 h-10 rounded-xl bg-red-500/15 text-red-400 flex items-center justify-center shrink-0"><i class="fas fa-file-pdf"></i></div>
-      <div class="flex-1 min-w-0">
-        <p id="fi-name" class="font-bold text-white text-sm truncate"></p>
-        <p id="fi-size" class="text-xs text-white/40 mt-0.5"></p>
-      </div>
-      <button onclick="clearFile()" class="text-white/30 hover:text-red-400 transition"><i class="fas fa-xmark"></i></button>
-    </div>
-    <div class="mt-3" id="prog-bar"><div id="prog-fill"></div></div>
-    <p id="prog-msg" class="text-[10px] text-white/40 mt-1.5 text-center hidden">Menyiapkan unggahan…</p>
-  </div>
-
-  <div class="card space-y-4 mb-4">
-    <div>
-      <label class="lbl">Judul Flipbook *</label>
-      <input class="inp" id="f-judul" type="text" placeholder="cth. Modul Argumentasi Kelas X" maxlength="120">
-    </div>
-    <div>
-      <label class="lbl">Kategori</label>
-      <select class="inp" id="f-kat">
-        <option value="modul">📝 Modul Ajar</option>
-        <option value="buku">📖 Buku Referensi</option>
-        <option value="flipbook">📚 Flipbook</option>
-        <option value="majalah">🗞️ Majalah / Buletin</option>
-        <option value="lainnya">🗂️ Lainnya</option>
-      </select>
-    </div>
-    <div>
-      <label class="lbl">Deskripsi / Ringkasan</label>
-      <textarea class="inp" id="f-desk" rows="3" placeholder="Ringkasan singkat isi dokumen…" maxlength="500" style="resize:none"></textarea>
-    </div>
-
-    <div>
-      <label class="lbl"><i class="fab fa-youtube text-red-400 mr-1"></i>Video YouTube Terkait</label>
-      <p class="text-[10px] text-white/30 mb-2">Tambahkan ID video YouTube (bagian setelah ?v=) agar bisa diputar di panel info.</p>
-      <div class="flex gap-2">
-        <input class="inp flex-1" id="yt-in" type="text" placeholder="cth. dQw4w9WgXcQ atau tautan penuh" maxlength="80" onkeydown="if(event.key==='Enter'){event.preventDefault();addYT();}">
-        <button onclick="addYT()" class="shrink-0 w-10 h-10 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 transition flex items-center justify-center"><i class="fas fa-plus"></i></button>
-      </div>
-      <div id="yt-list" class="mt-2 space-y-2"></div>
-    </div>
-
-    <div>
-      <label class="lbl">Status Publikasi</label>
-      <select class="inp" id="f-status">
-        <option value="published">✅ Terbit (Publik)</option>
-        <option value="draft">📝 Draft (Tersembunyi)</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="card mb-5" id="qr-section" style="display:none">
-    <p class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3"><i class="fas fa-qrcode mr-1.5"></i>QR Code Flipbook</p>
-    <div class="flex items-center gap-4">
-      <div id="qr-prev-wrap"><canvas id="qr-prev-canvas" width="120" height="120"></canvas></div>
-      <div class="flex-1">
-        <p class="text-xs text-white/50 leading-relaxed" id="qr-url-text">QR akan muncul setelah tersimpan.</p>
-        <button onclick="copyQRLink()" id="qr-copy-btn" class="mt-2 bg-amber-500/20 text-amber-400 text-xs font-bold px-4 py-2 rounded-lg hidden hover:bg-amber-500/30 transition"><i class="fas fa-copy mr-1"></i>Salin Tautan</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="flex gap-2">
-    <button class="btn-primary" id="btn-submit" onclick="submit()">
-      <i class="fas fa-paper-plane"></i><span id="btn-submit-label">Simpan Flipbook</span>
-    </button>
-  </div>
-  <button id="btn-delete-inline" onclick="confirmDeleteCurrent()" class="btn-ghost w-full mt-2 hidden text-red-300 border-red-500/20"><i class="fas fa-trash"></i>Hapus Flipbook Ini</button>
-  <p class="text-center text-[10px] text-white/25 mt-3">File diunggah ke Cloudinary (signed upload) · Data disimpan di Firebase</p>
-</div>
-
-<!-- ═══ LIBRARY TAB ═══ -->
-<div id="pane-library" class="hidden">
-  <div class="flex items-center gap-2 mb-4">
-    <input class="inp flex-1" type="text" id="lib-q" placeholder="Cari judul flipbook…" oninput="filterLib()">
-    <button onclick="loadLibrary(true)" class="shrink-0 w-10 h-10 rounded-xl bg-white/6 text-white/60 hover:text-amber-400 flex items-center justify-center transition"><i class="fas fa-rotate-right text-sm"></i></button>
-  </div>
-  <div id="lib-loading" class="text-center py-10 text-white/30 hidden"><div class="w-8 h-8 border-2 border-white/20 border-t-amber-400 rounded-full animate-spin mx-auto mb-3"></div>Memuat…</div>
-  <div id="lib-list" class="space-y-2"></div>
-  <p id="lib-empty" class="text-center text-white/30 text-sm py-10 hidden">Belum ada flipbook.</p>
-</div>
-
-</div><!-- /main -->
-</div><!-- /#app -->
-
-<div id="toast"></div>
-
-<!-- DELETE CONFIRM MODAL -->
-<div id="del-modal" class="fixed inset-0 bg-black/60 z-[200] hidden items-center justify-center px-6">
-  <div class="bg-slate-800 rounded-2xl p-6 w-full max-w-sm">
-    <h3 class="font-bold text-white text-base mb-2">Hapus Flipbook?</h3>
-    <p class="text-sm text-slate-400 mb-5" id="del-name">Yakin ingin menghapus dokumen ini? File di Cloudinary juga akan dihapus.</p>
-    <div class="grid grid-cols-2 gap-3">
-      <button onclick="closeDelModal()" class="bg-white/8 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-white/15 transition">Batal</button>
-      <button id="del-confirm" class="bg-red-500 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-red-600 transition active:scale-95">Hapus</button>
-    </div>
-  </div>
-</div>
-
-<!-- DIAGNOSTIC MODAL (Cek Penyimpanan) -->
-<div id="diag-modal" class="fixed inset-0 bg-black/60 z-[200] hidden items-end sm:items-center justify-center px-0 sm:px-6" onclick="if(event.target===this)closeDiag()">
-  <div class="bg-slate-800 rounded-t-3xl sm:rounded-2xl p-5 w-full max-w-md max-h-[85vh] overflow-y-auto">
-    <div class="flex items-center justify-between mb-1">
-      <h3 class="font-bold text-white text-sm"><i class="fas fa-stethoscope text-amber-400 mr-2"></i>Cek Penyimpanan</h3>
-      <button onclick="closeDiag()" class="text-white/40"><i class="fas fa-xmark text-lg"></i></button>
-    </div>
-    <p class="text-[11px] text-slate-400 leading-relaxed mb-4">Mengunggah, membaca, lalu menghapus satu file kecil di Cloudinary untuk memastikan penyimpanan siap dipakai.</p>
-    <div id="diag-list" class="space-y-2"></div>
-    <button id="diag-run" onclick="runDiag()" class="w-full mt-4 bg-amber-500 text-white font-bold py-3 rounded-xl text-xs active:scale-95 transition disabled:opacity-50"><i class="fas fa-play mr-1.5"></i>Jalankan Tes</button>
-  </div>
-</div>
-
-<!-- QRCode.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy }
-  from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-const cfg  = { apiKey:"AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", authDomain:"mading-cf676.firebaseapp.com", projectId:"mading-cf676" };
-const app  = initializeApp(cfg);
-const db   = getFirestore(app);
-const auth = getAuth(app);
-const ALLOWED_ROLES = ['admin'];
-
-// ── expose to global (non-module) scope ──────────────────────────────
-window.__db = db;
-window.__auth = auth;
-window.__fb = {
-  serverTimestamp,
-  addDoc: (data) => addDoc(collection(db,'flipbooks'), data),
-  updateDoc: async (id,data) => { data.updatedAt = serverTimestamp(); await updateDoc(doc(db,'flipbooks',id), data); },
-  getFlipbook: async (id) => { const s = await getDoc(doc(db,'flipbooks',id)); return s.exists() ? {id:s.id,...s.data()} : null; },
-  getFlipbooks: async () => {
-    const q = query(collection(db,'flipbooks'), orderBy('createdAt','desc'));
-    const snap = await getDocs(q);
-    const out = []; snap.forEach(d=>out.push({id:d.id,...d.data()})); return out;
-  },
-  deleteDoc: (id) => deleteDoc(doc(db,'flipbooks',id)),
-};
-
-// ── auth + role gate ──────────────────────────────────────────────────
-onAuthStateChanged(auth, async (user) => {
-  if (!user) { location.href = 'login.html'; return; }
-  try {
-    const u = await getDoc(doc(db,'users',user.uid));
-    if (!u.exists() || !ALLOWED_ROLES.includes(u.data().role)) {
-      alert('Akses ditolak! Halaman ini khusus pengelola.');
-      location.href = 'login.html';
-      return;
-    }
-    window.currentUser = user;
-    document.getElementById('auth-email').textContent = user.email || 'Admin';
-    document.getElementById('gate').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    if (typeof window.__onAuthReady === 'function') window.__onAuthReady();
-  } catch (e) {
-    console.error(e);
-    document.getElementById('gate').innerHTML = '<p class="text-sm text-red-400 px-6 text-center">Gagal memeriksa akses. Periksa koneksi lalu muat ulang.</p>';
-  }
-});
-</script>
-
-<script>
-// ─── UTIL ────────────────────────────────────────────────────────────
+import { getFirestore, collection, doc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", authDomain: "mading-cf676.firebaseapp.com", projectId: "mading-cf676" });
+const auth = getAuth(app), db = getFirestore(app);
+const ALLOWED_ROLES = ['admin'];   // tambahkan 'teacher' bila dipakai guru
 const $ = id => document.getElementById(id);
-const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let semua = [], filter = 'semua';
+const FIL = [['semua', 'Semua'], ['published', 'Terbit'], ['draft', 'Draf']];
 
-let selectedFile = null;
-let uploadedUrl  = '';
-let uploadedId   = '';
-let ytIds        = [];
-let libData      = [];
-let delDocId     = null;
-let delCloudId   = null;
-let savedFlipId  = null;
-
-function toast(msg, type='ok'){
-  const t = document.createElement('div');
-  const clr = type==='ok'?'bg-slate-800':type==='err'?'bg-red-600':'bg-amber-600';
-  const ic  = type==='ok'?'fa-check-circle text-amber-400':type==='err'?'fa-circle-exclamation':'fa-circle-info';
-  t.className=`${clr} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2`;
-  t.innerHTML=`<i class="fas ${ic}"></i><span>${esc(msg)}</span>`;
-  $('toast').appendChild(t);
-  setTimeout(()=>t.remove(),3000);
+function render() {
+    const q = $('q').value.trim().toLowerCase();
+    const arr = semua.filter(h => (filter === 'semua' || h.status === filter) && (!q || h.judul.toLowerCase().includes(q)));
+    $('chips').innerHTML = FIL.map(([k, l]) => `<button onclick="setFilter('${k}')" class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold border transition ${filter === k ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-slate-500 border-slate-200'}">${l}</button>`).join('');
+    const total = semua.reduce((a, h) => a + (parseFloat(h.ukuranFile) || 0), 0);
+    $('sub').textContent = `${semua.length} dokumen · ${total.toFixed(1)} MB`;
+    if (!arr.length) { $('list').classList.add('hidden'); $('sKosong').classList.replace('hidden', 'flex'); const ada = semua.length > 0; $('kosongJ').textContent = ada ? 'Tidak ditemukan' : 'Belum ada handout'; $('kosongP').textContent = ada ? 'Coba kata kunci atau filter lain.' : 'Unggah PDF pertamamu. Sampul dan ringkasan dibuat otomatis.'; $('kosongA').classList.toggle('hidden', ada); return; }
+    $('sKosong').classList.replace('flex', 'hidden');
+    $('list').innerHTML = arr.map((h, i) => `<div class="up bg-white rounded-xl border border-slate-100 shadow-sm flex overflow-hidden" style="animation-delay:${Math.min(i, 8) * 40}ms">
+        <a href="form_handout.html?action=edit&id=${encodeURIComponent(h.id)}" class="flex gap-3 p-3 flex-1 min-w-0 active:bg-slate-50 transition">
+            <div class="w-14 h-[74px] rounded-lg overflow-hidden bg-slate-100 border border-slate-200 shrink-0">${h.coverImage ? `<img src="${esc(h.coverImage)}" alt="" class="w-full h-full object-cover">` : '<div class="w-full h-full flex items-center justify-center text-amber-400"><i class="fas fa-file-pdf text-xl"></i></div>'}</div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5 mb-1"><span class="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${h.status === 'draft' ? 'bg-slate-100 text-slate-500' : 'bg-emerald-50 text-emerald-600'}">${h.status === 'draft' ? 'Draf' : 'Terbit'}</span><span class="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 truncate">${esc(h.kategori)}</span></div>
+                <h3 class="font-bold text-[12px] text-slate-800 leading-snug lc2">${esc(h.judul)}</h3>
+                <p class="text-[10px] text-slate-400 mt-1"><i class="fas fa-file-lines"></i> ${esc(h.halaman || '-')} hal · ${esc(h.ukuranFile || '-')} MB · <i class="far fa-eye"></i> ${h.views || 0}</p>
+            </div></a>
+        <a href="../view-pdf.html?id=${encodeURIComponent(h.id)}" target="_blank" title="Lihat" aria-label="Lihat" class="w-11 flex items-center justify-center border-l border-slate-100 text-slate-400 hover:text-amber-500 hover:bg-amber-50 transition"><i class="fas fa-arrow-up-right-from-square text-xs"></i></a></div>`).join('');
+    $('list').classList.remove('hidden'); $('list').classList.add('flex');
 }
+window.setFilter = k => { filter = k; render(); };
+window.saring = render;
 
-// ─── API: signed Cloudinary requests via serverless function ─────────
-async function apiCloud(action, body){
-  if(!window.__auth || !window.__auth.currentUser) throw new Error("Belum login");
-  const token = await window.__auth.currentUser.getIdToken();
-  const r = await fetch('/api/cloudinary', {
-    method: 'POST',
-    headers: { 'Content-Type':'application/json', Authorization: 'Bearer ' + token },
-    body: JSON.stringify({ action, ...body })
-  });
-  const d = await r.json().catch(()=>({}));
-  if(!r.ok) throw Object.assign(new Error(d.detail_error || d.error || 'Server error'), { status:r.status });
-  return d;
+
+/* ===== CEK PENYIMPANAN (Cloudinary) ===== */
+const LANGKAH = ['Hubungi server (kunci Cloudinary & akses admin)', 'Unggah file uji ke Cloudinary', 'Baca file dari situs (izin PDF & CORS)', 'Hapus file uji'];
+let tesJalan = false;
+async function apiCloud(action, body) {
+    const token = await auth.currentUser.getIdToken();
+    const r = await fetch('/api/cloudinary', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ action, ...body }) });
+    const d = await r.json().catch(() => ({})); if (!r.ok) throw Object.assign(new Error(d.detail_error || 'Server error'), { status: r.status }); return d;
 }
-
-// ─── TABS ────────────────────────────────────────────────────────────
-function setTab(t){
-  ['upload','library'].forEach(k=>{
-    $('pane-'+k).classList.toggle('hidden',k!==t);
-    $('tab-'+k).classList.toggle('on',k===t);
-  });
-  if(t==='library') loadLibrary();
-}
-
-// ─── DROP ZONE ───────────────────────────────────────────────────────
-const drop = $('drop');
-drop.addEventListener('dragover',e=>{ e.preventDefault(); drop.classList.add('drag-over'); });
-drop.addEventListener('dragleave',()=>drop.classList.remove('drag-over'));
-drop.addEventListener('drop',e=>{ e.preventDefault(); drop.classList.remove('drag-over'); onFile(e.dataTransfer.files[0]); });
-
-function onFile(file){
-  if(!file) return;
-  if(file.type!=='application/pdf'&&!file.name.endsWith('.pdf')){ toast('Hanya file PDF yang diterima.','err'); return; }
-  if(file.size > 50*1024*1024){ toast('Ukuran file melebihi 50 MB.','err'); return; }
-  selectedFile = file;
-  uploadedUrl=''; uploadedId='';
-  $('file-info').classList.remove('hidden');
-  $('fi-name').textContent = file.name;
-  $('fi-size').textContent = (file.size/1024/1024).toFixed(2)+' MB';
-  $('prog-fill').style.width='0%';
-  $('drop-label').textContent = file.name;
-  $('drop-icon').innerHTML='<i class="fas fa-file-pdf text-red-400"></i>';
-  if(!$('f-judul').value) $('f-judul').value = file.name.replace(/\.pdf$/i,'').replace(/[-_]+/g,' ');
-}
-function clearFile(){
-  selectedFile=null; uploadedUrl=''; uploadedId='';
-  $('file-info').classList.add('hidden');
-  $('fi-name').textContent=''; $('fi-size').textContent='';
-  $('file-in').value='';
-  $('drop-label').textContent='Klik atau seret PDF ke sini';
-  $('drop-icon').innerHTML='<i class="fas fa-cloud-upload-alt"></i>';
-}
-
-// ─── YOUTUBE ─────────────────────────────────────────────────────────
-function addYT(){
-  const raw = $('yt-in').value.trim();
-  const m = raw.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
-  const id = m?m[1]:(raw.length===11?raw:'');
-  if(!id){ toast('ID/tautan YouTube tidak valid.','err'); return; }
-  if(ytIds.includes(id)){ toast('Video sudah ditambahkan.','warn'); return; }
-  ytIds.push(id);
-  $('yt-in').value='';
-  renderYTList();
-}
-function removeYT(id){ ytIds=ytIds.filter(x=>x!==id); renderYTList(); }
-function renderYTList(){
-  $('yt-list').innerHTML = ytIds.map(id=>`
-    <div class="yt-tag">
-      <img src="https://img.youtube.com/vi/${esc(id)}/default.jpg" class="w-12 h-9 object-cover rounded-lg shrink-0">
-      <div class="flex-1 min-w-0">
-        <p class="text-xs font-bold text-white truncate">youtube.com/watch?v=${esc(id)}</p>
-        <a href="https://youtube.com/watch?v=${esc(id)}" target="_blank" rel="noopener" class="text-[10px] text-amber-400 hover:underline">Buka <i class="fas fa-external-link-alt text-[8px]"></i></a>
-      </div>
-      <button onclick="removeYT('${esc(id)}')" class="text-white/30 hover:text-red-400 transition shrink-0"><i class="fas fa-xmark"></i></button>
-    </div>`).join('');
-}
-
-// ─── SIGNED UPLOAD TO CLOUDINARY ───────────────────────────────────────
-async function uploadSigned(file){
-  $('prog-msg').classList.remove('hidden');
-  $('prog-msg').textContent = 'Meminta izin unggah…';
-  $('prog-fill').style.width = '5%';
-
-  const t = await apiCloud('tanda', { namaFile: file.name });
-
-  $('prog-msg').textContent = 'Mengunggah ke Cloudinary…';
-  const fd = new FormData();
-  fd.append('file', file);
-  fd.append('api_key', t.api_key);
-  fd.append('timestamp', t.timestamp);
-  fd.append('public_id', t.public_id);
-  fd.append('signature', t.signature);
-  if(t.folder) fd.append('folder', t.folder);
-
-  return new Promise((ok,err)=>{
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', `https://api.cloudinary.com/v1_1/${t.cloud_name}/raw/upload`);
-    xhr.upload.onprogress = e=>{
-      if(e.lengthComputable){ const p=5+Math.round(e.loaded/e.total*90); $('prog-fill').style.width=p+'%'; }
-    };
-    xhr.onload = ()=>{
-      let r; try{ r=JSON.parse(xhr.responseText); }catch(e){ r={}; }
-      if(xhr.status===200 && r.secure_url){ $('prog-fill').style.width='100%'; ok(r); }
-      else err(new Error((r.error&&r.error.message) || ('Upload gagal: HTTP '+xhr.status)));
-    };
-    xhr.onerror = ()=>err(new Error('Koneksi ke Cloudinary gagal.'));
-    xhr.send(fd);
-  });
-}
-
-// ─── SUBMIT (create or update) ─────────────────────────────────────────
-async function submit(){
-  if(!window.currentUser){ toast('Kamu harus login dulu.','err'); return; }
-  const judul = $('f-judul').value.trim();
-  if(!judul){ toast('Judul harus diisi.','err'); $('f-judul').focus(); return; }
-  if(!selectedFile && !uploadedUrl){ toast('Pilih file PDF terlebih dahulu.','err'); return; }
-
-  const btn = $('btn-submit');
-  btn.disabled = true;
-  $('btn-submit-label').textContent = 'Menyimpan…';
-  btn.querySelector('i').className = 'fas fa-circle-notch fa-spin';
-
-  try{
-    if(selectedFile && !uploadedUrl){
-      const res = await uploadSigned(selectedFile);
-      uploadedUrl = res.secure_url;
-      uploadedId  = res.public_id;
-      toast('Unggah berhasil!');
+function bantu(e, tahap) {
+    const m = String((e && e.message) || e || '');
+    if (tahap === 1) {
+        if (/Variabel belum diisi/i.test(m)) return m;
+        if (e && e.status === 404) return 'File api/cloudinary.js belum ter-deploy. Upload file tersebut ke folder api lalu deploy ulang.';
+        if (e && (e.status === 401 || e.status === 403)) return m + ' Pastikan kamu login sebagai admin.';
+        return m;
     }
-
-    const data = {
-      judul, kategori: $('f-kat').value, deskripsi: $('f-desk').value.trim(),
-      fileUrl: uploadedUrl, cloudinaryId: uploadedId,
-      ukuranFile: selectedFile ? (selectedFile.size/1024/1024).toFixed(2) : ($('fi-size').textContent||'').replace(' MB','') || '',
-      youtubeIds: ytIds, status: $('f-status').value,
-      createdBy: window.currentUser.email || window.currentUser.uid,
-    };
-
-    if(savedFlipId){
-      await window.__fb.updateDoc(savedFlipId, data);
-      toast('Flipbook diperbarui!');
-    } else {
-      data.createdAt = window.__fb.serverTimestamp();
-      data.views = 0;
-      const ref = await window.__fb.addDoc(data);
-      savedFlipId = ref.id;
-      toast('Flipbook berhasil disimpan!');
-      $('btn-delete-inline').classList.remove('hidden');
+    if (tahap === 2) {
+        if (/signature/i.test(m)) return 'Tanda tangan ditolak. Periksa CLOUDINARY_API_SECRET di Vercel (salin ulang tanpa spasi), lalu deploy ulang.';
+        if (/api[_ ]key|cloud/i.test(m)) return 'Cloud name atau API Key salah. Periksa CLOUDINARY_CLOUD_NAME dan CLOUDINARY_API_KEY di Vercel.';
+        if (/Failed to fetch|NetworkError/i.test(m)) return 'Tidak bisa menghubungi Cloudinary. Periksa internet atau pemblokir iklan/VPN.';
+        return m;
     }
-
-    buildQRPreview(savedFlipId);
-    libData = []; // force refresh next time library opens
-
-  }catch(e){
-    console.error(e);
-    toast('Gagal menyimpan: '+(e.message||'Error'),'err');
-  }finally{
-    btn.disabled=false;
-    btn.querySelector('i').className='fas fa-paper-plane';
-    $('btn-submit-label').textContent = savedFlipId ? 'Perbarui Flipbook' : 'Simpan Flipbook';
-    $('prog-msg').classList.add('hidden');
-  }
-}
-
-// ─── RESET / EDIT FORM ─────────────────────────────────────────────────
-function resetForm(){
-  savedFlipId=null; selectedFile=null; uploadedUrl=''; uploadedId=''; ytIds=[];
-  $('f-judul').value=''; $('f-kat').value='modul'; $('f-desk').value=''; $('f-status').value='published';
-  clearFile(); renderYTList();
-  $('qr-section').style.display='none';
-  $('edit-banner').classList.add('hidden');
-  $('btn-delete-inline').classList.add('hidden');
-  $('btn-submit-label').textContent='Simpan Flipbook';
-  $('drop-sub').textContent='Maks. 50 MB • Format PDF';
-}
-async function editFlipbook(id){
-  const d = await window.__fb.getFlipbook(id);
-  if(!d){ toast('Flipbook tidak ditemukan.','err'); return; }
-  resetForm();
-  savedFlipId = id;
-  uploadedUrl = d.fileUrl || '';
-  uploadedId  = d.cloudinaryId || '';
-  ytIds = d.youtubeIds || [];
-  $('f-judul').value = d.judul || '';
-  $('f-kat').value = d.kategori || 'modul';
-  $('f-desk').value = d.deskripsi || '';
-  $('f-status').value = d.status || 'published';
-  renderYTList();
-  $('edit-banner').classList.remove('hidden');
-  $('edit-banner-title').textContent = d.judul || '';
-  $('btn-delete-inline').classList.remove('hidden');
-  $('btn-submit-label').textContent = 'Perbarui Flipbook';
-  if(uploadedUrl){
-    $('file-info').classList.remove('hidden');
-    $('fi-name').textContent = d.judul || 'File tersimpan';
-    $('fi-size').textContent = (d.ukuranFile||'-')+' MB';
-    $('drop-label').textContent = 'File sudah tersimpan — pilih file baru untuk mengganti';
-    $('drop-icon').innerHTML='<i class="fas fa-file-pdf text-red-400"></i>';
-  }
-  buildQRPreview(id);
-  setTab('upload');
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-// ─── QR PREVIEW ───────────────────────────────────────────────────────
-function buildQRPreview(docId){
-  const url = location.origin + location.pathname.replace(/upload-flipbook\.html$/, 'flipbook.html') + '?id=' + encodeURIComponent(docId);
-  $('qr-url-text').textContent = url;
-  $('qr-copy-btn').classList.remove('hidden');
-  $('qr-section').style.display='block';
-
-  const existing = $('qr-prev-inner');
-  if(existing) existing.remove();
-  const canvas = $('qr-prev-canvas');
-  if(typeof QRCode!=='undefined'){
-    canvas.style.display='none';
-    const div=document.createElement('div');
-    div.id='qr-prev-inner';
-    $('qr-prev-wrap').appendChild(div);
-    new QRCode(div,{text:url,width:120,height:120,colorDark:'#0f172a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
-  } else {
-    canvas.style.display='block';
-    const ctx=canvas.getContext('2d');
-    ctx.fillStyle='#fff'; ctx.fillRect(0,0,120,120);
-    ctx.fillStyle='#0f172a'; ctx.font='bold 10px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('QR tidak tersedia',60,55); ctx.fillText('di browser ini',60,70);
-  }
-}
-function copyQRLink(){
-  const url = $('qr-url-text').textContent;
-  navigator.clipboard.writeText(url).then(()=>toast('Tautan disalin!')).catch(()=>toast('Gagal menyalin.','err'));
-}
-
-// ─── LIBRARY ──────────────────────────────────────────────────────────
-async function loadLibrary(force=false){
-  if(libData.length && !force){ renderLib(libData); return; }
-  $('lib-loading').classList.remove('hidden');
-  $('lib-list').innerHTML=''; $('lib-empty').classList.add('hidden');
-  try{
-    libData = await window.__fb.getFlipbooks();
-    renderLib(libData);
-  }catch(e){ console.error(e); toast('Gagal memuat koleksi.','err'); }
-  finally{ $('lib-loading').classList.add('hidden'); }
-}
-function filterLib(){
-  const q=$('lib-q').value.toLowerCase();
-  renderLib(libData.filter(d=>(d.judul+'').toLowerCase().includes(q)));
-}
-function renderLib(arr){
-  $('lib-empty').classList.toggle('hidden', arr.length>0);
-  $('lib-list').innerHTML = arr.map(d=>{
-    const statusCls = d.status==='published'?'badge-ok':'badge-pending';
-    const statusLbl = d.status==='published'?'Terbit':'Draft';
-    return `<div class="card flex items-start gap-3">
-      <div class="w-10 h-12 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center shrink-0"><i class="fas fa-book text-lg"></i></div>
-      <div class="flex-1 min-w-0">
-        <p class="font-bold text-white text-sm truncate">${esc(d.judul)}</p>
-        <p class="text-[10px] text-white/40 mt-0.5">${esc(d.kategori||'')} • ${esc(d.ukuranFile||'-')} MB • 👁 ${d.views||0}</p>
-        <div class="mt-1.5 flex items-center gap-2 flex-wrap">
-          <span class="badge ${statusCls}">${statusLbl}</span>
-          ${d.youtubeIds&&d.youtubeIds.length?`<span class="badge" style="background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2)"><i class="fab fa-youtube text-[9px]"></i> ${d.youtubeIds.length}</span>`:''}
-        </div>
-      </div>
-      <div class="flex flex-col gap-1.5 shrink-0">
-        <button onclick="editFlipbook('${esc(d.id)}')" class="w-8 h-8 rounded-lg bg-white/8 text-white/60 flex items-center justify-center hover:bg-white/15 hover:text-amber-400 transition text-xs" title="Edit"><i class="fas fa-pen"></i></button>
-        <a href="flipbook.html?id=${esc(d.id)}" target="_blank" class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center hover:bg-amber-500/30 transition text-xs" title="Buka"><i class="fas fa-book-open"></i></a>
-        <button onclick="openDelModal('${esc(d.id)}','${esc((d.judul||'').replace(/'/g,"\\'"))}','${esc(d.cloudinaryId||'')}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/25 transition text-xs" title="Hapus"><i class="fas fa-trash"></i></button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ─── DELETE (Firestore + Cloudinary) ──────────────────────────────────
-function openDelModal(id,name,cloudId){ delDocId=id; delCloudId=cloudId||''; $('del-name').textContent=`Hapus "${name}"? File di Cloudinary juga akan dihapus.`; $('del-modal').style.display='flex'; }
-function closeDelModal(){ $('del-modal').style.display='none'; delDocId=null; delCloudId=null; }
-function confirmDeleteCurrent(){
-  if(!savedFlipId) return;
-  openDelModal(savedFlipId, $('f-judul').value||'dokumen ini', uploadedId);
-}
-$('del-confirm').onclick = async ()=>{
-  if(!delDocId) return;
-  $('del-confirm').disabled=true; $('del-confirm').textContent='Menghapus…';
-  try{
-    if(delCloudId){
-      try{ await apiCloud('hapus', { publicId: delCloudId }); }
-      catch(e){ console.warn('Hapus Cloudinary gagal (lanjut hapus data):', e); }
+    if (tahap === 3) {
+        if (e && e.status === 401) return 'Cloudinary menahan pengiriman PDF (HTTP 401). Buka Cloudinary → Settings → Security → aktifkan "Allow delivery of PDF and ZIP files", lalu Save.';
+        if (e && e.status === 404) return 'File tidak ditemukan di Cloudinary (HTTP 404). Coba jalankan ulang tes.';
+        return 'Browser tidak boleh membaca file itu (CORS/jaringan). Matikan pemblokir iklan lalu ulangi; bila tetap gagal, kirim pesan ini kepada saya: ' + m;
     }
-    await window.__fb.deleteDoc(delDocId);
-    toast('Flipbook dihapus.');
-    libData = libData.filter(d=>d.id!==delDocId);
-    renderLib(libData);
-    if(savedFlipId===delDocId) resetForm();
-    closeDelModal();
-  }catch(e){ console.error(e); toast('Gagal menghapus.','err'); }
-  finally{ $('del-confirm').disabled=false; $('del-confirm').textContent='Hapus'; }
+    return m;
+}
+function gambarTes(st) {
+    $('tesList').innerHTML = LANGKAH.map((l, i) => { const x = st[i] || { s: 'tunggu' };
+        const ic = x.s === 'ok' ? '<i class="fas fa-circle-check text-emerald-500"></i>' : x.s === 'gagal' ? '<i class="fas fa-circle-xmark text-red-500"></i>' : x.s === 'jalan' ? '<i class="fas fa-circle-notch fa-spin text-amber-500"></i>' : '<i class="far fa-circle text-slate-300"></i>';
+        return `<div class="rounded-xl border ${x.s === 'gagal' ? 'border-red-200 bg-red-50' : 'border-slate-100 bg-slate-50'} p-3"><div class="flex items-center gap-2.5 text-[12px] font-semibold text-slate-700">${ic}<span>${i + 1}. ${l}</span></div>${x.pesan ? `<p class="text-[11px] text-red-700 leading-relaxed mt-1.5 ml-6">${esc(x.pesan)}</p>` : ''}</div>`; }).join('');
+}
+window.bukaTes = () => { $('tes').classList.replace('hidden', 'flex'); gambarTes([]); $('tesMulai').disabled = false; };
+window.tutupTes = () => $('tes').classList.replace('flex', 'hidden');
+window.jalankanTes = async () => {
+    if (tesJalan) return; tesJalan = true; $('tesMulai').disabled = true; $('tesMulai').innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1.5"></i>Menguji…';
+    const st = []; const set = (i, s, pesan) => { st[i] = { s, pesan }; gambarTes(st); };
+    let t = null, hasil = null;
+    try { set(0, 'jalan'); t = await apiCloud('tanda', { namaFile: 'tes-penyimpanan.pdf' }); set(0, 'ok'); } catch (e) { console.error(e); set(0, 'gagal', bantu(e, 1)); }
+    if (t) {
+        try {
+            set(1, 'jalan'); const fd = new FormData(); fd.append('file', new Blob(['%PDF-1.4 tes penyimpanan'], { type: 'application/pdf' }), 'tes.pdf'); fd.append('api_key', t.api_key); fd.append('timestamp', t.timestamp); fd.append('public_id', t.public_id); fd.append('signature', t.signature);
+            const r = await fetch(`https://api.cloudinary.com/v1_1/${t.cloud_name}/raw/upload`, { method: 'POST', body: fd }), j = await r.json().catch(() => ({}));
+            if (!r.ok || !j.secure_url) throw new Error((j.error && j.error.message) || 'HTTP ' + r.status); hasil = j; set(1, 'ok');
+            set(2, 'jalan'); try { const g = await fetch(j.secure_url); if (!g.ok) throw Object.assign(new Error('HTTP ' + g.status), { status: g.status }); await g.blob(); set(2, 'ok'); } catch (e) { set(2, 'gagal', bantu(e, 3)); }
+        } catch (e) { console.error(e); set(hasil ? 2 : 1, 'gagal', bantu(e, hasil ? 3 : 2)); }
+    }
+    if (hasil) { try { set(3, 'jalan'); await apiCloud('hapus', { publicId: hasil.public_id }); set(3, 'ok'); } catch (e) { set(3, 'gagal', bantu(e, 4)); } }
+    if (LANGKAH.every((_, i) => st[i] && st[i].s === 'ok')) $('tesList').insertAdjacentHTML('beforeend', '<p class="text-[12px] font-bold text-emerald-600 text-center pt-2"><i class="fas fa-circle-check"></i> Penyimpanan siap dipakai. Silakan unggah handout.</p>');
+    tesJalan = false; $('tesMulai').disabled = false; $('tesMulai').innerHTML = '<i class="fas fa-rotate mr-1.5"></i>Jalankan Ulang';
 };
 
-// ─── DIAGNOSTIC (Cek Penyimpanan) ──────────────────────────────────────
-const DIAG_STEPS = ['Hubungi server (kunci Cloudinary & akses admin)', 'Unggah file uji ke Cloudinary', 'Baca file dari situs (izin PDF & CORS)', 'Hapus file uji'];
-let diagRunning = false;
-function diagHelp(e, step){
-  const m = String((e&&e.message)||e||'');
-  if(step===1){
-    if(e&&(e.status===401||e.status===403)) return m+' Pastikan kamu login sebagai admin.';
-    if(e&&e.status===404) return 'File api/cloudinary.js belum ter-deploy. Upload file tersebut ke folder api lalu deploy ulang.';
-    return m;
-  }
-  if(step===2){
-    if(/signature/i.test(m)) return 'Tanda tangan ditolak. Periksa CLOUDINARY_API_SECRET di Vercel, lalu deploy ulang.';
-    if(/api[_ ]key|cloud/i.test(m)) return 'Cloud name atau API Key salah. Periksa variabel CLOUDINARY_* di Vercel.';
-    if(/Failed to fetch|NetworkError/i.test(m)) return 'Tidak bisa menghubungi Cloudinary. Periksa internet atau pemblokir iklan/VPN.';
-    return m;
-  }
-  if(step===3){
-    if(e&&e.status===401) return 'Cloudinary menahan pengiriman file (HTTP 401). Buka Cloudinary → Settings → Security → aktifkan "Allow delivery of PDF and ZIP files", lalu Save.';
-    if(e&&e.status===404) return 'File tidak ditemukan di Cloudinary (HTTP 404). Coba jalankan ulang tes.';
-    return 'Browser tidak bisa membaca file itu (CORS/jaringan). Matikan pemblokir iklan lalu ulangi.';
-  }
-  return m;
-}
-function diagRender(st){
-  $('diag-list').innerHTML = DIAG_STEPS.map((l,i)=>{
-    const x = st[i] || {s:'wait'};
-    const ic = x.s==='ok' ? '<i class="fas fa-circle-check step-ok"></i>'
-             : x.s==='err' ? '<i class="fas fa-circle-xmark step-err"></i>'
-             : x.s==='run' ? '<i class="fas fa-circle-notch fa-spin step-ok"></i>'
-             : '<i class="far fa-circle step-wait"></i>';
-    return `<div class="rounded-xl border ${x.s==='err'?'border-red-500/30 bg-red-500/5':'border-white/8 bg-white/4'} p-3">
-      <div class="step-row">${ic}<span>${i+1}. ${esc(l)}</span></div>
-      ${x.msg?`<p class="text-[11px] text-red-300 leading-relaxed mt-1.5 ml-6">${esc(x.msg)}</p>`:''}
-    </div>`;
-  }).join('');
-}
-function openDiag(){ $('diag-modal').style.display='flex'; diagRender([]); $('diag-run').disabled=false; $('diag-run').innerHTML='<i class="fas fa-play mr-1.5"></i>Jalankan Tes'; }
-function closeDiag(){ $('diag-modal').style.display='none'; }
-async function runDiag(){
-  if(diagRunning) return; diagRunning=true;
-  $('diag-run').disabled=true; $('diag-run').innerHTML='<i class="fas fa-circle-notch fa-spin mr-1.5"></i>Menguji…';
-  const st=[]; const set=(i,s,msg)=>{ st[i]={s,msg}; diagRender(st); };
-  let t=null, hasil=null;
-  try{ set(0,'run'); t=await apiCloud('tanda',{namaFile:'tes-penyimpanan.pdf'}); set(0,'ok'); }
-  catch(e){ console.error(e); set(0,'err',diagHelp(e,1)); }
-  if(t){
-    try{
-      set(1,'run');
-      const fd=new FormData();
-      fd.append('file', new Blob(['%PDF-1.4 tes penyimpanan'],{type:'application/pdf'}), 'tes.pdf');
-      fd.append('api_key',t.api_key); fd.append('timestamp',t.timestamp); fd.append('public_id',t.public_id); fd.append('signature',t.signature);
-      const r=await fetch(`https://api.cloudinary.com/v1_1/${t.cloud_name}/raw/upload`,{method:'POST',body:fd});
-      const j=await r.json().catch(()=>({}));
-      if(!r.ok||!j.secure_url) throw new Error((j.error&&j.error.message)||'HTTP '+r.status);
-      hasil=j; set(1,'ok');
-      set(2,'run');
-      try{ const g=await fetch(j.secure_url); if(!g.ok) throw Object.assign(new Error('HTTP '+g.status),{status:g.status}); await g.blob(); set(2,'ok'); }
-      catch(e){ set(2,'err',diagHelp(e,3)); }
-    }catch(e){ console.error(e); set(hasil?2:1,'err',diagHelp(e,hasil?3:2)); }
-  }
-  if(hasil){ try{ set(3,'run'); await apiCloud('hapus',{publicId:hasil.public_id}); set(3,'ok'); }catch(e){ set(3,'err',diagHelp(e,4)); } }
-  if(DIAG_STEPS.every((_,i)=>st[i]&&st[i].s==='ok')){
-    $('diag-list').insertAdjacentHTML('beforeend','<p class="text-[12px] font-bold text-emerald-400 text-center pt-2"><i class="fas fa-circle-check"></i> Penyimpanan siap dipakai.</p>');
-  }
-  diagRunning=false; $('diag-run').disabled=false; $('diag-run').innerHTML='<i class="fas fa-rotate mr-1.5"></i>Jalankan Ulang';
-}
+onAuthStateChanged(auth, async user => {
+    if (!user) { location.href = '../login.html'; return; }
+    try {
+        const u = await getDoc(doc(db, 'users', user.uid));
+        if (!u.exists() || !ALLOWED_ROLES.includes(u.data().role)) { alert('Akses ditolak! Halaman ini khusus pengelola.'); location.href = '../login.html'; return; }
+        const snap = await getDocs(collection(db, 'handouts')), ms = t => t ? (t.toMillis ? t.toMillis() : new Date(t).getTime() || 0) : 0;
+        semua = []; snap.forEach(d => { const v = d.data(); if (v.status === 'dihapus') return; semua.push({ id: d.id, judul: v.judul || 'Tanpa judul', kategori: v.kategori || 'Bahan Ajar', status: v.status === 'draft' ? 'draft' : 'published', coverImage: v.coverImage || '', ukuranFile: v.ukuranFile || '', halaman: v.halaman || '', views: v.views || 0, t: ms(v.createdAt) }); });
+        semua.sort((a, b) => b.t - a.t); $('sMuat').classList.add('hidden'); render();
+    } catch (e) {
+        console.error(e); $('sMuat').classList.add('hidden'); $('sKosong').classList.replace('hidden', 'flex'); $('kosongJ').textContent = 'Gagal memuat'; $('kosongP').textContent = 'Periksa koneksi atau aturan Firestore, lalu muat ulang.'; $('kosongA').classList.add('hidden');
+    }
+});
 </script>
 </body>
 </html>
