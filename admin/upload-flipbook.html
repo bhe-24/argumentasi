@@ -44,7 +44,6 @@ label.lbl{display:block;font-size:11px;font-weight:700;color:#94a3b8;text-transf
 .step-row{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;color:#cbd5e1}
 .step-ok{color:#10b981}.step-err{color:#ef4444}.step-wait{color:#64748b}
 
-/* Error message box styling */
 .error-msg-box {
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
@@ -247,11 +246,11 @@ label.lbl{display:block;font-size:11px;font-weight:700;color:#94a3b8;text-transf
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script type="module">
-// Menggunakan versi 10.10.0 (lebih stabil)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+// Menggunakan versi 10.8.0 yang paling stabil dan bebas error 404
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy }
-  from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+  from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const cfg  = { apiKey:"AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", authDomain:"mading-cf676.firebaseapp.com", projectId:"mading-cf676" };
 const app  = initializeApp(cfg);
@@ -276,7 +275,6 @@ window.__fb = {
 };
 
 function showError(msg) {
-  // Sembunyikan elemen skeleton (semua elemen di dalam gate KECUALI modal error)
   const gate = document.getElementById('gate');
   const children = gate.children;
   for (let i = 0; i < children.length; i++) {
@@ -301,13 +299,11 @@ onAuthStateChanged(auth, async (user) => {
     const userDocRef = doc(db, 'users', user.uid);
     const u = await getDoc(userDocRef);
     
-    // Periksa apakah dokumen user ada dan rolenya admin
     if (!u.exists() || !u.data().role || !ALLOWED_ROLES.includes(u.data().role)) {
       showError('Akses ditolak! Halaman ini khusus admin. Hubungi pengelola jika merasa ini kesalahan.');
       return;
     }
     
-    // Jika berhasil
     window.currentUser = user;
     document.getElementById('auth-email').textContent = user.email || 'Admin';
     document.getElementById('gate').classList.add('hidden');
@@ -317,7 +313,6 @@ onAuthStateChanged(auth, async (user) => {
     
   } catch (e) {
     console.error("Auth Gate Error:", e);
-    // Jika network error atau hal lain yang tidak terduga
     showError(e.message || 'Gagal memeriksa akses. Periksa koneksi internet Anda lalu muat ulang.');
   }
 });
