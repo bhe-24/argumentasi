@@ -200,10 +200,10 @@ let selectedFile = null;
 let uploadedUrl  = '';
 let uploadedId   = '';   // Cloudinary public_id
 let ytIds        = [];
-let currentUser  = null;
 let libData      = [];
 let delDocId     = null;
 let savedFlipId  = null;
+// Variabel currentUser dihapus dari sini agar menggunakan window.currentUser yang diatur oleh Firebase
 
 // ─── TOAST ───────────────────────────────────────────────────────────
 function toast(msg, type='ok'){
@@ -308,7 +308,8 @@ async function uploadCloudinary(file){
 
 // ─── SUBMIT ───────────────────────────────────────────────────────────
 async function submit(){
-  if(!currentUser){ toast('Kamu harus login dulu.','err'); return; }
+  // Pengecekan login diubah menggunakan window.currentUser
+  if(!window.currentUser){ toast('Kamu harus login dulu.','err'); return; }
   const judul = $('f-judul').value.trim();
   if(!judul){ toast('Judul harus diisi.','err'); $('f-judul').focus(); return; }
   if(!selectedFile&&!uploadedUrl){ toast('Pilih file PDF terlebih dahulu.','err'); return; }
@@ -339,7 +340,8 @@ async function submit(){
       ukuranFile  : selectedFile ? (selectedFile.size/1024/1024).toFixed(2) : '',
       youtubeIds  : ytIds,
       status      : $('f-status').value,
-      createdBy   : currentUser.email||currentUser.uid,
+      // Pengambilan identitas user diubah menggunakan window.currentUser
+      createdBy   : window.currentUser.email||window.currentUser.uid,
       createdAt   : window.__fbServerTimestamp(),
       views       : 0,
     };
