@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Upload Flipbook — Argumentasi</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','sans-serif']}}}}</script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Poppins',sans-serif;background:#0f172a;color:#f1f5f9;min-height:100dvh}
+/* Drop zone */
+.drop-zone{border:2px dashed rgba(245,158,11,.35);border-radius:16px;transition:.25s;cursor:pointer;background:rgba(245,158,11,.04)}
+.drop-zone.drag-over{border-color:#f59e0b;background:rgba(245,158,11,.1);transform:scale(1.01)}
+/* Input */
+.inp{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 14px;color:#f1f5f9;font-size:13px;outline:none;font-family:inherit;transition:.2s}
+.inp:focus{border-color:#f59e0b;background:rgba(245,158,11,.07)}
+.inp::placeholder{color:rgba(255,255,255,.25)}
+label.lbl{display:block;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+/* Progress bar */
+#prog-bar{height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden}
+#prog-fill{height:100%;width:0%;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:3px;transition:width .3s}
+/* Card */
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px}
+/* Primary button */
+.btn-primary{background:#f59e0b;color:#fff;font-weight:700;border-radius:12px;padding:12px 20px;width:100%;font-size:14px;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;border:none;font-family:inherit}
+.btn-primary:hover{background:#d97706}.btn-primary:active{transform:scale(.97)}.btn-primary:disabled{opacity:.45;cursor:default}
+/* Status badge */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.badge-ok{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.25)}
+.badge-err{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+.badge-pending{background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.2)}
+/* YT tag */
+.yt-tag{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 12px}
+/* Library list */
+.lib-item{display:flex;align-items:center;gap-10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;transition:.15s}
+.lib-item:hover{background:rgba(255,255,255,.03);border-radius:8px;padding:10px 6px;margin:0 -6px}
+.lib-item:last-child{border-bottom:none}
+/* QR */
+#qr-prev-wrap{background:#fff;border-radius:12px;padding:8px;width:140px;height:140px;display:flex;align-items:center;justify-content:center}
+/* Toast */
+#toast{position:fixed;top:72px;left:50%;transform:translateX(-50%);z-index:999;pointer-events:none;width:90%;max-width:380px;display:flex;flex-direction:column;align-items:center;gap:6px}
+/* Scrollbar */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+/* Tab */
+.tab-btn{flex:1;py:10px;text-center;text-xs;font-weight:700;color:#64748b;border-bottom:2px solid transparent;transition:.2s;cursor:pointer;padding:10px 4px}
+.tab-btn.on{color:#f59e0b;border-color:#f59e0b}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="sticky top-0 z-50 bg-slate-900/95 backdrop-blur border-b border-white/6 h-13 flex items-center px-4 gap-3" style="height:52px">
+  <a href="handout.html" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:bg-white/10 transition"><i class="fas fa-chevron-left text-sm"></i></a>
+  <div class="flex-1">
+    <h1 class="text-white font-bold text-[13px]">Upload Flipbook</h1>
+    <p class="text-white/40 text-[10px]">Admin • Argumentasi Platform</p>
+  </div>
+  <div id="auth-chip" class="badge badge-pending"><i class="fas fa-circle-notch fa-spin text-[9px]"></i>Memuat</div>
+</header>
+
+<!-- TABS -->
+<div class="sticky top-[52px] z-40 bg-slate-900/95 backdrop-blur border-b border-white/6 flex px-2">
+  <button class="tab-btn on" id="tab-upload" onclick="setTab('upload')">Upload Baru</button>
+  <button class="tab-btn" id="tab-library" onclick="setTab('library')">Koleksi Flipbook</button>
+</div>
+
+<div class="max-w-lg mx-auto px-4 pb-24 pt-5">
+
+<!-- ═══ UPLOAD TAB ═══ -->
+<div id="pane-upload">
+
+  <!-- Drop zone -->
+  <div class="drop-zone p-8 text-center mb-5" id="drop" onclick="$('file-in').click()">
+    <div id="drop-icon" class="text-5xl text-amber-500/50 mb-3"><i class="fas fa-cloud-upload-alt"></i></div>
+    <p id="drop-label" class="font-bold text-white/70 text-sm">Klik atau seret PDF ke sini</p>
+    <p class="text-xs text-white/30 mt-1">Maks. 50 MB • Format PDF</p>
+    <input type="file" id="file-in" accept=".pdf,application/pdf" class="hidden" onchange="onFile(this.files[0])">
+  </div>
+
+  <!-- Selected file info -->
+  <div id="file-info" class="card mb-4 hidden">
+    <div class="flex items-start gap-3">
+      <div class="w-10 h-10 rounded-xl bg-red-500/15 text-red-400 flex items-center justify-center shrink-0"><i class="fas fa-file-pdf"></i></div>
+      <div class="flex-1 min-w-0">
+        <p id="fi-name" class="font-bold text-white text-sm truncate"></p>
+        <p id="fi-size" class="text-xs text-white/40 mt-0.5"></p>
+      </div>
+      <button onclick="clearFile()" class="text-white/30 hover:text-red-400 transition"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="mt-3" id="prog-bar"><div id="prog-fill"></div></div>
+    <p id="prog-msg" class="text-[10px] text-white/40 mt-1.5 text-center hidden">Mengunggah ke Cloudinary…</p>
+  </div>
+
+  <!-- Form -->
+  <div class="card space-y-4 mb-4">
+    <div>
+      <label class="lbl">Judul Flipbook *</label>
+      <input class="inp" id="f-judul" type="text" placeholder="cth. Modul Argumentasi Kelas X" maxlength="120">
+    </div>
+    <div>
+      <label class="lbl">Kategori</label>
+      <select class="inp" id="f-kat">
+        <option value="modul">📝 Modul Ajar</option>
+        <option value="buku">📖 Buku Referensi</option>
+        <option value="flipbook">📚 Flipbook</option>
+        <option value="majalah">🗞️ Majalah / Buletin</option>
+        <option value="lainnya">🗂️ Lainnya</option>
+      </select>
+    </div>
+    <div>
+      <label class="lbl">Deskripsi / Ringkasan</label>
+      <textarea class="inp" id="f-desk" rows="3" placeholder="Ringkasan singkat isi dokumen…" maxlength="500" style="resize:none"></textarea>
+    </div>
+
+    <!-- YouTube IDs -->
+    <div>
+      <label class="lbl"><i class="fab fa-youtube text-red-400 mr-1"></i>Video YouTube Terkait</label>
+      <p class="text-[10px] text-white/30 mb-2">Tambahkan ID video YouTube (bagian setelah ?v=) agar bisa diputar di panel info.</p>
+      <div class="flex gap-2">
+        <input class="inp flex-1" id="yt-in" type="text" placeholder="cth. dQw4w9WgXcQ" maxlength="20">
+        <button onclick="addYT()" class="shrink-0 w-10 h-10 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 transition flex items-center justify-center"><i class="fas fa-plus"></i></button>
+      </div>
+      <div id="yt-list" class="mt-2 space-y-2"></div>
+    </div>
+
+    <!-- Status -->
+    <div>
+      <label class="lbl">Status Publikasi</label>
+      <select class="inp" id="f-status">
+        <option value="published">✅ Terbit (Publik)</option>
+        <option value="draft">📝 Draft (Tersembunyi)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- QR Preview -->
+  <div class="card mb-5" id="qr-section" style="display:none">
+    <p class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3"><i class="fas fa-qrcode mr-1.5"></i>QR Code Flipbook</p>
+    <div class="flex items-center gap-4">
+      <div id="qr-prev-wrap"><canvas id="qr-prev-canvas" width="120" height="120"></canvas></div>
+      <div class="flex-1">
+        <p class="text-xs text-white/50 leading-relaxed" id="qr-url-text">QR akan muncul setelah tersimpan.</p>
+        <button onclick="copyQRLink()" id="qr-copy-btn" class="mt-2 bg-amber-500/20 text-amber-400 text-xs font-bold px-4 py-2 rounded-lg hidden hover:bg-amber-500/30 transition"><i class="fas fa-copy mr-1"></i>Salin Tautan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <button class="btn-primary" id="btn-submit" onclick="submit()">
+    <i class="fas fa-paper-plane"></i>Simpan Flipbook
+  </button>
+  <p class="text-center text-[10px] text-white/25 mt-3">File diunggah ke Cloudinary · Data disimpan di Firebase</p>
+</div>
+
+<!-- ═══ LIBRARY TAB ═══ -->
+<div id="pane-library" class="hidden">
+  <div class="flex items-center gap-2 mb-4">
+    <input class="inp flex-1" type="text" id="lib-q" placeholder="Cari judul flipbook…" oninput="filterLib()">
+    <button onclick="loadLibrary(true)" class="shrink-0 w-10 h-10 rounded-xl bg-white/6 text-white/60 hover:text-amber-400 flex items-center justify-center transition"><i class="fas fa-rotate-right text-sm"></i></button>
+  </div>
+  <div id="lib-loading" class="text-center py-10 text-white/30 hidden"><div class="w-8 h-8 border-2 border-white/20 border-t-amber-400 rounded-full animate-spin mx-auto mb-3"></div>Memuat…</div>
+  <div id="lib-list" class="space-y-2"></div>
+  <p id="lib-empty" class="text-center text-white/30 text-sm py-10 hidden">Belum ada flipbook.</p>
+</div>
+
+</div><!-- /main -->
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div id="del-modal" class="fixed inset-0 bg-black/60 z-[200] hidden items-center justify-center px-6">
+  <div class="bg-slate-800 rounded-2xl p-6 w-full max-w-sm">
+    <h3 class="font-bold text-white text-base mb-2">Hapus Flipbook?</h3>
+    <p class="text-sm text-slate-400 mb-5" id="del-name">Yakin ingin menghapus dokumen ini?</p>
+    <div class="grid grid-cols-2 gap-3">
+      <button onclick="closeDelModal()" class="bg-white/8 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-white/15 transition">Batal</button>
+      <button id="del-confirm" class="bg-red-500 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-red-600 transition active:scale-95">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- QRCode.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+// ─── CLOUDINARY CONFIG ───────────────────────────────────────────────
+// ⚠️  Ganti dengan cloud_name dan upload_preset unsigned kamu
+const CLOUD_NAME    = 'YOUR_CLOUD_NAME';    // ← ganti
+const UPLOAD_PRESET = 'YOUR_UPLOAD_PRESET'; // ← ganti unsigned preset
+
+// ─── STATE ───────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const esc= s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let selectedFile = null;
+let uploadedUrl  = '';
+let uploadedId   = '';   // Cloudinary public_id
+let ytIds        = [];
+let currentUser  = null;
+let libData      = [];
+let delDocId     = null;
+let savedFlipId  = null;
+
+// ─── TOAST ───────────────────────────────────────────────────────────
+function toast(msg, type='ok'){
+  const t = document.createElement('div');
+  const clr = type==='ok'?'bg-slate-800':type==='err'?'bg-red-600':'bg-amber-600';
+  const ic  = type==='ok'?'fa-check-circle text-amber-400':type==='err'?'fa-circle-exclamation':'fa-circle-info';
+  t.className=`${clr} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2`;
+  t.innerHTML=`<i class="fas ${ic}"></i><span>${esc(msg)}</span>`;
+  $('toast').appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+
+// ─── TABS ────────────────────────────────────────────────────────────
+function setTab(t){
+  ['upload','library'].forEach(k=>{
+    $('pane-'+k).classList.toggle('hidden',k!==t);
+    $('tab-'+k).classList.toggle('on',k===t);
+  });
+  if(t==='library') loadLibrary();
+}
+
+// ─── DROP ZONE ───────────────────────────────────────────────────────
+const drop = $('drop');
+drop.addEventListener('dragover',e=>{ e.preventDefault(); drop.classList.add('drag-over'); });
+drop.addEventListener('dragleave',()=>drop.classList.remove('drag-over'));
+drop.addEventListener('drop',e=>{ e.preventDefault(); drop.classList.remove('drag-over'); onFile(e.dataTransfer.files[0]); });
+
+function onFile(file){
+  if(!file) return;
+  if(file.type!=='application/pdf'&&!file.name.endsWith('.pdf')){ toast('Hanya file PDF yang diterima.','err'); return; }
+  if(file.size > 50*1024*1024){ toast('Ukuran file melebihi 50 MB.','err'); return; }
+  selectedFile = file;
+  uploadedUrl  = ''; uploadedId=''; savedFlipId=null;
+  $('file-info').classList.remove('hidden');
+  $('fi-name').textContent = file.name;
+  $('fi-size').textContent = (file.size/1024/1024).toFixed(2)+' MB';
+  $('prog-fill').style.width='0%';
+  $('drop-label').textContent = file.name;
+  $('drop-icon').innerHTML='<i class="fas fa-file-pdf text-red-400"></i>';
+  $('qr-section').style.display='none';
+  // Auto-fill judul if empty
+  if(!$('f-judul').value) $('f-judul').value = file.name.replace(/\.pdf$/i,'').replace(/[-_]+/g,' ');
+}
+function clearFile(){
+  selectedFile=null; uploadedUrl=''; uploadedId=''; savedFlipId=null;
+  $('file-info').classList.add('hidden');
+  $('fi-name').textContent=''; $('fi-size').textContent='';
+  $('file-in').value='';
+  $('drop-label').textContent='Klik atau seret PDF ke sini';
+  $('drop-icon').innerHTML='<i class="fas fa-cloud-upload-alt"></i>';
+  $('qr-section').style.display='none';
+}
+
+// ─── YOUTUBE ─────────────────────────────────────────────────────────
+function addYT(){
+  const raw = $('yt-in').value.trim();
+  // extract ID from full URL or plain ID
+  const m = raw.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+  const id = m?m[1]:(raw.length===11?raw:'');
+  if(!id){ toast('ID YouTube tidak valid (11 karakter).','err'); return; }
+  if(ytIds.includes(id)){ toast('Video sudah ditambahkan.','warn'); return; }
+  ytIds.push(id);
+  $('yt-in').value='';
+  renderYTList();
+}
+function removeYT(id){ ytIds=ytIds.filter(x=>x!==id); renderYTList(); }
+function renderYTList(){
+  $('yt-list').innerHTML = ytIds.map(id=>`
+    <div class="yt-tag">
+      <img src="https://img.youtube.com/vi/${esc(id)}/default.jpg" class="w-12 h-9 object-cover rounded-lg shrink-0">
+      <div class="flex-1 min-w-0">
+        <p class="text-xs font-bold text-white truncate">youtube.com/watch?v=${esc(id)}</p>
+        <a href="https://youtube.com/watch?v=${esc(id)}" target="_blank" rel="noopener" class="text-[10px] text-amber-400 hover:underline">Buka <i class="fas fa-external-link-alt text-[8px]"></i></a>
+      </div>
+      <button onclick="removeYT('${esc(id)}')" class="text-white/30 hover:text-red-400 transition shrink-0"><i class="fas fa-xmark"></i></button>
+    </div>`).join('');
+}
+
+// ─── UPLOAD TO CLOUDINARY ─────────────────────────────────────────────
+async function uploadCloudinary(file){
+  $('prog-msg').classList.remove('hidden');
+  const fd = new FormData();
+  fd.append('file',file);
+  fd.append('upload_preset',UPLOAD_PRESET);
+  fd.append('resource_type','raw');
+  fd.append('folder','flipbooks');
+
+  return new Promise((ok,err)=>{
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST',`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`);
+    xhr.upload.onprogress = e=>{
+      if(e.lengthComputable){ const p=Math.round(e.loaded/e.total*100); $('prog-fill').style.width=p+'%'; }
+    };
+    xhr.onload = ()=>{
+      if(xhr.status===200){ const r=JSON.parse(xhr.responseText); ok(r); }
+      else err(new Error('Upload gagal: '+xhr.status));
+    };
+    xhr.onerror = ()=>err(new Error('Network error'));
+    xhr.send(fd);
+  });
+}
+
+// ─── SUBMIT ───────────────────────────────────────────────────────────
+async function submit(){
+  if(!currentUser){ toast('Kamu harus login dulu.','err'); return; }
+  const judul = $('f-judul').value.trim();
+  if(!judul){ toast('Judul harus diisi.','err'); $('f-judul').focus(); return; }
+  if(!selectedFile&&!uploadedUrl){ toast('Pilih file PDF terlebih dahulu.','err'); return; }
+
+  const btn=$('btn-submit');
+  btn.disabled=true;
+  btn.innerHTML='<i class="fas fa-circle-notch fa-spin"></i>Menyimpan…';
+
+  try{
+    // 1. Upload ke Cloudinary jika belum
+    if(selectedFile&&!uploadedUrl){
+      $('prog-fill').style.width='0%';
+      toast('Mengunggah PDF ke Cloudinary…','warn');
+      const res = await uploadCloudinary(selectedFile);
+      uploadedUrl = res.secure_url;
+      uploadedId  = res.public_id;
+      $('prog-fill').style.width='100%';
+      toast('Upload berhasil!');
+    }
+
+    // 2. Simpan ke Firestore
+    const data = {
+      judul       : judul,
+      kategori    : $('f-kat').value,
+      deskripsi   : $('f-desk').value.trim(),
+      fileUrl     : uploadedUrl,
+      cloudinaryId: uploadedId,
+      ukuranFile  : selectedFile ? (selectedFile.size/1024/1024).toFixed(2) : '',
+      youtubeIds  : ytIds,
+      status      : $('f-status').value,
+      createdBy   : currentUser.email||currentUser.uid,
+      createdAt   : window.__fbServerTimestamp(),
+      views       : 0,
+    };
+
+    let docRef;
+    if(savedFlipId){
+      // update existing
+      await window.__fbUpdateFlipbook(savedFlipId, data);
+      docRef = {id: savedFlipId};
+      toast('Flipbook diperbarui!');
+    } else {
+      docRef = await window.__fbAddFlipbook(data);
+      savedFlipId = docRef.id;
+      toast('Flipbook berhasil disimpan!');
+    }
+
+    // 3. Generate QR
+    buildQRPreview(savedFlipId);
+
+  }catch(e){
+    console.error(e);
+    toast('Gagal menyimpan: '+(e.message||'Error'),'err');
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML='<i class="fas fa-paper-plane"></i>Simpan Flipbook';
+    $('prog-msg').classList.add('hidden');
+  }
+}
+
+// ─── QR PREVIEW ───────────────────────────────────────────────────────
+function buildQRPreview(docId){
+  const url = location.origin + '/flipbook.html?id='+encodeURIComponent(docId);
+  $('qr-url-text').textContent = url;
+  $('qr-copy-btn').classList.remove('hidden');
+  $('qr-section').style.display='block';
+
+  const canvas=$('qr-prev-canvas');
+  if(typeof QRCode!=='undefined'){
+    canvas.style.display='none';
+    const existing=$('qr-prev-inner');
+    if(existing) existing.remove();
+    const div=document.createElement('div');
+    div.id='qr-prev-inner';
+    $('qr-prev-wrap').appendChild(div);
+    new QRCode(div,{text:url,width:120,height:120,colorDark:'#0f172a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+  } else {
+    // fallback
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,120,120);
+    ctx.fillStyle='#0f172a'; ctx.font='bold 10px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('QR tidak tersedia',60,55); ctx.fillText('di browser ini',60,70);
+  }
+}
+function copyQRLink(){
+  const url = location.origin + '/flipbook.html?id='+encodeURIComponent(savedFlipId||'');
+  navigator.clipboard.writeText(url).then(()=>toast('Tautan disalin!')).catch(()=>toast('Gagal menyalin.','err'));
+}
+
+// ─── LIBRARY ──────────────────────────────────────────────────────────
+async function loadLibrary(force=false){
+  if(libData.length&&!force){ renderLib(libData); return; }
+  $('lib-loading').classList.remove('hidden');
+  $('lib-list').innerHTML=''; $('lib-empty').classList.add('hidden');
+  try{
+    libData = await window.__fbGetFlipbooks();
+    renderLib(libData);
+  }catch(e){ toast('Gagal memuat koleksi.','err'); }
+  finally{ $('lib-loading').classList.add('hidden'); }
+}
+function filterLib(){
+  const q=$('lib-q').value.toLowerCase();
+  const filtered = libData.filter(d=>(d.judul+'').toLowerCase().includes(q));
+  renderLib(filtered);
+}
+function renderLib(arr){
+  $('lib-empty').classList.toggle('hidden',arr.length>0);
+  $('lib-list').innerHTML = arr.map(d=>{
+    const statusCls = d.status==='published'?'badge-ok':'badge-pending';
+    const statusLbl = d.status==='published'?'Terbit':'Draft';
+    return `<div class="card flex items-start gap-3">
+      <div class="w-10 h-12 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center shrink-0"><i class="fas fa-book text-lg"></i></div>
+      <div class="flex-1 min-w-0">
+        <p class="font-bold text-white text-sm truncate">${esc(d.judul)}</p>
+        <p class="text-[10px] text-white/40 mt-0.5">${esc(d.kategori||'')} • ${esc(d.ukuranFile||'')} MB • 👁 ${d.views||0}</p>
+        <div class="mt-1.5 flex items-center gap-2">
+          <span class="badge ${statusCls}">${statusLbl}</span>
+          ${d.youtubeIds&&d.youtubeIds.length?`<span class="badge" style="background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2)"><i class="fab fa-youtube text-[9px]"></i> ${d.youtubeIds.length} video</span>`:''}
+        </div>
+      </div>
+      <div class="flex flex-col gap-1.5 shrink-0">
+        <a href="flipbook.html?id=${esc(d.id)}" target="_blank" class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center hover:bg-amber-500/30 transition text-xs" title="Buka"><i class="fas fa-book-open"></i></a>
+        <button onclick="openDelModal('${esc(d.id)}','${esc(d.judul)}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/25 transition text-xs" title="Hapus"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── DELETE MODAL ─────────────────────────────────────────────────────
+function openDelModal(id,name){ delDocId=id; $('del-name').textContent=`Hapus "${name}"?`; $('del-modal').style.display='flex'; }
+function closeDelModal(){ $('del-modal').style.display='none'; delDocId=null; }
+$('del-confirm').onclick=async()=>{
+  if(!delDocId) return;
+  $('del-confirm').disabled=true; $('del-confirm').textContent='Menghapus…';
+  try{
+    await window.__fbDeleteFlipbook(delDocId);
+    toast('Flipbook dihapus.');
+    libData=libData.filter(d=>d.id!==delDocId);
+    renderLib(libData);
+    closeDelModal();
+  }catch(e){ toast('Gagal menghapus.','err'); }
+  finally{ $('del-confirm').disabled=false; $('del-confirm').textContent='Hapus'; }
+};
+</script>
+
+<script type="module">
+import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy }
+                             from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged }
+                             from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+const cfg = { apiKey:"AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId:"mading-cf676" };
+const app = initializeApp(cfg);
+const db  = getFirestore(app);
+const auth= getAuth(app);
+
+// Expose Firebase helpers to global scope
+window.__fbServerTimestamp = () => serverTimestamp();
+
+window.__fbAddFlipbook = async (data) => {
+  return await addDoc(collection(db,'flipbooks'), data);
+};
+window.__fbUpdateFlipbook = async (id, data) => {
+  data.updatedAt = serverTimestamp();
+  await updateDoc(doc(db,'flipbooks',id), data);
+};
+window.__fbGetFlipbooks = async () => {
+  const q   = query(collection(db,'flipbooks'), orderBy('createdAt','desc'));
+  const snap= await getDocs(q);
+  const out = [];
+  snap.forEach(d=>out.push({id:d.id,...d.data()}));
+  return out;
+};
+window.__fbDeleteFlipbook = async (id) => {
+  await deleteDoc(doc(db,'flipbooks',id));
+};
+
+// Auth state
+onAuthStateChanged(auth, user=>{
+  window.currentUser = user;
+  const chip = document.getElementById('auth-chip');
+  if(user){
+    chip.className='badge badge-ok';
+    chip.innerHTML=`<i class="fas fa-circle-check text-[9px]"></i>${user.email||'Admin'}`;
+  } else {
+    chip.className='badge badge-err';
+    chip.innerHTML='<i class="fas fa-lock text-[9px]"></i>Belum login';
+    // redirect to login if you have one
+    // location.href = 'login.html?redirect=upload-flipbook.html';
+  }
+});
+</script>
+</body>
+</html>
