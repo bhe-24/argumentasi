@@ -246,7 +246,7 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('auth-email').textContent = user.email || 'Admin';
     document.getElementById('gate').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
-    if (typeof window.__onAuthReady === 'function') window.__onAuthReady();
+    window.__onAuthReady && window.__onAuthReady();
   } catch (e) {
     console.error(e);
     document.getElementById('gate').innerHTML = '<p class="text-sm text-red-400 px-6 text-center">Gagal memeriksa akses. Periksa koneksi lalu muat ulang.</p>';
@@ -280,7 +280,6 @@ function toast(msg, type='ok'){
 
 // ─── API: signed Cloudinary requests via serverless function ─────────
 async function apiCloud(action, body){
-  if(!window.__auth || !window.__auth.currentUser) throw new Error("Belum login");
   const token = await window.__auth.currentUser.getIdToken();
   const r = await fetch('/api/cloudinary', {
     method: 'POST',
