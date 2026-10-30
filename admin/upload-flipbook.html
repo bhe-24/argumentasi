@@ -34,22 +34,47 @@ label.lbl{display:block;font-size:11px;font-weight:700;color:#94a3b8;text-transf
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
 .tab-btn{flex:1;text-align:center;font-size:12px;font-weight:700;color:#64748b;border-bottom:2px solid transparent;transition:.2s;cursor:pointer;padding:10px 4px}
 .tab-btn.on{color:#f59e0b;border-color:#f59e0b}
-.sk{position:relative;overflow:hidden;background:rgba(255,255,255,.06)}
+
+/* Skeleton Animation */
+.sk{position:relative;overflow:hidden;background:rgba(255,255,255,.06);border-radius:8px;}
 .sk::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);animation:sh 1.3s infinite}
 @keyframes sh{100%{transform:translateX(100%)}}
-#gate{position:fixed;inset:0;background:#0f172a;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-.spin{width:44px;height:44px;border:3px solid rgba(245,158,11,.2);border-top-color:#f59e0b;border-radius:50%;animation:spin .9s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+
+#gate{position:fixed;inset:0;background:#0f172a;z-index:500;display:flex;flex-direction:column;}
 .step-row{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;color:#cbd5e1}
 .step-ok{color:#10b981}.step-err{color:#ef4444}.step-wait{color:#64748b}
 </style>
 </head>
 <body>
 
-<!-- AUTH GATE -->
+<!-- AUTH GATE (Skeleton UI) -->
 <div id="gate">
-  <div class="spin"></div>
-  <p class="text-sm font-semibold text-amber-400">Memeriksa akses admin…</p>
+  <!-- Fake Header -->
+  <header class="border-b border-white/6 flex items-center px-4 gap-3" style="height:52px">
+    <div class="sk w-8 h-8 rounded-full shrink-0"></div>
+    <div class="flex-1 space-y-1.5">
+      <div class="sk h-4 w-32"></div>
+      <div class="sk h-2.5 w-40"></div>
+    </div>
+    <div class="sk w-8 h-8 rounded-full shrink-0"></div>
+    <div class="sk w-20 h-6 rounded-full shrink-0"></div>
+  </header>
+
+  <!-- Fake Tabs -->
+  <div class="border-b border-white/6 flex px-2 py-2 gap-2">
+    <div class="sk h-8 flex-1 rounded-md"></div>
+    <div class="sk h-8 flex-1 rounded-md"></div>
+  </div>
+
+  <!-- Fake Content -->
+  <div class="max-w-lg w-full mx-auto px-4 pt-5 space-y-4">
+    <div class="sk h-48 rounded-2xl w-full"></div>
+    <div class="sk h-64 rounded-2xl w-full"></div>
+    <div class="sk h-12 rounded-xl w-full"></div>
+  </div>
+  
+  <!-- Status Text overlay just to inform if it takes too long (optional) -->
+  <p id="gate-msg" class="absolute bottom-10 left-0 right-0 text-center text-xs text-slate-500 font-semibold">Memeriksa kredensial admin...</p>
 </div>
 
 <!-- APP (hidden until authorized) -->
@@ -246,10 +271,10 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('auth-email').textContent = user.email || 'Admin';
     document.getElementById('gate').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
-    window.__onAuthReady && window.__onAuthReady();
+    if (typeof window.__onAuthReady === 'function') window.__onAuthReady();
   } catch (e) {
     console.error(e);
-    document.getElementById('gate').innerHTML = '<p class="text-sm text-red-400 px-6 text-center">Gagal memeriksa akses. Periksa koneksi lalu muat ulang.</p>';
+    document.getElementById('gate-msg').innerHTML = '<span class="text-red-400">Gagal memeriksa akses. Periksa koneksi lalu muat ulang.</span>';
   }
 });
 </script>
@@ -280,6 +305,7 @@ function toast(msg, type='ok'){
 
 // ─── API: signed Cloudinary requests via serverless function ─────────
 async function apiCloud(action, body){
+  if(!window.__auth || !window.__auth.currentUser) throw new Error("Belum login");
   const token = await window.__auth.currentUser.getIdToken();
   const r = await fetch('/api/cloudinary', {
     method: 'POST',
