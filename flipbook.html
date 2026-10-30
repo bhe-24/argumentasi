@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Flipbook — Argumentasi</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','sans-serif']}}}}</script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Poppins',sans-serif;background:#1a1a2e;color:#fff;overflow:hidden;height:100dvh;display:flex;flex-direction:column}
+/* ── BOOK SHELL ── */
+#stage{flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;perspective:2400px}
+#book{position:relative;transform-style:preserve-3d;transition:transform .6s cubic-bezier(.4,0,.2,1)}
+.spread{display:flex;position:relative}
+/* Pages */
+.page-wrap{position:relative;overflow:hidden;background:#fff;color:#222}
+.page-wrap.left{border-radius:4px 0 0 4px;transform-origin:right center}
+.page-wrap.right{border-radius:0 4px 4px 0;transform-origin:left center}
+/* Flip animation */
+@keyframes flipLeft{0%{transform:rotateY(0deg)}100%{transform:rotateY(-180deg)}}
+@keyframes flipRight{0%{transform:rotateY(0deg)}100%{transform:rotateY(180deg)}}
+.flipping-left{animation:flipLeft .55s cubic-bezier(.4,0,.2,1) forwards}
+.flipping-right{animation:flipRight .55s cubic-bezier(.4,0,.2,1) forwards}
+/* Shadows & spine */
+.page-shadow-l{position:absolute;right:0;top:0;bottom:0;width:24px;background:linear-gradient(to left,rgba(0,0,0,.18),transparent);pointer-events:none;z-index:10}
+.page-shadow-r{position:absolute;left:0;top:0;bottom:0;width:24px;background:linear-gradient(to right,rgba(0,0,0,.18),transparent);pointer-events:none;z-index:10}
+.spine-line{width:4px;background:linear-gradient(to bottom,#8b6914,#f59e0b,#8b6914);flex-shrink:0;box-shadow:0 0 12px rgba(245,158,11,.6)}
+/* Page number */
+.pg-num{position:absolute;bottom:10px;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.05em;z-index:5}
+.pg-num.left{right:14px}.pg-num.right{left:14px}
+/* PDF canvas inside page */
+.page-wrap canvas{display:block;width:100%;height:100%}
+/* Loading shimmer */
+.sk{background:#e2e8f0;position:relative;overflow:hidden}
+.sk::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);animation:sh 1.3s infinite}
+@keyframes sh{100%{transform:translateX(100%)}}
+/* Cover gradient */
+.cover-bg{background:linear-gradient(135deg,#1e3a5f 0%,#0f2340 40%,#1a1a2e 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;text-align:center}
+/* Hit zones */
+.hit-prev,.hit-next{position:absolute;top:0;bottom:0;width:80px;z-index:20;cursor:pointer}
+.hit-prev{left:0}.hit-next{right:0}
+/* UI overlay fade */
+#ui{position:fixed;bottom:0;left:0;right:0;z-index:80;transition:opacity .3s}
+#ui.hidden-ui{opacity:0;pointer-events:none}
+/* Toolbar */
+#bar{background:rgba(15,23,42,.92);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.08)}
+/* Nav arrows */
+.nav-btn{width:48px;height:48px;border-radius:50%;background:rgba(245,158,11,.15);border:1.5px solid rgba(245,158,11,.3);color:#f59e0b;display:flex;align-items:center;justify-content:center;transition:.2s;cursor:pointer}
+.nav-btn:hover{background:rgba(245,158,11,.3)}.nav-btn:active{transform:scale(.92)}
+.nav-btn:disabled{opacity:.3;cursor:default}
+/* Toast */
+#toast{position:fixed;top:72px;left:50%;transform:translateX(-50%);z-index:999;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:6px;width:90%;max-width:360px}
+/* Panel */
+.panel{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
+.panel-inner{background:#0f172a;border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;padding:20px}
+.panel-handle{width:40px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto 16px}
+/* Chip */
+.chip{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:5px 12px;font-size:11px;font-weight:600;color:#94a3b8}
+/* QR */
+#qrCanvas{border-radius:12px;background:#fff;padding:8px}
+/* YouTube embed */
+.yt-wrap{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px}
+.yt-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
+/* Scroll inside panel */
+.panel-inner::-webkit-scrollbar{width:4px}.panel-inner::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
+/* Single page mode */
+body.single-mode .spread{flex-direction:column}
+body.single-mode .page-wrap{border-radius:8px!important}
+/* Zoom */
+#book{transform-origin:center center}
+/* Header */
+#header{background:rgba(15,23,42,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.08);height:52px;display:flex;align-items:center;padding:0 12px;gap:10px;z-index:80;flex-shrink:0}
+/* Loading screen */
+#screen-load{position:fixed;inset:0;background:#1a1a2e;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.spin{width:52px;height:52px;border:3px solid rgba(245,158,11,.2);border-top-color:#f59e0b;border-radius:50%;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Page curl hint on hover */
+.page-wrap.right:hover::after{content:'';position:absolute;bottom:0;right:0;width:40px;height:40px;background:linear-gradient(225deg,#f59e0b44,transparent);pointer-events:none;border-radius:0 0 4px 0}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="screen-load">
+  <div class="spin"></div>
+  <p class="text-sm font-semibold text-amber-400" id="load-msg">Menyiapkan flipbook…</p>
+  <p class="text-xs text-slate-500" id="load-sub">Membuka dokumen PDF</p>
+</div>
+
+<!-- ERROR -->
+<div id="screen-err" class="fixed inset-0 bg-slate-900 z-[300] flex-col items-center justify-center gap-4 text-center px-6 hidden">
+  <i class="fas fa-book-open text-5xl text-amber-500/40"></i>
+  <h2 class="font-bold text-lg text-white" id="err-title">Flipbook tidak tersedia</h2>
+  <p class="text-sm text-slate-400 max-w-xs" id="err-msg">Dokumen tidak ditemukan.</p>
+  <a href="handout.html" class="mt-2 bg-amber-500 text-white text-xs font-bold px-6 py-2.5 rounded-full">← Kembali ke Koleksi</a>
+</div>
+
+<!-- HEADER -->
+<div id="header">
+  <a href="handout.html" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/10 transition"><i class="fas fa-chevron-left text-sm"></i></a>
+  <div class="flex-1 min-w-0">
+    <h1 id="hdr-title" class="text-white font-bold text-[13px] leading-tight truncate">Memuat…</h1>
+    <p id="hdr-sub" class="text-white/50 text-[10px] leading-tight truncate">Flipbook • PDF</p>
+  </div>
+  <button onclick="openPanel('info')" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-amber-400 hover:bg-white/10 transition" title="Info"><i class="fas fa-circle-info"></i></button>
+  <button onclick="openPanel('qr')" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-amber-400 hover:bg-white/10 transition" title="Bagikan QR"><i class="fas fa-qrcode"></i></button>
+  <button onclick="unduh()" class="shrink-0 h-7 px-3 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center gap-1 hover:bg-amber-600 transition"><i class="fas fa-download text-[9px]"></i>Unduh</button>
+</div>
+
+<!-- STAGE -->
+<div id="stage" onclick="handleStageClick(event)">
+  <div id="book">
+    <div class="spread" id="spread">
+      <!-- pages injected here -->
+    </div>
+    <div class="hit-prev" onclick="prevPage(event)"></div>
+    <div class="hit-next" onclick="nextPage(event)"></div>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div id="ui">
+  <div id="bar" class="px-4 py-3 flex items-center justify-between gap-3">
+    <!-- Prev -->
+    <button class="nav-btn" id="btn-prev" onclick="prevPage()" title="Halaman Sebelumnya"><i class="fas fa-chevron-left text-sm"></i></button>
+    <!-- Page indicator -->
+    <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+      <input id="pg-in" type="number" min="1" class="w-12 h-8 rounded-lg bg-white/10 border border-white/10 text-center text-white text-xs font-bold outline-none focus:border-amber-500" onkeydown="if(event.key==='Enter')jumpTo(+this.value)" onchange="jumpTo(+this.value)">
+      <span class="text-slate-500">/ <span id="pg-tot">0</span></span>
+    </div>
+    <!-- Controls center -->
+    <div class="flex items-center gap-1.5">
+      <button onclick="zoomOut()" class="w-8 h-8 rounded-lg bg-white/8 text-white/60 hover:text-amber-400 text-sm flex items-center justify-center transition" title="Perkecil"><i class="fas fa-search-minus text-xs"></i></button>
+      <button onclick="zoomReset()" id="zoom-lbl" class="h-8 px-2 rounded-lg bg-white/8 text-white/60 hover:text-amber-400 text-[10px] font-bold transition">100%</button>
+      <button onclick="zoomIn()" class="w-8 h-8 rounded-lg bg-white/8 text-white/60 hover:text-amber-400 text-sm flex items-center justify-center transition" title="Perbesar"><i class="fas fa-search-plus text-xs"></i></button>
+      <div class="w-px h-5 bg-white/10 mx-1"></div>
+      <button id="btn-layout" onclick="toggleLayout()" class="w-8 h-8 rounded-lg bg-white/8 text-white/60 hover:text-amber-400 text-sm flex items-center justify-center transition" title="Toggle Layout"><i class="fas fa-book-open text-xs"></i></button>
+      <button onclick="openPanel('toc')" class="w-8 h-8 rounded-lg bg-white/8 text-white/60 hover:text-amber-400 text-sm flex items-center justify-center transition" title="Daftar Isi"><i class="fas fa-list text-xs"></i></button>
+    </div>
+    <!-- Next -->
+    <button class="nav-btn" id="btn-next" onclick="nextPage()" title="Halaman Berikutnya"><i class="fas fa-chevron-right text-sm"></i></button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- PANELS -->
+<div id="panel-bg" class="panel hidden" onclick="if(event.target===this)closePanel()">
+  <!-- INFO -->
+  <div id="panel-info" class="panel-inner hidden">
+    <div class="panel-handle"></div>
+    <h2 class="font-bold text-white text-base mb-4" id="pi-title">Info Dokumen</h2>
+    <div id="pi-chips" class="flex flex-wrap gap-2 mb-4"></div>
+    <div id="pi-desc" class="text-sm text-slate-400 leading-relaxed hidden"></div>
+    <!-- YouTube embeds -->
+    <div id="pi-yt" class="mt-4 space-y-3 hidden">
+      <p class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2"><i class="fab fa-youtube mr-1.5"></i>Video Terkait</p>
+      <div id="pi-yt-list"></div>
+    </div>
+    <button onclick="closePanel()" class="mt-5 w-full bg-white/8 hover:bg-white/15 text-white text-sm font-semibold py-2.5 rounded-xl transition">Tutup</button>
+  </div>
+  <!-- QR -->
+  <div id="panel-qr" class="panel-inner hidden">
+    <div class="panel-handle"></div>
+    <h2 class="font-bold text-white text-base mb-1">Bagikan Flipbook</h2>
+    <p class="text-xs text-slate-400 mb-5">Scan QR ini untuk membuka flipbook di perangkat lain.</p>
+    <div class="flex flex-col items-center gap-4">
+      <canvas id="qrCanvas" width="180" height="180"></canvas>
+      <p id="qr-url" class="text-[10px] text-slate-500 text-center break-all max-w-xs"></p>
+      <button onclick="copyLink()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-6 py-2.5 rounded-full transition active:scale-95"><i class="fas fa-copy mr-1.5"></i>Salin Tautan</button>
+    </div>
+    <button onclick="closePanel()" class="mt-5 w-full bg-white/8 hover:bg-white/15 text-white text-sm font-semibold py-2.5 rounded-xl transition">Tutup</button>
+  </div>
+  <!-- TOC -->
+  <div id="panel-toc" class="panel-inner hidden">
+    <div class="panel-handle"></div>
+    <h2 class="font-bold text-white text-base mb-4">Daftar Halaman</h2>
+    <div id="toc-grid" class="grid grid-cols-4 gap-2"></div>
+    <button onclick="closePanel()" class="mt-5 w-full bg-white/8 hover:bg-white/15 text-white text-sm font-semibold py-2.5 rounded-xl transition">Tutup</button>
+  </div>
+</div>
+
+<!-- PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- QR generator (pure JS, no canvas dependency) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────
+const qs  = new URLSearchParams(location.search);
+const $   = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let pdf        = null;
+let totalPages = 0;
+let curSpread  = 0;   // 0-indexed spread number; spread 0 = cover (page 1)
+let dualMode   = window.innerWidth >= 640;
+let zoom       = 1;
+let isFlipping = false;
+let uiTimeout;
+let meta       = { judul:'Flipbook', url:'', kategori:'', deskripsi:'', youtubeIds:[] };
+
+// Audio context for page-flip sound
+let audioCtx = null;
+function getAudioCtx(){ return audioCtx || (audioCtx = new (window.AudioContext||window.webkitAudioContext)()); }
+function playFlip(){
+  try{
+    const ctx = getAudioCtx();
+    const buf = ctx.createBuffer(1,ctx.sampleRate*.18,ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<d.length;i++){
+      // paper-rustle envelope
+      const t = i/ctx.sampleRate, env = Math.exp(-t*28)*(t<.02?t/.02:1);
+      d[i] = (Math.random()*2-1)*.6*env + Math.sin(2*Math.PI*180*t)*env*.08;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const gain = ctx.createGain(); gain.gain.value=.55;
+    src.connect(gain); gain.connect(ctx.destination); src.start();
+  }catch(e){}
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────────
+function toast(msg,err=false){
+  const t=document.createElement('div');
+  t.className=`${err?'bg-red-600':'bg-slate-800'} text-white px-4 py-2 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2`;
+  t.innerHTML=`<i class="fas ${err?'fa-circle-exclamation':'fa-check-circle text-amber-400'}"></i><span>${esc(msg)}</span>`;
+  $('toast').appendChild(t);
+  setTimeout(()=>t.remove(),2600);
+}
+
+// ─── UI AUTO-HIDE ─────────────────────────────────────────────────────
+function showUI(){
+  $('ui').classList.remove('hidden-ui');
+  clearTimeout(uiTimeout);
+  uiTimeout = setTimeout(()=>{ if(document.fullscreenElement) $('ui').classList.add('hidden-ui'); },3500);
+}
+document.addEventListener('mousemove',showUI);
+document.addEventListener('touchstart',showUI,{passive:true});
+
+// ─── PAGE SIZE ────────────────────────────────────────────────────────
+function spreadDims(){
+  const stW = $('stage').clientWidth - 24;
+  const stH = $('stage').clientHeight - 8;
+  const ratio = 1.414; // A4 portrait
+  if(dualMode){
+    // two pages side by side
+    let pgW = Math.min((stW-4)/2, stH/ratio);
+    let pgH = pgW * ratio;
+    if(pgH > stH){ pgH=stH; pgW=pgH/ratio; }
+    return { pgW:Math.floor(pgW), pgH:Math.floor(pgH), dual:true };
+  } else {
+    let pgW = Math.min(stW, stH/ratio);
+    let pgH = pgW * ratio;
+    if(pgH > stH){ pgH=stH; pgW=pgH/ratio; }
+    return { pgW:Math.floor(pgW), pgH:Math.floor(pgH), dual:false };
+  }
+}
+
+// ─── RENDER PDF PAGE TO CANVAS ────────────────────────────────────────
+const pageCache = {};
+async function renderPdfPage(pageNum, canvas){
+  if(!pdf||pageNum<1||pageNum>totalPages) return;
+  const cacheKey = `${pageNum}_${Math.round(canvas.width)}`;
+  if(pageCache[cacheKey]){
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(pageCache[cacheKey],0,0);
+    return;
+  }
+  try{
+    const page = await pdf.getPage(pageNum);
+    const vp0  = page.getViewport({scale:1});
+    const dpr  = Math.min(window.devicePixelRatio||1,2);
+    const scale = (canvas.width * dpr) / vp0.width;
+    const vp   = page.getViewport({scale});
+    canvas.width  = Math.floor(vp.width);
+    canvas.height = Math.floor(vp.height);
+    canvas.style.width  = '100%';
+    canvas.style.height = '100%';
+    await page.render({canvasContext:canvas.getContext('2d'), viewport:vp}).promise;
+    // cache
+    const offscreen = document.createElement('canvas');
+    offscreen.width=canvas.width; offscreen.height=canvas.height;
+    offscreen.getContext('2d').drawImage(canvas,0,0);
+    pageCache[cacheKey] = offscreen;
+  }catch(e){ console.warn('render err p'+pageNum,e); }
+}
+
+// ─── BUILD SPREAD DOM ─────────────────────────────────────────────────
+function buildPageEl(pageNum, side){
+  const {pgW,pgH} = spreadDims();
+  const wrap = document.createElement('div');
+  wrap.className = `page-wrap ${side}`;
+  wrap.style.cssText = `width:${pgW}px;height:${pgH}px;position:relative;`;
+
+  if(pageNum === 0){
+    // blank page placeholder
+    wrap.style.background = '#f8fafc';
+    return wrap;
+  }
+
+  // cover page
+  if(pageNum === 1 && totalPages > 0){
+    const cv = document.createElement('div');
+    cv.className = 'cover-bg w-full h-full';
+    cv.innerHTML = `
+      <div class="text-amber-400 text-4xl mb-4"><i class="fas fa-book"></i></div>
+      <h2 class="text-white font-extrabold text-base leading-snug mb-2">${esc(meta.judul)}</h2>
+      <p class="text-white/50 text-xs">${esc(meta.kategori)}</p>
+      <div class="mt-6 text-[10px] text-white/30 font-semibold tracking-widest uppercase">Argumentasi Platform</div>`;
+    wrap.appendChild(cv);
+  } else {
+    const canvas = document.createElement('canvas');
+    canvas.width  = pgW*2;
+    canvas.height = pgH*2;
+    canvas.style.cssText = 'width:100%;height:100%;';
+    wrap.appendChild(canvas);
+    // render async
+    renderPdfPage(pageNum, canvas);
+  }
+
+  // shadow
+  const shad = document.createElement('div');
+  shad.className = side==='left' ? 'page-shadow-l' : 'page-shadow-r';
+  wrap.appendChild(shad);
+
+  // page number
+  const num = document.createElement('div');
+  num.className = `pg-num ${side}`;
+  num.textContent = pageNum;
+  wrap.appendChild(num);
+
+  return wrap;
+}
+
+// ─── SPREAD CALCULATION ───────────────────────────────────────────────
+// Spread 0: cover alone (page 1)
+// Spread 1: pages 2,3
+// Spread 2: pages 4,5 ... etc.
+function spreadPages(sIdx){
+  if(sIdx === 0) return [1, 0]; // cover, blank right
+  const left  = sIdx*2;        // e.g. spread 1 → page 2
+  const right = left + 1;
+  return [left, right <= totalPages ? right : 0];
+}
+function totalSpreads(){
+  if(totalPages <= 1) return 1;
+  return 1 + Math.ceil((totalPages-1)/2);
+}
+function spreadForPage(p){
+  if(p<=1) return 0;
+  return Math.ceil((p-1)/2);
+}
+
+// ─── FLIP ENGINE ──────────────────────────────────────────────────────
+function renderSpread(sIdx, animate=null){
+  const spread = $('spread');
+  const {dual} = spreadDims();
+  const [lp,rp] = spreadPages(sIdx);
+
+  spread.innerHTML = '';
+
+  if(dual){
+    // Left page
+    const L = buildPageEl(lp,'left');
+    // Spine
+    const spine = document.createElement('div');
+    spine.className = 'spine-line';
+    spine.style.height = L.style.height || spreadDims().pgH+'px';
+    // Right page
+    const R = buildPageEl(rp,'right');
+
+    if(animate==='forward'){
+      // old right flips over to become new left
+      R.style.transformOrigin='left center';
+      R.style.transform='rotateY(-5deg)';
+      R.style.transition='transform .55s cubic-bezier(.4,0,.2,1)';
+      setTimeout(()=>{ R.style.transform='rotateY(0)'; },20);
+    } else if(animate==='back'){
+      L.style.transformOrigin='right center';
+      L.style.transform='rotateY(5deg)';
+      L.style.transition='transform .55s cubic-bezier(.4,0,.2,1)';
+      setTimeout(()=>{ L.style.transform='rotateY(0)'; },20);
+    }
+
+    spread.appendChild(L);
+    spread.appendChild(spine);
+    spread.appendChild(R);
+  } else {
+    const pageNum = lp||rp;
+    const P = buildPageEl(pageNum,'right');
+    P.style.borderRadius='8px';
+    spread.appendChild(P);
+  }
+
+  updateNav();
+  saveProgress();
+}
+
+function nextPage(e){ if(e) e.stopPropagation(); goSpread(curSpread+1,'forward'); }
+function prevPage(e){ if(e) e.stopPropagation(); goSpread(curSpread-1,'back'); }
+
+function goSpread(sIdx, dir=null){
+  const max = totalSpreads()-1;
+  if(sIdx<0||sIdx>max||isFlipping) return;
+  isFlipping=true;
+  playFlip();
+  curSpread=sIdx;
+  renderSpread(curSpread, dir);
+  setTimeout(()=>{ isFlipping=false; },600);
+}
+
+function jumpTo(pageNum){
+  if(!totalPages) return;
+  pageNum = Math.max(1,Math.min(totalPages,Math.round(pageNum)||1));
+  goSpread(spreadForPage(pageNum));
+}
+
+function updateNav(){
+  const max=totalSpreads()-1;
+  $('btn-prev').disabled = curSpread<=0;
+  $('btn-next').disabled = curSpread>=max;
+  const [lp] = spreadPages(curSpread);
+  $('pg-in').value = lp||1;
+  $('pg-tot').textContent = totalPages;
+}
+
+// ─── STAGE CLICK (hit zones) ──────────────────────────────────────────
+function handleStageClick(e){
+  const w = $('stage').clientWidth;
+  if(e.clientX < w*0.25) prevPage();
+  else if(e.clientX > w*0.75) nextPage();
+}
+
+// ─── ZOOM ─────────────────────────────────────────────────────────────
+function applyZoom(){
+  $('book').style.transform = `scale(${zoom})`;
+  $('zoom-lbl').textContent = Math.round(zoom*100)+'%';
+}
+function zoomIn(){ zoom=Math.min(zoom+.2,3); applyZoom(); }
+function zoomOut(){ zoom=Math.max(zoom-.2,.4); applyZoom(); }
+function zoomReset(){ zoom=1; applyZoom(); }
+
+// ─── LAYOUT TOGGLE ────────────────────────────────────────────────────
+function toggleLayout(){
+  dualMode=!dualMode;
+  $('btn-layout').querySelector('i').className = dualMode ? 'fas fa-book-open text-xs' : 'fas fa-book text-xs';
+  renderSpread(curSpread);
+  toast(dualMode?'Mode dua halaman aktif':'Mode satu halaman aktif');
+}
+
+// ─── SWIPE ────────────────────────────────────────────────────────────
+let touchX=null;
+$('stage').addEventListener('touchstart',e=>{ touchX=e.changedTouches[0].clientX; },{passive:true});
+$('stage').addEventListener('touchend',e=>{
+  if(touchX===null) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  if(Math.abs(dx)>50){ dx<0?nextPage():prevPage(); }
+  touchX=null;
+},{passive:true});
+
+// ─── KEYBOARD ─────────────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight','ArrowDown','PageDown'].includes(e.key)) nextPage();
+  if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key))  prevPage();
+  if(e.key==='Home') goSpread(0);
+  if(e.key==='End')  goSpread(totalSpreads()-1);
+});
+
+// ─── DOWNLOAD ─────────────────────────────────────────────────────────
+async function unduh(){
+  if(!meta.url) return toast('Tautan tidak tersedia.',true);
+  try{
+    const r=await fetch(meta.url,{mode:'cors'}); if(!r.ok) throw new Error();
+    const b=await r.blob(), a=document.createElement('a');
+    a.href=URL.createObjectURL(b); a.download=(meta.judul||'flipbook').toLowerCase().replace(/\s+/g,'-')+'.pdf';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    toast('Unduhan dimulai.');
+  }catch(e){ window.open(meta.url,'_blank','noopener'); toast('File dibuka di tab baru.'); }
+}
+
+// ─── PROGRESS SAVE ────────────────────────────────────────────────────
+function saveProgress(){
+  try{ localStorage.setItem('flip_'+docId, String(curSpread)); }catch(e){}
+}
+function loadProgress(){
+  try{ return parseInt(localStorage.getItem('flip_'+docId)||'0'); }catch(e){ return 0; }
+}
+
+// ─── PANELS ───────────────────────────────────────────────────────────
+let activePanel=null;
+function openPanel(name){
+  closePanel();
+  activePanel=name;
+  $('panel-bg').classList.remove('hidden');
+  $(`panel-${name}`).classList.remove('hidden');
+  if(name==='qr') buildQR();
+  if(name==='toc') buildTOC();
+}
+function closePanel(){
+  if(activePanel){ $(`panel-${activePanel}`).classList.add('hidden'); }
+  $('panel-bg').classList.add('hidden');
+  activePanel=null;
+}
+
+// ─── QR CODE ──────────────────────────────────────────────────────────
+let qrBuilt=false;
+function buildQR(){
+  if(qrBuilt) return;
+  qrBuilt=true;
+  const url = location.href;
+  $('qr-url').textContent = url;
+  const canvas = $('qrCanvas');
+  // Use QRCode.js if available, else manual tiny draw
+  try{
+    if(typeof QRCode !== 'undefined'){
+      canvas.style.display='none';
+      const div=document.createElement('div');
+      div.id='qr-div';
+      canvas.parentNode.insertBefore(div,canvas);
+      new QRCode(div,{text:url,width:180,height:180,colorDark:'#0f172a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+    } else {
+      drawFallbackQR(canvas, url);
+    }
+  }catch(e){ drawFallbackQR(canvas,url); }
+}
+function drawFallbackQR(canvas, text){
+  // Simple visual fallback — checkerboard as placeholder
+  const ctx=canvas.getContext('2d'), s=180;
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,s,s);
+  ctx.fillStyle='#0f172a';
+  // Draw text QR prompt
+  ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Scan untuk membuka',s/2,s/2-10);
+  ctx.font='9px sans-serif'; ctx.fillText('(QR tidak tersedia)',s/2,s/2+8);
+}
+function copyLink(){
+  navigator.clipboard.writeText(location.href).then(()=>toast('Tautan disalin!')).catch(()=>toast('Gagal menyalin.',true));
+}
+
+// ─── TOC ──────────────────────────────────────────────────────────────
+function buildTOC(){
+  const grid=$('toc-grid');
+  if(grid.children.length) return;
+  for(let p=1;p<=totalPages;p++){
+    const btn=document.createElement('button');
+    btn.className='aspect-[3/4] bg-white/8 rounded-lg flex items-center justify-center text-xs font-bold text-white/60 hover:bg-amber-500/20 hover:text-amber-400 transition active:scale-95';
+    btn.textContent=p;
+    btn.onclick=()=>{ jumpTo(p); closePanel(); };
+    grid.appendChild(btn);
+  }
+}
+
+// ─── INFO PANEL ───────────────────────────────────────────────────────
+function fillInfo(){
+  $('pi-title').textContent = meta.judul;
+  const chip=(ic,t)=>t?`<span class="chip"><i class="fas ${ic} text-amber-500"></i>${esc(t)}</span>`:'';
+  $('pi-chips').innerHTML = chip('fa-tag',meta.kategori)+chip('fa-file-lines',totalPages?totalPages+' halaman':'')+chip('fa-calendar',meta.tanggal||'');
+  if(meta.deskripsi){ $('pi-desc').textContent=meta.deskripsi; $('pi-desc').classList.remove('hidden'); }
+  if(meta.youtubeIds&&meta.youtubeIds.length){
+    $('pi-yt').classList.remove('hidden');
+    $('pi-yt-list').innerHTML = meta.youtubeIds.map(id=>`
+      <div class="yt-wrap"><iframe src="https://www.youtube.com/embed/${esc(id)}?rel=0" allowfullscreen allow="autoplay; encrypted-media" title="Video"></iframe></div>`).join('');
+  }
+}
+
+// ─── RESIZE ───────────────────────────────────────────────────────────
+let resizeTimer;
+window.addEventListener('resize',()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(()=>{
+    dualMode = window.innerWidth >= 640;
+    renderSpread(curSpread);
+  },300);
+});
+
+// ─── LOAD PDF ─────────────────────────────────────────────────────────
+let docId = qs.get('id') || '';
+async function loadFlipbook(m){
+  meta = Object.assign(meta, m);
+  $('hdr-title').textContent = meta.judul;
+  $('hdr-sub').textContent   = [meta.kategori, totalPages?totalPages+' hal':''].filter(Boolean).join(' • ')||'Flipbook';
+
+  if(!meta.url){ showError('Tautan PDF tidak tersedia.'); return; }
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  try{
+    const task = pdfjsLib.getDocument({url:meta.url});
+    task.onProgress = p=>{
+      if(p.total) $('load-sub').textContent = Math.round(p.loaded/p.total*100)+'%';
+    };
+    pdf = await task.promise;
+    totalPages = pdf.numPages;
+
+    $('hdr-sub').textContent = (meta.kategori||'Flipbook')+' • '+totalPages+' halaman';
+    $('pg-tot').textContent  = totalPages;
+
+    // Cover pre-render
+    $('load-msg').textContent='Membangun flipbook…';
+    await renderPdfPage(2, document.createElement('canvas')); // pre-warm
+
+    $('screen-load').classList.add('hidden');
+    fillInfo();
+
+    // Restore position
+    const saved = loadProgress();
+    curSpread = Math.min(saved, totalSpreads()-1);
+    renderSpread(curSpread);
+
+    if(saved>0) toast('Dilanjutkan dari halaman '+(spreadPages(curSpread)[0]||1));
+
+  }catch(e){
+    console.error(e);
+    showError('Gagal membuka PDF. Periksa jaringanmu atau coba lagi.');
+  }
+}
+
+function showError(msg){
+  $('screen-load').classList.add('hidden');
+  $('screen-err').classList.remove('hidden');
+  $('screen-err').style.display='flex';
+  $('err-msg').textContent=msg;
+}
+
+// ─── FIREBASE ────────────────────────────────────────────────────────
+</script>
+
+<script type="module">
+import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, getDoc, updateDoc, increment }
+                              from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const cfg = { apiKey:"AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId:"mading-cf676" };
+const db  = getFirestore(initializeApp(cfg));
+
+const qs   = new URLSearchParams(location.search);
+const id   = qs.get('id');
+const langsung = qs.get('url');
+
+if(id){
+  try{
+    const ref  = doc(db,'flipbooks',id);
+    const snap = await getDoc(ref);
+    if(!snap.exists()||snap.data().status==='dihapus'){
+      window.showError('Flipbook ini tidak ditemukan atau sudah dihapus.');
+    } else {
+      const v = snap.data();
+      const t = v.createdAt && (v.createdAt.toDate ? v.createdAt.toDate() : new Date(v.createdAt));
+      window.docId = id;
+      await window.loadFlipbook({
+        judul      : v.judul      || 'Flipbook',
+        url        : v.fileUrl    || '',
+        kategori   : v.kategori   || 'Flipbook',
+        deskripsi  : v.deskripsi  || '',
+        youtubeIds : v.youtubeIds || [],
+        tanggal    : t&&!isNaN(t) ? t.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}) : '',
+      });
+      // increment view count
+      if(!sessionStorage.getItem('fv_'+id)){
+        sessionStorage.setItem('fv_'+id,'1');
+        try{ await updateDoc(ref,{views:increment(1)}); }catch(e){}
+      }
+    }
+  }catch(e){ console.error(e); window.showError('Gagal mengambil data. Periksa koneksimu.'); }
+} else if(langsung){
+  window.docId = 'direct';
+  window.loadFlipbook({ judul: qs.get('judul')||'Flipbook', url: langsung });
+} else {
+  window.showError('Dokumen tidak dipilih. Buka dari halaman Koleksi Flipbook.');
+}
+</script>
+</body>
+</html>
