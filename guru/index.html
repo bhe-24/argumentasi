@@ -35,11 +35,26 @@
         .overlay.show { opacity: 1; pointer-events: auto; }
         .overlay .modal-box { transform: scale(.95); transition: transform .25s; } 
         .overlay.show .modal-box { transform: scale(1); }
+
+        /* Custom Input Password Setup */
+        .input-underline {
+            width: 100%;
+            border: none;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 10px 12px 10px 32px;
+            font-size: 14px;
+            color: #374151;
+            background-color: transparent;
+            border-radius: 0;
+            transition: all 0.2s ease;
+        }
+        .input-underline:focus { outline: none; border-bottom-color: #059669; }
+        .input-icon { position: absolute; left: 2px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 0.9rem; }
     </style>
 </head>
 <body class="flex justify-center min-h-screen">
 
-<!-- CONTAINER UTAMA (Menyelaraskan Desain Halaman Lain) -->
+<!-- CONTAINER UTAMA -->
 <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
 
     <!-- HEADER STICKY -->
@@ -58,7 +73,7 @@
     <!-- AREA SCROLL KONTEN -->
     <main class="flex-grow flex flex-col pb-10">
 
-        <!-- ===== PANEL AKSES DITOLAK (Muncul Bila Peran Bukan Guru) ===== -->
+        <!-- ===== PANEL AKSES DITOLAK ===== -->
         <div id="panelTolak" class="hidden px-5 py-10">
             <div class="bg-white rounded-3xl shadow-md border border-slate-200 p-6 text-center fade-in">
                 <div class="w-16 h-16 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-3xl mx-auto mb-4"><i class="fas fa-user-lock"></i></div>
@@ -68,10 +83,6 @@
                     <div><p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Akun yang dipakai</p><p id="tolakEmail" class="text-xs font-semibold text-slate-800 break-all"></p></div>
                     <div class="flex gap-4"><div><p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Peran tercatat</p><p id="tolakPeran" class="text-xs font-bold text-rose-600"></p></div><div><p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Masuk lewat</p><p id="tolakMetode" class="text-xs font-semibold text-slate-800"></p></div></div>
                     <div><p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">ID Akun (UID)</p><p id="tolakUid" class="text-[10px] font-mono text-slate-600 break-all"></p></div>
-                </div>
-                <div class="mt-4 text-left bg-emerald-50 border border-emerald-100 rounded-xl p-3.5 text-[11px] text-emerald-900 leading-relaxed">
-                    <p class="font-bold mb-1"><i class="fas fa-circle-info mr-1"></i>Cara mengaktifkan sebagai guru</p>
-                    <ol class="list-decimal ml-4 space-y-0.5"><li>Salin ID akun di atas.</li><li>Minta administrator membuka menu <b>Pengguna</b> lalu mengubah peran akun ini menjadi <b>teacher</b>.</li><li>Keluar, lalu masuk lagi.</li></ol>
                 </div>
                 <div class="grid grid-cols-1 gap-2 mt-5">
                     <button data-act="copy-uid" class="bg-slate-900 text-white font-bold py-3 rounded-xl text-xs active:scale-95 transition"><i class="far fa-copy mr-1.5"></i>Salin ID Akun</button>
@@ -190,12 +201,47 @@
             <button data-act="download-qr" class="w-full bg-brand-green text-white font-bold py-3.5 rounded-xl hover:bg-emerald-700 transition-colors shadow-md active:scale-95 flex items-center justify-center gap-2 text-sm"><i class="fas fa-download"></i> Unduh Gambar QR</button>
         </div>
     </div>
+
+    <!-- MODAL SETUP PASSWORD AWAL (FORCE SETUP) -->
+    <div id="modalSetupPassword" class="overlay bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4" role="dialog" aria-modal="true">
+        <div class="modal-box bg-white w-full max-w-sm rounded-3xl p-6 relative flex flex-col shadow-2xl">
+            <!-- Modal ini tidak memiliki tombol close agar pengguna terpaksa mengatur kata sandi -->
+            <div class="w-16 h-16 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-3xl mx-auto mb-4 border border-emerald-100">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 text-center mb-2">Amankan Akun Anda</h3>
+            <p class="text-xs text-slate-500 text-center mb-6 leading-relaxed">
+                Anda masuk menggunakan Google. Untuk mencegah masalah saat Google sedang gangguan, harap buat kata sandi agar tetap bisa <i>login</i> manual.
+            </p>
+            
+            <form id="setupPasswordForm" onsubmit="simpanPasswordAwal(event)">
+                <div class="relative mb-4">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="newPassword" required minlength="6" class="input-underline pr-10" placeholder="Kata Sandi Baru (Min. 6 Karakter)">
+                    <button type="button" onclick="toggleVis('newPassword', 'eyeNew')" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 outline-none">
+                        <i class="far fa-eye-slash" id="eyeNew"></i>
+                    </button>
+                </div>
+                <div class="relative mb-6">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="confirmNewPassword" required minlength="6" class="input-underline pr-10" placeholder="Tulis Ulang Kata Sandi">
+                    <button type="button" onclick="toggleVis('confirmNewPassword', 'eyeConfirm')" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 outline-none">
+                        <i class="far fa-eye-slash" id="eyeConfirm"></i>
+                    </button>
+                </div>
+                
+                <button type="submit" id="btnSimpanPassword" class="w-full bg-brand-green text-white font-bold py-3.5 rounded-xl hover:bg-emerald-700 transition-colors shadow-md active:scale-95 text-sm flex items-center justify-center">
+                    Simpan Kata Sandi
+                </button>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, getCountFromServer, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, getCountFromServer, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const app = initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", authDomain: "mading-cf676.firebaseapp.com", projectId: "mading-cf676" });
     const auth = getAuth(app), db = getFirestore(app);
@@ -204,11 +250,11 @@
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const withTimeout = (p, ms) => Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error('TIMEOUT')), ms))]);
     const isArsip = s => s === 'archived' || s === 'selesai';
-    const PERAN_GURU = ['teacher', 'guru', 'admin'];     // peran yang boleh membuka panel ini
+    const PERAN_GURU = ['teacher', 'guru', 'admin'];     
 
     let currentGuru = null, currentUser = null, currentActiveKode = '', confirmCallback = null, sedangMuat = false;
 
-    function showToast(msg, isError = false) {
+    window.showToast = function(msg, isError = false) {
         const t = document.createElement('div');
         t.className = `${isError ? 'bg-red-600' : 'bg-slate-800'} text-white px-4 py-3 rounded-xl shadow-lg text-xs font-bold flex items-center gap-3 -translate-y-4 opacity-0 transition-all duration-300`;
         const i = document.createElement('i'); i.className = `fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle text-emerald-400'}`;
@@ -218,8 +264,17 @@
     }
 
     const bukaModal = id => $(id).classList.add('show'), tutupModal = id =>$(id).classList.remove('show');
+    
+    // Jangan izinkan modalSetupPassword ditutup dengan klik luar
     ['modalConfirm', 'modalQR'].forEach(id => $(id).addEventListener('click', e => { if (e.target === e.currentTarget) tutupModal(id); }));
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') ['modalConfirm', 'modalQR'].forEach(tutupModal); });
+    
+    // Jangan izinkan Escape untuk modalSetupPassword
+    document.addEventListener('keydown', e => { 
+        if (e.key === 'Escape') {
+            if ($('modalConfirm').classList.contains('show')) tutupModal('modalConfirm');
+            if ($('modalQR').classList.contains('show')) tutupModal('modalQR');
+        }
+    });
     
     function showConfirm({ title, message, icon, iconColor, btnText, btnColor, onConfirm }) {
         $('confirmTitle').textContent = title; $('confirmMessage').textContent = message;
@@ -228,6 +283,64 @@
         confirmCallback = onConfirm; bukaModal('modalConfirm');
     }
     $('btnConfirmAction').addEventListener('click', () => { tutupModal('modalConfirm'); const cb = confirmCallback; confirmCallback = null; if (cb) cb(); });
+
+    // Fungsi Toggle Visibilitas Password di Modal Setup
+    window.toggleVis = function(inputId, iconId) {
+        const input = $(inputId);
+        const icon = $(iconId);
+        if(input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+        }
+    }
+
+    /* ---------- Cek Status Password ---------- */
+    // Mengecek apakah pengguna memiliki password (berarti provider password diaktifkan)
+    function periksaKebutuhanPassword(user) {
+        const hasPassword = user.providerData.some(p => p.providerId === 'password');
+        const hasGoogle = user.providerData.some(p => p.providerId === 'google.com');
+
+        // Jika masuk dengan google TETAPI belum punya konfigurasi kata sandi, paksa buat
+        if (hasGoogle && !hasPassword) {
+            bukaModal('modalSetupPassword');
+        }
+    }
+
+    // Fungsi untuk menyimpan password dari modal
+    window.simpanPasswordAwal = async function(e) {
+        e.preventDefault();
+        const p1 = $('newPassword').value;
+        const p2 = $('confirmNewPassword').value;
+        
+        if (p1 !== p2) {
+            showToast("Konfirmasi kata sandi tidak cocok!", true);
+            return;
+        }
+        if (p1.length < 6) {
+            showToast("Kata sandi minimal 6 karakter", true);
+            return;
+        }
+
+        const btn = $('btnSimpanPassword');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Menyimpan...';
+        btn.disabled = true;
+
+        try {
+            // Update password di Firebase Auth
+            await updatePassword(currentUser, p1);
+            showToast("Kata sandi berhasil disimpan!", false);
+            tutupModal('modalSetupPassword');
+        } catch (error) {
+            console.error(error);
+            showToast("Gagal menyimpan kata sandi. Coba muat ulang halaman.", true);
+        } finally {
+            btn.innerHTML = 'Simpan Kata Sandi';
+            btn.disabled = false;
+        }
+    }
 
     /* ---------- Sapaan & Info Akun ---------- */
     function tampilkanSapaan(nama) {
@@ -256,10 +369,28 @@
         if (!user) { window.location.href = '../login.html'; return; }
         currentUser = user;
         try {
-            const snap = await getDoc(doc(db, 'users', user.uid));
-            const d = snap.exists() ? snap.data() : null;
+            let snap = await getDoc(doc(db, 'users', user.uid));
+            
+            // Jika dokumen di firestore belum ada (karena delay sinkronisasi login google pertama), buatkan
+            if (!snap.exists()) {
+                await setDoc(doc(db, 'users', user.uid), {
+                    namaLengkap: user.displayName || 'Guru Baru',
+                    email: user.email,
+                    role: 'teacher',
+                    nip: '-',
+                    createdAt: serverTimestamp(),
+                    authProvider: 'google'
+                });
+                snap = await getDoc(doc(db, 'users', user.uid));
+            }
+
+            const d = snap.data();
             if (!d || !PERAN_GURU.includes(String(d.role || '').toLowerCase())) { tampilTolak(user, d); return; }
             currentGuru = { uid: user.uid, nama: d.namaLengkap || user.displayName || 'Guru' };
+            
+            // Periksa jika butuh atur password (khusus yang login google tapi belum punya password)
+            periksaKebutuhanPassword(user);
+
             tampilkanSapaan(currentGuru.nama); tampilkanAkun(user, currentGuru.nama);
             loadClassesData();
         } catch (e) {
