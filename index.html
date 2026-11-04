@@ -17,7 +17,21 @@
         tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }
     </script>
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        /* MENCEGAH TEKS DISALIN (NO SELECT) */
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #f1f5f9; 
+            -webkit-tap-highlight-color: transparent; 
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
+            user-select: none; /* Standar */
+        }
+        /* KECUALI INPUT TEKS */
+        input, textarea {
+            -webkit-user-select: auto;
+            user-select: auto;
+        }
+
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .modal-z { z-index: 99999 !important; }
@@ -69,7 +83,7 @@
         <!-- Logo Animasi Memudar (Pulse) -->
         <div class="relative flex flex-col items-center animate-pulse">
             <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Argumentasi" class="h-16 object-contain mb-4 filter brightness-0 invert">
-            <h1 class="text-white font-bold text-2xl tracking-widest uppercase">Argumentasi</h1>
+            <h1 class="text-white font-bold text-2xl tracking-widest uppercase">Argumentasi App</h1>
             <p class="text-brand-light text-[10px] mt-1.5 font-medium tracking-wide">Platform Belajar Teks Argumentasi</p>
         </div>
         
@@ -171,9 +185,9 @@
                         <div class="w-11 h-11 bg-white border border-slate-100 shadow-sm rounded-xl flex items-center justify-center mb-1 group-hover:border-slate-800"><i class="fas fa-user-shield text-xl text-slate-700"></i></div>
                         <span class="text-[10px] text-slate-600 font-medium text-center leading-tight">Portal Guru</span>
                     </a>
-                    <a href="pindai_kode.html" class="flex flex-col items-center group active:scale-95 transition-transform">
-                        <div class="w-11 h-11 bg-white border border-slate-100 shadow-sm rounded-xl flex items-center justify-center mb-1 group-hover:border-indigo-400"><i class="fas fa-qrcode text-xl text-indigo-500"></i></div>
-                        <span class="text-[10px] text-slate-600 font-medium text-center leading-tight">Pindai Kode</span>
+                    <a href="kelola-flipbook.html" class="flex flex-col items-center group active:scale-95 transition-transform">
+                        <div class="w-11 h-11 bg-white border border-slate-100 shadow-sm rounded-xl flex items-center justify-center mb-1 group-hover:border-indigo-400"><i class="fas fa-book-open text-xl text-indigo-500"></i></div>
+                        <span class="text-[10px] text-slate-600 font-medium text-center leading-tight">Kelola Flipbook</span>
                     </a>
                     <a href="class.html" class="flex flex-col items-center group active:scale-95 transition-transform">
                         <div class="w-11 h-11 bg-white border border-slate-100 shadow-sm rounded-xl flex items-center justify-center mb-1 group-hover:border-cyan-400"><i class="fas fa-door-open text-xl text-cyan-500"></i></div>
@@ -191,6 +205,15 @@
                     <a href="teks.html" class="text-xs text-brand-green font-medium flex items-center gap-1">Lihat Semua <i class="fas fa-chevron-right text-[10px]"></i></a>
                 </div>
                 <div id="listTeks" class="flex flex-col gap-3">
+                    <!-- Loading Skeleton x3 -->
+                    <div class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 animate-pulse">
+                        <div class="w-24 h-24 bg-slate-200 rounded-lg shrink-0"></div>
+                        <div class="flex-1 py-1"><div class="h-3 bg-slate-200 w-16 rounded mb-2"></div><div class="h-4 bg-slate-200 w-full rounded mb-1"></div><div class="h-4 bg-slate-200 w-3/4 rounded"></div></div>
+                    </div>
+                    <div class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 animate-pulse">
+                        <div class="w-24 h-24 bg-slate-200 rounded-lg shrink-0"></div>
+                        <div class="flex-1 py-1"><div class="h-3 bg-slate-200 w-16 rounded mb-2"></div><div class="h-4 bg-slate-200 w-full rounded mb-1"></div><div class="h-4 bg-slate-200 w-3/4 rounded"></div></div>
+                    </div>
                     <div class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 animate-pulse">
                         <div class="w-24 h-24 bg-slate-200 rounded-lg shrink-0"></div>
                         <div class="flex-1 py-1"><div class="h-3 bg-slate-200 w-16 rounded mb-2"></div><div class="h-4 bg-slate-200 w-full rounded mb-1"></div><div class="h-4 bg-slate-200 w-3/4 rounded"></div></div>
@@ -207,6 +230,15 @@
                     <a href="artikel.html" class="text-xs text-brand-green font-medium flex items-center gap-1">Lihat Semua <i class="fas fa-chevron-right text-[10px]"></i></a>
                 </div>
                 <div id="listArtikel" class="flex flex-col gap-3">
+                    <!-- Loading Skeleton x3 -->
+                    <div class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 animate-pulse">
+                        <div class="w-24 h-24 bg-slate-200 rounded-lg shrink-0"></div>
+                        <div class="flex-1 py-1"><div class="h-3 bg-slate-200 w-16 rounded mb-2"></div><div class="h-4 bg-slate-200 w-full rounded mb-1"></div><div class="h-4 bg-slate-200 w-3/4 rounded"></div></div>
+                    </div>
+                    <div class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 animate-pulse">
+                        <div class="w-24 h-24 bg-slate-200 rounded-lg shrink-0"></div>
+                        <div class="flex-1 py-1"><div class="h-3 bg-slate-200 w-16 rounded mb-2"></div><div class="h-4 bg-slate-200 w-full rounded mb-1"></div><div class="h-4 bg-slate-200 w-3/4 rounded"></div></div>
+                    </div>
                     <div class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 animate-pulse">
                         <div class="w-24 h-24 bg-slate-200 rounded-lg shrink-0"></div>
                         <div class="flex-1 py-1"><div class="h-3 bg-slate-200 w-16 rounded mb-2"></div><div class="h-4 bg-slate-200 w-full rounded mb-1"></div><div class="h-4 bg-slate-200 w-3/4 rounded"></div></div>
@@ -296,6 +328,54 @@
         </div>
     </div>
 
+    <!-- MODAL OPSI KELAS (ARSIP) -->
+    <div id="modalOpsiKelas" class="fixed inset-0 bg-black/60 hidden modal-z flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300 pb-0 sm:pb-10" onclick="if(event.target === this) tutupModal('modalOpsiKelas')">
+        <div class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 transform translate-y-full sm:translate-y-10 transition-transform duration-300 relative">
+            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-5 sm:hidden"></div>
+            <button onclick="tutupModal('modalOpsiKelas')" class="absolute top-4 right-4 text-slate-400 hover:text-red-500"><i class="fas fa-times text-lg"></i></button>
+            <h3 class="text-lg font-bold text-slate-800 mb-1 text-center">Opsi Kelas</h3>
+            <p class="text-xs text-slate-500 text-center mb-5 font-medium" id="namaKelasOpsi"></p>
+            
+            <div class="space-y-3">
+                <button id="btnLihatKelas" class="w-full text-left p-4 rounded-xl border border-slate-200 hover:border-brand-green bg-slate-50 flex items-center justify-between group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-emerald-100 text-brand-green rounded-full flex items-center justify-center"><i class="fas fa-eye"></i></div>
+                        <p class="font-bold text-slate-700 text-sm">Masuk / Lihat Kelas</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-slate-300 group-hover:text-brand-green"></i>
+                </button>
+                <button id="btnHapusKelas" class="w-full text-left p-4 rounded-xl border border-red-100 hover:border-red-500 bg-red-50 flex items-center justify-between group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-red-100 text-red-500 rounded-full flex items-center justify-center"><i class="fas fa-trash-alt"></i></div>
+                        <p class="font-bold text-red-600 text-sm">Hapus dari Arsip</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-red-300 group-hover:text-red-500"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SHARE (BAGIKAN MATERI) -->
+    <div id="modalShare" class="fixed inset-0 bg-black/60 hidden modal-z flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300 pb-0 sm:pb-10" onclick="if(event.target === this) tutupModal('modalShare')">
+        <div class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 transform translate-y-full sm:translate-y-10 transition-transform duration-300 relative">
+            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-5 sm:hidden"></div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2 text-center">Bagikan Materi</h3>
+            <p class="text-[11px] text-slate-500 text-center mb-6 px-4 line-clamp-2" id="shareJudul"></p>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <a id="btnShareWa" href="#" target="_blank" class="bg-[#25D366] text-white p-3 rounded-xl flex flex-col items-center gap-2 hover:bg-green-600 transition-colors">
+                    <i class="fab fa-whatsapp text-2xl"></i>
+                    <span class="text-[10px] font-bold">WhatsApp</span>
+                </a>
+                <button id="btnCopyLink" class="bg-slate-100 text-slate-700 p-3 rounded-xl flex flex-col items-center gap-2 hover:bg-slate-200 transition-colors">
+                    <i class="fas fa-link text-2xl"></i>
+                    <span class="text-[10px] font-bold">Salin Tautan</span>
+                </button>
+            </div>
+            <button onclick="tutupModal('modalShare')" class="w-full mt-4 p-3 bg-white border border-slate-200 text-slate-600 font-bold text-xs rounded-xl hover:bg-slate-50">Batal</button>
+        </div>
+    </div>
+
     <!-- MODAL ZOOM FOTO -->
     <div id="modalZoomFoto" class="fixed inset-0 bg-black/95 hidden modal-z flex flex-col items-center justify-center opacity-0 transition-opacity duration-300" onclick="if(event.target === this) tutupModal('modalZoomFoto')">
         <button onclick="tutupModal('modalZoomFoto')" class="absolute top-6 right-6 w-10 h-10 bg-white/10 rounded-full text-white hover:bg-red-500 transition-colors flex items-center justify-center z-10"><i class="fas fa-times text-xl"></i></button>
@@ -310,21 +390,16 @@
         // LOGIKA MENGHILANGKAN CUSTOM SPLASH SCREEN (Dengan memori Cerdas)
         window.addEventListener('load', () => {
             const splashScreen = document.getElementById('customSplashScreen');
-            
-            // Cek apakah splash screen belum disembunyikan oleh sistem memori
             if (splashScreen && splashScreen.style.display !== 'none') {
-                // Jeda 1.2 detik agar animasi terlihat pertama kali
                 setTimeout(() => {
                     splashScreen.style.opacity = '0';
                     splashScreen.style.visibility = 'hidden';
                     setTimeout(() => {
                         splashScreen.remove();
-                        // Catat di memori bahwa user sudah melihatnya
                         sessionStorage.setItem('splashSudahDilihat', 'true');
                     }, 600);
                 }, 1200);
             } else if (splashScreen) {
-                // Jika halaman di-refresh, langsung hapus elemen hijaunya tanpa ampun!
                 splashScreen.remove();
             }
         });
@@ -363,13 +438,9 @@
         btnInstall.addEventListener('click', async () => {
             installPopup.classList.remove('popup-show');
             installPopup.classList.add('popup-hide');
-            
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    console.log('Aplikasi berhasil dipasang');
-                }
                 deferredPrompt = null;
             }
         });
@@ -378,8 +449,8 @@
             installPopup.classList.remove('popup-show');
             installPopup.classList.add('popup-hide');
         };
-        /* ============================================================ */
 
+        /* ==================== FUNGSI LAINNYA ==================== */
         function cariMateri() {
             const query = document.getElementById('searchInput').value;
             if(query.trim()) window.location.href = `search.html?q=${encodeURIComponent(query)}`;
@@ -424,22 +495,104 @@
             else setTimeout(() => showToast("Anda belum mengunggah foto profil di Halaman Profil.", true), 350);
         };
 
+        /* ==================== FITUR TEKAN LAMA (LONG PRESS) & SHARE ==================== */
+        let isLongPress = false;
+        let longPressTimer;
+
+        // Fungsi navigasi biasa ke halaman materi
+        window.handleCardClick = function(e, id) {
+            if (isLongPress) {
+                e.preventDefault();
+                isLongPress = false;
+            } else {
+                window.location.href = 'baca.html?id=' + id;
+            }
+        };
+
+        // Fungsi menghitung waktu saat layar ditekan
+        window.startLongPress = function(e, id, judul) {
+            isLongPress = false;
+            longPressTimer = setTimeout(() => {
+                isLongPress = true;
+                if(navigator.vibrate) navigator.vibrate(50); // Getaran kecil jika HP mendukung
+                window.showShareModal(id, judul);
+            }, 600); // Tahan 0.6 detik untuk memunculkan opsi share
+        };
+
+        // Batal long-press jika jari bergeser atau dilepas cepat
+        window.cancelLongPress = function() {
+            clearTimeout(longPressTimer);
+        };
+
+        // Menampilkan Modal Bagikan Materi
+        window.showShareModal = function(id, judul) {
+            const urlPath = window.location.pathname.replace('index.html', '') + 'baca.html?id=' + id;
+            const fullUrl = window.location.origin + urlPath;
+            const textToShare = `Yuk belajar materi menarik "${judul}" di Aplikasi Argumentasi! Baca selengkapnya di sini: ${fullUrl}`;
+            
+            document.getElementById('shareJudul').innerText = judul;
+            document.getElementById('btnShareWa').href = `https://api.whatsapp.com/send?text=${encodeURIComponent(textToShare)}`;
+            
+            document.getElementById('btnCopyLink').onclick = function() {
+                navigator.clipboard.writeText(textToShare).then(() => {
+                    tutupModal('modalShare');
+                    showToast('Tautan berhasil disalin!');
+                }).catch(() => showToast('Gagal menyalin tautan.', true));
+            };
+            
+            bukaModal('modalShare');
+        };
+
+        /* ==================== ARSIP KELAS ==================== */
+        window.bukaOpsiKelas = function(id, nama) {
+            document.getElementById('namaKelasOpsi').innerText = nama;
+            document.getElementById('btnLihatKelas').onclick = () => window.location.href = 'class.html?id=' + id;
+            document.getElementById('btnHapusKelas').onclick = () => hapusArsipKelas(id);
+            bukaModal('modalOpsiKelas');
+        };
+
+        window.hapusArsipKelas = function(id) {
+            let historyList = [];
+            try { const s = localStorage.getItem('riwayatKelasArg'); if(s) historyList = JSON.parse(s); } catch(e){}
+            historyList = historyList.filter(c => c.id !== id);
+            localStorage.setItem('riwayatKelasArg', JSON.stringify(historyList));
+            tutupModal('modalOpsiKelas');
+            muatArsipKelas();
+            showToast("Arsip kelas berhasil dihapus");
+        };
+
         function muatArsipKelas() {
             let historyList = [];
             try { const s = localStorage.getItem('riwayatKelasArg'); if(s) historyList = JSON.parse(s); } catch(e){}
+            
             if(historyList.length > 0) {
                 let html = "";
                 historyList.forEach(cls => {
+                    const isSelesai = (cls.status || '').toLowerCase() === 'selesai';
+                    const bgClass = isSelesai ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600';
+                    const borderHover = isSelesai ? 'hover:border-red-500' : 'hover:border-brand-green';
+                    const statusText = isSelesai ? '<span class="text-red-500 font-bold ml-1">(Ditutup)</span>' : '';
+                    const iconClass = isSelesai ? 'fa-door-closed' : 'fa-door-open';
+
                     html += `
-                    <a href="class.html?id=${cls.id}" class="bg-white border border-slate-200 rounded-xl p-3 min-w-[200px] flex items-center gap-3 shadow-sm hover:border-brand-green transition-colors">
-                        <div class="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600 shrink-0"><i class="fas fa-door-open"></i></div>
+                    <button onclick="bukaOpsiKelas('${cls.id}', '${cls.nama || 'Kelas ' + cls.id}')" class="bg-white border border-slate-200 rounded-xl p-3 min-w-[200px] flex items-center gap-3 shadow-sm ${borderHover} transition-colors text-left active:scale-95 shrink-0">
+                        <div class="w-10 h-10 ${bgClass} rounded-lg flex items-center justify-center shrink-0">
+                            <i class="fas ${iconClass}"></i>
+                        </div>
                         <div class="overflow-hidden">
                             <h4 class="font-bold text-slate-800 text-xs truncate">${cls.nama || 'Kelas ' + cls.id}</h4>
-                            <p class="text-[9px] text-slate-400 mt-0.5">Kode: ${cls.id}</p>
+                            <p class="text-[9px] text-slate-400 mt-0.5">Kode: ${cls.id} ${statusText}</p>
                         </div>
-                    </a>`;
+                    </button>`;
                 });
                 document.getElementById('arsipKelasContainer').innerHTML = html;
+            } else {
+                document.getElementById('arsipKelasContainer').innerHTML = `
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 min-w-[220px] text-center shadow-sm shrink-0">
+                        <i class="fas fa-folder-open text-slate-300 text-2xl mb-2"></i>
+                        <p class="text-xs text-slate-500">Belum ada kelas yang diikuti.</p>
+                        <a href="class.html" class="text-[10px] font-bold text-brand-green mt-2 inline-block">Cari Kelas</a>
+                    </div>`;
             }
         }
     </script>
@@ -462,10 +615,21 @@
             if (data.tags && Array.isArray(data.tags)) {
                 tagsHtml = data.tags.slice(0, 2).map(tag => `<span class="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[8px] mr-1 mt-1">#${esc(tag)}</span>`).join('');
             }
+            // MENGGUNAKAN DIV DENGAN FITUR KLIK & TEKAN LAMA UNTUK SHARE
             return `
-            <a href="baca.html?id=${data.id}" class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 hover:border-brand-green transition-colors active:scale-[0.98]">
-                <img src="${imgUrl}" alt="${esc(data.judul)}" class="w-24 h-24 object-cover rounded-lg shrink-0 bg-slate-100">
-                <div class="flex-1 flex flex-col justify-between py-1 min-w-0">
+            <div role="button" tabindex="0" 
+                 onclick="handleCardClick(event, '${data.id}')"
+                 oncontextmenu="event.preventDefault(); showShareModal('${data.id}', '${esc(data.judul)}'); return false;"
+                 ontouchstart="startLongPress(event, '${data.id}', '${esc(data.judul)}')"
+                 ontouchend="cancelLongPress()"
+                 ontouchmove="cancelLongPress()"
+                 onmousedown="startLongPress(event, '${data.id}', '${esc(data.judul)}')"
+                 onmouseup="cancelLongPress()"
+                 onmouseleave="cancelLongPress()"
+                 class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 hover:border-brand-green transition-colors active:scale-[0.98] cursor-pointer touch-action-pan-y">
+                 
+                <img src="${imgUrl}" alt="${esc(data.judul)}" class="w-24 h-24 object-cover rounded-lg shrink-0 bg-slate-100 pointer-events-none">
+                <div class="flex-1 flex flex-col justify-between py-1 min-w-0 pointer-events-none">
                     <div>
                         <span class="text-[9px] font-bold ${typeClass} px-1.5 py-0.5 rounded uppercase tracking-widest">${typeLabel}</span>
                         <h3 class="font-bold text-sm text-slate-800 line-clamp-2 mt-1.5 leading-snug">${esc(data.judul)}</h3>
@@ -473,10 +637,10 @@
                     </div>
                     <div class="flex justify-between items-end mt-2">
                         <span class="text-[10px] text-slate-400"><i class="far fa-clock"></i> ${esc(data.waktuBaca || '5 Min')}</span>
-                        <span class="text-[11px] font-bold text-brand-green">Mulai <i class="fas fa-chevron-right text-[9px] ml-0.5"></i></span>
+                        <span class="text-[11px] font-bold text-brand-green flex items-center gap-1">Mulai <i class="fas fa-chevron-right text-[9px]"></i></span>
                     </div>
                 </div>
-            </a>`;
+            </div>`;
         }
 
         async function muatKategori(kategori, el, cls, label, kosong, kosongPublish) {
