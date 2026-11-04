@@ -37,7 +37,7 @@
             position: fixed;
             left: 50%;
             transform: translateX(-50%);
-            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); /* Efek membal saat muncul */
+            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); 
             z-index: 100000;
         }
         .popup-hide {
@@ -46,18 +46,41 @@
             pointer-events: none;
         }
         .popup-show {
-            bottom: 24px; /* Mengambang di atas footer */
+            bottom: 24px; 
             opacity: 1;
             pointer-events: auto;
-            animation: float-gentle 3s ease-in-out infinite 0.6s; /* Animasi gerak-gerak perlahan */
+            animation: float-gentle 3s ease-in-out infinite 0.6s; 
         }
         @keyframes float-gentle {
             0%, 100% { transform: translateX(-50%) translateY(0); }
             50% { transform: translateX(-50%) translateY(-8px); }
         }
+
+        /* ===== CUSTOM SPLASH SCREEN ===== */
+        .splash-transition {
+            transition: opacity 0.6s ease-in-out, visibility 0.6s ease-in-out;
+        }
     </style>
 </head>
-<body class="flex justify-center min-h-screen">
+<body class="flex justify-center min-h-screen relative">
+
+    <!-- ================= CUSTOM SPLASH SCREEN ================= -->
+    <div id="customSplashScreen" class="fixed inset-0 bg-brand-green z-[999999] flex flex-col items-center justify-center splash-transition">
+        <!-- Logo Animasi Memudar (Pulse) -->
+        <div class="relative flex flex-col items-center animate-pulse">
+            <!-- Filter brightness-0 invert berfungsi mengubah logo asli menjadi warna putih sepenuhnya -->
+            <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Argumentasi" class="h-16 object-contain mb-4 filter brightness-0 invert">
+            <h1 class="text-white font-bold text-2xl tracking-widest uppercase">Argumentasi</h1>
+            <p class="text-brand-light text-[10px] mt-1.5 font-medium tracking-wide">Platform Belajar Teks Argumentasi</p>
+        </div>
+        
+        <!-- Animasi Loading Spinner di Bagian Bawah -->
+        <div class="absolute bottom-16 flex flex-col items-center">
+            <div class="w-7 h-7 border-[3px] border-white/20 border-t-white rounded-full animate-spin"></div>
+            <p class="text-white/80 text-[9px] mt-3 font-medium tracking-wider uppercase">Memuat Ruang Kelas...</p>
+        </div>
+    </div>
+    <!-- ======================================================== -->
 
     <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col overflow-x-hidden sm:border-x border-slate-200">
 
@@ -226,7 +249,6 @@
     <!-- POP-UP INSTALL MENGAMBANG -->
     <div id="installPopup" class="install-popup popup-hide w-[90%] max-w-sm bg-white rounded-2xl shadow-[0_15px_40px_rgba(5,150,105,0.25)] border border-emerald-100 p-3.5 flex items-center justify-between">
         <div class="flex items-center gap-3">
-            <!-- Tempat GIF Animasi -->
             <img src="animasi-menarik.gif" alt="Animasi PWA" class="w-12 h-12 rounded-xl object-cover shadow-sm bg-brand-light border border-emerald-200">
             <div>
                 <h4 class="font-bold text-slate-800 text-sm">Aplikasi Belajar</h4>
@@ -279,6 +301,22 @@
     <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
 
     <script>
+        // LOGIKA MENGHILANGKAN CUSTOM SPLASH SCREEN
+        window.addEventListener('load', () => {
+            const splashScreen = document.getElementById('customSplashScreen');
+            if (splashScreen) {
+                // Jeda 1.2 detik agar animasi terlihat
+                setTimeout(() => {
+                    splashScreen.style.opacity = '0';
+                    splashScreen.style.visibility = 'hidden';
+                    // Hapus elemen sepenuhnya setelah efek transisi selesai (0.6s)
+                    setTimeout(() => {
+                        splashScreen.remove();
+                    }, 600);
+                }, 1200);
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('displayDate').innerText = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
             const nama = localStorage.getItem('namaSiswaCendekia');
@@ -297,24 +335,19 @@
         const installPopup = document.getElementById('installPopup');
         const btnInstall = document.getElementById('btnInstall');
 
-        // Daftarkan Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').catch((err) => console.log('SW Gagal:', err));
             });
         }
 
-        // Tangkap event PWA sebelum ditampilkan default oleh browser
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            
-            // Tampilkan pop-up mengambang kita dengan animasi membal
             installPopup.classList.remove('popup-hide');
             installPopup.classList.add('popup-show');
         });
 
-        // Aksi tombol Unduh
         btnInstall.addEventListener('click', async () => {
             installPopup.classList.remove('popup-show');
             installPopup.classList.add('popup-hide');
@@ -329,7 +362,6 @@
             }
         });
 
-        // Aksi tombol silang (batal)
         window.tutupInstall = function() {
             installPopup.classList.remove('popup-show');
             installPopup.classList.add('popup-hide');
