@@ -68,7 +68,6 @@
     <div id="customSplashScreen" class="fixed inset-0 bg-brand-green z-[999999] flex flex-col items-center justify-center splash-transition">
         <!-- Logo Animasi Memudar (Pulse) -->
         <div class="relative flex flex-col items-center animate-pulse">
-            <!-- Filter brightness-0 invert berfungsi mengubah logo asli menjadi warna putih sepenuhnya -->
             <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo Argumentasi" class="h-16 object-contain mb-4 filter brightness-0 invert">
             <h1 class="text-white font-bold text-2xl tracking-widest uppercase">Argumentasi</h1>
             <p class="text-brand-light text-[10px] mt-1.5 font-medium tracking-wide">Platform Belajar Teks Argumentasi</p>
@@ -80,6 +79,13 @@
             <p class="text-white/80 text-[9px] mt-3 font-medium tracking-wider uppercase">Memuat Ruang Kelas...</p>
         </div>
     </div>
+    
+    <!-- Script penangkal "Layar Hijau" jika user cuma me-refresh halaman -->
+    <script>
+        if (sessionStorage.getItem('splashSudahDilihat')) {
+            document.getElementById('customSplashScreen').style.display = 'none';
+        }
+    </script>
     <!-- ======================================================== -->
 
     <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col overflow-x-hidden sm:border-x border-slate-200">
@@ -301,19 +307,25 @@
     <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
 
     <script>
-        // LOGIKA MENGHILANGKAN CUSTOM SPLASH SCREEN
+        // LOGIKA MENGHILANGKAN CUSTOM SPLASH SCREEN (Dengan memori Cerdas)
         window.addEventListener('load', () => {
             const splashScreen = document.getElementById('customSplashScreen');
-            if (splashScreen) {
-                // Jeda 1.2 detik agar animasi terlihat
+            
+            // Cek apakah splash screen belum disembunyikan oleh sistem memori
+            if (splashScreen && splashScreen.style.display !== 'none') {
+                // Jeda 1.2 detik agar animasi terlihat pertama kali
                 setTimeout(() => {
                     splashScreen.style.opacity = '0';
                     splashScreen.style.visibility = 'hidden';
-                    // Hapus elemen sepenuhnya setelah efek transisi selesai (0.6s)
                     setTimeout(() => {
                         splashScreen.remove();
+                        // Catat di memori bahwa user sudah melihatnya
+                        sessionStorage.setItem('splashSudahDilihat', 'true');
                     }, 600);
                 }, 1200);
+            } else if (splashScreen) {
+                // Jika halaman di-refresh, langsung hapus elemen hijaunya tanpa ampun!
+                splashScreen.remove();
             }
         });
 
