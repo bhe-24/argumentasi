@@ -36,7 +36,8 @@ body{font-family:'Poppins',sans-serif;background:#1e293b;overflow:hidden;height:
 <div id="app-container" class="w-full max-w-5xl relative flex flex-col h-full bg-slate-800 shadow-2xl sm:border-x border-slate-700">
   <header class="shrink-0 bg-amber-500 shadow-md relative z-50">
     <div class="h-14 px-3 flex items-center gap-2">
-      <a href="kelola-flipbook.html" aria-label="Kembali" class="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
+      <!-- Tombol Kembali Diubah ke koleksi-flipbook.html -->
+      <a href="koleksi-flipbook.html" aria-label="Kembali" class="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
       <div class="flex-1 min-w-0">
         <h1 id="judul" class="text-white font-bold text-sm leading-tight truncate">Memuat dokumen…</h1>
         <p id="sub" class="text-white/80 text-[10px] leading-tight truncate">Flipbook PDF</p>
@@ -58,7 +59,7 @@ body{font-family:'Poppins',sans-serif;background:#1e293b;overflow:hidden;height:
       <i class="fas fa-book-dead text-5xl text-white/30 mb-3"></i>
       <p class="text-sm font-bold text-white mb-1">Flipbook Gagal Dimuat</p>
       <p id="galatPesan" class="text-xs text-white/60 leading-relaxed max-w-xs mb-5">Dokumen rusak atau tautan tidak valid.</p>
-      <a href="kelola-flipbook.html" class="bg-amber-500 text-white text-xs font-bold px-6 py-2.5 rounded-full active:scale-95">Kembali</a>
+      <a href="koleksi-flipbook.html" class="bg-amber-500 text-white text-xs font-bold px-6 py-2.5 rounded-full active:scale-95">Kembali</a>
     </div>
     <div id="zoomWrap"><div id="book"></div></div>
   </main>
@@ -74,6 +75,11 @@ body{font-family:'Poppins',sans-serif;background:#1e293b;overflow:hidden;height:
         <button id="btn-next" onclick="nextPage()" aria-label="Halaman berikutnya" class="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-600 active:scale-95 transition disabled:opacity-30 disabled:pointer-events-none"><i class="fas fa-chevron-right"></i></button>
       </div>
       <div class="flex items-center gap-1">
+        <!-- Label Penunjuk Mode Tampilan (Baru Ditambahkan) -->
+        <div id="txt-layout" class="hidden sm:flex items-center text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-md mr-1 border border-amber-100 uppercase tracking-wide">
+          2 Halaman
+        </div>
+        
         <button id="btn-layout" onclick="toggleLayout()" aria-label="Ubah tampilan" class="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-600 active:scale-95 transition hidden sm:block"><i class="fas fa-book-open"></i></button>
         <button id="btn-sound" onclick="toggleSound()" aria-label="Suara balik halaman" class="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-600 active:scale-95 transition"><i class="fas fa-volume-high"></i></button>
         <div class="w-px h-5 bg-slate-200 mx-0.5"></div>
@@ -400,11 +406,19 @@ window.jumpTo=p=>{
   else{if(p===curPage)return;if(Math.abs(p-curPage)===1)return autoFlip(p>curPage?1:-1);curPage=p}
   playFlip(.5,.8);buildBook();saveProgress();scheduleHiRes();setTimeout(prefetch,60);
 };
+
+// Mengubah Teks Label Penunjuk Tampilan
 function updateNavUI(){
   $('btn-prev').disabled=!canFlip(-1);$('btn-next').disabled=!canFlip(1);
   const n=pageNow();
   $('progres').style.width=(totalPages>1?(n-1)/(totalPages-1)*100:100)+'%';
   $('inHal').value=n;$('tot').textContent=totalPages;
+  
+  // Mengupdate indikator tampilan 1 atau 2 halaman
+  const txtLayout = $('txt-layout');
+  if(txtLayout) {
+      txtLayout.innerHTML = dualMode ? '<i class="fas fa-book-open mr-1.5"></i>2 Halaman' : '<i class="fas fa-file-pdf mr-1.5"></i>1 Halaman';
+  }
 }
 window.toggleLayout=()=>{
   if(busy)return;
@@ -601,7 +615,13 @@ window.mulaiMembangun=async function(m){
   $('judul').textContent=meta.judul;document.title=meta.judul+' - Flipbook';
   $('sub').textContent=[meta.kategori,meta.ukuran?meta.ukuran+' MB':''].filter(Boolean).join(' • ')||'Flipbook';
   updateSoundUI();
+  
+  // Set tampilan default label layout saat pertama kali dimuat
+  const txtLayout = $('txt-layout');
+  if(txtLayout) txtLayout.innerHTML = dualMode ? '<i class="fas fa-book-open mr-1.5"></i>2 Halaman' : '<i class="fas fa-file-pdf mr-1.5"></i>1 Halaman';
+
   $('btn-layout').querySelector('i').className=dualMode?'fas fa-book-open':'fas fa-file-pdf';
+  
   if(!meta.url)return gagalMuat('Tautan dokumen tidak tersedia di server.');
   if(!window.pdfjsLib)return gagalMuat('Sistem PDF.js gagal dimuat. Periksa koneksi internet Anda.');
   pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
