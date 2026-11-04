@@ -36,7 +36,6 @@ body{font-family:'Poppins',sans-serif;background:#1e293b;overflow:hidden;height:
 <div id="app-container" class="w-full max-w-5xl relative flex flex-col h-full bg-slate-800 shadow-2xl sm:border-x border-slate-700">
   <header class="shrink-0 bg-amber-500 shadow-md relative z-50">
     <div class="h-14 px-3 flex items-center gap-2">
-      <!-- Tombol Kembali Diubah ke koleksi-flipbook.html -->
       <a href="koleksi-flipbook.html" aria-label="Kembali" class="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
       <div class="flex-1 min-w-0">
         <h1 id="judul" class="text-white font-bold text-sm leading-tight truncate">Memuat dokumen…</h1>
@@ -64,8 +63,8 @@ body{font-family:'Poppins',sans-serif;background:#1e293b;overflow:hidden;height:
     <div id="zoomWrap"><div id="book"></div></div>
   </main>
 
-  <div id="bar" class="shrink-0 bg-white/95 backdrop-blur border-t border-slate-200 px-2 py-2 z-50">
-    <div class="flex items-center justify-between gap-1 max-w-xl mx-auto w-full">
+  <div id="bar" class="shrink-0 bg-white/95 backdrop-blur border-t border-slate-200 px-2 py-2 z-50 overflow-x-auto hide-scrollbar">
+    <div class="flex items-center justify-between gap-1 max-w-xl mx-auto w-full min-w-max">
       <div class="flex items-center gap-1">
         <button id="btn-prev" onclick="prevPage()" aria-label="Halaman sebelumnya" class="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-600 active:scale-95 transition disabled:opacity-30 disabled:pointer-events-none"><i class="fas fa-chevron-left"></i></button>
         <div class="flex items-center gap-1 text-xs font-semibold text-slate-600">
@@ -74,13 +73,14 @@ body{font-family:'Poppins',sans-serif;background:#1e293b;overflow:hidden;height:
         </div>
         <button id="btn-next" onclick="nextPage()" aria-label="Halaman berikutnya" class="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-600 active:scale-95 transition disabled:opacity-30 disabled:pointer-events-none"><i class="fas fa-chevron-right"></i></button>
       </div>
-      <div class="flex items-center gap-1">
-        <!-- Label Penunjuk Mode Tampilan (Baru Ditambahkan) -->
-        <div id="txt-layout" class="hidden sm:flex items-center text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-md mr-1 border border-amber-100 uppercase tracking-wide">
+      <div class="flex items-center gap-1 pl-2">
+        <!-- Label Penunjuk Mode Tampilan -->
+        <div id="txt-layout" class="flex items-center text-[10px] font-bold text-amber-600 bg-amber-50 px-2 h-9 rounded-lg mr-1 border border-amber-100 uppercase tracking-wide whitespace-nowrap">
           2 Halaman
         </div>
         
-        <button id="btn-layout" onclick="toggleLayout()" aria-label="Ubah tampilan" class="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-600 active:scale-95 transition hidden sm:block"><i class="fas fa-book-open"></i></button>
+        <!-- Tombol Layout (Tersedia untuk Mobile & Desktop) -->
+        <button id="btn-layout" onclick="toggleLayout()" aria-label="Ubah tampilan" class="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-600 active:scale-95 transition block"><i class="fas fa-book-open"></i></button>
         <button id="btn-sound" onclick="toggleSound()" aria-label="Suara balik halaman" class="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-600 active:scale-95 transition"><i class="fas fa-volume-high"></i></button>
         <div class="w-px h-5 bg-slate-200 mx-0.5"></div>
         <button onclick="ubahZoom(-0.25)" aria-label="Perkecil" class="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-600 active:scale-95 transition"><i class="fas fa-magnifying-glass-minus"></i></button>
@@ -171,7 +171,6 @@ function burst(c,out,t,freq,vol,len,type='highpass'){
   const g=c.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+len);
   s.connect(f);f.connect(g);g.connect(out);s.start(t,Math.random()*1.5,len+.02);
 }
-// Suara: desir udara (noise band-pass menyapu naik-turun) + remasan kertas + ketukan halus saat mendarat
 function playFlip(dur=.6,vol=1){
   if(!soundOn)return;
   try{
