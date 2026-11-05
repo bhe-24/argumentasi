@@ -205,12 +205,15 @@
 
         /* Bagikan: tautan lewat /api/share supaya WhatsApp menampilkan gambar cover + judul + cuplikan */
         window.bagikanKeWhatsApp = function() {
-            const a = window.currentArticleData; if (!a) return;
+            const a = window.currentArticleData; 
+            if (!a) return;
+            
             const judul = a.judul || "Materi Pembelajaran";
             const cuplikan = (document.getElementById('readingContent').innerText || '').replace(/\s+/g, ' ').trim().slice(0, 110);
-            const url = `${location.origin}/api/share?id=${encodeURIComponent(a.id)}`;
-            const teks = `📖 *${judul}*\n${cuplikan ? '\n_' + cuplikan + '…_\n' : ''}\nBaca selengkapnya di Argumentasi:\n${url}`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(teks)}`, '_blank');
+            const url = `${window.location.origin}/api/share?id=${encodeURIComponent(a.id)}`;
+            const teks = `📖 *${judul}*\n${cuplikan ? '\n_' + cuplikan + '…_\n' : ''}\nYuk baca selengkapnya di Aplikasi Argumentasi:\n${url}`;
+            
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(teks)}`, '_blank');
         };
 
         const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
