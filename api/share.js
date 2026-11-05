@@ -13,15 +13,32 @@ export default async function handler(req, res) {
     const target = `${origin}/baca.html?id=${id}`;
     if (!id) return res.redirect(302, '/');
 
-    let fields = {};
+    let fields = {}, status = 'belum';
     try {
-        const r = await fetch(`https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/materials/${id}?key=${API_KEY}`);
+        const r = await fetch(`https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/materials/${id}?key=${API_KEY}`, {
+            headers: { Referer: origin + '/', Origin: origin }
+        });
+        status = r.status;
         if (r.ok) fields = (await r.json()).fields || {};
-    } catch (e) {}
+        else status += ' ' + (await r.text()).slice(0, 200);
+    } catch (e) { status = 'error: ' + e.message; }
+
+    // Mode cek: buka /api/share?id=XXX&debug=1
+    if (req.query.debug === '1') {
+        return res.status(200).json({
+            firestoreStatus: status,
+            adaJudul: !!val(fields.judul),
+            coverImage: val(fields.coverImage).slice(0, 120),
+            adaBase64: !!val(fields.gambarBase64),
+            panjangBase64: val(fields.gambarBase64).length
+        });
+    }
 
     // Mode gambar: cover tersimpan base64 → sajikan sebagai file gambar
     if (req.query.img === '1') {
-        const m = val(fields.gambarBase64).match(/^data:(image\/[\w+.-]+);base64,(.+)$/s);
+        let raw = val(fields.gambarBase64);
+        if (raw && !raw.startsWith('data:')) raw = 'data:image/jpeg;base64,' + raw;
+        const m = raw.match(/^data:(image\/[\w+.-]+);base64,(.+)$/s);
         if (!m) return res.redirect(302, 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1200');
         res.setHeader('Content-Type', m[1]);
         res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate');
@@ -32,7 +49,8 @@ export default async function handler(req, res) {
     const isi = (val(fields.isi) || val(fields.konten)).replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
     const desc = (isi.slice(0, 150) || 'Baca materi lengkapnya di Argumentasi.') + (isi.length > 150 ? '…' : '');
     const cover = val(fields.coverImage);
-    const image = /^https?:\/\//.test(cover) ? cover
+    const coverUrl = cover.replace('/upload/', '/upload/f_jpg,q_auto,w_1200,c_limit/');
+    const image = /^https?:\/\//.test(cover) ? coverUrl
         : val(fields.gambarBase64) ? `${origin}/api/share?id=${id}&img=1`
         : 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1200';
 
