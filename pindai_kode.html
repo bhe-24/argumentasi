@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Pindai Kode Kelas - Argumentasi</title>
     
     <!-- Tailwind CSS -->
@@ -30,18 +30,22 @@
     </script>
 
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #0f172a; /* Latar gelap untuk mode scanner */ -webkit-tap-highlight-color: transparent; }
-        
-        /* Hide Scrollbar */
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Mengunci layar agar tidak bisa di-scroll sama sekali */
+        html, body {
+            height: 100dvh; /* Dynamic viewport height untuk mobile */
+            overflow: hidden; 
+            overscroll-behavior: none;
+        }
+
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #0f172a; /* Latar gelap untuk mode scanner */ 
+            -webkit-tap-highlight-color: transparent; 
+        }
 
         /* CUSTOM SCANNER OVERLAY */
-        #reader { width: 100%; border-radius: 1rem; overflow: hidden; border: none !important; }
-        #reader video { object-fit: cover; border-radius: 1rem; }
+        #reader { width: 100%; border-radius: 1.5rem; overflow: hidden; border: none !important; }
+        #reader video { object-fit: cover; border-radius: 1.5rem; }
         
         .scanner-frame {
             position: absolute;
@@ -80,27 +84,28 @@
         }
     </style>
 </head>
-<body class="flex justify-center min-h-screen text-slate-100">
+<body class="flex justify-center text-slate-100">
 
-    <!-- CONTAINER UTAMA -->
-    <div class="w-full max-w-md bg-slate-900 relative min-h-screen shadow-2xl flex flex-col overflow-hidden sm:border-x border-slate-800 fade-in">
+    <!-- CONTAINER UTAMA (Fixed ke layar) -->
+    <div class="w-full max-w-md bg-slate-900 relative h-[100dvh] flex flex-col overflow-hidden sm:border-x border-slate-800 shadow-2xl">
         
         <!-- HEADER STICKY -->
-        <header class="fixed w-full max-w-md z-50 px-4 py-4 flex items-center justify-between bg-gradient-to-b from-slate-900 to-transparent">
-            <button onclick="kembali()" class="w-10 h-10 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+        <header class="absolute top-0 w-full z-50 px-4 py-4 flex items-center justify-between bg-gradient-to-b from-slate-900 to-transparent"
+                style="padding-top:calc(16px + env(safe-area-inset-top,0px));">
+            <button onclick="kembali()" class="w-10 h-10 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors active:scale-95">
                 <i class="fas fa-arrow-left"></i>
             </button>
-            <h1 class="text-sm font-bold text-white tracking-widest uppercase bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full">Pindai Kode</h1>
+            <h1 class="text-[11px] font-bold text-white tracking-widest uppercase bg-black/40 backdrop-blur-md px-4 py-2 rounded-full">Pindai Kode</h1>
             <div class="w-10 h-10"></div> <!-- Placeholder untuk keseimbangan flex -->
         </header>
 
         <!-- KONTEN SCANNER -->
-        <main class="flex-grow flex flex-col items-center justify-center relative px-6 w-full">
+        <main class="flex-1 flex flex-col items-center justify-center w-full px-6 relative mt-10">
             
-            <div class="text-center mb-8 relative z-30">
-                <i class="fas fa-qrcode text-4xl text-emerald-400 mb-3 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]"></i>
-                <h2 class="text-xl font-bold text-white mb-1">Arahkan Kamera ke QR Code</h2>
-                <p class="text-xs text-slate-400 max-w-[250px] mx-auto">Sistem akan secara otomatis memindai dan memasukkan Anda ke Ruang Kelas Guru.</p>
+            <div class="text-center mb-6 relative z-30">
+                <i class="fas fa-qrcode text-3xl text-emerald-400 mb-2 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]"></i>
+                <h2 class="text-lg font-bold text-white mb-1">Arahkan Kamera ke QR</h2>
+                <p class="text-[11px] text-slate-400 max-w-[250px] mx-auto leading-relaxed">Sistem akan memindai otomatis dan memasukkan Anda ke Ruang Kelas Guru.</p>
             </div>
 
             <!-- CAMERA BOX CONTAINER -->
@@ -110,7 +115,7 @@
                 <div id="cameraLoading" class="absolute inset-0 flex flex-col items-center justify-center z-10 p-6 text-center">
                     <i class="fas fa-circle-notch fa-spin text-3xl text-emerald-500 mb-3"></i>
                     <p class="text-xs font-bold text-slate-300 mb-1">Meminta Izin Kamera...</p>
-                    <p class="text-[9px] text-slate-500">Pastikan browser Anda mengizinkan akses kamera untuk melanjutkan.</p>
+                    <p class="text-[9px] text-slate-500 leading-relaxed">Pastikan browser Anda mengizinkan akses kamera untuk melanjutkan.</p>
                 </div>
 
                 <!-- Div Target HTML5 QR Code -->
@@ -130,11 +135,12 @@
         </main>
 
         <!-- FOOTER / AKSI MANUAL -->
-        <footer class="mt-auto px-6 pb-8 pt-6 bg-gradient-to-t from-slate-900 via-slate-900 to-transparent relative z-30 text-center">
-            <p class="text-[11px] text-slate-400 mb-4">Kamera bermasalah atau tidak punya kode QR?</p>
+        <footer class="absolute bottom-0 w-full px-6 pb-6 pt-10 bg-gradient-to-t from-slate-900 via-slate-900 to-transparent z-30 text-center"
+                style="padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));">
+            <p class="text-[10px] text-slate-400 mb-3">Kamera bermasalah atau tidak punya kode QR?</p>
             
-            <a href="class.html" class="w-full bg-white text-slate-900 hover:bg-slate-200 font-bold py-4 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg">
-                <i class="fas fa-keyboard text-brand-green"></i> Masukkan Kode Manual
+            <a href="class.html" class="w-full bg-white text-slate-900 hover:bg-slate-200 font-bold py-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg text-sm">
+                <i class="fas fa-keyboard text-brand-green"></i> Ketik Kode Manual
             </a>
         </footer>
 
@@ -176,7 +182,7 @@
 
         // Inisialisasi Kamera saat halaman dimuat
         document.addEventListener('DOMContentLoaded', () => {
-            // Gunakan metode Html5Qrcode murni untuk kontrol UI penuh (tanpa tombol jelek bawaan library)
+            // Gunakan metode Html5Qrcode murni untuk kontrol UI penuh
             html5QrCode = new Html5Qrcode("reader");
 
             const config = { 
@@ -205,7 +211,6 @@
                         `;
 
                         // Lempar ke class.html dengan membawa parameter ID (Kode Kelas)
-                        // Membersihkan spasi pada decodedText just in case
                         const kodeKelas = decodedText.trim();
                         setTimeout(() => {
                             window.location.href = `class.html?id=${kodeKelas}`;
@@ -217,7 +222,7 @@
                     });
                 },
                 (errorMessage) => {
-                    // Jika belum mendeteksi (berjalan terus setiap frame). Abaikan agar tidak spam console.
+                    // Jika belum mendeteksi (berjalan terus setiap frame). Abaikan agar tidak spam.
                 }
             ).then(() => {
                 // JIKA KAMERA BERHASIL HIDUP & DIIZINKAN
@@ -230,7 +235,7 @@
                 document.getElementById('cameraLoading').innerHTML = `
                     <i class="fas fa-camera-slash text-4xl text-red-500 mb-3"></i>
                     <p class="text-xs font-bold text-white mb-2">Akses Kamera Ditolak</p>
-                    <p class="text-[10px] text-slate-400">Harap izinkan akses kamera di pengaturan browser Anda, atau gunakan input manual.</p>
+                    <p class="text-[9px] text-slate-400">Harap izinkan akses kamera di pengaturan browser Anda, atau gunakan input manual.</p>
                 `;
             });
         });
