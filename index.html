@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js untuk Grafik Nilaiku 3D -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }
     </script>
@@ -244,6 +246,82 @@
                         <div class="w-24 h-24 bg-slate-200 rounded-lg shrink-0"></div>
                         <div class="flex-1 py-1"><div class="h-3 bg-slate-200 w-16 rounded mb-2"></div><div class="h-4 bg-slate-200 w-full rounded mb-1"></div><div class="h-4 bg-slate-200 w-3/4 rounded"></div></div>
                     </div>
+                </div>
+            </div>
+
+            <div class="h-2 bg-slate-100 w-full mt-6"></div>
+
+            <!-- SECTION GRAFIK NILAIKU (3D STYLE) -->
+            <div class="px-4 mt-6">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20 text-xs">
+                            <i class="fas fa-chart-simple"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-slate-800 text-sm leading-tight">Grafik Nilaiku</h2>
+                            <p class="text-[10px] text-slate-400 leading-tight mt-0.5">Statistik pemerolehan XP &amp; nilai latihan</p>
+                        </div>
+                    </div>
+                    <!-- Filter Waktu (7 Hari / Hari Ini) -->
+                    <div class="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                        <button id="btnMode7Hari" onclick="window.gantiModeGrafik('7hari')" class="px-2 py-1 text-[10px] font-bold rounded-md bg-white text-slate-800 shadow-xs transition-all">7 Hari</button>
+                        <button id="btnModeHariIni" onclick="window.gantiModeGrafik('hariini')" class="px-2 py-1 text-[10px] font-medium text-slate-500 rounded-md hover:text-slate-800 transition-all">Hari Ini</button>
+                    </div>
+                </div>
+
+                <!-- Kartu Grafik 3D Container -->
+                <div class="bg-gradient-to-br from-white via-amber-50/25 to-orange-50/30 rounded-3xl p-4 border border-amber-200/60 shadow-[0_10px_25px_-5px_rgba(245,158,11,0.08),0_8px_10px_-6px_rgba(0,0,0,0.03)] relative overflow-hidden">
+                    
+                    <!-- Ringkasan Statistik Mini (Chips) -->
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="bg-white/85 backdrop-blur-sm border border-amber-200/70 rounded-2xl p-2.5 flex items-center gap-2.5 shadow-xs">
+                            <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xs shrink-0">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">XP Diperoleh</span>
+                                <div class="flex items-baseline gap-1">
+                                    <span id="statXpCount" class="text-sm font-black text-slate-800">0</span>
+                                    <span class="text-[9px] font-bold text-amber-500">XP</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white/85 backdrop-blur-sm border border-orange-200/70 rounded-2xl p-2.5 flex items-center gap-2.5 shadow-xs">
+                            <div class="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center text-xs shrink-0">
+                                <i class="fas fa-award"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Rata-rata Nilai</span>
+                                <div class="flex items-baseline gap-1">
+                                    <span id="statNilaiAvg" class="text-sm font-black text-slate-800">0</span>
+                                    <span class="text-[9px] font-bold text-orange-500">Poin</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Area Kanvas Chart.js -->
+                    <div class="relative w-full h-48 bg-white/60 rounded-2xl p-2 border border-slate-100">
+                        <canvas id="chartNilaikuCanvas"></canvas>
+                    </div>
+
+                    <!-- Keterangan Legenda 3D & Status Sinkronisasi -->
+                    <div class="flex items-center justify-between mt-3 pt-2.5 border-t border-amber-100/60 text-[10px]">
+                        <div class="flex items-center gap-3">
+                            <span class="flex items-center gap-1.5 font-bold text-amber-600">
+                                <span class="w-2.5 h-2.5 rounded-sm bg-gradient-to-b from-amber-400 to-amber-600 shadow-xs"></span> XP (Kuning)
+                            </span>
+                            <span class="flex items-center gap-1.5 font-bold text-orange-600">
+                                <span class="w-2.5 h-2.5 rounded-sm bg-gradient-to-b from-orange-400 to-orange-600 shadow-xs"></span> Nilai (Oranye)
+                            </span>
+                        </div>
+                        <span id="syncStatusBadge" class="text-[9px] font-semibold text-slate-400 flex items-center gap-1" title="Sistem memperbarui data per 1 jam">
+                            <i class="fas fa-clock text-slate-400"></i> <span id="syncTimeText">Auto-sync 1 Jam</span>
+                        </span>
+                    </div>
+
                 </div>
             </div>
 
@@ -596,6 +674,406 @@
                     </div>`;
             }
         }
+
+        /* ==================== GRAFIK NILAIKU (3D STYLE & SINKRONISASI 1 JAM) ==================== */
+        const GRAFIK_STORAGE_KEY = 'arg_grafik_nilaiku_log_v1';
+        let chartNilaikuInstance = null;
+        let currentGrafikMode = '7hari';
+
+        function loadGrafikLog() {
+            try {
+                const raw = localStorage.getItem(GRAFIK_STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && typeof parsed === 'object') {
+                        if (!parsed.recordedIds) parsed.recordedIds = {};
+                        if (!parsed.dailyLog) parsed.dailyLog = {};
+                        return parsed;
+                    }
+                }
+            } catch (e) {}
+            return {
+                lastScan: 0,
+                recordedIds: {},
+                dailyLog: {}
+            };
+        }
+
+        function saveGrafikLog(log) {
+            try {
+                localStorage.setItem(GRAFIK_STORAGE_KEY, JSON.stringify(log));
+            } catch (e) {}
+        }
+
+        function catatKeLog(log, uniqueId, dateStr, hourNum, xp, nilai) {
+            if (log.recordedIds[uniqueId]) return false; // Sudah pernah dicatat, jangan tambahkan lagi!
+
+            log.recordedIds[uniqueId] = {
+                xp: xp,
+                nilai: nilai,
+                date: dateStr,
+                hour: hourNum,
+                timestamp: Date.now()
+            };
+
+            if (!log.dailyLog[dateStr]) {
+                log.dailyLog[dateStr] = {
+                    xp: 0,
+                    totalNilai: 0,
+                    countNilai: 0,
+                    maxNilai: 0,
+                    hours: {}
+                };
+            }
+            const day = log.dailyLog[dateStr];
+            day.xp += xp;
+            if (nilai > 0) {
+                day.totalNilai += nilai;
+                day.countNilai += 1;
+                day.maxNilai = Math.max(day.maxNilai, nilai);
+            }
+
+            const hKey = String(hourNum);
+            if (!day.hours[hKey]) day.hours[hKey] = { xp: 0, nilai: 0, count: 0 };
+            day.hours[hKey].xp += xp;
+            if (nilai > 0) {
+                day.hours[hKey].nilai = Math.max(day.hours[hKey].nilai, nilai);
+                day.hours[hKey].count += 1;
+            }
+            return true;
+        }
+
+        function syncNilaiDanXp(log) {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const currentHour = new Date().getHours();
+
+            // 1. Pindai Ruang Belajar Siswa (lat_v1_*)
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && k.startsWith('lat_v1_')) {
+                    const classId = k.replace('lat_v1_', '');
+                    try {
+                        const lData = JSON.parse(localStorage.getItem(k) || '{}');
+                        if (lData && lData.hari) {
+                            for (const hariKey in lData.hari) {
+                                const hasil = lData.hari[hariKey]?.hasil || {};
+                                for (const misi in hasil) {
+                                    const item = hasil[misi];
+                                    if (!item) continue;
+                                    const skor = Number(item.skor) || 0;
+                                    const xp = Number(item.xp) || 0;
+                                    // Kunci unik: kelas + misi + skor + xp (mencegah duplikasi data kemarin)
+                                    const uniqueId = `rb_${classId}_${misi}_s${skor}_x${xp}`;
+                                    
+                                    let entryDate = hariKey;
+                                    if (!/^\d{4}-\d{2}-\d{2}$/.test(entryDate)) {
+                                        const d = item.waktu ? new Date(item.waktu) : new Date();
+                                        entryDate = d.toISOString().split('T')[0];
+                                    }
+                                    const entryHour = item.waktu ? new Date(item.waktu).getHours() : currentHour;
+
+                                    catatKeLog(log, uniqueId, entryDate, entryHour, xp, skor);
+                                }
+                            }
+                        }
+                    } catch (e) {}
+                }
+            }
+
+            // 2. Pindai Kreasi (kreasi_karya)
+            try {
+                const karyaList = JSON.parse(localStorage.getItem('kreasi_karya') || '[]');
+                if (Array.isArray(karyaList)) {
+                    karyaList.forEach(k => {
+                        if (!k) return;
+                        const kId = k.id || k.judul;
+                        const skor = Number(k.nilai || k.skor || k.evaluasi?.skor || 0);
+                        const xp = Number(k.xp || 0);
+                        const uniqueId = `kreasi_${kId}_s${skor}_x${xp}`;
+                        if (skor > 0 || xp > 0) {
+                            const d = k.createdAt ? new Date(k.createdAt) : new Date();
+                            const entryDate = d.toISOString().split('T')[0];
+                            const entryHour = d.getHours();
+                            catatKeLog(log, uniqueId, entryDate, entryHour, xp, skor);
+                        }
+                    });
+                }
+            } catch (e) {}
+
+            // 3. Pindai Latihan Umum (hasilLatihanArg)
+            try {
+                const latArg = JSON.parse(localStorage.getItem('hasilLatihanArg') || '{}');
+                for (const k in latArg) {
+                    const skor = Number(latArg[k]) || 0;
+                    if (skor > 0) {
+                        const uniqueId = `latarg_${k}_s${skor}`;
+                        catatKeLog(log, uniqueId, todayStr, currentHour, 0, skor);
+                    }
+                }
+            } catch (e) {}
+
+            // 4. Sinkronisasi Saldo XP Global (kelasPointsArg, latihanPointsCendekia, kreasiPointsArg)
+            const totalXpGlobal = (parseInt(localStorage.getItem('kelasPointsArg') || '0', 10) || 0) +
+                                  (parseInt(localStorage.getItem('latihanPointsCendekia') || '0', 10) || 0) +
+                                  (parseInt(localStorage.getItem('kreasiPointsArg') || '0', 10) || 0);
+
+            let totalXpRecorded = 0;
+            for (const dKey in log.dailyLog) {
+                totalXpRecorded += log.dailyLog[dKey].xp || 0;
+            }
+
+            if (totalXpGlobal > totalXpRecorded) {
+                const sisa = totalXpGlobal - totalXpRecorded;
+                catatKeLog(log, `global_xp_sync_${sisa}`, todayStr, currentHour, sisa, 0);
+            }
+
+            // Inisialisasi awal baseline 7 hari jika riwayat masih kosong
+            if (Object.keys(log.dailyLog).length === 0) {
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const dtStr = d.toISOString().split('T')[0];
+                    if (!log.dailyLog[dtStr]) {
+                        log.dailyLog[dtStr] = { xp: 0, totalNilai: 0, countNilai: 0, maxNilai: 0, hours: {} };
+                    }
+                }
+            }
+        }
+
+        function renderChartNilaiku(labels, dataXp, dataNilai) {
+            const canvas = document.getElementById('chartNilaikuCanvas');
+            if (!canvas || typeof Chart === 'undefined') return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            if (chartNilaikuInstance) {
+                chartNilaikuInstance.destroy();
+                chartNilaikuInstance = null;
+            }
+
+            // Gradien 3D untuk Batang Kuning (XP)
+            const gradXp = ctx.createLinearGradient(0, 0, 0, 160);
+            gradXp.addColorStop(0, 'rgba(251, 191, 36, 0.95)'); // kuning terang
+            gradXp.addColorStop(1, 'rgba(217, 119, 6, 0.7)');    // kuning amber hangat
+
+            // Gradien 3D untuk Batang Oranye (Nilai)
+            const gradNilai = ctx.createLinearGradient(0, 0, 0, 160);
+            gradNilai.addColorStop(0, 'rgba(251, 146, 60, 0.95)'); // oranye terang
+            gradNilai.addColorStop(1, 'rgba(234, 88, 12, 0.7)');    // oranye gelap
+
+            chartNilaikuInstance = new Chart(ctx, {
+                data: {
+                    labels: labels,
+                    datasets: [
+                        // Batang 1: XP Diperoleh (Kuning)
+                        {
+                            type: 'bar',
+                            label: 'XP',
+                            data: dataXp,
+                            backgroundColor: gradXp,
+                            borderRadius: 6,
+                            barPercentage: 0.65,
+                            categoryPercentage: 0.8,
+                            order: 3
+                        },
+                        // Batang 2: Nilai Latihan (Oranye)
+                        {
+                            type: 'bar',
+                            label: 'Nilai',
+                            data: dataNilai,
+                            backgroundColor: gradNilai,
+                            borderRadius: 6,
+                            barPercentage: 0.65,
+                            categoryPercentage: 0.8,
+                            order: 4
+                        },
+                        // Garis Melengkung 1: Tren XP (Kuning Emas)
+                        {
+                            type: 'line',
+                            label: 'Garis XP',
+                            data: dataXp,
+                            borderColor: '#d97706',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2.5,
+                            tension: 0.42,
+                            pointRadius: 3.5,
+                            pointBackgroundColor: '#fbbf24',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 1.5,
+                            order: 1
+                        },
+                        // Garis Melengkung 2: Tren Nilai (Oranye)
+                        {
+                            type: 'line',
+                            label: 'Garis Nilai',
+                            data: dataNilai,
+                            borderColor: '#ea580c',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2.5,
+                            tension: 0.42,
+                            pointRadius: 3.5,
+                            pointBackgroundColor: '#f97316',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 1.5,
+                            order: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 600 },
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                            titleFont: { family: 'Poppins', size: 10, weight: 'bold' },
+                            bodyFont: { family: 'Poppins', size: 10 },
+                            padding: 8,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function (context) {
+                                    if (context.dataset.type === 'line') return null;
+                                    const val = context.parsed.y || 0;
+                                    return context.datasetIndex === 0 ? `⚡ XP: +${val}` : `🎯 Nilai: ${val}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Poppins', size: 9 }, color: '#64748b' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: 100,
+                            grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                            ticks: { font: { family: 'Poppins', size: 9 }, color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateGrafikDisplay() {
+            const log = loadGrafikLog();
+            let labels = [];
+            let dataXp = [];
+            let dataNilai = [];
+            let sumXp = 0;
+            let sumNilai = 0;
+            let countNilai = 0;
+
+            if (currentGrafikMode === '7hari') {
+                const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const dtStr = d.toISOString().split('T')[0];
+                    const entry = log.dailyLog[dtStr] || { xp: 0, totalNilai: 0, countNilai: 0, maxNilai: 0 };
+                    
+                    const labelStr = i === 0 ? 'Hari Ini' : `${dayNames[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;
+                    labels.push(labelStr);
+                    
+                    const xpVal = entry.xp || 0;
+                    const nilaiVal = entry.countNilai > 0 ? Math.round(entry.totalNilai / entry.countNilai) : (entry.maxNilai || 0);
+
+                    dataXp.push(xpVal);
+                    dataNilai.push(nilaiVal);
+
+                    sumXp += xpVal;
+                    if (nilaiVal > 0) {
+                        sumNilai += nilaiVal;
+                        countNilai++;
+                    }
+                }
+            } else {
+                // Mode Hari Ini (Per Jam: 08:00, 11:00, 14:00, 17:00, 20:00, 23:00)
+                const todayStr = new Date().toISOString().split('T')[0];
+                const dayEntry = log.dailyLog[todayStr] || { xp: 0, totalNilai: 0, countNilai: 0, hours: {} };
+                const timeSlots = [
+                    { label: '08:00', start: 0, end: 8 },
+                    { label: '11:00', start: 9, end: 11 },
+                    { label: '14:00', start: 12, end: 14 },
+                    { label: '17:00', start: 15, end: 17 },
+                    { label: '20:00', start: 18, end: 20 },
+                    { label: '23:00', start: 21, end: 23 }
+                ];
+
+                timeSlots.forEach(slot => {
+                    labels.push(slot.label);
+                    let slotXp = 0;
+                    let slotMaxNilai = 0;
+                    for (let h = slot.start; h <= slot.end; h++) {
+                        const hData = dayEntry.hours?.[String(h)];
+                        if (hData) {
+                            slotXp += hData.xp || 0;
+                            slotMaxNilai = Math.max(slotMaxNilai, hData.nilai || 0);
+                        }
+                    }
+                    dataXp.push(slotXp);
+                    dataNilai.push(slotMaxNilai);
+                    sumXp += slotXp;
+                    if (slotMaxNilai > 0) {
+                        sumNilai += slotMaxNilai;
+                        countNilai++;
+                    }
+                });
+            }
+
+            const statXp = document.getElementById('statXpCount');
+            const statNilai = document.getElementById('statNilaiAvg');
+            if (statXp) statXp.textContent = sumXp;
+            if (statNilai) statNilai.textContent = countNilai > 0 ? Math.round(sumNilai / countNilai) : 0;
+
+            renderChartNilaiku(labels, dataXp, dataNilai);
+        }
+
+        window.gantiModeGrafik = function(mode) {
+            currentGrafikMode = mode;
+            const btn7 = document.getElementById('btnMode7Hari');
+            const btnH = document.getElementById('btnModeHariIni');
+            if (mode === '7hari') {
+                if (btn7) { btn7.className = "px-2 py-1 text-[10px] font-bold rounded-md bg-white text-slate-800 shadow-xs transition-all"; }
+                if (btnH) { btnH.className = "px-2 py-1 text-[10px] font-medium text-slate-500 rounded-md hover:text-slate-800 transition-all"; }
+            } else {
+                if (btn7) { btn7.className = "px-2 py-1 text-[10px] font-medium text-slate-500 rounded-md hover:text-slate-800 transition-all"; }
+                if (btnH) { btnH.className = "px-2 py-1 text-[10px] font-bold rounded-md bg-white text-slate-800 shadow-xs transition-all"; }
+            }
+            updateGrafikDisplay();
+        };
+
+        function cekDanJalankanSyncGrafik() {
+            const log = loadGrafikLog();
+            const now = Date.now();
+            syncNilaiDanXp(log);
+            log.lastScan = now;
+            saveGrafikLog(log);
+            updateGrafikDisplay();
+
+            const timeText = document.getElementById('syncTimeText');
+            if (timeText) {
+                const d = new Date(now);
+                const jam = String(d.getHours()).padStart(2, '0');
+                const mnt = String(d.getMinutes()).padStart(2, '0');
+                timeText.textContent = `Sinkron ${jam}:${mnt}`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(cekDanJalankanSyncGrafik, 300);
+        });
+
+        // Auto-sync setiap 1 jam (3.600.000 ms)
+        setInterval(cekDanJalankanSyncGrafik, 3600000);
+
+        // Sinkron ulang saat aplikasi kembali dibuka / fokus
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) cekDanJalankanSyncGrafik();
+        });
+        window.addEventListener('pageshow', cekDanJalankanSyncGrafik);
     </script>
 
     <script type="module">
@@ -610,12 +1088,38 @@
 
         const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+        // Hitung waktu baca riil berdasarkan jumlah kata (Acuan tepat: per 100 kata = 35 detik)
+        function hitungWaktuBacaReal(data) {
+            const raw = String(data.isi || data.konten || '');
+            const cleanText = raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            const words = cleanText ? cleanText.split(/\s+/).filter(Boolean).length : 0;
+
+            let totalDetik = 0;
+            if (words > 0) {
+                totalDetik = Math.round((words / 100) * 35);
+            } else if (data.waktuBaca) {
+                const parsed = parseInt(data.waktuBaca, 10);
+                totalDetik = !isNaN(parsed) ? parsed * 60 : 35;
+            } else {
+                totalDetik = 35;
+            }
+
+            if (totalDetik < 60) {
+                return `${Math.max(15, totalDetik)} dtk`;
+            }
+            const menit = Math.round(totalDetik / 60);
+            return `${Math.max(1, menit)} mnt`;
+        }
+
         function renderHorizontalCard(data, typeClass, typeLabel) {
             const imgUrl = data.coverImage || data.gambarBase64 || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=300";
             let tagsHtml = "";
             if (data.tags && Array.isArray(data.tags)) {
-                tagsHtml = data.tags.slice(0, 2).map(tag => `<span class="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[8px] mr-1 mt-1">#${esc(tag)}</span>`).join('');
+                tagsHtml = data.tags.slice(0, 2).map(tag => `<span class="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[8px] mr-1">#${esc(tag)}</span>`).join('');
             }
+            const waktuStr = hitungWaktuBacaReal(data);
+            const views = Number(data.views || data.viewCount || 0);
+
             // MENGGUNAKAN DIV DENGAN FITUR KLIK & TEKAN LAMA UNTUK SHARE
             return `
             <div role="button" tabindex="0" 
@@ -627,18 +1131,27 @@
                  onmousedown="startLongPress(event, '${data.id}', '${esc(data.judul)}')"
                  onmouseup="cancelLongPress()"
                  onmouseleave="cancelLongPress()"
-                 class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 hover:border-brand-green transition-colors active:scale-[0.98] cursor-pointer touch-action-pan-y">
+                 class="flex gap-3 bg-white p-2.5 sm:p-3 rounded-2xl shadow-xs border border-slate-200/80 hover:border-brand-green transition-all active:scale-[0.98] cursor-pointer touch-action-pan-y">
                  
-                <img src="${imgUrl}" alt="${esc(data.judul)}" class="w-24 h-24 object-cover rounded-lg shrink-0 bg-slate-100 pointer-events-none">
-                <div class="flex-1 flex flex-col justify-between py-1 min-w-0 pointer-events-none">
+                <img src="${imgUrl}" alt="${esc(data.judul)}" class="w-24 h-24 object-cover rounded-xl shrink-0 bg-slate-100 pointer-events-none">
+                <div class="flex-1 flex flex-col justify-between py-0.5 min-w-0 pointer-events-none">
                     <div>
-                        <span class="text-[9px] font-bold ${typeClass} px-1.5 py-0.5 rounded uppercase tracking-widest">${typeLabel}</span>
-                        <h3 class="font-bold text-sm text-slate-800 line-clamp-2 mt-1.5 leading-snug">${esc(data.judul)}</h3>
-                        <div class="flex flex-wrap">${tagsHtml}</div>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-[8.5px] font-bold ${typeClass} px-1.5 py-0.5 rounded-md uppercase tracking-wider">${typeLabel}</span>
+                            ${tagsHtml}
+                        </div>
+                        <h3 class="font-bold text-[13px] text-slate-800 line-clamp-2 mt-1 leading-snug">${esc(data.judul)}</h3>
                     </div>
-                    <div class="flex justify-between items-end mt-2">
-                        <span class="text-[10px] text-slate-400"><i class="far fa-clock"></i> ${esc(data.waktuBaca || '5 Min')}</span>
-                        <span class="text-[11px] font-bold text-brand-green flex items-center gap-1">Mulai <i class="fas fa-chevron-right text-[9px]"></i></span>
+                    <div class="flex justify-between items-center mt-1 pt-1 border-t border-slate-50 text-[10px] text-slate-400">
+                        <div class="flex items-center gap-2.5">
+                            <span class="flex items-center gap-1" title="Waktu Baca: ${waktuStr} (Acuan: 35 dtk / 100 kata)">
+                                <i class="far fa-clock text-amber-500"></i> ${waktuStr}
+                            </span>
+                            <span class="flex items-center gap-1" title="${views} kali dibaca">
+                                <i class="far fa-eye text-emerald-500"></i> ${views}x
+                            </span>
+                        </div>
+                        <span class="text-[11px] font-bold text-brand-green flex items-center gap-0.5">Mulai <i class="fas fa-chevron-right text-[8px]"></i></span>
                     </div>
                 </div>
             </div>`;
