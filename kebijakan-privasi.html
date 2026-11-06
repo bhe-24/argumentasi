@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Kebijakan Privasi - Argumentasi</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: { 
+                        brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } 
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #f1f5f9; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen bg-slate-900 sm:bg-slate-200">
+
+    <!-- CONTAINER UTAMA (Mobile App Frame) -->
+    <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-300">
+        
+        <!-- HEADER STICKY -->
+        <header class="bg-brand-green sticky top-0 z-50 shadow-md">
+            <div class="px-4 flex items-center justify-between"
+                 style="height:calc(60px + env(safe-area-inset-top,0px)); padding-top:env(safe-area-inset-top,0px);">
+                <div class="flex items-center gap-3">
+                    <button onclick="if(history.length > 1){history.back();}else{window.location.href='login.html';}" 
+                            aria-label="Kembali" 
+                            class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-sm font-bold text-white tracking-wide">Kebijakan Privasi</h1>
+                        <p class="text-[10px] text-emerald-100 font-medium leading-none mt-0.5">Perlindungan &amp; Keamanan Data</p>
+                    </div>
+                </div>
+
+                <a href="index.html" aria-label="Beranda" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
+                    <i class="fas fa-house text-sm"></i>
+                </a>
+            </div>
+        </header>
+
+        <!-- KONTEN UTAMA -->
+        <main class="flex-grow p-4 space-y-4">
+            
+            <!-- HERO BANNER INFORMASI -->
+            <div class="bg-gradient-to-br from-emerald-50 via-teal-50 to-white border border-emerald-200/80 rounded-2xl p-4 shadow-xs">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-brand-green text-white flex items-center justify-center text-lg shrink-0 shadow-xs">
+                        <i class="fas fa-shield-halved"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <span class="text-[9px] font-bold bg-emerald-100 text-brand-green px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            Terakhir Diperbarui: 1 Januari 2026
+                        </span>
+                        <h2 class="text-xs font-bold text-slate-800 leading-snug mt-1.5">Komitmen Privasi &amp; Kerahasiaan Data</h2>
+                        <p class="text-[11px] text-slate-600 leading-relaxed mt-1">
+                            Platform Argumentasi berkomitmen penuh menjaga privasi, integritas, dan keamanan informasi pribadi seluruh siswa, pendidik, dan pengguna layanan kami.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEKSI 1: INFORMASI YANG DIKUMPULKAN -->
+            <section class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs space-y-2.5">
+                <div class="flex items-center gap-2 text-slate-800 font-bold text-xs pb-1 border-b border-slate-100">
+                    <i class="fas fa-id-card text-brand-green"></i>
+                    <span>1. Informasi yang Kami Kumpulkan</span>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Kami hanya mengumpulkan data yang diperlukan untuk mendukung proses pembelajaran:
+                </p>
+                <ul class="text-xs text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed">
+                    <li><b>Data Akun:</b> Nama lengkap, alamat email, kata sandi terenkripsi, serta NIP/NUPTK (khusus akun pendidik/guru).</li>
+                    <li><b>Aktivitas Pembelajaran:</b> Catatan materi yang dibaca, riwayat latihan analisis, perolehan skor XP, serta partisipasi kelas interaktif.</li>
+                    <li><b>Data Perangkat:</b> Jenis peramban web dan resolusi layar semata-mata untuk penyesuaian tata letak responsif aplikasi.</li>
+                </ul>
+            </section>
+
+            <!-- SEKSI 2: PENGGUNAAN INFORMASI -->
+            <section class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs space-y-2.5">
+                <div class="flex items-center gap-2 text-slate-800 font-bold text-xs pb-1 border-b border-slate-100">
+                    <i class="fas fa-chart-line text-blue-600"></i>
+                    <span>2. Tujuan Penggunaan Informasi</span>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Informasi yang terkumpul digunakan semata-mata untuk tujuan edukasi:
+                </p>
+                <ul class="text-xs text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed">
+                    <li>Menyediakan akses personal ke ruang belajar siswa, tugas kelas, dan materi teks argumentasi.</li>
+                    <li>Menampilkan papan klasemen kelas dan grafik perkembangan nilai/XP siswa secara transparan.</li>
+                    <li>Mengirimkan tautan verifikasi email akun dan pemulihan kata sandi.</li>
+                    <li><b>Tanpa Komersialisasi:</b> Kami <u>tidak pernah</u> menjual, menyewakan, atau membagikan data pengguna kepada pengiklan atau pihak ketiga untuk kepentingan komersial.</li>
+                </ul>
+            </section>
+
+            <!-- SEKSI 3: KEAMANAN & ENKRIPSI -->
+            <section class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs space-y-2.5">
+                <div class="flex items-center gap-2 text-slate-800 font-bold text-xs pb-1 border-b border-slate-100">
+                    <i class="fas fa-lock text-emerald-600"></i>
+                    <span>3. Keamanan &amp; Penyimpanan Data</span>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Keamanan data adalah prioritas utama kami. Kami menerapkan standar industri:
+                </p>
+                <ul class="text-xs text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed">
+                    <li>Seluruh pertukaran data dilindungi protokol transmisi aman HTTPS/TLS.</li>
+                    <li>Manajemen otentikasi akun dikelola oleh infrastruktur Google Firebase Authentication yang teruji keamanannya.</li>
+                    <li>Pemisahan hak akses yang ketat antara akun siswa, akun guru, dan administrator.</li>
+                </ul>
+            </section>
+
+            <!-- SEKSI 4: PENYIMPANAN LOKAL (LOCAL STORAGE) -->
+            <section class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs space-y-2.5">
+                <div class="flex items-center gap-2 text-slate-800 font-bold text-xs pb-1 border-b border-slate-100">
+                    <i class="fas fa-hard-drive text-amber-500"></i>
+                    <span>4. Penyimpanan Lokal (Local Storage) &amp; Cookie</span>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Aplikasi Argumentasi memanfaatkan <i>localStorage</i> pada peramban pengguna untuk menyimpan data sesi sementara:
+                </p>
+                <ul class="text-xs text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed">
+                    <li>Cache materi edukasi selama 3 hari agar halaman dapat dimuat cepat dan hemat kuota.</li>
+                    <li>Status sesi masuk dan identitas tampilan profil siswa.</li>
+                    <li>Pengguna dapat menghapus data lokal ini kapan saja melalui menu pengaturan riwayat peramban.</li>
+                </ul>
+            </section>
+
+            <!-- SEKSI 5: HAK PENGGUNA -->
+            <section class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs space-y-2.5">
+                <div class="flex items-center gap-2 text-slate-800 font-bold text-xs pb-1 border-b border-slate-100">
+                    <i class="fas fa-user-gear text-purple-600"></i>
+                    <span>5. Hak Pengguna &amp; Penghapusan Akun</span>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Setiap pengguna memiliki kendali atas data mereka:
+                </p>
+                <ul class="text-xs text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed">
+                    <li>Memperbarui foto profil, nama pengguna, dan kata sandi melalui menu profil.</li>
+                    <li>Mengajukan permohonan penghapusan riwayat pembelajaran atau penonaktifan akun dengan menghubungi administrator sekolah atau guru pengampu.</li>
+                </ul>
+            </section>
+
+            <!-- SEKSI 6: KONTAK BANTUAN -->
+            <section class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs space-y-2">
+                <div class="flex items-center gap-2 text-slate-800 font-bold text-xs pb-1 border-b border-slate-100">
+                    <i class="fas fa-envelope text-brand-green"></i>
+                    <span>6. Kontak &amp; Pertanyaan</span>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Jika Anda memiliki pertanyaan mengenai Kebijakan Privasi ini, silakan hubungi tim pengembang melalui portal guru atau email resmi sekolah penyelenggara.
+                </p>
+            </section>
+
+            <!-- TAUTAN MENU KEMBALI -->
+            <div class="pt-2 flex justify-center">
+                <a href="login.html" class="inline-flex items-center gap-2 bg-brand-green text-white text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-emerald-700 active:scale-95 transition shadow-2xs">
+                    <i class="fas fa-arrow-left text-[11px]"></i>
+                    <span>Kembali ke Halaman Log In</span>
+                </a>
+            </div>
+
+            <!-- FOOTER RESMI -->
+            <footer class="py-6 text-center text-[10px] text-slate-400 font-medium">
+                &copy; 2026 Argumentasi App &bull; Platform Pembelajaran Bahasa Indonesia
+            </footer>
+        </main>
+    </div>
+</body>
+</html>

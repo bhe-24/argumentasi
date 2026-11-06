@@ -88,7 +88,7 @@
         <!-- HEADER APP-LIKE -->
         <header class="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-white border-b border-slate-100 z-20">
             <div class="flex items-center gap-4">
-                <a href="/index.html" class="text-brand-primary text-xl px-2 py-1"><i class="fas fa-arrow-left"></i></a>
+                <a href="index.html" class="text-brand-primary text-xl px-2 py-1"><i class="fas fa-arrow-left"></i></a>
                 <h1 class="text-lg font-medium text-slate-800" id="headerTitle">Log In</h1>
             </div>
             <button onclick="bukaModal('modalBantuan')" class="w-7 h-7 rounded-full border border-brand-primary text-brand-primary flex items-center justify-center font-bold text-sm hover:bg-emerald-50 transition-colors">
@@ -97,7 +97,7 @@
         </header>
 
         <!-- KONTEN FORM -->
-        <div class="flex-1 flex flex-col px-6 pt-4 pb-6 overflow-y-auto" id="mainContentArea">
+        <div class="flex-1 flex flex-col px-6 pt-4 pb-4 overflow-y-auto" id="mainContentArea">
             
             <!-- Logo Sederhana -->
             <div class="flex justify-center mb-4">
@@ -145,14 +145,40 @@
                     </button>
                 </div>
 
-                <!-- Simulasi Captcha Saya bukan robot -->
-                <div class="flex items-center justify-between border border-slate-300 rounded bg-slate-50 p-3 mb-5 mt-2 shadow-sm">
-                    <div class="flex items-center gap-3">
-                        <input type="checkbox" id="captchaCheck" class="w-5 h-5 accent-brand-primary cursor-pointer rounded">
-                        <label for="captchaCheck" class="text-sm text-slate-700 font-medium cursor-pointer select-none">Saya bukan robot</label>
+                <!-- WIDGET CAPTCHA "SAYA BUKAN ROBOT" DENGAN ANIMASI MENGANALISIS ASLI -->
+                <div id="captchaWidget" class="border border-slate-300/90 rounded-xl bg-slate-50/90 p-3 mb-5 mt-2 shadow-2xs select-none">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3 cursor-pointer group" onclick="klikCaptcha()" id="captchaArea">
+                            <!-- Kotak Centang -->
+                            <div id="captchaBox" class="w-7 h-7 rounded-lg bg-white border-2 border-slate-300 flex items-center justify-center transition-all duration-200 shadow-2xs group-hover:border-slate-400">
+                                <!-- Spinner Menganalisis -->
+                                <div id="captchaSpinner" class="hidden w-4 h-4 rounded-full border-2 border-slate-200 border-t-emerald-600 animate-spin"></div>
+                                <!-- Ikon Centang Hijau -->
+                                <i id="captchaCheckIcon" class="hidden fas fa-check text-emerald-600 text-sm transform scale-0 transition-transform duration-200"></i>
+                            </div>
+                            
+                            <div class="flex flex-col">
+                                <span id="captchaLabel" class="text-xs sm:text-sm text-slate-700 font-semibold cursor-pointer">Saya bukan robot</span>
+                                <span id="captchaStatus" class="text-[9px] text-slate-400 font-medium hidden">Menganalisis...</span>
+                            </div>
+                        </div>
+
+                        <!-- Sisi Kanan: Logo reCAPTCHA Resmi & Tautan Privasi/Persyaratan -->
+                        <div class="flex flex-col items-center justify-center pl-2 shrink-0">
+                            <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" alt="reCAPTCHA" class="h-6 object-contain">
+                            <span class="text-[9px] text-slate-500 font-bold tracking-tight mt-0.5">reCAPTCHA</span>
+                            <div class="flex items-center gap-1 text-[8px] text-slate-400 leading-tight">
+                                <a href="kebijakan-privasi.html" class="hover:underline hover:text-emerald-600">Privasi</a>
+                                <span>-</span>
+                                <a href="ketentuan-layanan.html" class="hover:underline hover:text-emerald-600">Persyaratan</a>
+                            </div>
+                        </div>
                     </div>
-                    <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" alt="reCAPTCHA" class="h-6">
+                    <!-- Wadah Google reCAPTCHA Resmi (Jika Site Key Disediakan) -->
+                    <div id="googleOfficialRecaptcha" class="hidden mt-2"></div>
                 </div>
+                <!-- Input hidden agar validasi form tetap bekerja mulus -->
+                <input type="checkbox" id="captchaCheck" class="hidden">
 
                 <button type="submit" id="btnSubmit" class="w-full bg-slate-200 text-slate-400 font-bold py-3 rounded text-sm transition-all mb-3 pointer-events-none">
                     <span id="btnText">Log In</span>
@@ -170,9 +196,21 @@
             </div>
 
             <!-- Teks Switcher Bawah -->
-            <div class="text-center mt-auto pt-2">
-                <p class="text-xs text-slate-600" id="switcherText">Belum punya akun? <button onclick="switchMode('register')" class="text-blue-600 font-medium hover:underline ml-1">Daftar</button></p>
+            <div class="text-center pt-2 mt-auto">
+                <p class="text-xs text-slate-600" id="switcherText">Belum punya akun? <button type="button" onclick="switchMode('register')" class="text-blue-600 font-medium hover:underline ml-1">Daftar</button></p>
             </div>
+
+            <!-- Tautan Kebijakan Privasi & Ketentuan Layanan -->
+            <div class="flex items-center justify-center gap-3 text-xs text-slate-500 pt-3 pb-2">
+                <a href="kebijakan-privasi.html" class="hover:text-emerald-600 hover:underline transition-colors font-medium">Kebijakan Privasi</a>
+                <span class="text-slate-300">&bull;</span>
+                <a href="ketentuan-layanan.html" class="hover:text-emerald-600 hover:underline transition-colors font-medium">Ketentuan Layanan</a>
+            </div>
+
+            <!-- Footer Resmi Presisi -->
+            <footer class="py-3 text-center text-[10px] text-slate-400 font-medium border-t border-slate-100 mt-2 shrink-0">
+                &copy; 2026 Argumentasi App &bull; Platform Pembelajaran Bahasa Indonesia
+            </footer>
         </div>
 
         <!-- ============================================== -->
@@ -246,8 +284,113 @@
 
     <!-- SCRIPT UI DASAR -->
     <script>
+        // =========================================================================
+        // KONFIGURASI GOOGLE reCAPTCHA (OPSIONAL JIKA MENGGUNAKAN SITE KEY GOOGLE)
+        // =========================================================================
+        // Masukkan Site Key Google reCAPTCHA v2 jika Anda memiliki API key resmi:
+        // https://www.google.com/recaptcha/admin
+        const GOOGLE_RECAPTCHA_SITE_KEY = "";
+
         let currentMode = 'login';
         let pendingUser = { nama: '', email: '', nip: '' };
+        let captchaStatusState = 'idle'; // 'idle', 'analyzing', 'verified'
+
+        // LOGIKA CENTANG CAPTCHA INTERAKTIF DENGAN ANIMASI MENGANALISIS
+        window.klikCaptcha = function() {
+            if (captchaStatusState === 'analyzing') return;
+            if (captchaStatusState === 'verified') return; // Sudah terverifikasi aman
+
+            const box = document.getElementById('captchaBox');
+            const spinner = document.getElementById('captchaSpinner');
+            const checkIcon = document.getElementById('captchaCheckIcon');
+            const statusText = document.getElementById('captchaStatus');
+            const hiddenCheckbox = document.getElementById('captchaCheck');
+
+            captchaStatusState = 'analyzing';
+            
+            // Tampilkan animasi spinner berputar di dalam kotak centang
+            box.classList.remove('border-slate-300');
+            box.classList.add('border-emerald-500', 'bg-emerald-50/40');
+            spinner.classList.remove('hidden');
+            checkIcon.classList.add('hidden');
+            statusText.classList.remove('hidden');
+            statusText.textContent = 'Menganalisis...';
+
+            // Animasi menganalisis selama 1.2 detik sebelum centang
+            setTimeout(() => {
+                spinner.classList.add('hidden');
+                checkIcon.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    checkIcon.classList.remove('scale-0');
+                    checkIcon.classList.add('scale-100');
+                });
+                box.classList.remove('bg-emerald-50/40');
+                box.classList.add('bg-white', 'border-emerald-600', 'shadow-xs');
+
+                statusText.textContent = 'Terverifikasi';
+                statusText.classList.remove('text-slate-400');
+                statusText.classList.add('text-emerald-600');
+
+                captchaStatusState = 'verified';
+                if (hiddenCheckbox) hiddenCheckbox.checked = true;
+
+                // Picu validasi form untuk mengaktifkan tombol Log In
+                validateForm();
+            }, 1250);
+        };
+
+        function resetCaptchaUI() {
+            captchaStatusState = 'idle';
+            const box = document.getElementById('captchaBox');
+            const spinner = document.getElementById('captchaSpinner');
+            const checkIcon = document.getElementById('captchaCheckIcon');
+            const statusText = document.getElementById('captchaStatus');
+            const hiddenCheckbox = document.getElementById('captchaCheck');
+
+            if (box) {
+                box.className = "w-7 h-7 rounded-lg bg-white border-2 border-slate-300 flex items-center justify-center transition-all duration-200 shadow-2xs group-hover:border-slate-400";
+            }
+            if (spinner) spinner.classList.add('hidden');
+            if (checkIcon) {
+                checkIcon.classList.add('hidden');
+                checkIcon.classList.remove('scale-100');
+                checkIcon.classList.add('scale-0');
+            }
+            if (statusText) {
+                statusText.classList.add('hidden');
+                statusText.textContent = '';
+                statusText.className = "text-[9px] text-slate-400 font-medium hidden";
+            }
+            if (hiddenCheckbox) hiddenCheckbox.checked = false;
+        }
+
+        // DUKUNGAN RESMI GOOGLE reCAPTCHA JIKA SITE KEY TERSEDIA
+        if (GOOGLE_RECAPTCHA_SITE_KEY && GOOGLE_RECAPTCHA_SITE_KEY.trim() !== "") {
+            window.onGoogleRecaptchaCallback = function(token) {
+                if (token) {
+                    const hiddenCheckbox = document.getElementById('captchaCheck');
+                    if (hiddenCheckbox) hiddenCheckbox.checked = true;
+                    validateForm();
+                }
+            };
+            window.onGoogleRecaptchaLoad = function() {
+                const target = document.getElementById('googleOfficialRecaptcha');
+                if (target && window.grecaptcha) {
+                    target.classList.remove('hidden');
+                    const simulatedArea = document.getElementById('captchaArea');
+                    if (simulatedArea) simulatedArea.classList.add('hidden');
+                    window.grecaptcha.render(target, {
+                        'sitekey': GOOGLE_RECAPTCHA_SITE_KEY.trim(),
+                        'callback': window.onGoogleRecaptchaCallback
+                    });
+                }
+            };
+            const scr = document.createElement('script');
+            scr.src = 'https://www.google.com/recaptcha/api.js?onload=onGoogleRecaptchaLoad&render=explicit';
+            scr.async = true;
+            scr.defer = true;
+            document.head.appendChild(scr);
+        }
 
         function togglePasswordVisibility(inputId, iconId) {
             const input = document.getElementById(inputId);
@@ -266,9 +409,9 @@
         const captchaCheck = document.getElementById('captchaCheck');
         
         function validateForm() {
-            const em = document.getElementById('inputEmail').value;
+            const em = document.getElementById('inputEmail').value.trim();
             const pw = document.getElementById('inputPassword').value;
-            const isCaptchaChecked = captchaCheck.checked;
+            const isCaptchaChecked = captchaCheck && captchaCheck.checked;
             
             let isValid = em.length > 3 && pw.length > 5 && isCaptchaChecked;
 
@@ -290,9 +433,8 @@
             }
         }
 
-        // Jalankan validasi setiap ada perubahan input dan checklist captcha
+        // Jalankan validasi setiap ada perubahan input
         inputs.forEach(input => input.addEventListener('input', validateForm));
-        captchaCheck.addEventListener('change', validateForm);
 
         window.switchMode = function(mode) {
             currentMode = mode;
@@ -309,6 +451,7 @@
             const pwDiv = document.getElementById('pwDivider');
 
             document.getElementById('authForm').reset();
+            resetCaptchaUI();
             validateForm(); // Reset tombol submit
 
             if (mode === 'login') {
@@ -330,6 +473,19 @@
                 headerTitle.innerText = "Daftar Akun";
                 btnText.innerText = "Daftar Sekarang";
                 switcherText.innerHTML = 'Sudah punya akun? <button type="button" onclick="switchMode(\'login\')" class="text-blue-600 font-medium hover:underline ml-1">Log In</button>';
+                
+                groupNama.classList.remove('hidden');
+                groupNIP.classList.remove('hidden');
+                groupPasswordConfirm.classList.remove('hidden');
+                document.getElementById('inputNama').setAttribute('required', 'true');
+                document.getElementById('inputPasswordConfirm').setAttribute('required', 'true');
+                
+                divider.classList.add('hidden');
+                social.classList.add('hidden');
+                lupaPw.classList.add('hidden');
+                pwDiv.classList.add('hidden');
+            }
+        };
                 
                 groupNama.classList.remove('hidden');
                 groupNIP.classList.remove('hidden');
@@ -442,7 +598,7 @@
                 }
 
                 showToast("Log In Berhasil! Meneruskan...", false);
-                setTimeout(() => window.location.href = "/guru/index.html", 1000);
+                setTimeout(() => window.location.href = "guru/index.html", 1000);
 
             } catch (error) {
                 console.error("Google Auth Error:", error);
@@ -493,8 +649,8 @@
                         }
 
                         showToast("Log In Berhasil!", false);
-                        if (userData.role === 'admin') setTimeout(() => window.location.href = "/admin/index.html", 1000);
-                        else setTimeout(() => window.location.href = "/guru/index.html", 1000);
+                        if (userData.role === 'admin') setTimeout(() => window.location.href = "admin/index.html", 1000);
+                        else setTimeout(() => window.location.href = "guru/index.html", 1000);
 
                     } else {
                         showToast("Profil akun tidak ditemukan di server.", true);
@@ -528,7 +684,7 @@
                             namaLengkap: nama, email: email, role: "admin", nip: nip || "-", createdAt: new Date()
                         });
                         showToast("Pendaftaran Admin Berhasil!", false);
-                        setTimeout(() => window.location.href = "/admin/index.html", 1000);
+                        setTimeout(() => window.location.href = "admin/index.html", 1000);
                     } catch (error) {
                         showToast(error.message, true);
                         setLoading(false);
@@ -624,7 +780,7 @@
                             createdAt: new Date()
                         });
                         showToast("Verifikasi Sukses! Mengalihkan...", false);
-                        setTimeout(() => window.location.href = "/guru/index.html", 1000);
+                        setTimeout(() => window.location.href = "guru/index.html", 1000);
                     } else {
                         showToast("Email belum diverifikasi. Cek kembali Inbox/Spam.", true);
                         btn.disabled = false;

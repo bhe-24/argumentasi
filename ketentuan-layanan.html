@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Ketentuan Layanan - Argumentasi</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: { 
+                        brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } 
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #f1f5f9; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen bg-slate-900 sm:bg-slate-200">
+
+    <!-- CONTAINER UTAMA (Mobile App Frame) -->
+    <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-300">
+        
+        <!-- HEADER STICKY -->
+        <header class="bg-brand-green sticky top-0 z-50 shadow-md">
+            <div class="px-4 flex items-center justify-between"
+                 style="height:calc(60px + env(safe-area-inset-top,0px)); padding-top:env(safe-area-inset-top,0px);">
+                <div class="flex items-center gap-3">
+                    <button onclick="if(history.length > 1){history.back();}else{window.location.href='login.html';}" 
+                            aria-label="Kembali" 
+                            class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-sm font-bold text-white tracking-wide">Ketentuan Layanan</h1>
+                        <p class="text-[10px] text-emerald-100 font-medium leading-none mt-0.5">Syarat &amp; Aturan Penggunaan</p>
+                    </div>
+                </div>
+
+                <a href="index.html" aria-label="Beranda" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
+                    <i class="fas fa-house text-sm"></i>
+                </a>
+            </div>
+        </header>
+
+        <!-- KONTEN UTAMA -->
+        <main class="flex-grow p-4 space-y-4">
+            
+            <!-- HERO BANNER INFORMASI -->
+            <div class="bg-gradient-to-br from-emerald-50 via-teal-50 to-white border border-emerald-200/80 rounded-2xl p-4 shadow-xs">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-brand-green text-white flex items-center justify-center text-lg shrink-0 shadow-xs">
+                        <i class="fas fa-scale-balanced"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <span class="text-[9px] font-bold bg-emerald-100 text-brand-green px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            Berlaku Efektif: 1 Januari 2026
+                        </span>
+                        <h2 class="text-xs font-bold text-slate-800 leading-snug mt-1.5">Syarat &amp; Ketentuan Penggunaan Platform</h2>
+                        <p class="text-[11px] text-slate-600 leading-relaxed mt-1">
+                            Harap baca ketentuan berikut dengan saksama sebelum mengakses atau memanfaatkan fitur pembelajaran interaktif di platform Argumentasi.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEKSI 1: PENERIMAAN KETENTUAN -->
+            <section class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs space-y-2.5">
+                <div class="flex items-center gap-2 text-slate-800 font-bold text-xs pb-1 border-b border-slate-100">
+                    <i class="fas fa-circle-check text-brand-green"></i>
+                    <span>1. Penerimaan Ketentuan</span>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Dengan mengakses, mendaftar, atau menggunakan layanan platform Argumentasi, Anda menyatakan setuju dan tunduk pada seluruh ketentuan yang tercantum pada dokumen ini serta Kebijakan Privasi kami.
+                </p>
+            </section>
+
+            <!-- SEKSI 2: KETENTUAN AKUN & KEAMANAN -->
+            <section class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs space-y-2.5">
+                <div class="flex items-center gap-2 text-slate-800 font-bold text-xs pb-1 border-b border-slate-100">
+                    <i class="fas fa-user-shield text-blue-600"></i>
+                    <span>2. Akun Pengguna &amp; Keamanan Sandi</span>
+                </div>
+                <ul class="text-xs text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed">
+                    <li>Pengguna bertanggung jawab penuh menjaga kerahasiaan kata sandi dan kredensial akses masing-masing.</li>
+                    <li>Satu akun guru hanya boleh digunakan oleh pendidik yang bersangkutan dan tidak diperkenankan dipindahtangankan.</li>
+                    <li>Apabila ditemukan aktivitas mencurigakan atau pembobolan akun, pengguna wajib segera memberitahukan pihak pengelola platform.</li>
+                </ul>
+            </section>
+
+            <!-- SEKSI 3: PENGGUNAAN YANG DIIZINKAN -->
+            <section class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs space-y-2.5">
+                <div class="flex items-center gap-2 text-slate-800 font-bold text-xs pb-1 border-b border-slate-100">
+                    <i class="fas fa-book-open-reader text-emerald-600"></i>
+                    <span>3. Penggunaan yang Diizinkan</span>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Platform Argumentasi disediakan secara khusus untuk tujuan pendidikan Bahasa Indonesia:
+                </p>
+                <ul class="text-xs text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed">
+                    <li>Membaca dan mempelajari struktur serta kaidah kebahasaan teks argumentasi.</li>
+                    <li>Mengerjakan misi latihan analisis, evaluasi pilihan ganda, dan kuis pemahaman materi.</li>
+                    <li>Menulis dan mengeksplorasi ide pada Ruang Kreasi Argumentasi secara orisinal dan bernalar logis.</li>
+                </ul>
+            </section>
+
+            <!-- SEKSI 4: LARANGAN & ETIKA AKADEMIK -->
+            <section class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs space-y-2.5">
+                <div class="flex items-center gap-2 text-slate-800 font-bold text-xs pb-1 border-b border-slate-100">
+                    <i class="fas fa-ban text-rose-600"></i>
+                    <span>4. Larangan &amp; Integritas Akademik</span>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Pengguna dilarang keras melakukan hal-hal berikut:
+                </p>
+                <ul class="text-xs text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed">
+                    <li><b>Plagiarisme:</b> Mengunggah tulisan hasil jiplakan karya orang lain tanpa menyebutkan sumber rujukan yang sah.</li>
+                    <li><b>Konten Terlarang:</b> Menyebarkan materi bermuatan sara, ujaran kebencian, pornografi, tautan judi/slot/gacor, atau materi ilegal lainnya.</li>
+                    <li><b>Eksploitasi Sistem:</b> Mencoba membobol keamanan basis data, menyuntikkan kode berbahaya (injeksi skrip), atau memanipulasi skor XP secara tidak jujur.</li>
+                </ul>
+            </section>
+
+            <!-- SEKSI 5: HAK KEKAYAAN INTELEKTUAL -->
+            <section class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs space-y-2.5">
+                <div class="flex items-center gap-2 text-slate-800 font-bold text-xs pb-1 border-b border-slate-100">
+                    <i class="fas fa-copyright text-amber-500"></i>
+                    <span>5. Hak Kekayaan Intelektual</span>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Seluruh desain antarmuka, tata letak, modul ajar, dan kode sistem pada platform Argumentasi dilindungi oleh hak cipta. Pengutipan materi artikel edukasi pihak ketiga (seperti Kompas Edukasi, Detik Edu, Kemdikbud) tunduk pada hak cipta penerbit masing-masing.
+                </p>
+            </section>
+
+            <!-- SEKSI 6: PENAFIAN & PEMELIHARAAN -->
+            <section class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs space-y-2.5">
+                <div class="flex items-center gap-2 text-slate-800 font-bold text-xs pb-1 border-b border-slate-100">
+                    <i class="fas fa-wrench text-slate-600"></i>
+                    <span>6. Penafian &amp; Pemeliharaan Layanan</span>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Pengembang berhak melakukan pemeliharaan berkala, perbaikan bug, atau penambahan materi pelajaran demi kelancaran kegiatan belajar-mengajar. Kami berusaha menjamin ketersediaan sistem semaksimal mungkin.
+                </p>
+            </section>
+
+            <!-- TAUTAN MENU KEMBALI -->
+            <div class="pt-2 flex justify-center">
+                <a href="login.html" class="inline-flex items-center gap-2 bg-brand-green text-white text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-emerald-700 active:scale-95 transition shadow-2xs">
+                    <i class="fas fa-arrow-left text-[11px]"></i>
+                    <span>Kembali ke Halaman Log In</span>
+                </a>
+            </div>
+
+            <!-- FOOTER RESMI -->
+            <footer class="py-6 text-center text-[10px] text-slate-400 font-medium">
+                &copy; 2026 Argumentasi App &bull; Platform Pembelajaran Bahasa Indonesia
+            </footer>
+        </main>
+    </div>
+</body>
+</html>
