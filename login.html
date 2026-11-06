@@ -366,11 +366,31 @@
 
         // DUKUNGAN RESMI GOOGLE reCAPTCHA JIKA SITE KEY TERSEDIA
         if (GOOGLE_RECAPTCHA_SITE_KEY && GOOGLE_RECAPTCHA_SITE_KEY.trim() !== "") {
-            window.onGoogleRecaptchaCallback = function(token) {
+            window.onGoogleRecaptchaCallback = async function(token) {
                 if (token) {
-                    const hiddenCheckbox = document.getElementById('captchaCheck');
-                    if (hiddenCheckbox) hiddenCheckbox.checked = true;
-                    validateForm();
+                    try {
+                        const resp = await fetch('/api/verify-captcha', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ token: token })
+                        });
+                        const data = await resp.json();
+                        if (data.success) {
+                            const hiddenCheckbox = document.getElementById('captchaCheck');
+                            if (hiddenCheckbox) hiddenCheckbox.checked = true;
+                            validateForm();
+                        } else {
+                            if (typeof showToast === 'function') {
+                                showToast(data.message || "Verifikasi reCAPTCHA gagal.", true);
+                            }
+                            if (window.grecaptcha) window.grecaptcha.reset();
+                        }
+                    } catch (err) {
+                        console.log("Verifikasi server fallback:", err);
+                        const hiddenCheckbox = document.getElementById('captchaCheck');
+                        if (hiddenCheckbox) hiddenCheckbox.checked = true;
+                        validateForm();
+                    }
                 }
             };
             window.onGoogleRecaptchaLoad = function() {
