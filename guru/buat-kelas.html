@@ -270,7 +270,7 @@
         if (!r.ok) throw Object.assign(new Error(d.detail_error || 'Server error'), { code: 'api/' + r.status });
         return d;
     }
-    
+
     async function unggah(file) {
         const t = await apiCloud('tanda', { namaFile: file.name });
         return new Promise((ok, no) => {
@@ -290,6 +290,7 @@
             x.send(fd);
         });
     }
+
 
     function withTimeout(p, ms) {
         return Promise.race([
@@ -394,6 +395,7 @@
         }
     };
 
+
     /* ---------- UPLOAD PDF (Lokal Ekstrak dengan pdf.js) ---------- */
     function jpeg(canvas, maxKb) { let q = 0.8, d = canvas.toDataURL('image/jpeg', q); while (d.length > maxKb * 1366 && q > 0.4) { q -= 0.1; d = canvas.toDataURL('image/jpeg', q); } return d; }
     async function render(page, lebar) { const v1 = page.getViewport({ scale: 1 }), vp = page.getViewport({ scale: lebar / v1.width }), c = document.createElement('canvas'); c.width = Math.floor(vp.width); c.height = Math.floor(vp.height); await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise; return c; }
@@ -476,6 +478,7 @@
             try { pdf && pdf.destroy(); } catch (e) {}
         }
     };
+
 
     window.gantiFile = function () {
         S.file = null; S.cover = ''; S.halaman = 0;

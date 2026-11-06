@@ -30,9 +30,15 @@
     </script>
 
     <style>
+        /* Base Styling Mobile First */
         body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+
+
+
         .font-display { font-family: 'Playfair Display', serif; }
         .texture-dots { background-image: radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px); background-size: 16px 16px; }
+
+
 
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -44,7 +50,7 @@
 </head>
 <body class="flex justify-center h-screen h-[100dvh] overflow-hidden bg-slate-100">
 
-    <!-- CONTAINER UTAMA -->
+    <!-- CONTAINER UTAMA (MOBILE FRAME) -->
     <div class="w-full max-w-md bg-slate-50 relative h-full shadow-2xl flex flex-col sm:border-x border-slate-200 overflow-hidden">
 
         <!-- HEADER STICKY -->
@@ -76,6 +82,7 @@
             
             <!-- STATE: DASHBOARD KELAS -->
             <div id="dashboardState" class="hidden w-full p-4 pb-10">
+
 
                 <!-- BAGIAN: INFO KELAS (CP/TP) -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-5">
@@ -111,6 +118,7 @@
                 </div>
 
                 <!-- BAGIAN: PAPAN PRESTASI (LEADERBOARD) -->
+
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 p-3 flex items-center justify-between text-white">
                         <h3 class="font-bold text-xs flex items-center gap-2"><i class="fas fa-trophy text-amber-300"></i> Papan Peringkat Siswa</h3>
@@ -195,6 +203,7 @@
                     document.getElementById('skeletonClassName').classList.add('hidden');
                     document.getElementById('classCodeDisplay').innerText = classCodeGlobal;
                     
+
                     // Isi Info Kelas
                     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
                     document.getElementById('infoCP').innerHTML = esc(classDataGlobal.cp) || '-';
@@ -203,16 +212,18 @@
                     // Tampilkan Dashboard
                     document.getElementById('dashboardState').classList.remove('hidden');
                     document.getElementById('dashboardState').classList.add('block');
-                    
+
                     renderLatihanAI(classDataGlobal.aiPaket || null);
                     mulaiListenerLeaderboard();
                 } else {
+
                     window.location.href = "index.html";
                 }
             } else {
                 window.location.href = '../login.html';
             }
         });
+
 
         // 2. RENDER MATERI & LATIHAN AI
         function renderLatihanAI(aiPaket) {
@@ -224,7 +235,7 @@
             }
 
             const formatWaktu = s => Math.max(1, Math.round(s / 60)) + " mnt";
-            
+
             const BAGIAN = [
                 { key: 'pilgan', n: 'Pilihan Ganda', ic: 'fa-circle-check', c: 'blue', d: 'Soal bertingkat s.d HOTS', meta: p => `${(p.pilgan?.soal || []).length} soal · ${formatWaktu(p.pilgan?.total || 300)}` },
                 { key: 'struktur', n: 'Bedah Struktur', ic: 'fa-layer-group', c: 'amber', d: 'Labeli struktur argumen', meta: p => `${(p.struktur?.teks || []).length} baris · ${formatWaktu(p.struktur?.waktu || 180)}` },
@@ -250,7 +261,6 @@
             container.innerHTML = html;
         }
 
-        // 3. LEADERBOARD REALTIME LISTENER
         function mulaiListenerLeaderboard() {
             const board = document.getElementById('leaderboardList');
             
