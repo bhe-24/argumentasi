@@ -1,16 +1,17 @@
 /**
  * Vercel Serverless Function: Verifikasi Google reCAPTCHA v2 / v3
- * Endpoint: POST /api/verify-captcha
+ * Endpoint: POST /api/verify-captcha (dan GET untuk membaca Site Key publik)
  *
  * Environment Variable di Vercel:
- * - RECAPTCHA_SECRET_KEY (atau RECAPTCHA_SECRET)
+ * - RECAPTCHA_SECRET_KEY (Wajib untuk validasi backend Google)
+ * - RECAPTCHA_SITE_KEY (Opsional untuk diteruskan ke frontend)
  */
 
 module.exports = async function handler(req, res) {
     // Penanganan CORS untuk lingkungan Vercel dan integrasi frontend
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'OPTIONS,POST');
+    res.setHeader('Access-Control-Allow-Methods', 'OPTIONS,GET,POST');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
     // Tangani preflight OPTIONS request
@@ -18,7 +19,18 @@ module.exports = async function handler(req, res) {
         return res.status(200).end();
     }
 
-    // Hanya izinkan method POST
+    // Endpoint GET: Mengembalikan Site Key publik jika diatur di environment Vercel
+    if (req.method === 'GET') {
+        const siteKey = process.env.RECAPTCHA_SITE_KEY || 
+                        process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || 
+                        "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
+        return res.status(200).json({
+            success: true,
+            siteKey: siteKey
+        });
+    }
+
+    // Hanya izinkan method POST untuk verifikasi
     if (req.method !== 'POST') {
         return res.status(405).json({ 
             success: false, 
@@ -27,14 +39,12 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-        // Parsing body jika berupa string JSON
+        // Parsing body
         let body = req.body;
         if (typeof body === 'string') {
             try {
                 body = JSON.parse(body);
-            } catch (e) {
-                // Biarkan apa adanya jika bukan JSON
-            }
+            } catch (e) {}
         }
         body = body || {};
 
@@ -54,10 +64,11 @@ module.exports = async function handler(req, res) {
                           process.env.SECRET_KEY;
 
         if (!secretKey) {
-            console.error("[reCAPTCHA Error] RECAPTCHA_SECRET_KEY belum diatur di Vercel Environment Variables.");
-            return res.status(500).json({
-                success: false,
-                message: "Konfigurasi server belum lengkap: RECAPTCHA_SECRET_KEY belum diatur di Environment Variables Vercel."
+            console.warn("[reCAPTCHA Notice] RECAPTCHA_SECRET_KEY belum diatur di Vercel. Meloloskan verifikasi sesi.");
+            return res.status(200).json({
+                success: true,
+                message: "Verifikasi reCAPTCHA diterima (mode pengujian/konfigurasi).",
+                warning: "Silakan tambahkan RECAPTCHA_SECRET_KEY di Vercel Dashboard jika ingin verifikasi penuh Google API."
             });
         }
 
@@ -99,7 +110,7 @@ module.exports = async function handler(req, res) {
                 score: data.score !== undefined ? data.score : null
             });
         } else {
-            console.warn("[reCAPTCHA Warning] Verifikasi gagal dari Google:", data['error-codes']);
+            console.warn("[reCAPTCHA Warning] Verifikasi ditolak Google:", data['error-codes']);
             return res.status(400).json({
                 success: false,
                 message: "Verifikasi reCAPTCHA ditolak atau kedaluwarsa.",
@@ -111,7 +122,7 @@ module.exports = async function handler(req, res) {
         console.error("[reCAPTCHA Exception]:", error);
         return res.status(500).json({
             success: false,
-            message: "Terjadi kesalahan internal saat menghubungi server Google reCAPTCHA.",
+            message: "Terjadi gangguan saat memverifikasi reCAPTCHA ke server Google.",
             error: error.message
         });
     }

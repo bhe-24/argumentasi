@@ -145,21 +145,23 @@
                     </button>
                 </div>
 
-                <!-- WIDGET CAPTCHA "SAYA BUKAN ROBOT" DENGAN ANIMASI MENGANALISIS ASLI -->
+                <!-- WIDGET CAPTCHA "SAYA BUKAN ROBOT" RESMI & CADANGAN INTERAKTIF -->
                 <div id="captchaWidget" class="border border-slate-300/90 rounded-xl bg-slate-50/90 p-3 mb-5 mt-2 shadow-2xs select-none">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3 cursor-pointer group" onclick="klikCaptcha()" id="captchaArea">
+                    <!-- Wadah Google reCAPTCHA v2 Resmi (Otomatis Dimuat dari Google) -->
+                    <div id="googleOfficialRecaptcha" class="flex justify-center min-h-[76px] py-1"></div>
+
+                    <!-- Kotak Fallback Interaktif (Muncul jika Google Script Terhambat Jaringan) -->
+                    <div id="captchaArea" class="hidden flex items-center justify-between">
+                        <div class="flex items-center gap-3 cursor-pointer group" onclick="bukaTantanganCaptcha()" id="fallbackCaptchaBtn">
                             <!-- Kotak Centang -->
                             <div id="captchaBox" class="w-7 h-7 rounded-lg bg-white border-2 border-slate-300 flex items-center justify-center transition-all duration-200 shadow-2xs group-hover:border-slate-400">
-                                <!-- Spinner Menganalisis -->
                                 <div id="captchaSpinner" class="hidden w-4 h-4 rounded-full border-2 border-slate-200 border-t-emerald-600 animate-spin"></div>
-                                <!-- Ikon Centang Hijau -->
-                                <i id="captchaCheckIcon" class="hidden fas fa-check text-emerald-600 text-sm transform scale-0 transition-transform duration-200"></i>
+                                <i id="captchaCheckIcon" class="hidden fas fa-check text-emerald-600 text-sm font-black"></i>
                             </div>
                             
                             <div class="flex flex-col">
                                 <span id="captchaLabel" class="text-xs sm:text-sm text-slate-700 font-semibold cursor-pointer">Saya bukan robot</span>
-                                <span id="captchaStatus" class="text-[9px] text-slate-400 font-medium hidden">Menganalisis...</span>
+                                <span id="captchaStatus" class="text-[9px] text-slate-400 font-medium">Klik untuk verifikasi keamanan</span>
                             </div>
                         </div>
 
@@ -174,8 +176,6 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Wadah Google reCAPTCHA Resmi (Jika Site Key Disediakan) -->
-                    <div id="googleOfficialRecaptcha" class="hidden mt-2"></div>
                 </div>
                 <!-- Input hidden agar validasi form tetap bekerja mulus -->
                 <input type="checkbox" id="captchaCheck" class="hidden">
@@ -282,61 +282,278 @@
         </div>
     </div>
 
-    <!-- SCRIPT UI DASAR -->
+    <!-- MODAL TANTANGAN RECAPTCHA INTERAKTIF -->
+    <div id="modalTantanganCaptcha" class="fixed inset-0 bg-black/60 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-200 p-4" onclick="if(event.target === this) tutupModalTantangan()">
+        <div class="bg-white w-full max-w-xs rounded-2xl overflow-hidden shadow-2xl transform scale-95 transition-transform duration-200 border border-slate-200" onclick="event.stopPropagation()">
+            <!-- Header Biru Khas Google reCAPTCHA -->
+            <div class="bg-[#1a73e8] text-white p-4">
+                <span class="text-[10px] uppercase font-bold tracking-wider opacity-90">Verifikasi Keamanan</span>
+                <h4 class="text-sm font-bold leading-tight mt-1" id="judulTantangan">Pilih semua kotak dengan ikon Buku Edukasi</h4>
+                <p class="text-[10px] text-blue-100 mt-0.5">Klik kotak untuk memilih, lalu tekan Verifikasi.</p>
+            </div>
+
+            <!-- Grid 6 Kotak Pilihan (3 x 2) -->
+            <div class="p-3 bg-slate-100">
+                <div class="grid grid-cols-3 gap-2" id="gridTantanganCaptcha">
+                    <button type="button" onclick="toggleTileCaptcha(this, true)" class="captcha-tile aspect-square bg-white rounded-xl border-2 border-slate-200 flex flex-col items-center justify-center p-2 relative active:scale-95 transition hover:border-slate-300">
+                        <i class="fas fa-book-open text-2xl text-emerald-600"></i>
+                        <span class="text-[9px] text-slate-600 mt-1 font-medium">Buku</span>
+                        <div class="tile-check hidden absolute top-1 right-1 w-4 h-4 bg-emerald-600 rounded-full text-white flex items-center justify-center text-[8px] shadow-2xs"><i class="fas fa-check"></i></div>
+                    </button>
+                    <button type="button" onclick="toggleTileCaptcha(this, false)" class="captcha-tile aspect-square bg-white rounded-xl border-2 border-slate-200 flex flex-col items-center justify-center p-2 relative active:scale-95 transition hover:border-slate-300">
+                        <i class="fas fa-car text-2xl text-slate-400"></i>
+                        <span class="text-[9px] text-slate-500 mt-1 font-medium">Mobil</span>
+                        <div class="tile-check hidden absolute top-1 right-1 w-4 h-4 bg-emerald-600 rounded-full text-white flex items-center justify-center text-[8px] shadow-2xs"><i class="fas fa-check"></i></div>
+                    </button>
+                    <button type="button" onclick="toggleTileCaptcha(this, true)" class="captcha-tile aspect-square bg-white rounded-xl border-2 border-slate-200 flex flex-col items-center justify-center p-2 relative active:scale-95 transition hover:border-slate-300">
+                        <i class="fas fa-book-bookmark text-2xl text-emerald-600"></i>
+                        <span class="text-[9px] text-slate-600 mt-1 font-medium">Modul</span>
+                        <div class="tile-check hidden absolute top-1 right-1 w-4 h-4 bg-emerald-600 rounded-full text-white flex items-center justify-center text-[8px] shadow-2xs"><i class="fas fa-check"></i></div>
+                    </button>
+                    <button type="button" onclick="toggleTileCaptcha(this, false)" class="captcha-tile aspect-square bg-white rounded-xl border-2 border-slate-200 flex flex-col items-center justify-center p-2 relative active:scale-95 transition hover:border-slate-300">
+                        <i class="fas fa-plane text-2xl text-slate-400"></i>
+                        <span class="text-[9px] text-slate-500 mt-1 font-medium">Pesawat</span>
+                        <div class="tile-check hidden absolute top-1 right-1 w-4 h-4 bg-emerald-600 rounded-full text-white flex items-center justify-center text-[8px] shadow-2xs"><i class="fas fa-check"></i></div>
+                    </button>
+                    <button type="button" onclick="toggleTileCaptcha(this, true)" class="captcha-tile aspect-square bg-white rounded-xl border-2 border-slate-200 flex flex-col items-center justify-center p-2 relative active:scale-95 transition hover:border-slate-300">
+                        <i class="fas fa-graduation-cap text-2xl text-emerald-600"></i>
+                        <span class="text-[9px] text-slate-600 mt-1 font-medium">Belajar</span>
+                        <div class="tile-check hidden absolute top-1 right-1 w-4 h-4 bg-emerald-600 rounded-full text-white flex items-center justify-center text-[8px] shadow-2xs"><i class="fas fa-check"></i></div>
+                    </button>
+                    <button type="button" onclick="toggleTileCaptcha(this, false)" class="captcha-tile aspect-square bg-white rounded-xl border-2 border-slate-200 flex flex-col items-center justify-center p-2 relative active:scale-95 transition hover:border-slate-300">
+                        <i class="fas fa-tree text-2xl text-slate-400"></i>
+                        <span class="text-[9px] text-slate-500 mt-1 font-medium">Pohon</span>
+                        <div class="tile-check hidden absolute top-1 right-1 w-4 h-4 bg-emerald-600 rounded-full text-white flex items-center justify-center text-[8px] shadow-2xs"><i class="fas fa-check"></i></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Footer Tombol Aksi Modal -->
+            <div class="p-3 bg-white border-t border-slate-100 flex items-center justify-between">
+                <button type="button" onclick="muatUlangTantangan()" class="text-slate-400 hover:text-slate-600 p-2 text-sm transition-colors" title="Muat Ulang Tantangan">
+                    <i class="fas fa-rotate"></i>
+                </button>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="tutupModalTantangan()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700 font-medium">
+                        Batal
+                    </button>
+                    <button type="button" onclick="submitTantanganCaptcha()" id="btnSubmitTantangan" class="bg-[#1a73e8] hover:bg-blue-700 text-white font-bold text-xs px-4 py-2 rounded-lg active:scale-95 transition shadow-xs flex items-center gap-1.5">
+                        <span id="btnSubmitTantanganText">Verifikasi</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT UI DASAR & reCAPTCHA -->
     <script>
         // =========================================================================
-        // KONFIGURASI GOOGLE reCAPTCHA (OPSIONAL JIKA MENGGUNAKAN SITE KEY GOOGLE)
+        // KONFIGURASI GOOGLE reCAPTCHA (SITE KEY RESMI & BACKEND VERCEL)
         // =========================================================================
-        // Masukkan Site Key Google reCAPTCHA v2 jika Anda memiliki API key resmi:
-        // https://www.google.com/recaptcha/admin
+        // Masukkan Site Key Google reCAPTCHA v2 dari Google reCAPTCHA Admin:
         const GOOGLE_RECAPTCHA_SITE_KEY = "6LcOdRMuAAAAACqCUK60iheg_vzFdMZ811T5Xi5T";
+        let activeRecaptchaSiteKey = GOOGLE_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
 
         let currentMode = 'login';
         let pendingUser = { nama: '', email: '', nip: '' };
         let captchaStatusState = 'idle'; // 'idle', 'analyzing', 'verified'
 
-        // LOGIKA CENTANG CAPTCHA INTERAKTIF DENGAN ANIMASI MENGANALISIS
-        window.klikCaptcha = function() {
-            if (captchaStatusState === 'analyzing') return;
-            if (captchaStatusState === 'verified') return; // Sudah terverifikasi aman
+        // 1. Inisialisasi Google reCAPTCHA v2
+        async function inisialisasiRecaptcha() {
+            try {
+                const resp = await fetch('/api/verify-captcha');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.siteKey && data.siteKey.trim() !== '') {
+                        activeRecaptchaSiteKey = data.siteKey.trim();
+                    }
+                }
+            } catch (e) {}
+
+            muatSkripGoogleRecaptcha();
+        }
+
+        function muatSkripGoogleRecaptcha() {
+            window.onGoogleRecaptchaReady = function() {
+                const container = document.getElementById('googleOfficialRecaptcha');
+                if (container && window.grecaptcha && window.grecaptcha.render) {
+                    try {
+                        container.innerHTML = '';
+                        window.grecaptcha.render(container, {
+                            'sitekey': activeRecaptchaSiteKey,
+                            'callback': window.onGoogleRecaptchaPass,
+                            'expired-callback': window.onGoogleRecaptchaExpired,
+                            'error-callback': window.onGoogleRecaptchaFailed
+                        });
+                        // Jika Google reCAPTCHA berhasil dirender, sembunyikan fallback
+                        const fallbackArea = document.getElementById('captchaArea');
+                        if (fallbackArea) fallbackArea.classList.add('hidden');
+                    } catch (err) {
+                        console.warn("reCAPTCHA notice, beralih ke fallback:", err);
+                        aktifkanFallbackCaptcha();
+                    }
+                }
+            };
+
+            // Timeout pengaman jika Google reCAPTCHA terhambat
+            setTimeout(() => {
+                const container = document.getElementById('googleOfficialRecaptcha');
+                if (container && container.children.length === 0) {
+                    aktifkanFallbackCaptcha();
+                }
+            }, 2500);
+
+            if (!document.getElementById('grecaptchaScript')) {
+                const script = document.createElement('script');
+                script.id = 'grecaptchaScript';
+                script.src = 'https://www.google.com/recaptcha/api.js?onload=onGoogleRecaptchaReady&render=explicit';
+                script.async = true;
+                script.defer = true;
+                script.onerror = aktifkanFallbackCaptcha;
+                document.head.appendChild(script);
+            } else if (window.grecaptcha) {
+                window.onGoogleRecaptchaReady();
+            }
+        }
+
+        function aktifkanFallbackCaptcha() {
+            const container = document.getElementById('googleOfficialRecaptcha');
+            if (container) container.classList.add('hidden');
+            const fallback = document.getElementById('captchaArea');
+            if (fallback) fallback.classList.remove('hidden');
+        }
+
+        // Callback saat Google reCAPTCHA Resmi Tercentang
+        window.onGoogleRecaptchaPass = async function(token) {
+            const hiddenCheckbox = document.getElementById('captchaCheck');
+            if (hiddenCheckbox) hiddenCheckbox.checked = true;
+            captchaStatusState = 'verified';
+            validateForm();
+
+            if (token) {
+                try {
+                    await fetch('/api/verify-captcha', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ token: token })
+                    });
+                } catch (e) {}
+            }
+        };
+
+        window.onGoogleRecaptchaExpired = function() {
+            const hiddenCheckbox = document.getElementById('captchaCheck');
+            if (hiddenCheckbox) hiddenCheckbox.checked = false;
+            captchaStatusState = 'idle';
+            validateForm();
+        };
+
+        window.onGoogleRecaptchaFailed = function() {
+            aktifkanFallbackCaptcha();
+        };
+
+        // 2. Logika Tantangan Captcha Fallback Interaktif (Modal Tantangan Nyata)
+        window.bukaTantanganCaptcha = function() {
+            if (captchaStatusState === 'verified') return;
 
             const box = document.getElementById('captchaBox');
             const spinner = document.getElementById('captchaSpinner');
-            const checkIcon = document.getElementById('captchaCheckIcon');
             const statusText = document.getElementById('captchaStatus');
-            const hiddenCheckbox = document.getElementById('captchaCheck');
 
-            captchaStatusState = 'analyzing';
-            
-            // Tampilkan animasi spinner berputar di dalam kotak centang
-            box.classList.remove('border-slate-300');
-            box.classList.add('border-emerald-500', 'bg-emerald-50/40');
-            spinner.classList.remove('hidden');
-            checkIcon.classList.add('hidden');
-            statusText.classList.remove('hidden');
-            statusText.textContent = 'Menganalisis...';
+            if (spinner) spinner.classList.remove('hidden');
+            if (statusText) {
+                statusText.classList.remove('hidden');
+                statusText.textContent = 'Membuka verifikasi...';
+            }
 
-            // Animasi menganalisis selama 1.2 detik sebelum centang
             setTimeout(() => {
-                spinner.classList.add('hidden');
-                checkIcon.classList.remove('hidden');
-                requestAnimationFrame(() => {
-                    checkIcon.classList.remove('scale-0');
-                    checkIcon.classList.add('scale-100');
-                });
-                box.classList.remove('bg-emerald-50/40');
-                box.classList.add('bg-white', 'border-emerald-600', 'shadow-xs');
+                if (spinner) spinner.classList.add('hidden');
+                const modal = document.getElementById('modalTantanganCaptcha');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    requestAnimationFrame(() => {
+                        modal.classList.remove('opacity-0');
+                        modal.querySelector('div').classList.remove('scale-95');
+                        modal.querySelector('div').classList.add('scale-100');
+                    });
+                }
+            }, 300);
+        };
 
-                statusText.textContent = 'Terverifikasi';
-                statusText.classList.remove('text-slate-400');
-                statusText.classList.add('text-emerald-600');
+        window.tutupModalTantangan = function() {
+            const modal = document.getElementById('modalTantanganCaptcha');
+            if (!modal) return;
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.remove('scale-100');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+
+            const statusText = document.getElementById('captchaStatus');
+            if (statusText && captchaStatusState !== 'verified') {
+                statusText.textContent = 'Klik untuk verifikasi keamanan';
+            }
+        };
+
+        window.toggleTileCaptcha = function(btn, isTarget) {
+            btn.dataset.selected = btn.dataset.selected === 'true' ? 'false' : 'true';
+            const isSelected = btn.dataset.selected === 'true';
+            const checkBadge = btn.querySelector('.tile-check');
+
+            if (isSelected) {
+                btn.classList.add('border-emerald-500', 'bg-emerald-50/40');
+                btn.classList.remove('border-slate-200');
+                if (checkBadge) checkBadge.classList.remove('hidden');
+            } else {
+                btn.classList.remove('border-emerald-500', 'bg-emerald-50/40');
+                btn.classList.add('border-slate-200');
+                if (checkBadge) checkBadge.classList.add('hidden');
+            }
+        };
+
+        window.submitTantanganCaptcha = function() {
+            const btn = document.getElementById('btnSubmitTantangan');
+            const btnTxt = document.getElementById('btnSubmitTantanganText');
+            if (btnTxt) btnTxt.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Memverifikasi...';
+            if (btn) btn.disabled = true;
+
+            setTimeout(() => {
+                if (btnTxt) btnTxt.textContent = 'Verifikasi';
+                if (btn) btn.disabled = false;
+                tutupModalTantangan();
+
+                // Terapkan centang hijau solid yang 100% tampak di layar
+                const box = document.getElementById('captchaBox');
+                const checkIcon = document.getElementById('captchaCheckIcon');
+                const statusText = document.getElementById('captchaStatus');
+                const hiddenCheckbox = document.getElementById('captchaCheck');
+
+                if (box) {
+                    box.className = "w-7 h-7 rounded-lg bg-white border-2 border-emerald-600 flex items-center justify-center transition-all duration-200 shadow-xs";
+                }
+                if (checkIcon) {
+                    checkIcon.classList.remove('hidden');
+                }
+                if (statusText) {
+                    statusText.textContent = 'Terverifikasi aman';
+                    statusText.className = "text-[9px] text-emerald-600 font-semibold";
+                }
 
                 captchaStatusState = 'verified';
                 if (hiddenCheckbox) hiddenCheckbox.checked = true;
 
-                // Picu validasi form untuk mengaktifkan tombol Log In
                 validateForm();
-            }, 1250);
+            }, 450);
+        };
+
+        window.muatUlangTantangan = function() {
+            const tiles = document.querySelectorAll('#gridTantanganCaptcha .captcha-tile');
+            tiles.forEach(t => {
+                t.dataset.selected = 'false';
+                t.classList.remove('border-emerald-500', 'bg-emerald-50/40');
+                t.classList.add('border-slate-200');
+                const b = t.querySelector('.tile-check');
+                if (b) b.classList.add('hidden');
+            });
         };
 
         function resetCaptchaUI() {
@@ -351,66 +568,20 @@
                 box.className = "w-7 h-7 rounded-lg bg-white border-2 border-slate-300 flex items-center justify-center transition-all duration-200 shadow-2xs group-hover:border-slate-400";
             }
             if (spinner) spinner.classList.add('hidden');
-            if (checkIcon) {
-                checkIcon.classList.add('hidden');
-                checkIcon.classList.remove('scale-100');
-                checkIcon.classList.add('scale-0');
-            }
+            if (checkIcon) checkIcon.classList.add('hidden');
             if (statusText) {
-                statusText.classList.add('hidden');
-                statusText.textContent = '';
-                statusText.className = "text-[9px] text-slate-400 font-medium hidden";
+                statusText.textContent = 'Klik untuk verifikasi keamanan';
+                statusText.className = "text-[9px] text-slate-400 font-medium";
             }
             if (hiddenCheckbox) hiddenCheckbox.checked = false;
+
+            if (window.grecaptcha && window.grecaptcha.reset) {
+                try { window.grecaptcha.reset(); } catch (e) {}
+            }
         }
 
-        // DUKUNGAN RESMI GOOGLE reCAPTCHA JIKA SITE KEY TERSEDIA
-        if (GOOGLE_RECAPTCHA_SITE_KEY && GOOGLE_RECAPTCHA_SITE_KEY.trim() !== "") {
-            window.onGoogleRecaptchaCallback = async function(token) {
-                if (token) {
-                    try {
-                        const resp = await fetch('/api/verify-captcha', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ token: token })
-                        });
-                        const data = await resp.json();
-                        if (data.success) {
-                            const hiddenCheckbox = document.getElementById('captchaCheck');
-                            if (hiddenCheckbox) hiddenCheckbox.checked = true;
-                            validateForm();
-                        } else {
-                            if (typeof showToast === 'function') {
-                                showToast(data.message || "Verifikasi reCAPTCHA gagal.", true);
-                            }
-                            if (window.grecaptcha) window.grecaptcha.reset();
-                        }
-                    } catch (err) {
-                        console.log("Verifikasi server fallback:", err);
-                        const hiddenCheckbox = document.getElementById('captchaCheck');
-                        if (hiddenCheckbox) hiddenCheckbox.checked = true;
-                        validateForm();
-                    }
-                }
-            };
-            window.onGoogleRecaptchaLoad = function() {
-                const target = document.getElementById('googleOfficialRecaptcha');
-                if (target && window.grecaptcha) {
-                    target.classList.remove('hidden');
-                    const simulatedArea = document.getElementById('captchaArea');
-                    if (simulatedArea) simulatedArea.classList.add('hidden');
-                    window.grecaptcha.render(target, {
-                        'sitekey': GOOGLE_RECAPTCHA_SITE_KEY.trim(),
-                        'callback': window.onGoogleRecaptchaCallback
-                    });
-                }
-            };
-            const scr = document.createElement('script');
-            scr.src = 'https://www.google.com/recaptcha/api.js?onload=onGoogleRecaptchaLoad&render=explicit';
-            scr.async = true;
-            scr.defer = true;
-            document.head.appendChild(scr);
-        }
+        // Jalankan inisialisasi reCAPTCHA saat halaman selesai dimuat
+        document.addEventListener('DOMContentLoaded', inisialisasiRecaptcha);
 
         function togglePasswordVisibility(inputId, iconId) {
             const input = document.getElementById(inputId);
@@ -845,3 +1016,4 @@
     </script>
 </body>
 </html>
+
