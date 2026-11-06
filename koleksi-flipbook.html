@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Koleksi Flipbook - Argumentasi</title>
+    
+    <!-- PWA Manifest & Theme -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f59e0b">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { amber: '#f59e0b', light: '#fef3c7', dark: '#b45309' } } } } }
+    </script>
+    <style>
+        /* MENCEGAH TEKS DISALIN */
+        body { 
+            font-family: 'Poppins', sans-serif; background-color: #f1f5f9; 
+            -webkit-tap-highlight-color: transparent; 
+            -webkit-user-select: none; user-select: none; 
+        }
+        input { -webkit-user-select: auto; user-select: auto; }
+        
+        .hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { scrollbar-width: none; }
+        .lc2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .lc1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .item { animation: up .35s ease-out both; } @keyframes up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        .sk { position: relative; overflow: hidden; background: #e2e8f0; }
+        .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent); animation: sh 1.3s infinite; } @keyframes sh { 100% { transform: translateX(100%); } }
+        .spine { box-shadow: inset 4px 0 0 rgba(0,0,0,.12); }
+        .tab-on { border-bottom: 3px solid #f59e0b; color: #d97706; font-weight: 700; } .tab-off { border-bottom: 3px solid transparent; color: #64748b; font-weight: 500; }
+        .modal-z { z-index: 99999 !important; }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen relative">
+<div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
+
+    <!-- HEADER + TAB (STICKY) -->
+    <div class="sticky top-0 z-50 shadow-md">
+        <header class="bg-amber-500 px-4 h-14 flex items-center gap-3">
+            <a href="index.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
+            <div class="flex-1 min-w-0"><h1 class="text-white font-bold text-sm leading-tight truncate">Koleksi Flipbook</h1><p id="sub" class="text-white/80 text-[10px] leading-tight truncate">Memuat rak buku…</p></div>
+            <button id="btnCari" onclick="tglCari()" aria-label="Cari" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-search"></i></button>
+            <a href="profil.html" aria-label="Profil" class="shrink-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white border border-white/30"><i class="fas fa-user text-sm"></i></a>
+        </header>
+        <div id="boxCari" class="hidden bg-amber-500 px-4 pb-3">
+            <div class="bg-white rounded-xl flex items-center px-3 py-2 shadow-sm"><i class="fas fa-search text-slate-400 text-sm mr-2"></i><input id="q" type="text" placeholder="Cari judul atau kategori..." class="w-full bg-transparent outline-none text-slate-700 text-sm placeholder-slate-400" oninput="cariTunda()"><button onclick="hapusCari()" class="text-slate-300 hover:text-slate-500 ml-2"><i class="fas fa-circle-xmark"></i></button></div>
+        </div>
+        <nav id="tabs" class="bg-white border-b border-slate-200 flex overflow-x-auto hide-scrollbar px-2"></nav>
+    </div>
+
+    <main class="flex-grow p-4">
+        <!-- Skeleton Loading x4 -->
+        <div id="sLoading" class="grid grid-cols-2 gap-3"></div>
+        
+        <!-- Kondisi Kosong -->
+        <div id="sKosong" class="hidden flex-col items-center justify-center py-16 text-center">
+            <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-4xl mb-4 text-slate-300"><i class="fas fa-folder-open"></i></div>
+            <h3 class="font-bold text-slate-700 text-base mb-1" id="kosongJudul">Rak Kosong</h3>
+            <p class="text-xs text-slate-500 max-w-[260px] mx-auto leading-relaxed" id="kosongPesan">Belum ada flipbook yang diterbitkan.</p>
+            <button id="btnUlang" onclick="location.reload()" class="hidden mt-4 bg-amber-500 text-white text-xs font-bold px-5 py-2.5 rounded-full active:scale-95"><i class="fas fa-rotate mr-1.5"></i>Muat Ulang</button>
+        </div>
+        
+        <!-- List Flipbook -->
+        <div id="grid" class="hidden grid grid-cols-2 gap-3"></div>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0"><p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p></footer>
+</div>
+
+<!-- MODAL SHARE (BAGIKAN MATERI) -->
+<div id="modalShare" class="fixed inset-0 bg-black/60 hidden modal-z flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300 pb-0 sm:pb-10" onclick="if(event.target === this) tutupModal('modalShare')">
+    <div class="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-2xl p-6 transform translate-y-full sm:translate-y-10 transition-transform duration-300 relative">
+        <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-5 sm:hidden"></div>
+        <h3 class="text-lg font-bold text-slate-800 mb-2 text-center">Bagikan Flipbook</h3>
+        <p class="text-[11px] text-slate-500 text-center mb-6 px-4 line-clamp-2" id="shareJudul"></p>
+        
+        <div class="grid grid-cols-2 gap-3">
+            <a id="btnShareWa" href="#" target="_blank" class="bg-[#25D366] text-white p-3 rounded-xl flex flex-col items-center gap-2 hover:bg-green-600 transition-colors">
+                <i class="fab fa-whatsapp text-2xl"></i>
+                <span class="text-[10px] font-bold">WhatsApp</span>
+            </a>
+            <button id="btnCopyLink" class="bg-slate-100 text-slate-700 p-3 rounded-xl flex flex-col items-center gap-2 hover:bg-slate-200 transition-colors">
+                <i class="fas fa-link text-2xl"></i>
+                <span class="text-[10px] font-bold">Salin Tautan</span>
+            </button>
+        </div>
+        <button onclick="tutupModal('modalShare')" class="w-full mt-4 p-3 bg-white border border-slate-200 text-slate-600 font-bold text-xs rounded-xl hover:bg-slate-50 transition">Batal</button>
+    </div>
+</div>
+
+<div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 z-[100000] w-11/12 max-w-sm pointer-events-none"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Sesuaikan Tab dengan kategori di Admin
+const TABS = [['semua', '📚 Semua'], ['bahan ajar', '📝 Bahan Ajar'], ['modul', '📖 Modul'], ['referensi', '📚 Referensi'], ['majalah', '📰 Majalah']];
+let semua = [], tab = 'semua', kueri = '', timer = null;
+
+// Skeleton HTML
+$('sLoading').innerHTML = [1, 2, 3, 4].map(() => '<div class="bg-white rounded-2xl border border-slate-100 p-3"><div class="sk aspect-[3/4] rounded-lg mb-3"></div><div class="sk h-3 w-5/6 rounded mb-2"></div><div class="sk h-3 w-1/2 rounded"></div></div>').join('');
+
+function toast(msg, err) {
+    const t = document.createElement('div');
+    t.className = `${err ? 'bg-red-500' : 'bg-slate-800'} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 mb-2 item`;
+    t.innerHTML = `<i class="fas ${err ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400'}"></i><span class="flex-1">${esc(msg)}</span>`;
+    $('toast').appendChild(t); setTimeout(() => t.remove(), 2800);
+}
+
+/* ---------- Cover otomatis dari PDF pertama ---------- */
+const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js', WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+let pdfLibP = null, antri = [], jalan = 0;
+function muatPdfJs() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    return pdfLibP || (pdfLibP = new Promise((ok, no) => { const s = document.createElement('script'); s.src = PDFJS; s.onload = () => { pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER; ok(pdfjsLib); }; s.onerror = () => { pdfLibP = null; no(new Error('pdf.js gagal dimuat')); }; document.head.appendChild(s); }));
+}
+async function buatCover(h) {
+    const lib = await muatPdfJs(), task = lib.getDocument({ url: h.fileUrl });
+    const pdf = await task.promise;
+    try {
+        const p = await pdf.getPage(1), v1 = p.getViewport({ scale: 1 }), vp = p.getViewport({ scale: 280 / v1.width });
+        const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+        await p.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+        return { data: c.toDataURL('image/jpeg', 0.72) };
+    } finally { pdf.destroy(); }
+}
+function jalankan() {
+    while (jalan < 2 && antri.length) {
+        const h = antri.shift(); jalan++;
+        (async () => {
+            try {
+                let hasil = null; try { hasil = sessionStorage.getItem('cv_' + h.id); } catch (e) {}
+                if (!hasil) { const r = await buatCover(h); hasil = r.data; try { sessionStorage.setItem('cv_' + h.id, hasil); } catch (e) {} }
+                pasangCover(h.id, hasil);
+            } catch (e) { console.warn('Cover gagal:', h.judul); }
+            finally { jalan--; jalankan(); }
+        })();
+    }
+}
+function pasangCover(id, data) {
+    const el = document.querySelector(`[data-cover="${id}"]`); if (!el) return;
+    el.innerHTML = `<img src="${data}" alt="" class="w-full h-full object-cover spine">`;
+}
+const pengamat = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { pengamat.unobserve(e.target); const h = semua.find(x => x.id === e.target.dataset.cover); if (h) { antri.push(h); jalankan(); } } }), { rootMargin: '300px' }) : null;
+
+/* ---------- Tampilan & UI ---------- */
+function cocok(h, k) { const kat = (h.kategori || '').toLowerCase(); return k === 'semua' || kat.includes(k); }
+function renderTabs() {
+    $('tabs').innerHTML = TABS.map(([k, l]) => `<button onclick="ubahTab('${k}')" class="flex-1 min-w-[110px] py-3 text-center text-[11px] uppercase tracking-wider whitespace-nowrap transition-all ${tab === k ? 'tab-on' : 'tab-off'}">${l} <span class="text-[10px] opacity-60">${semua.filter(h => cocok(h, k)).length}</span></button>`).join('');
+}
+function daftar() {
+    const q = kueri.trim().toLowerCase();
+    return semua.filter(h => cocok(h, tab) && (!q || (h.judul + ' ' + h.kategori + ' ' + (h.deskripsi || '')).toLowerCase().includes(q)));
+}
+function kartu(h, i) {
+    const ukuran = h.ukuranFile ? `${h.ukuranFile} MB` : 'PDF';
+    // Gunakan cover dari cache/generate, atau icon bawaan
+    const coverHTML = `<div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200"><i class="fas fa-book-open text-3xl text-amber-300 mb-2"></i></div>`;
+    
+    return `<article class="item bg-white rounded-2xl shadow-sm border border-slate-100 p-3 flex flex-col hover:border-amber-400 transition" style="animation-delay:${Math.min(i, 10) * 40}ms">
+        <button data-act="baca" data-id="${esc(h.id)}" class="relative w-full aspect-[3/4] rounded-lg overflow-hidden mb-3 shadow-sm bg-slate-100 block text-left group" aria-label="Baca ${esc(h.judul)}">
+            <div data-cover="${esc(h.id)}" class="w-full h-full">${coverHTML}</div>
+            <div class="absolute top-2 right-2 bg-amber-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm tracking-widest">FLIPBOOK</div>
+            <div class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition duration-300"></div>
+        </button>
+        <h3 class="font-bold text-slate-800 text-[12px] leading-snug lc2 mb-1">${esc(h.judul)}</h3>
+        <p class="text-[9px] text-slate-500 mb-3 lc1">${esc(h.kategori)} • ${esc(ukuran)} • <i class="far fa-eye"></i> ${h.views||0}</p>
+        <div class="mt-auto flex gap-1.5">
+            <button data-act="baca" data-id="${esc(h.id)}" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold py-2 rounded-lg transition active:scale-95"><i class="fas fa-book-open mr-1.5"></i>Baca</button>
+            <button data-act="share" data-id="${esc(h.id)}" data-title="${esc(h.judul).replace(/"/g, '&quot;')}" class="w-9 flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-500 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 rounded-lg transition active:scale-95"><i class="fas fa-share-nodes text-[11px]"></i></button>
+        </div></article>`;
+}
+function tampil() {
+    const arr = daftar(); renderTabs();
+    $('sub').textContent = semua.length ? `${arr.length} dari ${semua.length} Flipbook` : 'Belum ada Flipbook';
+    if (!arr.length) {
+        $('grid').classList.add('hidden'); $('sKosong').classList.replace('hidden', 'flex');
+        $('kosongJudul').textContent = kueri ? 'Tidak ditemukan' : 'Rak Kosong';
+        $('kosongPesan').textContent = kueri ? 'Tidak ada flipbook yang cocok dengan pencarianmu.' : (semua.length ? 'Belum ada flipbook di kategori ini.' : 'Belum ada flipbook yang diterbitkan.');
+        $('btnUlang').classList.add('hidden'); return;
+    }
+    $('sKosong').classList.replace('flex', 'hidden');
+    $('grid').innerHTML = arr.map(kartu).join(''); $('grid').classList.remove('hidden');
+    // Memicu pencarian cover
+    arr.forEach(h => { const el = document.querySelector(`[data-cover="${h.id}"]`); if (el && pengamat) pengamat.observe(el); });
+}
+
+window.ubahTab = k => { tab = k; tampil(); window.scrollTo({ top: 0 }); };
+window.tglCari = () => { const b = $('boxCari'); b.classList.toggle('hidden'); if (!b.classList.contains('hidden')) $('q').focus(); };
+window.hapusCari = () => { $('q').value = ''; kueri = ''; tampil(); };
+window.cariTunda = () => { clearTimeout(timer); timer = setTimeout(() => { kueri = $('q').value; tampil(); }, 200); };
+
+// Fungsi Modal Bagikan
+window.bukaModal = function(id) {
+    const modal = document.getElementById(id);
+    const box = modal.querySelector('.transform');
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => {
+        modal.classList.remove('opacity-0');
+        box.classList.remove('translate-y-full', 'sm:translate-y-10'); box.classList.add('translate-y-0');
+    });
+};
+window.tutupModal = function(id) {
+    const modal = document.getElementById(id);
+    const box = modal.querySelector('.transform');
+    modal.classList.add('opacity-0');
+    box.classList.remove('translate-y-0'); box.classList.add('translate-y-full', 'sm:translate-y-10');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+};
+
+// Event Klik pada Kartu
+$('grid').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const h = semua.find(x => x.id === b.dataset.id); if (!h) return;
+    
+    if (b.dataset.act === 'baca') {
+        location.href = 'flipbook.html?id=' + encodeURIComponent(h.id);
+    } 
+    else if (b.dataset.act === 'share') {
+        const urlPath = window.location.pathname.replace('koleksi-flipbook.html', '') + 'flipbook.html?id=' + encodeURIComponent(h.id);
+        const fullUrl = window.location.origin + urlPath;
+        const textToShare = `Yuk baca Flipbook menarik "${h.judul}" di Aplikasi Argumentasi! Baca selengkapnya di sini: ${fullUrl}`;
+        
+        $('shareJudul').innerText = h.judul;
+        $('btnShareWa').href = `https://api.whatsapp.com/send?text=${encodeURIComponent(textToShare)}`;
+        $('btnCopyLink').onclick = function() {
+            navigator.clipboard.writeText(textToShare).then(() => {
+                tutupModal('modalShare'); toast('Tautan berhasil disalin!');
+            }).catch(() => toast('Gagal menyalin tautan.', true));
+        };
+        bukaModal('modalShare');
+    }
+});
+
+/* ---------- Dipanggil oleh pemuat Firestore ---------- */
+window.muatData = list => { semua = list; $('sLoading').classList.add('hidden'); tampil(); };
+window.galat = pesan => { $('sLoading').classList.add('hidden'); $('sub').textContent = 'Gagal memuat'; $('sKosong').classList.replace('hidden', 'flex'); $('kosongJudul').textContent = 'Gagal Memuat'; $('kosongPesan').textContent = pesan; $('btnUlang').classList.remove('hidden'); };
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+const db = getFirestore(initializeApp({ apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" }));
+
+try {
+    // Mengambil data dari koleksi "flipbooks"
+    const snap = await getDocs(collection(db, "flipbooks"));
+    const ms = t => t ? (t.toMillis ? t.toMillis() : new Date(t).getTime() || 0) : 0;
+    const list = [];
+    snap.forEach(d => { 
+        const v = d.data();
+        // Skip draf atau yang dihapus
+        if (!v.fileUrl || v.status === 'draft' || v.status === 'dihapus') return;
+        list.push({ 
+            id: d.id, 
+            judul: v.judul || 'Tanpa Judul', 
+            fileUrl: v.fileUrl, 
+            ukuranFile: v.ukuranFile || '', 
+            kategori: v.kategori || 'Bahan Ajar', 
+            deskripsi: v.deskripsi || '', 
+            views: v.views || 0,
+            t: ms(v.createdAt) 
+        }); 
+    });
+    list.sort((a, b) => b.t - a.t); // Urutkan terbaru
+    window.muatData(list);
+} catch (e) { 
+    console.error("Firebase Error:", e); 
+    window.galat('Terjadi gangguan jaringan saat memuat data. Silakan muat ulang.'); 
+}
+</script>
+</body>
+</html>

@@ -27,37 +27,47 @@
         body { font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Hanya untuk memunculkan kartu data dari lokal */
         .fade-in { animation: fadeIn .4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Modal: disembunyikan lewat opacity + pointer-events (bukan class hidden vs flex yang bentrok) */
+        /* Modal Alert */
         #modalAlert { z-index: 99999; opacity: 0; pointer-events: none; transition: opacity .25s; }
         #modalAlert.show { opacity: 1; pointer-events: auto; }
         #modalAlert .modal-box { transform: scale(.95); transition: transform .25s; }
         #modalAlert.show .modal-box { transform: scale(1); }
+        
+        /* Efek UI Loading saat bergabung */
+        .loading-mode { pointer-events: none; filter: blur(2px) grayscale(40%); opacity: 0.7; transition: all 0.4s ease; }
     </style>
 </head>
 <body class="flex justify-center bg-slate-900 sm:bg-slate-200">
 
-    <!-- FRAME APLIKASI (tinggi tetap = layar, hanya area konten yang scroll) -->
-    <div class="w-full max-w-md bg-slate-50 relative h-[100dvh] shadow-2xl flex flex-col overflow-hidden sm:border-x border-slate-300 fade-in">
+    <!-- FRAME APLIKASI (Kokoh/statis, tanpa animasi fade-in yang aneh di awal) -->
+    <div class="w-full max-w-md bg-slate-50 relative h-[100dvh] shadow-2xl flex flex-col overflow-hidden sm:border-x border-slate-300">
 
         <!-- HEADER: absolute di dalam frame, tidak ikut scroll -->
         <header class="bg-brand-green absolute top-0 left-0 right-0 z-50 px-4 flex items-center justify-between shadow-md"
                 style="height:calc(60px + env(safe-area-inset-top,0px)); padding-top:env(safe-area-inset-top,0px);">
             <div class="flex items-center gap-3">
-                <a href="index.html" aria-label="Kembali" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+                <a href="index.html" aria-label="Kembali" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors active:scale-95">
                     <i class="fas fa-arrow-left"></i>
                 </a>
                 <h1 class="text-sm font-bold text-white tracking-wide">Ruang Kelas Digital</h1>
             </div>
-            <a href="pindai_kode.html" class="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 backdrop-blur-sm">
+            <a href="pindai_kode.html" class="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 backdrop-blur-sm active:scale-95">
                 <i class="fas fa-qrcode"></i> Scan QR
             </a>
+            
+            <!-- Progress bar Tipis di bawah header (akan terlihat saat loading gabung) -->
+            <div class="absolute bottom-0 left-0 w-full h-[3px] bg-brand-dark/40 overflow-hidden">
+                <div id="loadingBar" class="h-full bg-white w-0 transition-all duration-300 ease-out"></div>
+            </div>
         </header>
 
         <!-- AREA SCROLL -->
-        <main class="flex-1 min-h-0 overflow-y-auto hide-scrollbar relative"
+        <main id="mainContent" class="flex-1 min-h-0 overflow-y-auto hide-scrollbar relative transition-all duration-400"
               style="padding-top:calc(60px + env(safe-area-inset-top,0px)); overscroll-behavior:contain;">
 
             <!-- Lengkungan hijau (ikut ter-scroll) -->
@@ -87,7 +97,7 @@
                     </form>
                 </div>
 
-                <!-- KELAS AKTIF -->
+                <!-- KELAS AKTIF (Skeleton Default Statis) -->
                 <section>
                     <h2 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-3">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Kelas Aktif Saya
@@ -104,7 +114,7 @@
                     </div>
                 </section>
 
-                <!-- ARSIP -->
+                <!-- ARSIP (Skeleton Default Statis) -->
                 <section>
                     <h2 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-3">
                         <i class="fas fa-archive text-slate-400"></i> Arsip Kelas Selesai
@@ -209,11 +219,25 @@
 
             const btn = $('btnGabung');
             const teksAsli = btn.innerHTML;
+            
+            // Efek UI Loading (Blur + Tombol + Progress Bar)
+            $('mainContent').classList.add('loading-mode');
             btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Mencari Kelas...';
             btn.disabled = true;
-            const reset = () => { btn.innerHTML = teksAsli; btn.disabled = false; sedangProses = false; };
+            $('inputKode').blur(); // Menutup keyboard HP
+            $('loadingBar').style.width = '30%';
+
+            const reset = () => { 
+                $('mainContent').classList.remove('loading-mode');
+                btn.innerHTML = teksAsli; 
+                btn.disabled = false; 
+                sedangProses = false; 
+                $('loadingBar').style.width = '0%';
+            };
 
             try {
+                // Proses Ambil Data (Simulasi loading berlanjut)
+                $('loadingBar').style.width = '50%';
                 const snap = await withTimeout(getDoc(doc(db, 'classes', kode)), 10000);
 
                 if (!snap.exists()) {
@@ -221,6 +245,7 @@
                     return reset();
                 }
 
+                $('loadingBar').style.width = '75%';
                 const data = snap.data();
                 const namaKelas = data.namaKelas || 'Kelas Pembelajaran';
 
@@ -234,6 +259,7 @@
                 const namaSiswa = localStorage.getItem('namaSiswaCendekia') || 'Siswa Anonim';
                 const xp = parseInt(localStorage.getItem('kelasPointsArg') || '0', 10) || 0;
 
+                $('loadingBar').style.width = '85%';
                 await withTimeout(
                     setDoc(doc(db, `classes/${kode}/students`, getStudentId(kode)), {
                         nama: namaSiswa, xp, joinedAt: serverTimestamp()
@@ -242,8 +268,11 @@
                 );
 
                 simpanKeRiwayatLokal(kode, namaKelas, 'active');
-                showAlert('Berhasil Bergabung!', 'Anda telah masuk ke ruangan. Mengalihkan Anda sekarang...', 'success');
-                setTimeout(() => { window.location.href = `ruang_belajar_siswa.html?id=${encodeURIComponent(kode)}`; }, 1500);
+                $('loadingBar').style.width = '100%';
+                btn.innerHTML = '<i class="fas fa-check"></i> Memasuki Ruang...';
+                
+                // Jeda sebentar agar transisinya terasa mulus sebelum pindah halaman
+                setTimeout(() => { window.location.href = `ruang_belajar_siswa.html?id=${encodeURIComponent(kode)}`; }, 400);
 
             } catch (error) {
                 console.error('Error gabung kelas:', error);

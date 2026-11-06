@@ -203,7 +203,7 @@
                     // Tampilkan Dashboard
                     document.getElementById('dashboardState').classList.remove('hidden');
                     document.getElementById('dashboardState').classList.add('block');
-
+                    
                     renderLatihanAI(classDataGlobal.aiPaket || null);
                     mulaiListenerLeaderboard();
                 } else {
@@ -224,7 +224,7 @@
             }
 
             const formatWaktu = s => Math.max(1, Math.round(s / 60)) + " mnt";
-
+            
             const BAGIAN = [
                 { key: 'pilgan', n: 'Pilihan Ganda', ic: 'fa-circle-check', c: 'blue', d: 'Soal bertingkat s.d HOTS', meta: p => `${(p.pilgan?.soal || []).length} soal · ${formatWaktu(p.pilgan?.total || 300)}` },
                 { key: 'struktur', n: 'Bedah Struktur', ic: 'fa-layer-group', c: 'amber', d: 'Labeli struktur argumen', meta: p => `${(p.struktur?.teks || []).length} baris · ${formatWaktu(p.struktur?.waktu || 180)}` },
