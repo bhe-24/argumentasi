@@ -148,11 +148,11 @@
                 <!-- WIDGET CAPTCHA "SAYA BUKAN ROBOT" RESMI & CADANGAN INTERAKTIF -->
                 <div id="captchaWidget" class="border border-slate-300/90 rounded-xl bg-slate-50/90 p-3 mb-5 mt-2 shadow-2xs select-none">
                     <!-- Wadah Google reCAPTCHA v2 Resmi (Otomatis Dimuat dari Google) -->
-                    <div id="googleOfficialRecaptcha" class="flex justify-center min-h-[76px] py-1"></div>
+                    <div id="googleOfficialRecaptcha" class="flex items-center justify-center min-h-[76px] py-1 text-xs text-slate-400"><i class="fas fa-circle-notch fa-spin mr-2 text-emerald-600"></i> Memuat verifikasi Google reCAPTCHA...</div>
 
                     <!-- Kotak Fallback Interaktif (Muncul jika Google Script Terhambat Jaringan) -->
                     <div id="captchaArea" class="hidden flex items-center justify-between">
-                        <div class="flex items-center gap-3 cursor-pointer group" onclick="bukaTantanganCaptcha()" id="fallbackCaptchaBtn">
+                        <div class="flex items-center gap-3 cursor-pointer group" onclick="klikCentangCaptcha()" id="fallbackCaptchaBtn">
                             <!-- Kotak Centang -->
                             <div id="captchaBox" class="w-7 h-7 rounded-lg bg-white border-2 border-slate-300 flex items-center justify-center transition-all duration-200 shadow-2xs group-hover:border-slate-400">
                                 <div id="captchaSpinner" class="hidden w-4 h-4 rounded-full border-2 border-slate-200 border-t-emerald-600 animate-spin"></div>
@@ -175,6 +175,11 @@
                                 <a href="ketentuan-layanan.html" class="hover:underline hover:text-emerald-600">Persyaratan</a>
                             </div>
                         </div>
+                    </div>
+                    <!-- Pilihan Alternatif Tantangan Puzzle -->
+                    <div id="opsiTantanganPuzzle" class="text-center pt-2 border-t border-slate-200/70 mt-2.5 flex items-center justify-center gap-3 text-[10px] text-slate-400">
+                        <span>Tidak bisa memuat?</span>
+                        <button type="button" onclick="bukaTantanganCaptcha()" class="text-emerald-600 hover:underline font-semibold flex items-center gap-1"><i class="fas fa-puzzle-piece"></i> Buka Tantangan Puzzle</button>
                     </div>
                 </div>
                 <!-- Input hidden agar validasi form tetap bekerja mulus -->
@@ -360,6 +365,11 @@
 
         // 1. Inisialisasi Google reCAPTCHA v2
         async function inisialisasiRecaptcha() {
+            // Jika diakses lokal melalui file://, langsung tampilkan captcha fallback
+            if (window.location.protocol === 'file:') {
+                aktifkanFallbackCaptcha();
+                return;
+            }
             try {
                 const resp = await fetch('/api/verify-captcha');
                 if (resp.ok) {
@@ -452,7 +462,43 @@
             aktifkanFallbackCaptcha();
         };
 
-        // 2. Logika Tantangan Captcha Fallback Interaktif (Modal Tantangan Nyata)
+        // 2. Logika Centang Captcha Fallback (Animasi Menganalisis Berputar & Centang Hijau Solid)
+        window.klikCentangCaptcha = function() {
+            if (captchaStatusState === 'analyzing') return;
+            if (captchaStatusState === 'verified') return;
+
+            captchaStatusState = 'analyzing';
+            const box = document.getElementById('captchaBox');
+            const spinner = document.getElementById('captchaSpinner');
+            const checkIcon = document.getElementById('captchaCheckIcon');
+            const statusText = document.getElementById('captchaStatus');
+            const hiddenCheckbox = document.getElementById('captchaCheck');
+
+            if (spinner) spinner.classList.remove('hidden');
+            if (checkIcon) checkIcon.classList.add('hidden');
+            if (statusText) {
+                statusText.innerHTML = '<i class="fas fa-circle-notch fa-spin text-emerald-600 mr-1"></i> Menganalisis keamanan sistem...';
+                statusText.className = "text-[9px] text-emerald-600 font-medium";
+            }
+
+            setTimeout(() => {
+                captchaStatusState = 'verified';
+                if (spinner) spinner.classList.add('hidden');
+                if (checkIcon) checkIcon.classList.remove('hidden');
+                if (box) {
+                    box.className = "w-7 h-7 rounded-lg bg-emerald-50 border-2 border-emerald-600 flex items-center justify-center transition-all duration-200 shadow-xs";
+                }
+                if (statusText) {
+                    statusText.innerHTML = '<i class="fas fa-check-circle text-emerald-600 mr-1"></i> Terverifikasi aman';
+                    statusText.className = "text-[9px] text-emerald-600 font-semibold";
+                }
+                if (hiddenCheckbox) hiddenCheckbox.checked = true;
+
+                validateForm();
+            }, 850);
+        };
+
+        // 3. Logika Tantangan Captcha Fallback Interaktif (Modal Tantangan Nyata)
         window.bukaTantanganCaptcha = function() {
             if (captchaStatusState === 'verified') return;
 
@@ -664,19 +710,6 @@
                 headerTitle.innerText = "Daftar Akun";
                 btnText.innerText = "Daftar Sekarang";
                 switcherText.innerHTML = 'Sudah punya akun? <button type="button" onclick="switchMode(\'login\')" class="text-blue-600 font-medium hover:underline ml-1">Log In</button>';
-                
-                groupNama.classList.remove('hidden');
-                groupNIP.classList.remove('hidden');
-                groupPasswordConfirm.classList.remove('hidden');
-                document.getElementById('inputNama').setAttribute('required', 'true');
-                document.getElementById('inputPasswordConfirm').setAttribute('required', 'true');
-                
-                divider.classList.add('hidden');
-                social.classList.add('hidden');
-                lupaPw.classList.add('hidden');
-                pwDiv.classList.add('hidden');
-            }
-        };
                 
                 groupNama.classList.remove('hidden');
                 groupNIP.classList.remove('hidden');

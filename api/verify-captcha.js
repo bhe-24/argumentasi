@@ -23,7 +23,7 @@ module.exports = async function handler(req, res) {
     if (req.method === 'GET') {
         const siteKey = process.env.RECAPTCHA_SITE_KEY || 
                         process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || 
-                        "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
+                        "6LcOdRMuAAAAACqCUK60iheg_vzFdMZ811T5Xi5T";
         return res.status(200).json({
             success: true,
             siteKey: siteKey
