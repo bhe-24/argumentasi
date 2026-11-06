@@ -412,19 +412,15 @@
             if (new Blob([isi]).size > 900 * 1024) return alert("Isi materi terlalu besar (maks ±900 KB). Kurangi jumlah/ukuran gambar di dalam teks.");
 
             btn.disabled = true; document.getElementById('loadingText').innerText = "Menyimpan Data..."; ov.classList.remove('hidden');
-            
-            const base64Data = document.getElementById('base64Image').value;
             const dataToSave = {
                 judul, status, isi,
                 kategori: document.getElementById('inputKategori').value,
                 tags: document.getElementById('inputTags').value.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean).slice(0, 3),
                 sumberGambar: document.getElementById('inputSumberGambar').value.trim(),
                 daftarPustaka: document.getElementById('inputReferensi').value.trim(),
-                coverImage: base64Data.startsWith('http') ? base64Data : '',
-                gambarBase64: base64Data.startsWith('data:') ? base64Data : '',
+                coverImage: document.getElementById('base64Image').value,
                 updatedAt: serverTimestamp()
             };
-
             try {
                 let savedId = editDocId;
                 if (editDocId) await updateDoc(doc(db, "materials", editDocId), dataToSave);

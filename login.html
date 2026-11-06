@@ -112,46 +112,22 @@
                     <input type="text" id="inputNama" class="input-underline" placeholder="Nama Lengkap Guru">
                 </div>
 
-                <!-- Input Khusus Guru (NIP/NUPTK) Opsional -->
-                <div id="groupNIP" class="input-container relative hidden mb-3">
-                    <i class="far fa-id-badge input-icon"></i>
-                    <input type="text" id="inputNIP" class="input-underline" placeholder="NIP / NUPTK (Opsional)">
-                </div>
-
                 <div class="input-container relative mb-3" id="groupEmail">
                     <i class="far fa-user input-icon"></i>
                     <input type="email" id="inputEmail" required class="input-underline" placeholder="Email / Username">
                 </div>
 
-                <div class="input-container relative mb-3" id="groupPassword">
+                <div class="input-container relative mb-5" id="groupPassword">
                     <i class="fas fa-lock input-icon"></i>
                     <input type="password" id="inputPassword" required class="input-underline pr-20" placeholder="Password">
                     
                     <div class="absolute right-0 top-1/2 transform -translate-y-1/2 flex items-center h-full">
-                        <button type="button" onclick="togglePasswordVisibility('inputPassword', 'eyeIcon')" class="text-slate-400 hover:text-slate-600 px-2 outline-none">
+                        <button type="button" onclick="togglePasswordVisibility()" class="text-slate-400 hover:text-slate-600 px-2 outline-none">
                             <i class="far fa-eye-slash" id="eyeIcon"></i>
                         </button>
                         <div class="w-px h-4 bg-slate-300 mx-1" id="pwDivider"></div>
                         <button type="button" onclick="bukaModal('modalLupaPassword')" class="text-blue-600 text-xs font-medium hover:underline px-2" id="lupaPwText">Lupa?</button>
                     </div>
-                </div>
-
-                <!-- Konfirmasi Password (Khusus Daftar) -->
-                <div id="groupPasswordConfirm" class="input-container relative hidden mb-5">
-                    <i class="fas fa-lock input-icon"></i>
-                    <input type="password" id="inputPasswordConfirm" class="input-underline pr-10" placeholder="Tulis Ulang Kata Sandi">
-                    <button type="button" onclick="togglePasswordVisibility('inputPasswordConfirm', 'eyeIconConfirm')" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 outline-none">
-                        <i class="far fa-eye-slash" id="eyeIconConfirm"></i>
-                    </button>
-                </div>
-
-                <!-- Simulasi Captcha Saya bukan robot -->
-                <div class="flex items-center justify-between border border-slate-300 rounded bg-slate-50 p-3 mb-5 mt-2 shadow-sm">
-                    <div class="flex items-center gap-3">
-                        <input type="checkbox" id="captchaCheck" class="w-5 h-5 accent-brand-primary cursor-pointer rounded">
-                        <label for="captchaCheck" class="text-sm text-slate-700 font-medium cursor-pointer select-none">Saya bukan robot</label>
-                    </div>
-                    <img src="https://www.gstatic.com/recaptcha/api2/logo_48.png" alt="reCAPTCHA" class="h-6">
                 </div>
 
                 <button type="submit" id="btnSubmit" class="w-full bg-slate-200 text-slate-400 font-bold py-3 rounded text-sm transition-all mb-3 pointer-events-none">
@@ -247,11 +223,11 @@
     <!-- SCRIPT UI DASAR -->
     <script>
         let currentMode = 'login';
-        let pendingUser = { nama: '', email: '', nip: '' };
+        let pendingUser = { nama: '', email: '' };
 
-        function togglePasswordVisibility(inputId, iconId) {
-            const input = document.getElementById(inputId);
-            const icon = document.getElementById(iconId);
+        function togglePasswordVisibility() {
+            const input = document.getElementById('inputPassword');
+            const icon = document.getElementById('eyeIcon');
             if(input.type === 'password') {
                 input.type = 'text';
                 icon.classList.replace('fa-eye-slash', 'fa-eye');
@@ -263,42 +239,24 @@
 
         const inputs = document.querySelectorAll('#authForm input');
         const btnSubmit = document.getElementById('btnSubmit');
-        const captchaCheck = document.getElementById('captchaCheck');
         
-        function validateForm() {
-            const em = document.getElementById('inputEmail').value;
-            const pw = document.getElementById('inputPassword').value;
-            const isCaptchaChecked = captchaCheck.checked;
-            
-            let isValid = em.length > 3 && pw.length > 5 && isCaptchaChecked;
-
-            // Jika dalam mode register, perlu mengecek Nama dan Konfirmasi Password
-            if (currentMode === 'register') {
-                const nama = document.getElementById('inputNama').value.trim();
-                const pwConfirm = document.getElementById('inputPasswordConfirm').value;
-                if (nama.length === 0 || pw !== pwConfirm || pwConfirm.length < 6) {
-                    isValid = false;
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                const em = document.getElementById('inputEmail').value;
+                const pw = document.getElementById('inputPassword').value;
+                if(em.length > 3 && pw.length > 5) {
+                    btnSubmit.classList.remove('bg-slate-200', 'text-slate-400', 'pointer-events-none');
+                    btnSubmit.classList.add('bg-brand-primary', 'text-white', 'shadow-md');
+                } else {
+                    btnSubmit.classList.add('bg-slate-200', 'text-slate-400', 'pointer-events-none');
+                    btnSubmit.classList.remove('bg-brand-primary', 'text-white', 'shadow-md');
                 }
-            }
-
-            if(isValid) {
-                btnSubmit.classList.remove('bg-slate-200', 'text-slate-400', 'pointer-events-none');
-                btnSubmit.classList.add('bg-brand-primary', 'text-white', 'shadow-md');
-            } else {
-                btnSubmit.classList.add('bg-slate-200', 'text-slate-400', 'pointer-events-none');
-                btnSubmit.classList.remove('bg-brand-primary', 'text-white', 'shadow-md');
-            }
-        }
-
-        // Jalankan validasi setiap ada perubahan input dan checklist captcha
-        inputs.forEach(input => input.addEventListener('input', validateForm));
-        captchaCheck.addEventListener('change', validateForm);
+            });
+        });
 
         window.switchMode = function(mode) {
             currentMode = mode;
             const groupNama = document.getElementById('groupNama');
-            const groupNIP = document.getElementById('groupNIP');
-            const groupPasswordConfirm = document.getElementById('groupPasswordConfirm');
             const headerTitle = document.getElementById('headerTitle');
             const btnText = document.getElementById('btnText');
             const switcherText = document.getElementById('switcherText');
@@ -309,7 +267,8 @@
             const pwDiv = document.getElementById('pwDivider');
 
             document.getElementById('authForm').reset();
-            validateForm(); // Reset tombol submit
+            btnSubmit.classList.add('bg-slate-200', 'text-slate-400', 'pointer-events-none');
+            btnSubmit.classList.remove('bg-brand-primary', 'text-white', 'shadow-md');
 
             if (mode === 'login') {
                 headerTitle.innerText = "Log In";
@@ -317,10 +276,7 @@
                 switcherText.innerHTML = 'Belum punya akun? <button type="button" onclick="switchMode(\'register\')" class="text-blue-600 font-medium hover:underline ml-1">Daftar</button>';
                 
                 groupNama.classList.add('hidden');
-                groupNIP.classList.add('hidden');
-                groupPasswordConfirm.classList.add('hidden');
                 document.getElementById('inputNama').removeAttribute('required');
-                document.getElementById('inputPasswordConfirm').removeAttribute('required');
                 
                 divider.classList.remove('hidden');
                 social.classList.remove('hidden');
@@ -332,10 +288,7 @@
                 switcherText.innerHTML = 'Sudah punya akun? <button type="button" onclick="switchMode(\'login\')" class="text-blue-600 font-medium hover:underline ml-1">Log In</button>';
                 
                 groupNama.classList.remove('hidden');
-                groupNIP.classList.remove('hidden');
-                groupPasswordConfirm.classList.remove('hidden');
                 document.getElementById('inputNama').setAttribute('required', 'true');
-                document.getElementById('inputPasswordConfirm').setAttribute('required', 'true');
                 
                 divider.classList.add('hidden');
                 social.classList.add('hidden');
@@ -412,12 +365,6 @@
         };
 
         window.loginDenganGoogle = async function() {
-            // Pengecekan Captcha sebelum login google
-            if (!document.getElementById('captchaCheck').checked) {
-                showToast("Harap centang verifikasi 'Saya bukan robot' terlebih dahulu.", true);
-                return;
-            }
-
             try {
                 showToast("Membuka otentikasi Google...", false);
                 const result = await signInWithPopup(auth, googleProvider);
@@ -429,7 +376,6 @@
                         namaLengkap: user.displayName || "Pengguna Baru",
                         email: user.email,
                         role: "teacher",
-                        nip: "-", // default
                         createdAt: new Date(),
                         authProvider: "google"
                     });
@@ -455,14 +401,8 @@
 
         window.handleAuth = async function(e) {
             e.preventDefault();
-            
             const email = document.getElementById('inputEmail').value.trim();
             const password = document.getElementById('inputPassword').value;
-            
-            if (!document.getElementById('captchaCheck').checked) {
-                showToast("Harap centang verifikasi 'Saya bukan robot'.", true);
-                return;
-            }
 
             setLoading(true);
 
@@ -512,20 +452,12 @@
 
             if (currentMode === 'register') {
                 const nama = document.getElementById('inputNama').value.trim();
-                const nip = document.getElementById('inputNIP').value.trim();
-                const passwordConfirm = document.getElementById('inputPasswordConfirm').value;
-
-                if (password !== passwordConfirm) {
-                    showToast("Konfirmasi kata sandi tidak cocok!", true);
-                    setLoading(false);
-                    return;
-                }
 
                 if (email.endsWith('@arg.ac.id')) {
                     try {
                         const userCred = await createUserWithEmailAndPassword(auth, email, password);
                         await setDoc(doc(db, "users", userCred.user.uid), {
-                            namaLengkap: nama, email: email, role: "admin", nip: nip || "-", createdAt: new Date()
+                            namaLengkap: nama, email: email, role: "admin", createdAt: new Date()
                         });
                         showToast("Pendaftaran Admin Berhasil!", false);
                         setTimeout(() => window.location.href = "/admin/index.html", 1000);
@@ -541,7 +473,6 @@
                         
                         pendingUser.nama = nama; 
                         pendingUser.email = email;
-                        pendingUser.nip = nip || "-";
 
                         tampilkanLayarVerifikasi();
                         showToast("Link verifikasi berhasil dikirim ke email Anda!", false);
@@ -620,7 +551,6 @@
                             namaLengkap: pendingUser.nama || "Guru Terverifikasi", 
                             email: user.email, 
                             role: "teacher", 
-                            nip: pendingUser.nip || "-",
                             createdAt: new Date()
                         });
                         showToast("Verifikasi Sukses! Mengalihkan...", false);
