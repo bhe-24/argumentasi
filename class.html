@@ -28,9 +28,10 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Hanya untuk memunculkan kartu data dari lokal */
-        .fade-in { animation: fadeIn .4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Skeleton Shimmer (Kokoh & presisi sesuai tampilan asli) */
+        .sk { position: relative; overflow: hidden; background: #e2e8f0; border-radius: .375rem; }
+        .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent); animation: shimmer 1.4s infinite; }
+        @keyframes shimmer { 100% { transform: translateX(100%); } }
 
         /* Modal Alert */
         #modalAlert { z-index: 99999; opacity: 0; pointer-events: none; transition: opacity .25s; }
@@ -97,36 +98,46 @@
                     </form>
                 </div>
 
-                <!-- KELAS AKTIF (Skeleton Default Statis) -->
+                <!-- KELAS AKTIF (Skeleton Default Statis - Presisi & Tampilan Penuh) -->
                 <section>
                     <h2 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-3">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Kelas Aktif Saya
                     </h2>
                     <div id="listKelasAktif" class="space-y-3">
-                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between animate-pulse">
-                            <div>
-                                <div class="w-12 h-3 bg-slate-200 rounded mb-2"></div>
-                                <div class="w-32 h-4 bg-slate-300 rounded mb-1"></div>
-                                <div class="w-20 h-3 bg-slate-200 rounded"></div>
+                        <!-- Skeleton Card 1 -->
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-3">
+                            <div class="space-y-2 flex-1 min-w-0">
+                                <div class="sk w-14 h-3.5"></div>
+                                <div class="sk w-40 h-4"></div>
+                                <div class="sk w-24 h-3"></div>
                             </div>
-                            <div class="w-24 h-8 bg-slate-200 rounded-xl"></div>
+                            <div class="sk w-16 h-8 !rounded-xl shrink-0"></div>
+                        </div>
+                        <!-- Skeleton Card 2 -->
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-3">
+                            <div class="space-y-2 flex-1 min-w-0">
+                                <div class="sk w-14 h-3.5"></div>
+                                <div class="sk w-32 h-4"></div>
+                                <div class="sk w-20 h-3"></div>
+                            </div>
+                            <div class="sk w-16 h-8 !rounded-xl shrink-0"></div>
                         </div>
                     </div>
                 </section>
 
-                <!-- ARSIP (Skeleton Default Statis) -->
+                <!-- ARSIP (Skeleton Default Statis - Presisi & Tampilan Penuh) -->
                 <section>
                     <h2 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-3">
                         <i class="fas fa-archive text-slate-400"></i> Arsip Kelas Selesai
                     </h2>
                     <div id="listKelasArsip" class="space-y-3">
-                        <div class="bg-slate-100 p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between animate-pulse opacity-75">
-                            <div>
-                                <div class="w-12 h-3 bg-slate-200 rounded mb-2"></div>
-                                <div class="w-32 h-4 bg-slate-300 rounded mb-1"></div>
-                                <div class="w-20 h-3 bg-slate-200 rounded"></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-3 opacity-80">
+                            <div class="space-y-2 flex-1 min-w-0">
+                                <div class="sk w-14 h-3.5"></div>
+                                <div class="sk w-36 h-4"></div>
+                                <div class="sk w-24 h-3"></div>
                             </div>
-                            <div class="w-20 h-8 bg-slate-200 rounded-lg"></div>
+                            <div class="sk w-20 h-7 !rounded-lg shrink-0"></div>
                         </div>
                     </div>
                 </section>
@@ -291,12 +302,12 @@
 
         /* ---------- RENDER RIWAYAT ---------- */
         const kartuKosong = (pesan, gelap) => `
-            <div class="${gelap ? 'bg-slate-100' : 'bg-white shadow-sm'} p-5 rounded-2xl border border-slate-200 text-center fade-in">
+            <div class="${gelap ? 'bg-slate-100' : 'bg-white shadow-sm'} p-5 rounded-2xl border border-slate-200 text-center">
                 <p class="text-xs text-slate-400">${pesan}</p>
             </div>`;
 
         const htmlAktif = (id, nama) => `
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-3 hover:border-brand-green transition-colors fade-in">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-3 hover:border-brand-green transition-colors">
                 <div class="min-w-0">
                     <span class="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Berjalan</span>
                     <h3 class="font-bold text-slate-800 text-sm mt-1 truncate">${esc(nama)}</h3>
@@ -306,7 +317,7 @@
             </div>`;
 
         const htmlArsip = (id, nama) => `
-            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-3 opacity-80 hover:opacity-100 transition-opacity fade-in">
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-3 opacity-80 hover:opacity-100 transition-opacity">
                 <div class="min-w-0">
                     <span class="bg-slate-200 text-slate-600 text-[9px] font-bold px-2 py-0.5 rounded uppercase">Selesai</span>
                     <h3 class="font-bold text-slate-700 text-sm mt-1 truncate">${esc(nama)}</h3>

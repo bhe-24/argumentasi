@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- HTML5 QR Code Scanner Library -->
@@ -30,98 +31,120 @@
     </script>
 
     <style>
-        /* Mengunci layar agar tidak bisa di-scroll sama sekali */
+        /* Mengunci layar agar fiks 1 halaman tanpa scroll */
         html, body {
-            height: 100dvh; /* Dynamic viewport height untuk mobile */
+            height: 100%;
+            height: 100dvh;
             overflow: hidden; 
             overscroll-behavior: none;
         }
 
         body { 
             font-family: 'Poppins', sans-serif; 
-            background-color: #0f172a; /* Latar gelap untuk mode scanner */ 
             -webkit-tap-highlight-color: transparent; 
         }
 
         /* CUSTOM SCANNER OVERLAY */
-        #reader { width: 100%; border-radius: 1.5rem; overflow: hidden; border: none !important; }
-        #reader video { object-fit: cover; border-radius: 1.5rem; }
+        #reader { 
+            width: 100% !important; 
+            height: 100% !important; 
+            border: none !important; 
+            position: absolute; 
+            inset: 0; 
+        }
+        #reader video { 
+            width: 100% !important; 
+            height: 100% !important; 
+            object-fit: cover !important; 
+            border-radius: 1.5rem; 
+        }
+        #reader__scan_region { border: none !important; }
+        #reader__dashboard { display: none !important; }
         
         .scanner-frame {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 250px;
-            height: 250px;
+            width: 82%;
+            height: 82%;
             z-index: 20;
             pointer-events: none;
         }
 
         /* Sudut Bingkai Scanner */
-        .corner { position: absolute; width: 40px; height: 40px; border-color: #10b981; border-style: solid; }
-        .corner-tl { top: 0; left: 0; border-width: 4px 0 0 4px; border-top-left-radius: 16px; }
-        .corner-tr { top: 0; right: 0; border-width: 4px 4px 0 0; border-top-right-radius: 16px; }
-        .corner-bl { bottom: 0; left: 0; border-width: 0 0 4px 4px; border-bottom-left-radius: 16px; }
-        .corner-br { bottom: 0; right: 0; border-width: 0 4px 4px 0; border-bottom-right-radius: 16px; }
+        .corner { position: absolute; width: 32px; height: 32px; border-color: #10b981; border-style: solid; }
+        .corner-tl { top: 0; left: 0; border-width: 4px 0 0 4px; border-top-left-radius: 14px; }
+        .corner-tr { top: 0; right: 0; border-width: 4px 4px 0 0; border-top-right-radius: 14px; }
+        .corner-bl { bottom: 0; left: 0; border-width: 0 0 4px 4px; border-bottom-left-radius: 14px; }
+        .corner-br { bottom: 0; right: 0; border-width: 0 4px 4px 0; border-bottom-right-radius: 14px; }
 
         /* Garis Pindai Laser */
         .laser-line {
             position: absolute;
-            left: 5%;
-            width: 90%;
+            left: 6%;
+            width: 88%;
             height: 2px;
             background: #10b981;
-            box-shadow: 0 0 10px 2px rgba(16, 185, 129, 0.7);
-            animation: scanning 2.5s infinite linear;
+            box-shadow: 0 0 10px 2px rgba(16, 185, 129, 0.75);
+            animation: scanning 2.2s infinite linear;
         }
 
         @keyframes scanning {
-            0% { top: 5%; opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { top: 95%; opacity: 0; }
+            0% { top: 6%; opacity: 0; }
+            15% { opacity: 1; }
+            85% { opacity: 1; }
+            100% { top: 94%; opacity: 0; }
         }
     </style>
 </head>
-<body class="flex justify-center text-slate-100">
+<body class="flex justify-center bg-slate-900 sm:bg-slate-200">
 
-    <!-- CONTAINER UTAMA (Fixed ke layar) -->
-    <div class="w-full max-w-md bg-slate-900 relative h-[100dvh] flex flex-col overflow-hidden sm:border-x border-slate-800 shadow-2xl">
+    <!-- CONTAINER UTAMA (Fiks 1 halaman presisi, kokoh, menyesuaikan tinggi layar HP) -->
+    <div class="w-full max-w-md bg-slate-50 relative h-[100dvh] flex flex-col justify-between overflow-hidden sm:border-x border-slate-300 shadow-2xl">
         
-        <!-- HEADER STICKY -->
-        <header class="absolute top-0 w-full z-50 px-4 py-4 flex items-center justify-between bg-gradient-to-b from-slate-900 to-transparent"
-                style="padding-top:calc(16px + env(safe-area-inset-top,0px));">
-            <button onclick="kembali()" class="w-10 h-10 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors active:scale-95">
-                <i class="fas fa-arrow-left"></i>
-            </button>
-            <h1 class="text-[11px] font-bold text-white tracking-widest uppercase bg-black/40 backdrop-blur-md px-4 py-2 rounded-full">Pindai Kode</h1>
-            <div class="w-10 h-10"></div> <!-- Placeholder untuk keseimbangan flex -->
+        <!-- HEADER IDENTIK DENGAN HALAMAN LAIN -->
+        <header class="bg-brand-green shrink-0 px-4 flex items-center justify-between shadow-md z-30"
+                style="height:calc(60px + env(safe-area-inset-top,0px)); padding-top:env(safe-area-inset-top,0px);">
+            <div class="flex items-center gap-3">
+                <button onclick="window.kembali()" aria-label="Kembali" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors active:scale-95">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="text-sm font-bold text-white tracking-wide">Pindai Kode QR</h1>
+            </div>
+            <div class="w-8 h-8 flex items-center justify-center text-white/80">
+                <i class="fas fa-camera text-sm"></i>
+            </div>
         </header>
 
-        <!-- KONTEN SCANNER -->
-        <main class="flex-1 flex flex-col items-center justify-center w-full px-6 relative mt-10">
+        <!-- KONTEN SCANNER FOKUS KAMERA -->
+        <main class="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-4 relative overflow-hidden">
             
-            <div class="text-center mb-6 relative z-30">
-                <i class="fas fa-qrcode text-3xl text-emerald-400 mb-2 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]"></i>
-                <h2 class="text-lg font-bold text-white mb-1">Arahkan Kamera ke QR</h2>
-                <p class="text-[11px] text-slate-400 max-w-[250px] mx-auto leading-relaxed">Sistem akan memindai otomatis dan memasukkan Anda ke Ruang Kelas Guru.</p>
+            <!-- Petunjuk Ringkas -->
+            <div class="text-center mb-5 shrink-0">
+                <div class="w-12 h-12 bg-emerald-100 text-brand-green rounded-2xl flex items-center justify-center text-xl mx-auto mb-2.5 shadow-inner">
+                    <i class="fas fa-qrcode"></i>
+                </div>
+                <h2 class="text-base font-bold text-slate-800">Arahkan Kamera ke QR</h2>
+                <p class="text-xs text-slate-500 max-w-[260px] mx-auto mt-0.5 leading-relaxed">
+                    Posisikan kode QR di dalam bingkai untuk masuk otomatis ke Ruang Kelas.
+                </p>
             </div>
 
-            <!-- CAMERA BOX CONTAINER -->
-            <div class="relative w-full max-w-[300px] aspect-square mx-auto bg-slate-800 rounded-3xl shadow-[0_0_40px_rgba(0,0,0,0.5)] overflow-hidden border border-slate-700">
+            <!-- CAMERA BOX CONTAINER (Responsif terhadap berbagai rasio layar HP) -->
+            <div class="relative w-full max-w-[280px] max-h-[38vh] aspect-square mx-auto bg-slate-900 rounded-3xl shadow-xl overflow-hidden border-2 border-emerald-500/30 shrink-0">
                 
-                <!-- Pesan Loading/Izin -->
-                <div id="cameraLoading" class="absolute inset-0 flex flex-col items-center justify-center z-10 p-6 text-center">
-                    <i class="fas fa-circle-notch fa-spin text-3xl text-emerald-500 mb-3"></i>
-                    <p class="text-xs font-bold text-slate-300 mb-1">Meminta Izin Kamera...</p>
-                    <p class="text-[9px] text-slate-500 leading-relaxed">Pastikan browser Anda mengizinkan akses kamera untuk melanjutkan.</p>
+                <!-- Pesan Loading / Minta Izin Kamera -->
+                <div id="cameraLoading" class="absolute inset-0 flex flex-col items-center justify-center z-10 p-6 text-center bg-slate-900 text-white">
+                    <i class="fas fa-circle-notch fa-spin text-3xl text-emerald-400 mb-3"></i>
+                    <p class="text-xs font-bold text-slate-200 mb-1">Menyiapkan Kamera...</p>
+                    <p class="text-[10px] text-slate-400 leading-relaxed">Harap izinkan akses kamera pada browser Anda.</p>
                 </div>
 
                 <!-- Div Target HTML5 QR Code -->
                 <div id="reader" class="w-full h-full absolute inset-0 z-0 opacity-0 transition-opacity duration-500"></div>
 
-                <!-- OVERLAY EFEK SCANNER (Hanya muncul jika kamera aktif) -->
+                <!-- OVERLAY EFEK SCANNER (Muncul otomatis saat kamera aktif) -->
                 <div id="scannerOverlay" class="scanner-frame hidden">
                     <div class="corner corner-tl"></div>
                     <div class="corner corner-tr"></div>
@@ -132,38 +155,48 @@
 
             </div>
 
+            <!-- Indikator Status Scanner -->
+            <div id="scannerStatus" class="mt-4 flex items-center justify-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-100/70 border border-emerald-200/80 px-4 py-1.5 rounded-full shrink-0">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                <span>Pemindai Siap &bull; Mengarahkan...</span>
+            </div>
+
         </main>
 
-        <!-- FOOTER / AKSI MANUAL -->
-        <footer class="absolute bottom-0 w-full px-6 pb-6 pt-10 bg-gradient-to-t from-slate-900 via-slate-900 to-transparent z-30 text-center"
-                style="padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));">
-            <p class="text-[10px] text-slate-400 mb-3">Kamera bermasalah atau tidak punya kode QR?</p>
-            
-            <a href="class.html" class="w-full bg-white text-slate-900 hover:bg-slate-200 font-bold py-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg text-sm">
-                <i class="fas fa-keyboard text-brand-green"></i> Ketik Kode Manual
-            </a>
+        <!-- FOOTER HALAMAN -->
+        <footer class="shrink-0 py-3.5 px-4 text-center border-t border-slate-200 bg-white"
+                style="padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));">
+            <p class="text-[11px] text-slate-400 font-medium flex items-center justify-center gap-1.5">
+                <span>&copy; 2026 Argumentasi App</span>
+                <span>&bull;</span>
+                <span>Ruang Kelas Digital</span>
+            </p>
         </footer>
 
     </div>
 
-    <!-- SCRIPT LOGIKA QR SCANNER REAL -->
+    <!-- SCRIPT LOGIKA QR SCANNER -->
     <script>
-        let html5QrCode;
+        let html5QrCode = null;
+        let isRedirecting = false;
 
-        function kembali() {
-            // Hentikan kamera sebelum kembali agar tidak nyala di background
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    history.back();
-                }).catch(err => {
-                    history.back();
-                });
+        window.kembali = function () {
+            if (isRedirecting) return;
+            const go = () => {
+                if (window.history.length > 1) {
+                    window.history.back();
+                } else {
+                    window.location.href = "class.html";
+                }
+            };
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(go).catch(go);
             } else {
-                history.back();
+                go();
             }
-        }
+        };
 
-        // Efek Suara Bip (Murni JS, tanpa file audio)
+        // Efek Suara Bip saat QR terdeteksi
         const playBeep = () => {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -173,72 +206,112 @@
                 gain.connect(ctx.destination);
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(800, ctx.currentTime);
-                gain.gain.setValueAtTime(0.5, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.4, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
                 osc.start();
-                osc.stop(ctx.currentTime + 0.1);
-            } catch(e) { console.error("Audio API error", e); }
+                osc.stop(ctx.currentTime + 0.12);
+            } catch(e) { /* ignore audio error */ }
         };
 
-        // Inisialisasi Kamera saat halaman dimuat
-        document.addEventListener('DOMContentLoaded', () => {
-            // Gunakan metode Html5Qrcode murni untuk kontrol UI penuh
-            html5QrCode = new Html5Qrcode("reader");
+        // Pembersihan & ekstraksi kode kelas dari QR (mendukung string kode polos maupun URL)
+        function ekstrakKodeKelas(decodedText) {
+            let kode = String(decodedText || '').trim();
+            try {
+                if (kode.includes('?')) {
+                    const u = new URL(kode, window.location.href);
+                    const idParam = u.searchParams.get('id');
+                    if (idParam) kode = idParam;
+                }
+            } catch (e) {}
+            return kode.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+        }
 
-            const config = { 
-                fps: 10, 
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0 // Persegi
-            };
+        // Inisialisasi Kamera saat halaman siap
+        function mulaiScanner() {
+            try {
+                html5QrCode = new Html5Qrcode("reader");
 
-            // Mulai scan menggunakan kamera belakang
-            html5QrCode.start(
-                { facingMode: "environment" }, 
-                config,
-                (decodedText, decodedResult) => {
-                    // JIKA BERHASIL MENDETEKSI QR CODE
-                    html5QrCode.stop().then(() => {
-                        // Mainkan suara Bip
+                const config = { 
+                    fps: 10, 
+                    qrbox: (viewfinderWidth, viewfinderHeight) => {
+                        const minDim = Math.min(viewfinderWidth, viewfinderHeight);
+                        const edge = Math.floor(minDim * 0.82);
+                        return { width: edge, height: edge };
+                    },
+                    aspectRatio: 1.0
+                };
+
+                html5QrCode.start(
+                    { facingMode: "environment" }, 
+                    config,
+                    (decodedText) => {
+                        if (isRedirecting) return;
+                        isRedirecting = true;
+
                         playBeep();
 
-                        // Berikan efek visual sebentar sebelum redirect
-                        document.getElementById('scannerOverlay').innerHTML = `
-                            <div class="absolute inset-0 flex items-center justify-center bg-emerald-500/20 backdrop-blur-sm rounded-xl">
-                                <div class="w-16 h-16 bg-emerald-500 text-white rounded-full flex items-center justify-center text-3xl shadow-lg">
-                                    <i class="fas fa-check"></i>
+                        // Efek visual status berhasil
+                        const statusEl = document.getElementById('scannerStatus');
+                        if (statusEl) {
+                            statusEl.className = "mt-4 flex items-center justify-center gap-2 text-xs font-semibold text-emerald-800 bg-emerald-200 border border-emerald-300 px-4 py-1.5 rounded-full shrink-0 shadow-sm";
+                            statusEl.innerHTML = '<i class="fas fa-check-circle text-emerald-600"></i> <span>Kode Ditemukan! Mengalihkan...</span>';
+                        }
+
+                        // Efek visual overlay centang
+                        const overlayEl = document.getElementById('scannerOverlay');
+                        if (overlayEl) {
+                            overlayEl.innerHTML = `
+                                <div class="absolute inset-0 flex items-center justify-center bg-emerald-500/25 backdrop-blur-xs rounded-2xl">
+                                    <div class="w-14 h-14 bg-brand-green text-white rounded-full flex items-center justify-center text-2xl shadow-lg animate-bounce">
+                                        <i class="fas fa-check"></i>
+                                    </div>
                                 </div>
-                            </div>
-                        `;
+                            `;
+                        }
 
-                        // Lempar ke class.html dengan membawa parameter ID (Kode Kelas)
-                        const kodeKelas = decodedText.trim();
-                        setTimeout(() => {
-                            window.location.href = `class.html?id=${kodeKelas}`;
-                        }, 800);
+                        const kodeKelas = ekstrakKodeKelas(decodedText);
+                        const arahkan = () => {
+                            window.location.href = `class.html?id=${encodeURIComponent(kodeKelas)}`;
+                        };
 
-                    }).catch(err => {
-                        console.error("Gagal menghentikan kamera", err);
-                        window.location.href = `class.html?id=${decodedText.trim()}`;
-                    });
-                },
-                (errorMessage) => {
-                    // Jika belum mendeteksi (berjalan terus setiap frame). Abaikan agar tidak spam.
-                }
-            ).then(() => {
-                // JIKA KAMERA BERHASIL HIDUP & DIIZINKAN
-                document.getElementById('cameraLoading').classList.add('hidden');
-                document.getElementById('reader').classList.remove('opacity-0');
-                document.getElementById('scannerOverlay').classList.remove('hidden');
-            }).catch((err) => {
-                // JIKA IZIN DITOLAK ATAU KAMERA TIDAK ADA
-                console.error("Error mulai kamera:", err);
-                document.getElementById('cameraLoading').innerHTML = `
-                    <i class="fas fa-camera-slash text-4xl text-red-500 mb-3"></i>
-                    <p class="text-xs font-bold text-white mb-2">Akses Kamera Ditolak</p>
-                    <p class="text-[9px] text-slate-400">Harap izinkan akses kamera di pengaturan browser Anda, atau gunakan input manual.</p>
-                `;
-            });
-        });
+                        html5QrCode.stop().then(() => {
+                            setTimeout(arahkan, 500);
+                        }).catch(() => {
+                            setTimeout(arahkan, 500);
+                        });
+                    },
+                    () => { /* frame scan silently */ }
+                ).then(() => {
+                    document.getElementById('cameraLoading').classList.add('hidden');
+                    document.getElementById('reader').classList.remove('opacity-0');
+                    document.getElementById('scannerOverlay').classList.remove('hidden');
+                }).catch((err) => {
+                    console.error("Error mulai kamera:", err);
+                    const statusEl = document.getElementById('scannerStatus');
+                    if (statusEl) statusEl.classList.add('hidden');
+                    document.getElementById('cameraLoading').innerHTML = `
+                        <div class="w-14 h-14 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-2xl mx-auto mb-3 shadow-inner">
+                            <i class="fas fa-camera-slash"></i>
+                        </div>
+                        <p class="text-xs font-bold text-white mb-1.5">Akses Kamera Diperlukan</p>
+                        <p class="text-[10px] text-slate-300 max-w-[210px] mx-auto leading-relaxed mb-4">
+                            Izinkan akses kamera pada browser Anda untuk memindai kode QR.
+                        </p>
+                        <button onclick="location.reload()" class="bg-brand-green hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl active:scale-95 transition shadow-md">
+                            Coba Lagi
+                        </button>
+                    `;
+                });
+            } catch (e) {
+                console.error("Inisialisasi Html5Qrcode error:", e);
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', mulaiScanner);
+        } else {
+            mulaiScanner();
+        }
     </script>
 </body>
 </html>
