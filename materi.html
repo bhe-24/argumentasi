@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Materi Pembelajaran - Google Search &amp; Edukasi Terpercaya</title>
-    
+    <title>Materi Pembelajaran - Argumentasi</title>
+
+    <!-- Google Programmable Search Engine (CSE) -->
+    <script async src="https://cse.google.com/cse.js?cx=94b731495af8e474f"></script>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
@@ -13,14 +16,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: { sans: ['Poppins', 'sans-serif'] },
-                    colors: { 
-                        brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } 
+                    colors: {
+                        brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' }
                     }
                 }
             }
@@ -28,52 +31,177 @@
     </script>
 
     <style>
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            background-color: #f1f5f9; 
-            -webkit-tap-highlight-color: transparent; 
+        * { font-family: 'Poppins', sans-serif; }
+        body {
+            background-color: #f1f5f9;
+            -webkit-tap-highlight-color: transparent;
         }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-        /* Styling terpadu untuk Google CSE Widget jika diaktifkan */
+        /* ===== GOOGLE CSE OVERRIDES ===== */
+        /* Reset container */
+        .gsc-control-cse,
+        .gsc-control-cse * {
+            font-family: 'Poppins', sans-serif !important;
+        }
         .gsc-control-cse {
             background-color: transparent !important;
             border: none !important;
             padding: 0 !important;
         }
-        .gsc-input-box {
-            border-radius: 14px !important;
-            border: 1px solid #cbd5e1 !important;
-            overflow: hidden !important;
-            padding: 4px 8px !important;
+
+        /* Sembunyikan search bar bawaan CSE (kita pakai search bar sendiri) */
+        .gsc-search-box,
+        .gsc-search-box-tools,
+        .gsc-above-wrapper-area,
+        .gcsc-branding,
+        .gsc-adBlock,
+        .gsc-cursor-box,
+        table.gsc-search-box {
+            display: none !important;
         }
-        .gsc-search-button-v2 {
-            border-radius: 12px !important;
-            background-color: #059669 !important;
+
+        /* Area hasil */
+        .gsc-results-wrapper-overlay,
+        .gsc-results-wrapper-nooverlay {
+            padding: 0 !important;
             border: none !important;
-            padding: 9px 16px !important;
+            box-shadow: none !important;
+            position: relative !important;
+            width: 100% !important;
         }
+
+        /* Tiap kartu hasil */
         .gsc-webResult.gsc-result {
-            border-bottom: 1px solid #e2e8f0 !important;
-            padding: 12px 0 !important;
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 16px !important;
+            padding: 14px !important;
+            margin-bottom: 10px !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+            transition: border-color 0.2s, box-shadow 0.2s !important;
         }
-        .gs-title {
+        .gsc-webResult.gsc-result:hover {
+            border-color: #059669 !important;
+            box-shadow: 0 4px 12px rgba(5,150,105,0.12) !important;
+        }
+
+        /* Judul hasil */
+        .gs-title,
+        .gs-title b {
             color: #1d4ed8 !important;
-            font-weight: 600 !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
             text-decoration: none !important;
+            line-height: 1.4 !important;
         }
-        .gs-snippet {
+        .gs-title:hover {
+            color: #059669 !important;
+        }
+
+        /* URL/domain */
+        .gsc-url-top,
+        .gs-visibleUrl,
+        .gs-visibleUrl-long {
+            color: #64748b !important;
+            font-size: 10px !important;
+            font-weight: 500 !important;
+        }
+
+        /* Snippet / deskripsi */
+        .gs-snippet,
+        .gs-snippet b {
             color: #475569 !important;
+            font-size: 11.5px !important;
+            line-height: 1.6 !important;
+            font-weight: 400 !important;
+        }
+
+        /* Thumbnail / image jika ada */
+        .gsc-thumbnail-inside,
+        .gsc-url-top { padding: 0 !important; }
+
+        /* Info bar di bawah hasil */
+        .gsc-results .gsc-cursor-box { display: none !important; }
+
+        /* Navigasi halaman (pagination) */
+        .gsc-cursor-page {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 30px !important;
+            height: 30px !important;
+            border-radius: 8px !important;
             font-size: 12px !important;
-            line-height: 1.5 !important;
+            font-weight: 600 !important;
+            color: #475569 !important;
+            border: 1px solid #e2e8f0 !important;
+            margin: 2px !important;
+            cursor: pointer !important;
+            transition: background-color 0.15s !important;
+        }
+        .gsc-cursor-current-page {
+            background-color: #059669 !important;
+            color: #ffffff !important;
+            border-color: #059669 !important;
+        }
+        .gsc-cursor-box {
+            display: flex !important;
+            justify-content: center !important;
+            padding: 12px 0 4px !important;
+            margin-top: 4px !important;
+        }
+
+        /* Pesan tidak ditemukan */
+        .gs-no-results-result .gs-snippet {
+            font-size: 13px !important;
+            color: #94a3b8 !important;
+            padding: 20px 0 !important;
+            text-align: center !important;
+        }
+
+        /* Chip topik */
+        .chip-topik {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .chip-topik:not(.active) {
+            background: #f1f5f9;
+            color: #64748b;
+            border-color: #e2e8f0;
+        }
+        .chip-topik:not(.active):hover {
+            background: #e2e8f0;
+        }
+        .chip-topik.active {
+            background: #d1fae5;
+            color: #059669;
+            border-color: #6ee7b7;
+        }
+
+        /* Skeleton shimmer */
+        @keyframes shimmer {
+            0% { background-position: -400px 0; }
+            100% { background-position: 400px 0; }
+        }
+        .skeleton-shimmer {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 800px 100%;
+            animation: shimmer 1.4s infinite;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body class="flex justify-center min-h-screen bg-slate-900 sm:bg-slate-200">
-    <!-- FRAME APLIKASI (Presisi Mobile Frame) -->
+    <!-- FRAME APLIKASI -->
     <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-300">
 
         <!-- HEADER STICKY -->
@@ -81,571 +209,212 @@
             <div class="px-4 flex items-center justify-between"
                  style="height:calc(60px + env(safe-area-inset-top,0px)); padding-top:env(safe-area-inset-top,0px);">
                 <div class="flex items-center gap-3">
-                    <a href="index.html" aria-label="Kembali ke Beranda" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
+                    <a href="index.html" aria-label="Kembali" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
                         <i class="fas fa-arrow-left"></i>
                     </a>
                     <div>
-                        <h1 class="text-sm font-bold text-white tracking-wide">Materi Pembelajaran</h1>
-                        <p class="text-[10px] text-emerald-100 font-medium leading-none mt-0.5">Penelusuran Edukasi Terpadu</p>
+                        <h1 class="text-sm font-bold text-white tracking-wide">Materi Argumentasi</h1>
+                        <p class="text-[10px] text-emerald-100 font-medium leading-none mt-0.5">Telusuri dari Google</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-1.5">
-                    <button onclick="fokusCari()" aria-label="Cari Materi" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
-                        <i class="fas fa-search text-sm"></i>
-                    </button>
-                    <button onclick="refreshDataMateri()" title="Sinkronkan Penelusuran" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
-                        <i id="btnRefreshIcon" class="fas fa-rotate text-sm"></i>
-                    </button>
-                </div>
             </div>
 
-            <!-- SEARCH BAR MODERN GOOGLE STYLE -->
-            <div class="bg-emerald-800/90 px-4 pb-3 pt-1 border-t border-white/10">
-                <div class="bg-white rounded-2xl flex items-center px-3 py-2 shadow-sm border border-emerald-700/30">
-                    <i class="fab fa-google text-slate-400 text-xs mr-2.5"></i>
-                    <input id="inputCariMateri" type="text" 
-                           placeholder="Telusuri materi, struktur, contoh, kaidah..." 
-                           class="w-full bg-transparent outline-none text-slate-800 text-xs placeholder-slate-400 font-normal"
-                           oninput="onInputCari(this.value)"
-                           onkeydown="if(event.key === 'Enter') eksekusiCariGoogle()">
-                    <button id="btnClearCari" onclick="bersihkanCari()" class="hidden text-slate-300 hover:text-slate-500 ml-1.5 transition">
-                        <i class="fas fa-circle-xmark"></i>
+            <!-- SEARCH BAR -->
+            <div class="bg-emerald-800/80 px-4 pb-3 pt-1 border-t border-white/10">
+                <form onsubmit="cariMateri(event)" class="bg-white rounded-2xl flex items-center px-3 py-2 shadow-sm border border-emerald-700/20">
+                    <i class="fab fa-google text-slate-400 text-xs mr-2"></i>
+                    <input id="inputCari"
+                           type="text"
+                           placeholder="Cari struktur, contoh, kaidah bahasa..."
+                           value="teks argumentasi bahasa indonesia"
+                           class="w-full bg-transparent outline-none text-slate-800 text-xs placeholder-slate-400"
+                           autocomplete="off">
+                    <button type="button" id="btnHapusCari" onclick="hapusInput()" class="hidden text-slate-300 hover:text-slate-500 ml-1 transition">
+                        <i class="fas fa-circle-xmark text-sm"></i>
                     </button>
-                    <button onclick="eksekusiCariGoogle()" class="ml-2 bg-brand-green text-white w-7 h-7 rounded-xl flex items-center justify-center active:scale-90 transition shadow-2xs shrink-0" title="Cari">
+                    <button type="submit" class="ml-2 bg-brand-green text-white w-7 h-7 rounded-xl flex items-center justify-center active:scale-90 transition shrink-0">
                         <i class="fas fa-magnifying-glass text-[11px]"></i>
                     </button>
-                </div>
+                </form>
             </div>
 
-            <!-- TAB FILTER SUMBER & KATEGORI -->
-            <nav id="tabsMateri" class="bg-white border-b border-slate-200 flex overflow-x-auto hide-scrollbar px-3 py-2 gap-1.5">
-                <button onclick="setKategori('semua')" class="tab-chip active px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap bg-emerald-50 text-brand-green border border-emerald-200 transition">Semua</button>
-                <button onclick="setKategori('struktur')" class="tab-chip px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">Struktur Argumen</button>
-                <button onclick="setKategori('ciri')" class="tab-chip px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">Pengertian &amp; Ciri</button>
-                <button onclick="setKategori('kaidah')" class="tab-chip px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">Kaidah Bahasa</button>
-                <button onclick="setKategori('contoh')" class="tab-chip px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">Contoh Teks</button>
-                <button onclick="setKategori('kompas')" class="tab-chip px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">Kompas Skola</button>
-                <button onclick="setKategori('detik')" class="tab-chip px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">Detik Edu</button>
+            <!-- CHIP TOPIK CEPAT -->
+            <nav class="bg-white border-b border-slate-200 flex overflow-x-auto hide-scrollbar px-3 py-2 gap-1.5">
+                <button class="chip-topik active" onclick="pilihTopik(this, 'teks argumentasi bahasa indonesia')">Semua</button>
+                <button class="chip-topik" onclick="pilihTopik(this, 'struktur teks argumentasi')">Struktur</button>
+                <button class="chip-topik" onclick="pilihTopik(this, 'ciri-ciri teks argumentasi')">Ciri-Ciri</button>
+                <button class="chip-topik" onclick="pilihTopik(this, 'kaidah kebahasaan teks argumentasi')">Kaidah Bahasa</button>
+                <button class="chip-topik" onclick="pilihTopik(this, 'contoh teks argumentasi singkat')">Contoh Teks</button>
+                <button class="chip-topik" onclick="pilihTopik(this, 'sinonim kata argumentasi')">Sinonim</button>
             </nav>
         </header>
 
         <!-- KONTEN UTAMA -->
-        <main class="flex-grow p-4 space-y-4">
+        <main class="flex-grow px-4 pt-4 pb-24 space-y-4">
 
-            <!-- GOOGLE PROGRAMMABLE SEARCH ENGINE (CSE) WIDGET CONTAINER -->
-            <!-- Teraktivasi otomatis jika GOOGLE_CSE_CX diisi pada script -->
-            <div id="googleCseContainer" class="hidden bg-white p-3.5 rounded-2xl shadow-xs border border-emerald-200">
-                <div class="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100">
-                    <i class="fab fa-google text-blue-500 text-sm"></i>
-                    <span class="text-xs font-bold text-slate-800">Google Programmable Search (CSE)</span>
+            <!-- SKELETON LOADING (tampil saat CSE belum dimuat) -->
+            <div id="skeletonLoading" class="space-y-3">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 overflow-hidden">
+                    <div class="skeleton-shimmer h-3 w-32 mb-3"></div>
+                    <div class="skeleton-shimmer h-4 w-4/5 mb-2"></div>
+                    <div class="skeleton-shimmer h-3 w-full mb-1"></div>
+                    <div class="skeleton-shimmer h-3 w-3/4"></div>
                 </div>
-                <div class="gcse-search"></div>
-            </div>
-
-            <!-- STATISTIK & HEADER HASIL PENELUSURAN -->
-            <div class="flex items-center justify-between px-1">
-                <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <h2 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Hasil Penelusuran Edukasi</h2>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 overflow-hidden">
+                    <div class="skeleton-shimmer h-3 w-24 mb-3"></div>
+                    <div class="skeleton-shimmer h-4 w-3/4 mb-2"></div>
+                    <div class="skeleton-shimmer h-3 w-full mb-1"></div>
+                    <div class="skeleton-shimmer h-3 w-5/6"></div>
                 </div>
-                <span id="labelJumlahHasil" class="text-[11px] font-semibold text-slate-400">Memuat...</span>
-            </div>
-
-            <!-- SKELETON LOADING -->
-            <div id="skeletonMateri" class="space-y-3">
-                <div class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200 animate-pulse">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="h-3 bg-slate-200 rounded w-24"></div>
-                        <div class="h-3 bg-slate-200 rounded w-16"></div>
-                    </div>
-                    <div class="h-4 bg-slate-300 rounded w-3/4 mb-2"></div>
-                    <div class="h-3 bg-slate-200 rounded w-full mb-1"></div>
-                    <div class="h-3 bg-slate-200 rounded w-5/6"></div>
-                </div>
-                <div class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200 animate-pulse">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="h-3 bg-slate-200 rounded w-20"></div>
-                        <div class="h-3 bg-slate-200 rounded w-14"></div>
-                    </div>
-                    <div class="h-4 bg-slate-300 rounded w-2/3 mb-2"></div>
-                    <div class="h-3 bg-slate-200 rounded w-full mb-1"></div>
-                    <div class="h-3 bg-slate-200 rounded w-4/6"></div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 overflow-hidden">
+                    <div class="skeleton-shimmer h-3 w-28 mb-3"></div>
+                    <div class="skeleton-shimmer h-4 w-2/3 mb-2"></div>
+                    <div class="skeleton-shimmer h-3 w-full mb-1"></div>
+                    <div class="skeleton-shimmer h-3 w-4/5"></div>
                 </div>
             </div>
 
-            <!-- CONTAINER LIST HASIL PENELUSURAN GOOGLE & WEB PIHAK KETIGA -->
-            <div id="daftarMateriWeb" class="space-y-3"></div>
-
-            <!-- STATE KOSONG / TIDAK DITEMUKAN -->
-            <div id="stateKosongWeb" class="hidden flex-col items-center justify-center py-12 text-center text-slate-400">
-                <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-2xl mb-3 text-slate-400">
-                    <i class="fas fa-magnifying-glass"></i>
-                </div>
-                <h3 class="text-sm font-bold text-slate-700 mb-1">Tidak Ada Hasil yang Cocok</h3>
-                <p class="text-xs text-slate-400 max-w-[260px] leading-relaxed mb-4">
-                    Topik yang Anda cari belum ditemukan di indeks edukasi. Cari langsung di Google atau reset kata kunci.
-                </p>
-                <div class="flex flex-col gap-2 w-full max-w-xs">
-                    <button onclick="bukaPencarianGoogleEksternal()" class="w-full bg-brand-green hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl active:scale-95 transition shadow-xs flex items-center justify-center gap-2">
-                        <i class="fab fa-google"></i> Buka Pencarian di Google.com
-                    </button>
-                    <button onclick="bersihkanCari(); setKategori('semua')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2 px-4 rounded-xl active:scale-95 transition">
-                        Tampilkan Semua Materi
-                    </button>
+            <!-- GOOGLE CSE WIDGET -->
+            <!-- Hasil pencarian Google asli tampil di sini -->
+            <div id="cseWrapper" class="hidden">
+                <div class="gcse-searchresults-only
+                            data-queryParameterName="q"
+                            data-defaultToImageSearch="false"
+                            data-enableImageSearch="false"
+                            data-mobileLayout="enabled"
+                            data-safeSearch="active">
                 </div>
             </div>
 
-            <!-- KOTAK TAUTAN LANGSUNG KE GOOGLE SEARCH ASLI -->
-            <div class="bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-emerald-200/90 rounded-2xl p-4 shadow-xs">
-                <div class="flex items-start gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-white border border-emerald-200 flex items-center justify-center text-lg text-blue-600 shrink-0 shadow-2xs">
-                        <i class="fab fa-google"></i>
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <h4 class="text-xs font-bold text-slate-800 leading-snug">Ingin Eksplorasi Lebih Lanjut di Google?</h4>
-                        <p class="text-[11px] text-slate-600 leading-relaxed mt-0.5">
-                            Telusuri ratusan jurnal, artikel ilmiah, dan bahan ajar teks argumentasi langsung di Google Search dengan filter aman.
-                        </p>
-                        <button onclick="bukaPencarianGoogleEksternal()" class="mt-3 inline-flex items-center gap-2 bg-brand-green hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl active:scale-95 transition shadow-2xs">
-                            <i class="fas fa-arrow-up-right-from-square text-[10px]"></i>
-                            <span>Buka di Google Search</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- FOOTER RESMI -->
-            <div class="pt-4 pb-8 text-center text-[10px] text-slate-400 font-medium">
-                &copy; 2026 Argumentasi App &bull; Terhubung ke Google CSE &amp; Media Edukasi Terpercaya
-            </div>
         </main>
+
+        <!-- FOOTER -->
+        <footer class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t border-slate-200 z-40 py-2.5 px-4">
+            <p class="text-center text-[10px] text-slate-400 font-medium">
+                <i class="fab fa-google text-blue-500 mr-1"></i>
+                Hasil pencarian oleh Google Programmable Search &bull;
+                <span class="text-emerald-600">Safe Search Aktif</span>
+            </p>
+        </footer>
     </div>
 
-    <!-- SCRIPT DATA PENELUSURAN, GOOGLE CSE & CACHE 3 HARI DI BELAKANG LAYAR -->
     <script>
-        // =========================================================================
-        // KONFIGURASI GOOGLE CSE (CUSTOM SEARCH ENGINE) & API
-        // =========================================================================
-        // Jika Anda memiliki Search Engine ID dari Google CSE:
-        // https://programmablesearchengine.google.com/
-        // Cukup tempel ID Anda pada variabel GOOGLE_CSE_CX di bawah ini.
-        // Contoh: const GOOGLE_CSE_CX = "012345678901234567890:abcdefghijk";
-        const GOOGLE_CSE_CX = "94b731495af8e474f"; 
+        // ============================================================
+        // GOOGLE CSE — PENCARIAN NYATA DARI GOOGLE
+        // CX: 94b731495af8e474f
+        // ============================================================
 
-        // Opsional: Google Custom Search API Key dari Google Cloud Console
-        const GOOGLE_API_KEY = "";
+        const TOPIK_DEFAULT = "teks argumentasi bahasa indonesia";
+        let queryAktif = TOPIK_DEFAULT;
 
-        // Kunci penyimpanan LocalStorage & Durasi 3 Hari (dalam milidetik)
-        // Disimpan otomatis di belakang layar tanpa notifikasi UI
-        const CACHE_KEY = "arg_google_materi_cache_v4";
-        const CACHE_TTL_MS = 3 * 24 * 60 * 60 * 1000; // 3 hari (259.200.000 ms)
+        // Jalankan pencarian awal saat CSE siap
+        window.__gcse = {
+            parsetags: 'explicit',
+            callback: function() {
+                // CSE sudah siap, tampilkan hasil
+                document.getElementById('skeletonLoading').classList.add('hidden');
+                document.getElementById('cseWrapper').classList.remove('hidden');
 
-        // FILTER KETAT: Memblokir judi, slot, gacor, pornografi, dan domain spam
-        const BLOCKED_PATTERNS = [
-            "slot", "judi", "gacor", "poker", "casino", "togel", "maxwin", "dewaslot", 
-            "pragmatic", "zeus", "sbobet", "betting", "taruhan", "bandar", "bokep", 
-            "porn", "xxx", "cheat", "hack", ".xyz", ".top", ".vip", ".bet", "link gacor",
-            "agen judi", "situs slot", "jackpot slot", "daftar slot", "rtp slot"
-        ];
-
-        function isAman(text) {
-            if (!text) return true;
-            const t = String(text).toLowerCase();
-            return !BLOCKED_PATTERNS.some(p => t.includes(p));
-        }
-
-        // DATABASE HASIL PENELUSURAN WEB EDUKASI TERVERIFIKASI
-        // Menghubungkan langsung ke situs resmi pihak ketiga (Kompas, Detik Edu, Kemdikbud, Gramedia, Ruangguru, Tirto)
-        const MASTER_WEB_RESOURCES = [
-            {
-                id: "kompas_1",
-                sumber: "Kompas.com - Skola",
-                domain: "kompas.com",
-                badgeWarna: "bg-orange-50 text-orange-700 border-orange-200",
-                icon: "fa-newspaper text-orange-500",
-                kategori: "struktur",
-                judul: "Teks Argumentasi: Pengertian, Karakteristik, Struktur, dan Contoh",
-                ringkasan: "Penjelasan komprehensif mengenai definisi teks argumentasi, karakteristik naskah berlandaskan logika dan fakta empiris, struktur 3 bagian pokok (tesis, tubuh argumen, penegasan ulang), serta contoh analisis paragraf.",
-                url: "https://www.kompas.com/skola/read/2020/12/17/143527269/teks-argumentasi-pengertian-karakteristik-struktur-dan-contoh",
-                tags: ["Kompas", "Struktur", "Karakteristik"]
-            },
-            {
-                id: "detik_1",
-                sumber: "Detik.com - Detik Edu",
-                domain: "detik.com",
-                badgeWarna: "bg-blue-50 text-blue-700 border-blue-200",
-                icon: "fa-graduation-cap text-blue-500",
-                kategori: "ciri",
-                judul: "Teks Argumentasi: Pengertian, Struktur, Ciri-ciri, dan Contohnya",
-                ringkasan: "Kajian lengkap struktur teks argumentatif, perbedaan pendekatan deduktif vs induktif, ciri-ciri bahasa denotatif, serta tips menyusun premis yang meyakinkan pembaca dalam ujian dan karya tulis ilmiah.",
-                url: "https://www.detik.com/edu/detikpedia/d-6499318/teks-argumentasi-pengertian-struktur-ciri-ciri-dan-contohnya",
-                tags: ["DetikEdu", "Ciri-Ciri", "Definisi"]
-            },
-            {
-                id: "kemdikbud_1",
-                sumber: "Kemdikbudristek RI",
-                domain: "kemdikbud.go.id",
-                badgeWarna: "bg-emerald-50 text-emerald-700 border-emerald-200",
-                icon: "fa-landmark text-emerald-600",
-                kategori: "struktur",
-                judul: "Mengenal Teks Argumentasi: Pengertian, Struktur, dan Ciri-Cirinya",
-                ringkasan: "Materi kurikulum resmi Kemdikbud untuk penguatan literasi: bagaimana menyajikan opini yang bertanggung jawab disertai bukti statistik, data penelitian, dan penalaran runtut tanpa bias emosional.",
-                url: "https://ditsmp.kemdikbud.go.id/mengenal-teks-argumentasi-pengertian-struktur-dan-ciri-cirinya/",
-                tags: ["Kemdikbud", "Kurikulum", "Resmi"]
-            },
-            {
-                id: "gramedia_1",
-                sumber: "Gramedia Literasi",
-                domain: "gramedia.com",
-                badgeWarna: "bg-indigo-50 text-indigo-700 border-indigo-200",
-                icon: "fa-book-bookmark text-indigo-500",
-                kategori: "kaidah",
-                judul: "Teks Argumentasi: Ciri, Struktur, Jenis, dan Pola Pengembangan Paragraf",
-                ringkasan: "Membahas teknik penulisan paragraf kausalitas, analogi, generalisasi, pemakaian konjungsi antar-klausa sebab-akibat, serta kata kerja mental evaluatif dalam penulisan esai kritis.",
-                url: "https://www.gramedia.com/literasi/teks-argumentasi/",
-                tags: ["Gramedia", "Kaidah Bahasa", "Pola Paragraf"]
-            },
-            {
-                id: "kompas_2",
-                sumber: "Kompas.com - Skola",
-                domain: "kompas.com",
-                badgeWarna: "bg-orange-50 text-orange-700 border-orange-200",
-                icon: "fa-spell-check text-orange-500",
-                kategori: "kaidah",
-                judul: "Kaidah Kebahasaan Teks Argumentasi dan Ciri-Cirinya",
-                ringkasan: "Rangkuman aturan tata bahasa teks argumentasi: verba mental, kata hubung koordinatif dan subordinatif (karena, akibatnya, oleh sebab itu), serta penggunaan kosakata teknis bidang ilmu tertentu.",
-                url: "https://www.kompas.com/skola/read/2022/08/29/110000869/struktur-teks-argumentasi-dan-ciri-kebahasaannya",
-                tags: ["Kompas", "Kaidah Bahasa", "Konjungsi"]
-            },
-            {
-                id: "detik_2",
-                sumber: "Detik.com - Detik Edu",
-                domain: "detik.com",
-                badgeWarna: "bg-blue-50 text-blue-700 border-blue-200",
-                icon: "fa-file-lines text-blue-500",
-                kategori: "contoh",
-                judul: "5 Contoh Teks Argumentasi Singkat Beserta Strukturnya",
-                ringkasan: "Koleksi teks argumentasi bertema ketahanan pangan, sampah plastik, literasi digital di kalangan remaja, dan pendidikan karakter lengkap dengan pembedahan bagian pendahuluan, isi, dan simpulan.",
-                url: "https://www.detik.com/edu/detikpedia/d-6761005/5-contoh-teks-argumentasi-singkat-beserta-strukturnya",
-                tags: ["DetikEdu", "Contoh Teks", "Bedah Struktur"]
-            },
-            {
-                id: "ruangguru_1",
-                sumber: "Ruangguru Blog",
-                domain: "ruangguru.com",
-                badgeWarna: "bg-teal-50 text-teal-700 border-teal-200",
-                icon: "fa-lightbulb text-teal-500",
-                kategori: "ciri",
-                judul: "Mengenal Teks Argumentasi: Ciri, Struktur & Contoh Lengkap",
-                ringkasan: "Panduan belajar interaktif membedakan fakta dan opini, tips menyusun kalimat utama yang tajam, serta cara menghindari kekeliruan bernalar (logical fallacy) saat berargumen.",
-                url: "https://www.ruangguru.com/blog/mengenal-teks-argumentasi",
-                tags: ["Ruangguru", "Materi Siswa", "Logika"]
-            },
-            {
-                id: "kompas_3",
-                sumber: "Kompas.com - Skola",
-                domain: "kompas.com",
-                badgeWarna: "bg-orange-50 text-orange-700 border-orange-200",
-                icon: "fa-leaf text-orange-500",
-                kategori: "contoh",
-                judul: "Contoh Teks Argumentasi tentang Sampah dan Lingkungan Hidup",
-                ringkasan: "Model teks argumentasi aktual dengan data dampak mikroplastik bagi kesehatan dan ekosistem laut, diiringi argumentasi logis mengenai pentingnya regulasi pengurangan plastik sekali pakai.",
-                url: "https://www.kompas.com/skola/read/2023/07/26/160000269/contoh-teks-argumentasi-tentang-sampah",
-                tags: ["Kompas", "Contoh Teks", "Lingkungan"]
-            },
-            {
-                id: "kemdikbud_2",
-                sumber: "Repositori Institusi Kemdikbud",
-                domain: "kemdikbud.go.id",
-                badgeWarna: "bg-emerald-50 text-emerald-700 border-emerald-200",
-                icon: "fa-book-open-reader text-emerald-600",
-                kategori: "struktur",
-                judul: "Modul Pembelajaran SMA: Menulis Teks Argumentasi Berbasis Masalah",
-                ringkasan: "Bahan ajar mandiri dari Kemdikbud: panduan langkah demi langkah memetakan masalah faktual, merumuskan tesis yang kuat, menyusun penalaran induktif-deduktif, dan menulis simpulan persuasif.",
-                url: "https://repositori.kemdikbud.go.id/21985/",
-                tags: ["Kemdikbud", "Modul Belajar", "Bahan Ajar"]
-            },
-            {
-                id: "tirto_1",
-                sumber: "Tirto.id Edukasi",
-                domain: "tirto.id",
-                badgeWarna: "bg-red-50 text-red-700 border-red-200",
-                icon: "fa-newspaper text-red-500",
-                kategori: "ciri",
-                judul: "Pengertian Teks Argumentasi, Struktur, Ciri-Ciri, dan Contohnya",
-                ringkasan: "Ulasan mendalam penulisan wacana kritis: bagaimana membangun sintesis pemikiran berdasarkan bukti empiris, struktur logis, dan kaidah penulisan bahasa Indonesia baku.",
-                url: "https://tirto.id/pengertian-teks-argumentasi-struktur-ciri-ciri-dan-contohnya-gcv3",
-                tags: ["Tirto", "Analisis", "Literasi Kritis"]
-            },
-            {
-                id: "detik_3",
-                sumber: "Detik.com - Detik Edu",
-                domain: "detik.com",
-                badgeWarna: "bg-blue-50 text-blue-700 border-blue-200",
-                icon: "fa-pen-nib text-blue-500",
-                kategori: "kaidah",
-                judul: "Kaidah Kebahasaan Teks Argumentasi Lengkap dengan Contoh Kalimat",
-                ringkasan: "Mengenal ragam kata keterangan pewatas, konjungsi pertentangan (namun, sebaliknya), konjungsi kausalitas (karena itu, sehingga), dan gaya bahasa denotatif dalam artikel ilmiah.",
-                url: "https://www.detik.com/edu/detikpedia/d-6850239/kaidah-kebahasaan-teks-argumentasi-lengkap-dengan-contoh-kalimat",
-                tags: ["DetikEdu", "Kaidah Kebahasaan", "Kosakata"]
-            },
-            {
-                id: "gramedia_2",
-                sumber: "Gramedia Literasi",
-                domain: "gramedia.com",
-                badgeWarna: "bg-indigo-50 text-indigo-700 border-indigo-200",
-                icon: "fa-list-check text-indigo-500",
-                kategori: "contoh",
-                judul: "15 Contoh Teks Argumentasi Berbagai Topik Aktual dan Pembahasannya",
-                ringkasan: "Referensi lengkap teks argumentasi bertema pemanasan global, pendidikan di era kecerdasan buatan, kemandirian pangan lokal, dan etika bermedia sosial beserta penelaahan strukturnya.",
-                url: "https://www.gramedia.com/literasi/contoh-teks-argumentasi/",
-                tags: ["Gramedia", "Contoh Teks", "Topik Aktual"]
-            }
-        ];
-
-        let semuaHasilMateri = [];
-        let kategoriDipilih = "semua";
-        let kataKunciQuery = "";
-
-        // INISIALISASI HALAMAN & GOOGLE CSE
-        document.addEventListener("DOMContentLoaded", () => {
-            inisialisasiGoogleCSE();
-            muatMateriDenganCache3Hari();
-        });
-
-        // AKTIVASI GOOGLE CSE BILA TERSEDIA KONFIGURASI
-        function inisialisasiGoogleCSE() {
-            if (GOOGLE_CSE_CX && GOOGLE_CSE_CX.trim() !== "") {
-                const cseContainer = document.getElementById("googleCseContainer");
-                if (cseContainer) cseContainer.classList.remove("hidden");
-
-                const script = document.createElement("script");
-                script.async = true;
-                script.src = `https://cse.google.com/cse.js?cx=${encodeURIComponent(GOOGLE_CSE_CX.trim())}`;
-                document.head.appendChild(script);
-            }
-        }
-
-        // SISTEM CACHE 3 HARI DI BELAKANG LAYAR
-        async function muatMateriDenganCache3Hari() {
-            tampilkanLoading(true);
-
-            let dataCache = null;
-            try {
-                const raw = localStorage.getItem(CACHE_KEY);
-                if (raw) dataCache = JSON.parse(raw);
-            } catch (e) {}
-
-            const sekarang = Date.now();
-            const adaCacheValid = dataCache && dataCache.timestamp && (sekarang - dataCache.timestamp < CACHE_TTL_MS) && Array.isArray(dataCache.items);
-
-            if (adaCacheValid) {
-                // Membaca dari cache internal 3 hari
-                semuaHasilMateri = dataCache.items;
-                tampilkanLoading(false);
-                renderHasilMateri();
-            } else {
-                // Cache kedaluwarsa (> 3 hari) atau pertama kali dibuka -> Sinkronkan ulang
-                await sinkronkanMateriBaru();
-            }
-        }
-
-        // SINKRONISASI MATERI DENGAN FILTER AMAN
-        async function sinkronkanMateriBaru() {
-            tampilkanLoading(true);
-            const refreshIcon = document.getElementById("btnRefreshIcon");
-            if (refreshIcon) refreshIcon.classList.add("fa-spin");
-
-            // Filter ketat memastikan tidak ada situs judi atau kata berbahaya
-            const dataAman = MASTER_WEB_RESOURCES.filter(item => {
-                return isAman(item.judul) && isAman(item.ringkasan) && isAman(item.url);
-            });
-
-            // Simpan otomatis ke LocalStorage per 3 hari tanpa notifikasi UI
-            const cachePayload = {
-                timestamp: Date.now(),
-                items: dataAman
-            };
-            try {
-                localStorage.setItem(CACHE_KEY, JSON.stringify(cachePayload));
-            } catch (e) {}
-
-            semuaHasilMateri = dataAman;
-
-            setTimeout(() => {
-                if (refreshIcon) refreshIcon.classList.remove("fa-spin");
-                tampilkanLoading(false);
-                renderHasilMateri();
-            }, 350);
-        }
-
-        // REFRESH DATA (Membersihkan cache dan memuat ulang di belakang layar)
-        function refreshDataMateri() {
-            localStorage.removeItem(CACHE_KEY);
-            sinkronkanMateriBaru();
-        }
-
-        // RENDER DAFTAR MATERI WEB DENGAN TAUTAN LANGSUNG (TARGET="_BLANK")
-        function renderHasilMateri() {
-            const container = document.getElementById("daftarMateriWeb");
-            const stateKosong = document.getElementById("stateKosongWeb");
-            const labelJumlah = document.getElementById("labelJumlahHasil");
-            if (!container) return;
-
-            const q = kataKunciQuery.trim().toLowerCase();
-
-            const hasil = semuaHasilMateri.filter(m => {
-                // Filter kategori
-                let cocokKategori = true;
-                if (kategoriDipilih === "kompas") {
-                    cocokKategori = m.domain.includes("kompas.com");
-                } else if (kategoriDipilih === "detik") {
-                    cocokKategori = m.domain.includes("detik.com");
-                } else if (kategoriDipilih !== "semua") {
-                    cocokKategori = m.kategori === kategoriDipilih;
+                // Eksekusi pencarian default
+                if (window.google && window.google.search && window.google.search.cse) {
+                    google.search.cse.element.render({
+                        div: document.querySelector('#cseWrapper .gcse-searchresults-only'),
+                        tag: 'searchresults-only',
+                        gname: 'gsearch'
+                    });
+                    // Jalankan query awal
+                    setTimeout(() => jalankanCari(queryAktif), 100);
                 }
-
-                // Filter kata kunci
-                const cocokCari = !q || 
-                    m.judul.toLowerCase().includes(q) || 
-                    m.ringkasan.toLowerCase().includes(q) || 
-                    m.sumber.toLowerCase().includes(q) || 
-                    (m.tags && m.tags.some(t => t.toLowerCase().includes(q)));
-
-                return cocokKategori && cocokCari;
-            });
-
-            if (labelJumlah) {
-                labelJumlah.textContent = `${hasil.length} Hasil Ditemukan`;
             }
+        };
 
-            if (hasil.length === 0) {
-                container.innerHTML = "";
-                stateKosong.classList.remove("hidden");
-                stateKosong.classList.add("flex");
-                return;
+        // Fallback: jika CSE tidak terpanggil callback dalam 5 detik
+        setTimeout(() => {
+            const skel = document.getElementById('skeletonLoading');
+            if (skel && !skel.classList.contains('hidden')) {
+                // Sembunyikan skeleton, tampilkan cseWrapper
+                skel.classList.add('hidden');
+                document.getElementById('cseWrapper').classList.remove('hidden');
             }
+        }, 5000);
 
-            stateKosong.classList.add("hidden");
-            stateKosong.classList.remove("flex");
+        // Pantau perubahan DOM untuk menyembunyikan skeleton saat CSE mulai merender
+        const observer = new MutationObserver(() => {
+            const wrapper = document.getElementById('cseWrapper');
+            const skel = document.getElementById('skeletonLoading');
+            if (!wrapper) return;
+            const hasResults = wrapper.querySelector('.gsc-result, .gs-no-results-result');
+            if (hasResults) {
+                if (skel) skel.classList.add('hidden');
+                wrapper.classList.remove('hidden');
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
 
-            container.innerHTML = hasil.map(m => {
-                const chips = (m.tags || []).map(t => 
-                    `<span class="bg-slate-100 text-slate-500 text-[9px] px-2 py-0.5 rounded-full font-medium">#${t}</span>`
-                ).join(" ");
+        // ---- FUNGSI CARI ----
+        function cariMateri(event) {
+            if (event) event.preventDefault();
+            const input = document.getElementById('inputCari');
+            const q = input ? input.value.trim() : '';
+            if (!q) return;
+            queryAktif = q;
+            jalankanCari(q);
 
-                return `
-                <article class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs hover:border-brand-green hover:shadow-md transition-all duration-200">
-                    <!-- URL BREADCRUMB & BADGE SUMBER -->
-                    <div class="flex items-center justify-between gap-2 mb-2">
-                        <div class="flex items-center gap-1.5 min-w-0">
-                            <span class="text-[9px] font-bold border px-2 py-0.5 rounded-full uppercase tracking-wider ${m.badgeWarna || 'bg-slate-100 text-slate-700'}">
-                                ${m.sumber}
-                            </span>
-                            <span class="text-[10px] text-slate-400 font-mono truncate">
-                                ${m.domain}
-                            </span>
-                        </div>
-                        <span class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1 shrink-0">
-                            <i class="fas fa-circle-check text-[9px]"></i> Terverifikasi
-                        </span>
-                    </div>
-
-                    <!-- KONTEN HASIL PENELUSURAN: KLIK LANGSUNG MEMBUKA SITUS PIHAK KETIGA ASLI -->
-                    <div class="flex items-start gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-lg shrink-0 mt-0.5">
-                            <i class="fas ${m.icon || 'fa-globe text-slate-500'}"></i>
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <a href="${m.url}" target="_blank" rel="noopener noreferrer" 
-                               class="font-bold text-sm text-blue-700 hover:text-emerald-700 leading-snug line-clamp-2 transition-colors block">
-                                ${m.judul}
-                            </a>
-                            <p class="text-xs text-slate-500 line-clamp-3 mt-1 leading-relaxed">
-                                ${m.ringkasan}
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- FOOTER KARTU DENGAN TOMBOL BUKA SITUS ASLI -->
-                    <div class="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100">
-                        <div class="flex items-center gap-1 flex-wrap">${chips}</div>
-                        <a href="${m.url}" target="_blank" rel="noopener noreferrer"
-                           class="inline-flex items-center gap-1.5 bg-emerald-50 hover:bg-brand-green text-brand-green hover:text-white px-3 py-1.5 rounded-xl font-bold text-xs transition-colors shrink-0">
-                            <span>Buka Web</span>
-                            <i class="fas fa-arrow-up-right-from-square text-[9px]"></i>
-                        </a>
-                    </div>
-                </article>
-                `;
-            }).join("");
+            // Perbarui status chip
+            document.querySelectorAll('.chip-topik').forEach(c => c.classList.remove('active'));
         }
 
-        // FILTER KATEGORI TABS
-        function setKategori(kat) {
-            kategoriDipilih = kat;
-            const buttons = document.querySelectorAll("#tabsMateri .tab-chip");
-            buttons.forEach(b => {
-                b.className = "tab-chip px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:bg-slate-100 transition";
-            });
-            event.target.className = "tab-chip active px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap bg-emerald-50 text-brand-green border border-emerald-200 transition";
-            renderHasilMateri();
+        function jalankanCari(query) {
+            try {
+                // Metode 1: pakai API element Google CSE
+                if (window.google && window.google.search) {
+                    const el = google.search.cse.element.getElement('gsearch');
+                    if (el) {
+                        el.execute(query);
+                        return;
+                    }
+                }
+            } catch(e) {}
+
+            // Metode 2: inject via input tersembunyi dan trigger form CSE
+            try {
+                const gscInput = document.querySelector('.gsc-input input, input[name="q"], .gsc-search-box input');
+                if (gscInput) {
+                    gscInput.value = query;
+                    const btn = document.querySelector('.gsc-search-button, .gsc-search-button-v2');
+                    if (btn) btn.click();
+                }
+            } catch(e) {}
         }
 
-        // PENCARIAN TUNDA
-        let searchTimer = null;
-        function onInputCari(val) {
-            const btnClear = document.getElementById("btnClearCari");
-            if (btnClear) btnClear.classList.toggle("hidden", !val);
-
-            clearTimeout(searchTimer);
-            searchTimer = setTimeout(() => {
-                kataKunciQuery = val;
-                renderHasilMateri();
-            }, 250);
-        }
-
-        function bersihkanCari() {
-            const input = document.getElementById("inputCariMateri");
-            if (input) input.value = "";
-            const btnClear = document.getElementById("btnClearCari");
-            if (btnClear) btnClear.classList.add("hidden");
-            kataKunciQuery = "";
-            renderHasilMateri();
-        }
-
-        function fokusCari() {
-            const input = document.getElementById("inputCariMateri");
+        function hapusInput() {
+            const input = document.getElementById('inputCari');
             if (input) {
+                input.value = '';
                 input.focus();
-                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
+            document.getElementById('btnHapusCari').classList.add('hidden');
         }
 
-        function eksekusiCariGoogle() {
-            const input = document.getElementById("inputCariMateri");
-            const val = input ? input.value.trim() : "";
-            if (val) {
-                kataKunciQuery = val;
-                renderHasilMateri();
+        // Chip topik cepat
+        function pilihTopik(el, query) {
+            document.getElementById('inputCari').value = query;
+            document.querySelectorAll('.chip-topik').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            queryAktif = query;
+            jalankanCari(query);
+        }
+
+        // Tampilkan/sembunyikan tombol hapus saat mengetik
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('inputCari');
+            const btnHapus = document.getElementById('btnHapusCari');
+            if (input && btnHapus) {
+                input.addEventListener('input', () => {
+                    btnHapus.classList.toggle('hidden', !input.value);
+                });
             }
-        }
-
-        // MEMBUKA PENELUSURAN LANGSUNG DI GOOGLE.COM
-        function bukaPencarianGoogleEksternal() {
-            const input = document.getElementById("inputCariMateri");
-            const q = (input && input.value.trim()) ? input.value.trim() : "teks argumentasi struktur ciri kaidah kebahasaan contoh";
-            // Filter parameter & safe search di Google
-            const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(q + ' bahasa indonesia edukasi')}&safe=active`;
-            window.open(googleSearchUrl, '_blank', 'noopener,noreferrer');
-        }
-
-        function tampilkanLoading(show) {
-            const skel = document.getElementById("skeletonMateri");
-            const cont = document.getElementById("daftarMateriWeb");
-            if (skel) skel.classList.toggle("hidden", !show);
-            if (cont) cont.classList.toggle("hidden", show);
-        }
+        });
     </script>
 </body>
 </html>
