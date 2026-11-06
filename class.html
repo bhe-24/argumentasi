@@ -257,12 +257,14 @@
                 }
 
                 const namaSiswa = localStorage.getItem('namaSiswaCendekia') || 'Siswa Anonim';
+                const fotoSiswa = localStorage.getItem('fotoSiswaCendekia') || localStorage.getItem('fotoProfilBase64') || '';
                 const xp = parseInt(localStorage.getItem('kelasPointsArg') || '0', 10) || 0;
+                const sid = getStudentId(kode);
 
                 $('loadingBar').style.width = '85%';
                 await withTimeout(
-                    setDoc(doc(db, `classes/${kode}/students`, getStudentId(kode)), {
-                        nama: namaSiswa, xp, joinedAt: serverTimestamp()
+                    setDoc(doc(db, `classes/${kode}/students`, sid), {
+                        nama: namaSiswa, xp, fotoUrl: fotoSiswa, joinedAt: serverTimestamp()
                     }, { merge: true }),
                     10000
                 );
@@ -272,7 +274,7 @@
                 btn.innerHTML = '<i class="fas fa-check"></i> Memasuki Ruang...';
                 
                 // Jeda sebentar agar transisinya terasa mulus sebelum pindah halaman
-                setTimeout(() => { window.location.href = `ruang_belajar_siswa.html?id=${encodeURIComponent(kode)}`; }, 400);
+                setTimeout(() => { window.location.href = `ruang_belajar_siswa.html?id=${encodeURIComponent(kode)}&sid=${encodeURIComponent(sid)}`; }, 400);
 
             } catch (error) {
                 console.error('Error gabung kelas:', error);
@@ -300,7 +302,7 @@
                     <h3 class="font-bold text-slate-800 text-sm mt-1 truncate">${esc(nama)}</h3>
                     <p class="text-[10px] text-slate-400">Kode: ${esc(id)}</p>
                 </div>
-                <a href="ruang_belajar_siswa.html?id=${encodeURIComponent(id)}" class="bg-brand-green text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm shrink-0">Masuk</a>
+                <a href="ruang_belajar_siswa.html?id=${encodeURIComponent(id)}&sid=${encodeURIComponent(getStudentId(id))}" class="bg-brand-green text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm shrink-0">Masuk</a>
             </div>`;
 
         const htmlArsip = (id, nama) => `
@@ -310,7 +312,7 @@
                     <h3 class="font-bold text-slate-700 text-sm mt-1 truncate">${esc(nama)}</h3>
                     <p class="text-[10px] text-slate-400">Kode: ${esc(id)}</p>
                 </div>
-                <a href="ruang_belajar_siswa.html?id=${encodeURIComponent(id)}" class="bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors shadow-sm shrink-0">Lihat Nilai</a>
+                <a href="ruang_belajar_siswa.html?id=${encodeURIComponent(id)}&sid=${encodeURIComponent(getStudentId(id))}" class="bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors shadow-sm shrink-0">Lihat Nilai</a>
             </div>`;
 
         /* Gambar dari data lokal (instan, skeleton langsung hilang) */

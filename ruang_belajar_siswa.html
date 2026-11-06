@@ -367,7 +367,14 @@
         const globalClassId = searchParams.get("id");
         let globalHandoutId = null;
         let globalGuruPaket = null;
-        const globalStudentId = searchParams.get("sid") || localStorage.getItem("siswa_" + globalClassId) || localStorage.getItem("studentId");
+        const globalStudentId = searchParams.get("sid") ||
+            (globalClassId ? localStorage.getItem("studentIdArg_" + globalClassId) : null) ||
+            (globalClassId ? localStorage.getItem("siswa_" + globalClassId) : null) ||
+            localStorage.getItem("studentId") || "";
+
+        if (globalClassId && globalStudentId) {
+            try { localStorage.setItem("studentIdArg_" + globalClassId, globalStudentId); } catch (e) {}
+        }
 
         let cachedStudentDocs = [];      // snapshot realtime seluruh siswa di kelas
         let klasemenList = [];           // daftar hasil render (untuk modal detail)
@@ -575,6 +582,13 @@
             }
         }
 
+        /* ===== AVATAR HELPER ===== */
+        function getAvatarImg(fotoUrl, nama, ukuran = 64) {
+            const fallbackApi = `https://ui-avatars.com/api/?name=${encodeURIComponent(nama || "S")}&background=059669&color=fff&bold=true&size=${ukuran}`;
+            const src = fotoUrl || fallbackApi;
+            return `<img src="${esc(src)}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(nama)}" onerror="this.onerror=null;this.src='${fallbackApi}';">`;
+        }
+
         /* ===== DETAIL KLASEMEN (MODAL) ===== */
         function tampilkanDetail(nama, dataMisi, fotoUrl) {
             const mkNama = $("mkNama");
@@ -582,9 +596,7 @@
 
             const mkAvatar = $("mkAvatar");
             if (mkAvatar) {
-                mkAvatar.innerHTML = fotoUrl
-                    ? `<img src="${esc(fotoUrl)}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(nama)}">`
-                    : '<i class="fas fa-user"></i>';
+                mkAvatar.innerHTML = getAvatarImg(fotoUrl, nama, 128);
             }
 
             let totalXp = 0;
@@ -686,8 +698,9 @@
                 const byField = cachedStudentDocs.find((x) =>
                     ["studentId", "sid", "uid", "id", "nis"].some((f) => x.data[f] !== undefined && String(x.data[f]) === String(globalStudentId)));
                 if (byField) return byField.id;
+                return globalStudentId;
             }
-            const nm = normNama(profilLokal.namaProfil);
+            const nm = normNama(profilLokal && profilLokal.namaProfil);
             if (nm) {
                 const byName = cachedStudentDocs.filter((x) => normNama(x.data.nama || x.data.namaLengkap) === nm);
                 if (byName.length === 1) return byName[0].id;
@@ -695,14 +708,78 @@
             return null;
         }
 
-        /* ===== KIRIM XP SENDIRI KE SERVER (supaya terlihat di HP teman) ===== */
+        /* ===== CACHE FOTO USER (Firestore users collection) ===== */
+        const userPhotoCache = new Map();
+        async function fetchPhotoFromUsers(targetId) {
+            if (!targetId || userPhotoCache.has(targetId)) return;
+            userPhotoCache.set(targetId, null);
+            try {
+                const uSnap = await getDoc(doc(db, "users", targetId));
+                if (uSnap.exists()) {
+                    const uData = uSnap.data() || {};
+                    const f = uData.fotoProfil || uData.fotoUrl || uData.foto || uData.avatar || uData.photoURL || uData.photoUrl || null;
+                    if (f) {
+                        userPhotoCache.set(targetId, f);
+                        renderKlasemen();
+                    }
+                }
+            } catch (e) {}
+        }
+
+        /* ===== SINKRONISASI PROFIL & XP SENDIRI KE SERVER (supaya terlihat di HP teman) ===== */
         let lastPushedXp = null;
-        function pushMyXp(studentDocId, xp, latihan) {
-            if (!studentDocId || lastPushedXp === xp) return;
-            lastPushedXp = xp;
+        let lastPushedProfile = null;
+
+        function pushMyProfile(studentDocId) {
+            if (!studentDocId || !globalClassId) return;
+            const { fotoBase64, namaProfil } = getProfilFromLocal();
+            const key = `${studentDocId}_${namaProfil}_${(fotoBase64 || '').length}`;
+            if (lastPushedProfile === key) return;
+            lastPushedProfile = key;
+
+            const payload = { updatedAt: Date.now() };
+            if (namaProfil) {
+                payload.nama = namaProfil;
+                payload.namaLengkap = namaProfil;
+            }
+            if (fotoBase64) {
+                payload.fotoUrl = fotoBase64;
+                payload.fotoProfil = fotoBase64;
+                payload.foto = fotoBase64;
+            }
+
             setDoc(
                 doc(db, `classes/${globalClassId}/students`, studentDocId),
-                { xpTotal: xp, latihanSync: latihan || {}, xpUpdatedAt: Date.now() },
+                payload,
+                { merge: true }
+            ).catch((e) => {
+                console.warn("Sinkron profil ke server gagal:", e);
+                lastPushedProfile = null;
+            });
+        }
+
+        function pushMyXp(studentDocId, xp, latihan) {
+            if (!studentDocId || !globalClassId || lastPushedXp === xp) return;
+            lastPushedXp = xp;
+            const { fotoBase64, namaProfil } = getProfilFromLocal();
+            const payload = {
+                xpTotal: xp,
+                xp: xp,
+                latihanSync: latihan || {},
+                xpUpdatedAt: Date.now()
+            };
+            if (namaProfil) {
+                payload.nama = namaProfil;
+                payload.namaLengkap = namaProfil;
+            }
+            if (fotoBase64) {
+                payload.fotoUrl = fotoBase64;
+                payload.fotoProfil = fotoBase64;
+                payload.foto = fotoBase64;
+            }
+            setDoc(
+                doc(db, `classes/${globalClassId}/students`, studentDocId),
+                payload,
                 { merge: true }
             ).catch((e) => {
                 console.warn("Sinkron XP ke server gagal (cek Firestore rules):", e);
@@ -753,9 +830,22 @@
                         if (hasLocalLatihan) latihan = localLatihan;
                         // XP lokal lebih tinggi dari server -> kirim ke server agar teman bisa melihat
                         if (localXp > serverXp) pushMyXp(id, localXp, localLatihan);
+                        // Pastikan foto dan nama lokal juga terkirim ke server jika server belum memilikinya
+                        if (profilLokal.fotoBase64 && (!d.fotoUrl && !d.fotoProfil && !d.foto)) {
+                            pushMyProfile(id);
+                        }
                     }
 
-                    let fotoUrl = d.fotoUrl || d.fotoProfil || d.avatar || d.photoURL || d.photoUrl || null;
+                    // Ambil foto profil dari berbagai kemungkinan field di dokumen siswa
+                    let fotoUrl = d.fotoUrl || d.fotoProfil || d.foto || d.avatar || d.photoURL || d.photoUrl || d.gambarBase64 || d.image || null;
+                    if (!fotoUrl) {
+                        const uidKey = d.uid || d.userId || d.studentId || id;
+                        if (userPhotoCache.has(uidKey)) {
+                            fotoUrl = userPhotoCache.get(uidKey);
+                        } else if (uidKey && typeof uidKey === "string" && uidKey.length > 5) {
+                            fetchPhotoFromUsers(uidKey);
+                        }
+                    }
                     if (isCurrentUser && profilLokal.fotoBase64) fotoUrl = profilLokal.fotoBase64;
 
                     let nama = d.nama || d.namaLengkap || "Anonim";
@@ -764,10 +854,12 @@
                     students.push({ id, nama, xp, latihan, fotoUrl, isCurrentUser });
                 });
 
-                // Jika belum ada di database, tetap tampilkan sebagai "Anda"
-                if (!currentUserFound && globalStudentId) {
+                // Jika belum ada di database, tetap tampilkan sebagai "Anda" dan kirim ke server
+                if (!currentUserFound && (globalStudentId || meId)) {
+                    const myId = globalStudentId || meId;
+                    pushMyProfile(myId);
                     students.push({
-                        id: globalStudentId,
+                        id: myId,
                         nama: profilLokal.namaProfil || "Siswa",
                         xp: localXp,
                         latihan: localLatihan,
@@ -801,9 +893,7 @@
                     topContainer.innerHTML = pod.map((p) => {
                         if (!p) return '<div class="flex-1"></div>';
                         const nm = String(p.nama).split(" ")[0];
-                        const fotoHtml = p.fotoUrl
-                            ? `<img src="${esc(p.fotoUrl)}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(p.nama)}">`
-                            : `<i class="fas fa-user"></i>`;
+                        const fotoHtml = getAvatarImg(p.fotoUrl, p.nama, 128);
                         const badge = p.isCurrentUser
                             ? '<span class="absolute top-2 left-2 bg-white/95 text-emerald-600 text-[8px] font-black px-1.5 py-0.5 rounded-full shadow">ANDA</span>' : "";
                         return `
@@ -828,9 +918,7 @@
 
                 otherContainer.innerHTML = others.map((s) => {
                     const rankLabel = s.xp >= 70 ? `#${eligible.findIndex((x) => x.id === s.id) + 1}` : "—";
-                    const fotoLi = s.fotoUrl
-                        ? `<img src="${esc(s.fotoUrl)}" referrerpolicy="no-referrer" class="w-full h-full object-cover" alt="${esc(s.nama)}">`
-                        : `<i class="fas fa-user"></i>`;
+                    const fotoLi = getAvatarImg(s.fotoUrl, s.nama, 64);
                     const rowCls = s.isCurrentUser ? "bg-emerald-50 ring-1 ring-emerald-200" : "hover:bg-slate-50";
                     const andaTag = s.isCurrentUser
                         ? '<span class="ml-1 text-[9px] font-black text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">ANDA</span>' : "";
@@ -916,6 +1004,7 @@
                 };
 
                 if (globalStudentId) {
+                    pushMyProfile(globalStudentId);
                     const setNama = (nDb) => {
                         const c = getProfilFromLocal().namaProfil || nDb || "Siswa";
                         const nameDisplay = $("studentNameDisplay");
