@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }</script>
@@ -96,6 +98,7 @@
         @keyframes sp { 0% { transform: scale(0) rotate(0); opacity: 0; } 40% { opacity: 1; } 100% { transform: scale(1.4) rotate(120deg); opacity: 0; } }
         .goyang { animation: goy 1.2s ease-in-out infinite; } @keyframes goy { 0%,100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-12px) rotate(6deg); } }
         .detak { animation: dtk 1.2s ease-in-out infinite; } @keyframes dtk { 0%,100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+        .bahas-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: .8rem; }
         .rpt { display: none; font-family: Arial, Helvetica, sans-serif; font-size: 12px; line-height: 1.5; }
         @media print { body > *:not(#laporan) { display: none !important; } #laporan { display: block !important; } body { background: #fff; } }
     </style>
@@ -386,103 +389,273 @@ window.navLatihanHtml = function() {
     return navHtml;
 }
 
+const tglIndo = (t) => new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
 window.tampilHasil = function(baru) {
-    const R = window.H.hasil.peta; window.aktif = false; $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden');
-    const tk = {}; window.soal.forEach((s, i) => { const t = tk[s.tingkat] = tk[s.tingkat] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
+    const R = window.H.hasil.peta;
+    window.aktif = false;
+    $('hTimer').classList.add('hidden');
+    $('barWaktu').classList.add('hidden');
+    $('bar').classList.add('hidden');
+
+    const tk = {};
+    window.soal.forEach((s, i) => { const t = tk[s.tingkat] = tk[s.tingkat] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
     const urut = ['mudah', 'sedang', 'sulit', 'hots'].filter(t => tk[t]);
-    const lemah = urut.slice().sort((a, b) => tk[a].b / tk[a].n - tk[b].b / tk[b].n)[0], kuat = urut.slice().sort((a, b) => tk[b].b / tk[b].n - tk[a].b / tk[a].n)[0];
-    const pesan = R.skor >= 80 ? ['Luar biasa!', 'Pemahaman argumen paragrafmu sangat padu.'] : R.skor >= 60 ? ['Bagus!', 'Sedikit lagi menuju sempurna.'] : ['Tetap semangat!', 'Pelajari pembahasan agar argumenmu tidak sumbang.'];
-    const anim = R.skor >= 80 ? '<div class="tos"><i class="fas fa-hand h hl"></i><i class="fas fa-hand h hr"></i><div class="boom"></div><i class="fas fa-star sp" style="top:8px;left:42%"></i><i class="fas fa-star sp" style="top:24px;left:58%"></i><i class="fas fa-sparkles sp" style="top:70px;left:36%"></i><i class="fas fa-star sp" style="top:78px;left:60%"></i></div>'
-        : R.skor >= 60 ? '<div class="tos"><i class="fas fa-thumbs-up goyang" style="font-size:66px;color:#fcd34d;filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i></div>' : '<div class="tos"><i class="fas fa-heart detak" style="font-size:60px;color:#fda4af;filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i></div>';
-    
-    let html = [
-        '<div class="up rounded-3xl p-5 text-center text-white shadow-lg" style="background:linear-gradient(135deg,#4f46e5,#6366f1 60%,#818cf8)">',
-        anim,
-        '<p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold">Skor Akhir</p><div class="flex items-end justify-center gap-1"><span id="skorAngka" class="text-6xl font-extrabold leading-none">0</span><span class="text-xl font-bold text-white/70 mb-1">/100</span></div>',
+    const kosong = window.soal.filter((s, i) => R.jawab[i] === undefined).length;
+    const salah = R.total - R.benar - kosong;
+
+    const pesan = R.skor >= 80 ? ['Luar biasa!', 'Pemahaman argumen paragrafmu sangat padu.', 'fa-trophy', '#fcd34d']
+        : R.skor >= 60 ? ['Bagus!', 'Sedikit lagi menuju sempurna.', 'fa-thumbs-up', '#fcd34d']
+        : ['Tetap semangat!', 'Pelajari pembahasan agar argumenmu makin logis dan padu.', 'fa-heart', '#fda4af'];
+
+    const html = [
+        // Kartu skor
+        '<div class="rounded-3xl p-5 text-center text-white shadow-lg" style="background:linear-gradient(135deg,#064e3b,#059669 60%,#34d399)">',
+        '<i class="fas ' + pesan[2] + '" style="font-size:54px;color:' + pesan[3] + ';filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i>',
+        '<p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold mt-3">Skor Akhir</p>',
+        '<div class="flex items-end justify-center gap-1"><span class="text-6xl font-extrabold leading-none">' + R.skor + '</span><span class="text-xl font-bold text-white/70 mb-1">/100</span></div>',
         '<p class="font-extrabold text-base mt-2">' + pesan[0] + '</p><p class="text-[11px] text-white/80">' + pesan[1] + '</p>',
         '<span class="inline-block mt-3 bg-white/20 rounded-full px-3 py-1 text-[11px] font-bold"><i class="fas fa-star text-amber-300 mr-1"></i>+' + R.xp + ' XP</span>',
         R.auto ? '<p class="text-[10px] text-amber-200 mt-2"><i class="fas fa-clock mr-1"></i>Dikumpulkan otomatis karena waktu habis</p>' : '',
         '</div>',
-        '<div class="grid grid-cols-3 gap-2.5 mt-3"><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-emerald-600">' + R.benar + '</p><p class="text-[9px] font-semibold text-slate-500">Benar</p></div><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-rose-500">' + (R.total - R.benar) + '</p><p class="text-[9px] font-semibold text-slate-500">Salah/Kosong</p></div><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-slate-700">' + L.fmt(R.durasi) + '</p><p class="text-[9px] font-semibold text-slate-500">dari ' + L.fmt(R.batas) + '</p></div></div>',
+
+        // Statistik
+        '<div class="grid grid-cols-4 gap-2 mt-3">',
+        '<div class="bg-white rounded-xl p-2.5 text-center border border-slate-200"><p class="text-lg font-extrabold text-emerald-600">' + R.benar + '</p><p class="text-[9px] font-semibold text-slate-500">Benar</p></div>',
+        '<div class="bg-white rounded-xl p-2.5 text-center border border-slate-200"><p class="text-lg font-extrabold text-rose-500">' + salah + '</p><p class="text-[9px] font-semibold text-slate-500">Salah</p></div>',
+        '<div class="bg-white rounded-xl p-2.5 text-center border border-slate-200"><p class="text-lg font-extrabold text-slate-400">' + kosong + '</p><p class="text-[9px] font-semibold text-slate-500">Kosong</p></div>',
+        '<div class="bg-white rounded-xl p-2.5 text-center border border-slate-200"><p class="text-lg font-extrabold text-slate-700">' + L.fmt(R.durasi) + '</p><p class="text-[9px] font-semibold text-slate-500">Durasi</p></div>',
+        '</div>',
+
+        // Rapor tugas + unduh
+        '<div class="bg-white rounded-2xl border border-slate-200 mt-3 overflow-hidden">',
+        '<div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200"><h3 class="font-bold text-slate-800 text-xs"><i class="fas fa-id-card text-brand-green mr-1.5"></i>Rapor Tugas</h3></div>',
+        '<div class="p-4 text-[11px] text-slate-600 space-y-1.5">',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Nama</b><span class="mr-1">:</span><span class="font-semibold text-slate-800 break-words min-w-0">' + esc(L.nama()) + '</span></p>',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Jenis tugas</b><span class="mr-1">:</span><span>Peta Argumen</span></p>',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Materi</b><span class="mr-1">:</span><span class="break-words min-w-0">' + esc(window.H.spin.judul) + '</span></p>',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Tanggal</b><span class="mr-1">:</span><span>' + esc(tglIndo(R.selesai)) + '</span></p>',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Waktu</b><span class="mr-1">:</span><span>' + L.fmt(R.durasi) + ' dari ' + L.fmt(R.batas) + '</span></p>',
+        R.keluar ? '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Keluar halaman</b><span class="mr-1">:</span><span>' + R.keluar + ' kali</span></p>' : '',
+        '</div>',
+        '<div class="px-4 pb-4"><button onclick="unduhPdf()" class="w-full bg-rose-500 text-white font-bold py-3.5 rounded-xl shadow-md text-xs active:scale-95 transition"><i class="fas fa-file-pdf mr-1.5"></i>Unduh Hasil &amp; Pembahasan (PDF)</button></div>',
+        '</div>',
+
+        // Analisis per tingkat
         '<div class="bg-white rounded-2xl border border-slate-200 p-4 mt-3"><h3 class="font-bold text-slate-800 text-sm mb-3">Analisis per Tingkat</h3><div class="space-y-3">',
-        urut.map(t => { const p = Math.round(tk[t].b / tk[t].n * 100); return '<div><div class="flex justify-between items-center mb-1">' + badge(t) + '<span class="text-[11px] font-bold text-slate-600">' + tk[t].b + '/' + tk[t].n + '</span></div><div class="h-2.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-' + TKT[t][1] + '-500 rounded-full transition-all duration-1000" style="width:0" data-w="' + p + '"></div></div></div>'; }).join(''),
+        urut.map(t => { const p = Math.round(tk[t].b / tk[t].n * 100); return '<div><div class="flex justify-between items-center mb-1">' + badge(t) + '<span class="text-[11px] font-bold text-slate-600">' + tk[t].b + '/' + tk[t].n + '</span></div><div class="h-2.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:' + p + '%;background:' + TKT_HEX[t] + '"></div></div></div>'; }).join(''),
         '</div></div>',
-        navLatihanHtml(),
-        '<div class="flex items-center justify-between mt-6 mb-3"><h3 class="font-bold text-slate-800 text-sm">Pembahasan Kalimat</h3><div id="filter" class="flex gap-1.5"></div></div><div id="bahas" class="space-y-3"></div>'
+
+        // Pembahasan
+        '<div class="flex items-center justify-between mt-6 mb-3"><h3 class="font-bold text-slate-800 text-sm"><i class="fas fa-lightbulb text-amber-500 mr-1.5"></i>Pembahasan Kalimat Argumen</h3></div>',
+        '<div id="filter" class="flex gap-1.5 mb-3 flex-wrap"></div><div id="bahas" class="space-y-3"></div>',
+
+        window.navLatihanHtml()
     ].join('');
-    
+
     $('main').innerHTML = html;
     window.scrollTo({ top: 0 });
-    
-    let c = 0; const st = Math.max(1, Math.round(R.skor / 40)); 
-    const ti = setInterval(() => { c = Math.min(R.skor, c + st); $('skorAngka').textContent = c; if (c >= R.skor) clearInterval(ti); }, 30);
-    setTimeout(() => document.querySelectorAll('[data-w]').forEach(e => e.style.width = e.dataset.w + '%'), 300);
-    if (baru) { if (R.skor >= 80) { L.beep('ok'); setTimeout(() => window.confetti && confetti({ particleCount: 140, spread: 80, origin: { y: .4 }, zIndex: 100001 }), 700); } else L.beep(R.skor >= 60 ? 'ok' : 'err'); }
+
     filterBahas('semua');
-}
+
+    if (baru) {
+        try {
+            if (R.skor >= 80) { L.beep('ok'); setTimeout(() => window.confetti && confetti({ particleCount: 140, spread: 80, origin: { y: .4 }, zIndex: 100001 }), 400); }
+            else L.beep(R.skor >= 60 ? 'ok' : 'err');
+        } catch (e) {}
+    }
+};
 
 window.filterBahas = function(f) {
     const R = window.H.hasil.peta;
-    $('filter').innerHTML = [['semua', 'Semua'], ['salah', 'Salah']].map(x => '<button onclick="filterBahas(\'' + x[0] + '\')" class="px-3 py-1 rounded-full text-[10px] font-bold border ' + (f === x[0] ? 'bg-brand-green text-white border-brand-green' : 'bg-white text-slate-500 border-slate-200') + '">' + x[1] + '</button>').join('');
-    
-    const arr = window.soal.map((s, i) => [s, i]).filter(x => f === 'semua' || R.jawab[x[1]] !== x[0].j);
-    
-    if(arr.length) {
-        let htmlBahas = arr.map(x => {
-            const s = x[0], i = x[1];
-            const u = R.jawab[i], ok = u === s.j;
-            
-            // Highlight jawaban yang benar di dalam paragraf rumpang
-            const kunciJawabanText = s.opsi[s.j];
-            let teksReview = esc(s.p).replace(/\[\.\.\.\.\.\.\.\]/g, '<span class="inline-block bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold underline">' + esc(kunciJawabanText) + '</span>');
+    const status = i => R.jawab[i] === undefined ? 'kosong' : (R.jawab[i] === window.soal[i].j ? 'benar' : 'salah');
+    const cnt = { semua: window.soal.length, salah: 0, benar: 0 };
+    window.soal.forEach((s, i) => { const st = status(i); if (st === 'benar') cnt.benar++; else cnt.salah++; });
 
-            let item = '<article class="bg-white rounded-2xl border ' + (ok ? 'border-emerald-200' : 'border-rose-200') + ' p-4">';
-            item += '<div class="flex items-center gap-2 mb-2"><span class="w-6 h-6 rounded-full ' + (ok ? 'bg-emerald-500' : 'bg-rose-500') + ' text-white text-[11px] font-extrabold flex items-center justify-center">' + (i + 1) + '</span>' + badge(s.tingkat) + '<span class="ml-auto text-[10px] font-bold ' + (ok ? 'text-emerald-600' : 'text-rose-500') + '">' + (ok ? 'Benar' : u === undefined ? 'Tidak dijawab' : 'Salah') + '</span></div>';
-            item += '<p class="font-reading text-[12px] text-slate-800 leading-[1.75] mb-2.5">' + teksReview + '</p><div class="space-y-1.5">';
-            item += s.opsi.map((o, k) => '<div class="opsi ' + (k === s.j ? 'benar' : k === u ? 'salah' : '') + ' !py-2"><span class="huruf">' + HURUF[k] + '</span><span class="text-[11px] text-slate-700 leading-snug pt-0.5">' + esc(o) + '</span></div>').join('');
-            item += '</div>';
-            if(s.bahas) item += '<div class="mt-2.5 bg-slate-50 rounded-lg p-2.5 text-[11px] text-slate-600 leading-relaxed"><b class="text-slate-700">Pembahasan:</b> ' + esc(s.bahas) + '</div>';
-            item += '</article>';
-            return item;
-        }).join('');
-        $('bahas').innerHTML = htmlBahas;
-    } else {
-        $('bahas').innerHTML = '<div class="bg-white rounded-2xl p-6 text-center text-xs text-emerald-600 font-semibold border border-emerald-100"><i class="fas fa-party-horn"></i> Tidak ada jawaban yang salah. Hebat!</div>';
-    }
-}
+    $('filter').innerHTML = [['semua', 'Semua'], ['salah', 'Salah / Kosong'], ['benar', 'Benar']].map(x =>
+        '<button onclick="filterBahas(\'' + x[0] + '\')" class="px-3 py-1.5 rounded-full text-[10px] font-bold border ' + (f === x[0] ? 'bg-brand-green text-white border-brand-green' : 'bg-white text-slate-500 border-slate-200') + '">' + x[1] + ' (' + cnt[x[0]] + ')</button>').join('');
 
-window.isiLaporan = function() {
-    const R = window.H.hasil.peta, tk = {}; window.soal.forEach((s, i) => { const t = tk[s.tingkat] = tk[s.tingkat] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
-    const tgls = new Date(window.H.spin.ts).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    const A = i => R.jawab[i] === undefined ? '-' : HURUF[R.jawab[i]] + '. ' + esc(window.soal[i].opsi[R.jawab[i]]);
-    
-    let repHtml = [
-        '<div style="padding:4px"><div style="border-bottom:3px solid #059669;padding-bottom:8px;margin-bottom:12px"><div style="font-size:17px;font-weight:800;color:#064e3b">LAPORAN LATIHAN — PETA ARGUMEN</div><div style="color:#64748b;font-size:11px">Platform Argumentasi · Ruang Latihan</div></div>',
-        '<table style="width:100%;font-size:12px;margin-bottom:12px"><tr><td style="width:90px;color:#64748b">Nama</td><td><b>' + esc(L.nama()) + '</b></td></tr><tr><td style="color:#64748b">Tanggal</td><td>' + tgls + '</td></tr><tr><td style="color:#64748b">Materi</td><td>' + esc(window.H.spin.judul) + '</td></tr><tr><td style="color:#64748b">Waktu</td><td>' + L.fmt(R.durasi) + ' dari ' + L.fmt(R.batas) + (R.auto ? ' (waktu habis)' : '') + '</td></tr></table>',
-        '<div class="nobreak" style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:10px 14px;margin-bottom:12px"><span style="font-size:30px;font-weight:800;color:#059669">' + R.skor + '</span><span style="color:#64748b"> / 100</span> &nbsp;·&nbsp; Benar <b>' + R.benar + '</b> dari <b>' + R.total + '</b> soal</div>',
-        '<table class="nobreak" style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px"><tr style="background:#f1f5f9"><th style="text-align:left;padding:5px 8px;border:1px solid #e2e8f0">Tingkat</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Benar</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Jumlah</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Ketepatan</th></tr>',
-        ['mudah', 'sedang', 'sulit', 'hots'].filter(t => tk[t]).map(t => '<tr><td style="padding:5px 8px;border:1px solid #e2e8f0">' + TKT[t][0] + '</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">' + tk[t].b + '</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">' + tk[t].n + '</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">' + Math.round(tk[t].b / tk[t].n * 100) + '%</td></tr>').join(''),
-        '</table><div style="font-size:13px;font-weight:800;margin-bottom:6px;color:#064e3b">Rincian Jawaban & Pembahasan</div>'
-    ];
-    
-    window.soal.forEach((s, i) => { 
-        const ok = R.jawab[i] === s.j; 
-        const teks = esc(s.p).replace(/\[\.\.\.\.\.\.\.\]/g, ' [.......] ');
-        let d = '<div class="nobreak" style="border:1px solid ' + (ok ? '#a7f3d0' : '#fecdd3') + ';border-radius:6px;padding:8px 10px;margin-bottom:8px"><div style="font-size:11px"><b>' + (i + 1) + '.</b> <span style="color:#64748b">[' + TKT[s.tingkat][0] + ']</span> <b style="color:' + (ok ? '#059669' : '#e11d48') + '">' + (ok ? 'BENAR' : 'SALAH') + '</b></div><div style="margin:3px 0;font-size:12px">' + teks + '</div><div style="font-size:11px"><span style="color:#64748b">Jawabanmu:</span> ' + A(i) + '</div><div style="font-size:11px"><span style="color:#64748b">Kunci:</span> <b>' + HURUF[s.j] + '. ' + esc(s.opsi[s.j]) + '</b></div>';
-        if(s.bahas) d += '<div style="font-size:11px;color:#475569;margin-top:3px"><i>Pembahasan:</i> ' + esc(s.bahas) + '</div>';
-        d += '</div>';
-        repHtml.push(d);
+    const arr = window.soal.map((s, i) => [s, i]).filter(x => {
+        const st = status(x[1]);
+        return f === 'semua' || (f === 'benar' ? st === 'benar' : st !== 'benar');
     });
-    
-    repHtml.push('<div style="font-size:9px;color:#94a3b8;margin-top:10px;text-align:center">Dihasilkan otomatis oleh Platform Argumentasi · ' + new Date(R.selesai).toLocaleString('id-ID') + '</div></div>');
-    $('laporan').innerHTML = repHtml.join('');
+
+    if (!arr.length) {
+        $('bahas').innerHTML = '<div class="bg-white rounded-2xl p-6 text-center text-xs text-emerald-600 font-semibold border border-emerald-100"><i class="fas fa-circle-check mr-1"></i> Tidak ada soal pada kategori ini.</div>';
+        return;
+    }
+
+    $('bahas').innerHTML = arr.map(x => {
+        const s = x[0], i = x[1], u = R.jawab[i], st = status(i), ok = st === 'benar';
+        const warna = ok ? 'emerald' : 'rose';
+        const label = ok ? 'Benar' : st === 'kosong' ? 'Tidak dijawab' : 'Salah';
+        const kunciJawabanText = s.opsi[s.j];
+        const teksReview = esc(s.p).replace(/\[\.\.\.\.\.\.\.\]/g, '<span class="inline-block bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold underline">' + esc(kunciJawabanText) + '</span>');
+
+        let item = '<article class="bg-white rounded-2xl border border-' + warna + '-200 p-4" style="border-left:5px solid ' + (ok ? '#10b981' : '#f43f5e') + '">';
+        item += '<div class="flex items-center gap-2 mb-2.5"><span class="w-7 h-7 rounded-full ' + (ok ? 'bg-emerald-500' : 'bg-rose-500') + ' text-white text-xs font-extrabold flex items-center justify-center">' + (i + 1) + '</span>' + badge(s.tingkat) + '<span class="ml-auto text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full ' + (ok ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600') + '">' + label + '</span></div>';
+        item += '<p class="font-reading text-[12.5px] text-slate-800 leading-[1.8] mb-3 p-3 bg-slate-50/60 rounded-xl border border-slate-100">' + teksReview + '</p><div class="space-y-1.5">';
+        item += s.opsi.map((o, k) => {
+            let tag = '';
+            if (k === s.j && k === u) tag = '<span class="inline-block text-[8.5px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white ml-1.5">Pilihanmu = Kunci</span>';
+            else if (k === s.j) tag = '<span class="inline-block text-[8.5px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-white ml-1.5">Kunci</span>';
+            else if (k === u) tag = '<span class="inline-block text-[8.5px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-rose-500 text-white ml-1.5">Pilihanmu</span>';
+            return '<div class="opsi ' + (k === s.j ? 'benar' : k === u ? 'salah' : '') + ' !py-2"><span class="huruf">' + HURUF[k] + '</span><span class="text-[11.5px] text-slate-700 leading-snug pt-0.5 flex-1">' + esc(o) + tag + '</span></div>';
+        }).join('');
+        item += '</div>';
+        item += '<div class="bahas-box mt-3 p-3"><p class="text-[10px] font-extrabold uppercase tracking-wider text-amber-600 mb-1"><i class="fas fa-lightbulb mr-1"></i>Pembahasan</p><p class="text-[11.5px] text-slate-700 leading-relaxed">' + (s.bahas ? esc(s.bahas) : '<span class="text-slate-400">Pembahasan belum tersedia untuk soal ini.</span>') + '</p></div>';
+        item += '</article>';
+        return item;
+    }).join('');
+};
+
+/* ===== UNDUH PDF (pdfMake, teks asli) ===== */
+function buatDokumenPdf() {
+    const R = window.H.hasil.peta;
+    const nama = L.nama(), materi = (window.H.spin && window.H.spin.judul) || '-';
+    const W = { gelap: '#064e3b', hijau: '#059669', hijauMuda: '#d1fae5', merah: '#e11d48', merahMuda: '#ffe4e6', amber: '#d97706', amberMuda: '#fffbeb', abu: '#64748b', garis: '#e2e8f0', latar: '#f8fafc', biruMuda: '#e0f2fe', biru: '#0369a1' };
+    const warnaSkor = R.skor >= 80 ? W.hijau : R.skor >= 60 ? '#f59e0b' : W.merah;
+    const status = i => R.jawab[i] === undefined ? 'kosong' : (R.jawab[i] === window.soal[i].j ? 'benar' : 'salah');
+    const kosong = window.soal.filter((s, i) => R.jawab[i] === undefined).length;
+    const salah = R.total - R.benar - kosong;
+
+    const lbl = t => ({ text: t, fontSize: 7.5, bold: true, color: '#ffffff', fillColor: W.hijau, margin: [7, 5, 7, 5] });
+    const val = t => ({ text: String(t), bold: true, fontSize: 10, color: W.gelap, fillColor: W.latar, margin: [7, 7, 7, 7] });
+    const layoutKotak = { hLineWidth: () => 0.7, vLineWidth: () => 0.7, hLineColor: () => W.hijau, vLineColor: () => '#ffffff', paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 };
+    const judulBagian = t => ({ stack: [{ text: t, bold: true, fontSize: 12, color: W.gelap }, { canvas: [{ type: 'line', x1: 0, y1: 3, x2: 523, y2: 3, lineWidth: 1.2, lineColor: W.hijau }] }], margin: [0, 16, 0, 8] });
+
+    const content = [];
+
+    // Banner
+    content.push({
+        table: { widths: ['*'], body: [[{ stack: [
+            { text: 'LEMBAR HASIL LATIHAN', fontSize: 8.5, bold: true, color: '#a7f3d0', characterSpacing: 2 },
+            { text: 'Peta Argumen', fontSize: 22, bold: true, color: '#ffffff', margin: [0, 3, 0, 2] },
+            { text: 'Ruang Belajar Argumentasi', fontSize: 9.5, color: '#d1fae5' }
+        ], fillColor: W.gelap, margin: [18, 16, 18, 16] }]] },
+        layout: 'noBorders'
+    });
+
+    // Identitas
+    content.push({ margin: [0, 12, 0, 0], table: { widths: ['*', '*', '*', '*'], body: [
+        [lbl('NAMA SISWA'), lbl('JENIS TUGAS'), lbl('MATERI'), lbl('TANGGAL')],
+        [val(nama), val('Peta Argumen'), val(materi), val(tglIndo(R.selesai))]
+    ] }, layout: layoutKotak });
+
+    // Skor
+    const sel = (label, nilai, fill, warnaTeks, ukuran) => ({ fillColor: fill, margin: [7, 8, 7, 8], stack: [
+        { text: label, fontSize: 7.5, bold: true, color: warnaTeks, characterSpacing: 0.5 },
+        { text: String(nilai), fontSize: ukuran || 16, bold: true, color: warnaTeks, margin: [0, 2, 0, 0] }
+    ] });
+    content.push({ margin: [0, 8, 0, 0], table: { widths: ['*', '*', '*', '*', '*'], body: [[
+        sel('SKOR AKHIR', R.skor + ' / 100', warnaSkor, '#ffffff', 18),
+        sel('BENAR', R.benar, W.hijauMuda, W.gelap),
+        sel('SALAH', salah, W.merahMuda, W.merah),
+        sel('KOSONG', kosong, W.latar, W.abu),
+        sel('XP DIPEROLEH', '+' + R.xp, W.amberMuda, W.amber)
+    ]] }, layout: layoutKotak });
+
+    content.push({ text: 'Durasi pengerjaan ' + L.fmt(R.durasi) + ' dari ' + L.fmt(R.batas) + (R.auto ? '  •  dikumpulkan otomatis (waktu habis)' : ''), fontSize: 8.5, color: W.abu, margin: [0, 6, 0, 0] });
+
+    // Analisis per tingkat
+    const tk = {}; window.soal.forEach((s, i) => { const t = tk[s.tingkat] = tk[s.tingkat] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
+    const urut = ['mudah', 'sedang', 'sulit', 'hots'].filter(t => tk[t]);
+    const th = t => ({ text: t, bold: true, fontSize: 8.5, color: '#ffffff', fillColor: W.gelap, margin: [7, 5, 7, 5] });
+    content.push(judulBagian('Analisis per Tingkat Kesulitan'));
+    content.push({ table: { widths: [80, 60, '*'], body: [
+        [th('Tingkat'), th('Benar / Total'), th('Persentase')],
+        ...urut.map(t => {
+            const p = Math.round(tk[t].b / tk[t].n * 100);
+            return [
+                { text: TKT[t][0], bold: true, fontSize: 9.5, color: TKT_HEX[t], margin: [7, 6, 7, 6] },
+                { text: tk[t].b + ' / ' + tk[t].n, fontSize: 9.5, margin: [7, 6, 7, 6] },
+                { margin: [7, 6, 7, 6], columns: [
+                    { width: 110, canvas: [{ type: 'rect', x: 0, y: 3, w: 110, h: 7, r: 3, color: W.garis }, { type: 'rect', x: 0, y: 3, w: Math.max(0.1, 110 * p / 100), h: 7, r: 3, color: TKT_HEX[t] }] },
+                    { text: p + '%', bold: true, fontSize: 9.5, margin: [6, 1, 0, 0] }
+                ] }
+            ];
+        })
+    ] }, layout: { hLineWidth: () => 0.6, vLineWidth: () => 0.6, hLineColor: () => W.garis, vLineColor: () => W.garis, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 } });
+
+    // Soal, jawaban siswa, dan pembahasan
+    content.push(judulBagian('Paragraf Rumpang, Jawaban & Pembahasan'));
+    window.soal.forEach((s, i) => {
+        const st = status(i), u = R.jawab[i];
+        const c = st === 'benar' ? W.hijau : W.merah;
+        const label = st === 'benar' ? 'BENAR' : st === 'kosong' ? 'TIDAK DIJAWAB' : 'SALAH';
+        const tanpaPadding = { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 };
+
+        const opsiRows = s.opsi.map((o, k) => {
+            const kunci = k === s.j, pilih = k === u;
+            const fill = kunci ? W.hijauMuda : (pilih ? W.merahMuda : '#ffffff');
+            const fillHuruf = kunci ? W.hijau : (pilih ? W.merah : W.garis);
+            const teks = [{ text: String(o), color: kunci ? W.gelap : '#334155', bold: kunci || pilih }];
+            if (kunci && pilih) teks.push({ text: '   [PILIHAN SISWA = KUNCI]', fontSize: 7.5, bold: true, color: W.hijau });
+            else if (kunci) teks.push({ text: '   [KUNCI]', fontSize: 7.5, bold: true, color: W.hijau });
+            else if (pilih) teks.push({ text: '   [PILIHAN SISWA]', fontSize: 7.5, bold: true, color: W.merah });
+            return [
+                { text: HURUF[k] || String(k + 1), bold: true, alignment: 'center', color: (kunci || pilih) ? '#ffffff' : W.abu, fillColor: fillHuruf, margin: [0, 4, 0, 4] },
+                { text: teks, fillColor: fill, margin: [8, 4, 8, 4], fontSize: 9.5 }
+            ];
+        });
+
+        const teksJawab = u === undefined ? 'Tidak dijawab' : (HURUF[u] + '. ' + (s.opsi[u] ?? ''));
+        const teksKunci = HURUF[s.j] + '. ' + (s.opsi[s.j] ?? '');
+
+        content.push({
+            margin: [0, 0, 0, 12],
+            unbreakable: true,
+            table: {
+                dontBreakRows: true, widths: ['*'],
+                body: [
+                    [{ fillColor: c, margin: [10, 6, 10, 6], columns: [
+                        { text: 'PARAGRAF ' + (i + 1) + '   |   ' + TKT[s.tingkat][0].toUpperCase(), bold: true, fontSize: 9, color: '#ffffff' },
+                        { text: label, bold: true, fontSize: 9, color: '#ffffff', alignment: 'right' }
+                    ] }],
+                    [{ text: String(s.p), bold: true, fontSize: 10, lineHeight: 1.4, color: '#0f172a', fillColor: W.latar, margin: [10, 8, 10, 8] }],
+                    [{ table: { widths: [20, '*'], body: opsiRows }, layout: tanpaPadding }],
+                    [{ table: { widths: ['*', '*'], body: [[
+                        { fillColor: W.biruMuda, margin: [10, 6, 10, 6], stack: [{ text: 'PILIHAN SISWA', fontSize: 7.5, bold: true, color: W.biru }, { text: teksJawab, fontSize: 9.5, bold: true, color: u === undefined ? W.abu : '#0f172a', margin: [0, 2, 0, 0] }] },
+                        { fillColor: W.hijauMuda, margin: [10, 6, 10, 6], stack: [{ text: 'KUNCI KALIMAT ARGUMEN', fontSize: 7.5, bold: true, color: W.hijau }, { text: teksKunci, fontSize: 9.5, bold: true, color: W.gelap, margin: [0, 2, 0, 0] }] }
+                    ]] }, layout: tanpaPadding }],
+                    [{ fillColor: W.amberMuda, margin: [10, 7, 10, 8], stack: [
+                        { text: 'PENJELASAN / PEMBAHASAN', fontSize: 7.5, bold: true, color: W.amber },
+                        { text: s.bahas ? String(s.bahas) : 'Pembahasan belum tersedia untuk soal ini.', fontSize: 9.5, lineHeight: 1.35, color: s.bahas ? '#334155' : W.abu, margin: [0, 3, 0, 0] }
+                    ] }]
+                ]
+            },
+            layout: { hLineWidth: () => 0.8, vLineWidth: () => 0.8, hLineColor: () => c, vLineColor: () => c, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 }
+        });
+    });
+
+    content.push({ text: 'Dokumen ini dibuat otomatis oleh Argumentasi App pada ' + tglIndo(Date.now()) + '.', fontSize: 8, color: W.abu, alignment: 'center', margin: [0, 8, 0, 0] });
+
+    return {
+        info: { title: 'Hasil Latihan Peta Argumen - ' + nama, author: 'Argumentasi App', subject: materi },
+        pageSize: 'A4',
+        pageMargins: [36, 36, 36, 46],
+        defaultStyle: { fontSize: 10, lineHeight: 1.2, color: '#334155' },
+        footer: (cur, total) => ({ columns: [
+            { text: 'Argumentasi App  •  ' + nama + '  •  Peta Argumen', fontSize: 8, color: W.abu, margin: [36, 0, 0, 0] },
+            { text: 'Halaman ' + cur + ' dari ' + total, fontSize: 8, color: W.abu, alignment: 'right', margin: [0, 0, 36, 0] }
+        ], margin: [0, 18, 0, 0] }),
+        content
+    };
 }
 
-window.unduhPdf = async function() {
-    const b = $('btnPdf'), isi = b.innerHTML; b.disabled = true; b.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1.5"></i>Membuat PDF…';
-    try { isiLaporan(); await L.pdf($('laporan'), 'Laporan-Peta-Argumen-' + new Date(window.H.spin.ts).toISOString().slice(0, 10) + '.pdf'); L.toast('PDF berhasil dibuat.'); }
-    catch (e) { console.error(e); L.toast('Gagal membuat PDF. Memakai cetak browser…', true); setTimeout(() => window.print(), 600); }
-    finally { b.disabled = false; b.innerHTML = isi; }
+window.unduhPdf = function() {
+    if (typeof pdfMake === 'undefined') { L.toast('Pustaka PDF belum termuat. Periksa koneksi lalu coba lagi.', true); return; }
+    try {
+        const R = window.H.hasil.peta;
+        const d = new Date(R.selesai);
+        const tgl = d.getFullYear() + '-' + L.pad(d.getMonth() + 1) + '-' + L.pad(d.getDate());
+        const nama = ('Hasil-Peta-Argumen_' + L.nama() + '_' + tgl + '.pdf').replace(/[^\w\-.]+/g, '_');
+        pdfMake.createPdf(buatDokumenPdf()).download(nama);
+        L.toast('PDF sedang diunduh…');
+    } catch (e) {
+        console.error(e);
+        L.toast('Gagal membuat PDF.', true);
+    }
 };
 
 initLatihan();
