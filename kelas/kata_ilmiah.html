@@ -137,6 +137,7 @@ window.db = db;
 const $ = id => document.getElementById(id), esc = window.L.esc;
 const HURUF = ['A', 'B', 'C', 'D', 'E'];
 const TKT = { mudah: ['Mudah', 'emerald', 'fa-seedling'], sedang: ['Sedang', 'sky', 'fa-gauge'], sulit: ['Sulit', 'amber', 'fa-mountain'], hots: ['HOTS', 'rose', 'fa-fire'] };
+const TKT_HEX = { mudah: '#10b981', sedang: '#0ea5e9', sulit: '#f59e0b', hots: '#f43f5e' };
 const NAV_BAGIAN = [
     ['pilgan', 'Pilihan Ganda', 'pilgan.html', 'fa-circle-check', 'blue'],
     ['struktur', 'Bedah Struktur', 'struktur.html', 'fa-layer-group', 'amber'],
@@ -151,6 +152,14 @@ window.H = null; window.P = null; window.soal = null; window.totalWaktu = 0; win
 const qsParams = new URLSearchParams(window.location.search);
 const classId = qsParams.get('id') || '';
 const studentId = qsParams.get('sid') || localStorage.getItem('studentId') || localStorage.getItem('siswa_' + classId) || '';
+
+function urlKembali() {
+    let u = '../ruang_belajar_siswa.html';
+    const qs = new URLSearchParams();
+    if (classId) qs.set('id', classId);
+    if (studentId) qs.set('sid', studentId);
+    return u + (qs.toString() ? '?' + qs.toString() : '');
+}
 
 window.normSoal = function(arr) {
     return (arr || []).map(s => { 
@@ -170,45 +179,141 @@ window.modal = (judul, ket, ok, batal, ikon) => new Promise(r => { window.resolv
 window.jawabModal = v => { $('modal').classList.replace('flex', 'hidden'); if (window.resolveM) { window.resolveM(v); window.resolveM = null; } };
 window.badge = t => { const arr = TKT[t] || TKT.sedang; return '<span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-' + arr[1] + '-100 text-' + arr[1] + '-700"><i class="fas ' + arr[2] + '"></i>' + arr[0] + '</span>'; };
 
+/* ===== KIRIM HASIL KE SERVER (tidak menahan tampilan hasil) ===== */
+async function kirimServer() {
+    const R = window.H && window.H.hasil && window.H.hasil.ilmiah;
+    if (!R || R.sync || !studentId || !classId) return;
+    try {
+        await setDoc(doc(db, `classes/${classId}/students`, studentId), { latihan: { ilmiah: R } }, { merge: true });
+        R.sync = true; L.simpan(true);
+    } catch (e) {
+        console.warn('Gagal menyimpan hasil ke server:', e);
+    }
+}
+
 async function initLatihan() {
     await L.siap();
-    const H = L.hari();
     
-    let backUrl = '../ruang_belajar_siswa.html';
-    if(classId) backUrl += '?id=' + encodeURIComponent(classId);
-    if(studentId) backUrl += '&sid=' + encodeURIComponent(studentId);
-    $('btnBack').href = backUrl;
+    const backUrl = urlKembali();
+    if ($('btnBack')) $('btnBack').href = backUrl;
 
     // 1. Cek apakah ada hasil lama (dari hari manapun, tanpa batas waktu)
     const hDenganHasil = L.cariHariDenganHasil('ilmiah');
-    if (hDenganHasil) {
+    if (hDenganHasil && hDenganHasil.hasil && hDenganHasil.hasil.ilmiah) {
         window.H = hDenganHasil;
-        window.P = (hDenganHasil.pack && hDenganHasil.pack.ilmiah) || (hDenganHasil.pack && hDenganHasil.pack.pilgan);
-        if (window.P) {
+        let pack = (hDenganHasil.pack && hDenganHasil.pack.ilmiah) || (hDenganHasil.pack && hDenganHasil.pack.pilgan);
+        if (!pack) {
+            const S = L.state();
+            if (S && S.hari) {
+                for (const k in S.hari) {
+                    if (S.hari[k].pack && (S.hari[k].pack.ilmiah || S.hari[k].pack.pilgan)) {
+                        pack = S.hari[k].pack.ilmiah || S.hari[k].pack.pilgan;
+                        hDenganHasil.pack = S.hari[k].pack;
+                        if (!hDenganHasil.spin && S.hari[k].spin) hDenganHasil.spin = S.hari[k].spin;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!pack && classId) {
+            try {
+                const docSnap = await getDoc(doc(db, "classes", classId));
+                if (docSnap.exists() && docSnap.data().aiPaket) {
+                    hDenganHasil.pack = docSnap.data().aiPaket;
+                    if (!hDenganHasil.spin) hDenganHasil.spin = { judul: docSnap.data().namaKelas || 'Kelas', ts: Date.now() };
+                    pack = hDenganHasil.pack.ilmiah || hDenganHasil.pack.pilgan;
+                    L.simpan(true);
+                }
+            } catch (e) { console.warn("Gagal memuat aiPaket:", e); }
+        }
+        if (pack) {
+            window.P = pack;
             window.soal = window.normSoal(window.P.soal);
             window.totalWaktu = window.P.total || window.P.waktu || window.soal.reduce((a, b) => a + (b.waktu || 45), 0) || 300;
-            if($('hSub')) $('hSub').textContent = hDenganHasil.spin.judul || 'Kata Ilmiah';
+            if ($('hSub')) $('hSub').textContent = (hDenganHasil.spin && hDenganHasil.spin.judul) || 'Kata Ilmiah';
+            kirimServer();
             return window.tampilHasil();
         }
     }
 
     // 2. Cek apakah ada sesi yang masih berjalan (belum timeout)
     const hDenganSesi = L.cariHariDenganSesi('ilmiah');
-    if (hDenganSesi) {
+    if (hDenganSesi && hDenganSesi.sesi && hDenganSesi.sesi.ilmiah) {
         window.H = hDenganSesi;
-        window.P = (hDenganSesi.pack && hDenganSesi.pack.ilmiah) || (hDenganSesi.pack && hDenganSesi.pack.pilgan);
-        if (window.P) {
+        let pack = (hDenganSesi.pack && hDenganSesi.pack.ilmiah) || (hDenganSesi.pack && hDenganSesi.pack.pilgan);
+        if (!pack) {
+            const S = L.state();
+            if (S && S.hari) {
+                for (const k in S.hari) {
+                    if (S.hari[k].pack && (S.hari[k].pack.ilmiah || S.hari[k].pack.pilgan)) {
+                        pack = S.hari[k].pack.ilmiah || S.hari[k].pack.pilgan;
+                        hDenganSesi.pack = S.hari[k].pack;
+                        if (!hDenganSesi.spin && S.hari[k].spin) hDenganSesi.spin = S.hari[k].spin;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!pack && classId) {
+            try {
+                const docSnap = await getDoc(doc(db, "classes", classId));
+                if (docSnap.exists() && docSnap.data().aiPaket) {
+                    hDenganSesi.pack = docSnap.data().aiPaket;
+                    if (!hDenganSesi.spin) hDenganSesi.spin = { judul: docSnap.data().namaKelas || 'Kelas', ts: Date.now() };
+                    pack = hDenganSesi.pack.ilmiah || hDenganSesi.pack.pilgan;
+                    L.simpan(true);
+                }
+            } catch (e) { console.warn("Gagal memuat aiPaket:", e); }
+        }
+        if (pack) {
+            window.P = pack;
             window.soal = window.normSoal(window.P.soal);
             window.totalWaktu = window.P.total || window.P.waktu || window.soal.reduce((a, b) => a + (b.waktu || 45), 0) || 300;
-            if($('hSub')) $('hSub').textContent = hDenganSesi.spin.judul || 'Kata Ilmiah';
+            if ($('hSub')) $('hSub').textContent = (hDenganSesi.spin && hDenganSesi.spin.judul) || 'Kata Ilmiah';
             window.sesi = hDenganSesi.sesi.ilmiah;
             return Date.now() >= window.sesi.batas ? window.kumpulkan(true) : window.renderUjian();
         }
     }
 
-    // 3. Tidak ada hasil/sesi — gunakan hari aktif atau tampilkan error
-    const H2 = H || L.hari();
-    if (!H2 || !H2.pack || (!H2.pack.ilmiah && !H2.pack.pilgan)) {
+    // 3. Tidak ada hasil/sesi — cari atau buat hari aktif
+    let H = L.hari();
+    if (!H) {
+        const S = L.state();
+        const k = 'c' + Date.now();
+        S.hari[k] = { sesi: {}, hasil: {}, spin: { ts: Date.now(), judul: 'Memuat...' } };
+        H = S.hari[k];
+        L.simpan(true);
+    }
+
+    let pack = (H.pack && H.pack.ilmiah) || (H.pack && H.pack.pilgan);
+    if (!pack) {
+        const S = L.state();
+        if (S && S.hari) {
+            for (const k in S.hari) {
+                if (S.hari[k].pack && (S.hari[k].pack.ilmiah || S.hari[k].pack.pilgan)) {
+                    pack = S.hari[k].pack.ilmiah || S.hari[k].pack.pilgan;
+                    H.pack = S.hari[k].pack;
+                    if (!H.spin && S.hari[k].spin) H.spin = S.hari[k].spin;
+                    L.simpan(true);
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!pack && classId) {
+        try {
+            const docSnap = await getDoc(doc(db, "classes", classId));
+            if (docSnap.exists() && docSnap.data().aiPaket) {
+                H.pack = docSnap.data().aiPaket;
+                H.spin = { judul: docSnap.data().namaKelas || 'Kelas', ts: Date.now() };
+                pack = H.pack.ilmiah || H.pack.pilgan;
+                L.simpan(true);
+            }
+        } catch(e) { console.error("Firebase error:", e); }
+    }
+
+    if (!H || !pack) {
         $('main').innerHTML = [
             '<div class="bg-white rounded-2xl p-8 text-center border border-slate-200 mt-10">',
             '<i class="fas fa-exclamation-triangle text-4xl text-slate-300 mb-3"></i>',
@@ -217,15 +322,16 @@ async function initLatihan() {
             '<a href="' + backUrl + '" class="inline-block mt-4 bg-brand-green text-white text-xs font-bold px-5 py-2.5 rounded-full">Kembali</a>',
             '</div>'
         ].join('');
+        if ($('hSub')) $('hSub').textContent = 'Belum Siap';
         return;
     }
 
-    window.H = H2;
-    window.P = H2.pack.ilmiah || H2.pack.pilgan; 
+    window.H = H;
+    window.P = pack; 
     window.soal = window.normSoal(window.P.soal);
     window.totalWaktu = window.P.total || window.P.waktu || window.soal.reduce((a, b) => a + (b.waktu || 45), 0) || 300;
     
-    if($('hSub')) $('hSub').textContent = H2.spin.judul || 'Kata Ilmiah';
+    if ($('hSub')) $('hSub').textContent = (H.spin && H.spin.judul) || 'Kata Ilmiah';
 
     window.tampilIntro();
 }
@@ -442,7 +548,7 @@ window.tampilHasil = function(baru) {
         '<div class="p-4 text-[11px] text-slate-600 space-y-1.5">',
         '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Nama</b><span class="mr-1">:</span><span class="font-semibold text-slate-800 break-words min-w-0">' + esc(L.nama()) + '</span></p>',
         '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Jenis tugas</b><span class="mr-1">:</span><span>Kata Ilmiah</span></p>',
-        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Materi</b><span class="mr-1">:</span><span class="break-words min-w-0">' + esc(window.H.spin.judul) + '</span></p>',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Materi</b><span class="mr-1">:</span><span class="break-words min-w-0">' + esc((window.H.spin && window.H.spin.judul) || 'Kata Ilmiah') + '</span></p>',
         '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Tanggal</b><span class="mr-1">:</span><span>' + esc(tglIndo(R.selesai)) + '</span></p>',
         '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Waktu</b><span class="mr-1">:</span><span>' + L.fmt(R.durasi) + ' dari ' + L.fmt(R.batas) + '</span></p>',
         R.keluar ? '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Keluar halaman</b><span class="mr-1">:</span><span>' + R.keluar + ' kali</span></p>' : '',
@@ -667,7 +773,21 @@ window.unduhPdf = function() {
     }
 };
 
-initLatihan();
+initLatihan().catch(err => {
+    console.error("Gagal memuat latihan:", err);
+    $('main').innerHTML = [
+        '<div class="bg-white rounded-2xl p-8 text-center border border-slate-200 mt-10">',
+        '<i class="fas fa-circle-exclamation text-4xl text-rose-500 mb-3"></i>',
+        '<p class="text-sm font-bold text-slate-800">Terjadi Kendala Memuat Halaman</p>',
+        '<p class="text-[11px] text-slate-500 mt-1 mb-4">Gagal memuat data latihan. Silakan muat ulang atau kembali.</p>',
+        '<div class="flex gap-2 justify-center">',
+        '<button onclick="location.reload()" class="bg-brand-green text-white text-xs font-bold px-4 py-2 rounded-xl">Muat Ulang</button>',
+        '<a href="' + urlKembali() + '" class="bg-slate-100 text-slate-700 text-xs font-bold px-4 py-2 rounded-xl">Kembali</a>',
+        '</div>',
+        '</div>'
+    ].join('');
+    if ($('hSub')) $('hSub').textContent = 'Gagal Memuat';
+});
 </script>
 </body>
 </html>
