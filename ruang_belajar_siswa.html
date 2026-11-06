@@ -90,8 +90,36 @@
         }
         .bubble { position: absolute; bottom: -20px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; }
 
-        .tab-btn { color: #64748b; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .tab-btn { color: #64748b; border-bottom: 2px solid transparent; transition: all 0.2s; cursor: pointer; }
         .tab-btn.active { color: #059669; border-bottom-color: #059669; font-weight: 700; }
+
+        /* Swipeable Container & Panels */
+        .swipe-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-x: contain;
+            touch-action: pan-x pan-y;
+        }
+
+        .swipe-panel {
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+            flex-shrink: 0;
+            height: 100%;
+            overflow-y: auto;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            box-sizing: border-box;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
+        }
 
         .card-completed { border-color: #10b981 !important; background-color: #f0fdf4 !important; }
         .btn-completed { background-color: #10b981 !important; color: white !important; }
@@ -127,7 +155,7 @@
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto hide-scrollbar bg-slate-50 flex flex-col relative" id="scrollArea">
+        <main class="flex-1 min-h-0 overflow-hidden bg-slate-50 flex flex-col relative" id="scrollArea">
             <section class="shrink-0 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
                 <div id="avatarContainer" class="w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 border-2 border-white shadow flex items-center justify-center text-white text-xl overflow-hidden relative">
                     <img id="avatarImage" src="" alt="Foto Siswa" class="w-full h-full object-cover hidden absolute inset-0 z-10" referrerpolicy="no-referrer">
@@ -146,9 +174,10 @@
                 <button onclick="window.switchTab('klasemen')" id="tabKlasemen" class="flex-1 py-3 text-xs font-medium tab-btn">Klasemen</button>
             </div>
 
-            <div class="flex-1 relative">
-                <!-- TAB 1: MISI LATIHAN -->
-                <div id="contentMisi" class="px-4 fade-in absolute inset-0 overflow-y-auto hide-scrollbar bg-slate-50">
+            <div class="flex-1 min-h-0 relative overflow-hidden">
+                <div id="swipeContainer" class="swipe-container hide-scrollbar">
+                    <!-- TAB 1: MISI LATIHAN -->
+                    <div id="contentMisi" class="swipe-panel px-4 hide-scrollbar bg-slate-50">
                     <div id="motivationalBanner" class="bubble-bg hidden">
                         <div class="bubble w-4 h-4 left-4 animate-float-up"></div>
                         <div class="bubble w-8 h-8 left-1/4 animate-float-up-slow" style="animation-delay: 1s;"></div>
@@ -284,7 +313,7 @@
                 </div>
 
                 <!-- TAB 2: MATERI -->
-                <div id="contentMateri" class="px-4 py-6 hidden absolute inset-0 overflow-y-auto hide-scrollbar bg-slate-50">
+                <div id="contentMateri" class="swipe-panel px-4 py-6 hide-scrollbar bg-slate-50">
                     <h3 class="font-display font-bold text-xl text-slate-800 mb-1">Materi Referensi</h3>
                     <p class="text-xs text-slate-500 mb-6">Pelajari materi ini sebelum mengerjakan misi latihan.</p>
 
@@ -299,7 +328,7 @@
                 </div>
 
                 <!-- TAB 3: KLASEMEN -->
-                <div id="contentKlasemen" class="px-4 py-6 hidden absolute inset-0 overflow-y-auto hide-scrollbar bg-slate-50">
+                <div id="contentKlasemen" class="swipe-panel px-4 py-6 hide-scrollbar bg-slate-50">
                     <h3 class="font-display font-bold text-xl text-slate-800 mb-1 text-center">Papan Klasemen</h3>
                     <p class="text-xs text-slate-500 mb-6 text-center">Top Peringkat Tertinggi (Minimal 70 XP)</p>
 
@@ -322,7 +351,8 @@
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
+    </main>
     </div>
 
     <!-- WADAH TOAST -->
@@ -395,25 +425,159 @@
             setTimeout(() => m.classList.add("hidden"), 300);
         };
 
-        window.switchTab = function (tabName) {
-            ["Misi", "Materi", "Klasemen"].forEach((n) => {
-                const btn = $("tab" + n);
-                const cnt = $("content" + n);
-                if (btn && cnt) {
-                    btn.classList.remove("active");
-                    cnt.classList.add("hidden");
+        /* ===== NAVIGASI TAB & SWIPE GESER ===== */
+        const TAB_NAMES = ["misi", "materi", "klasemen"];
+        let currentActiveTab = "misi";
+        let isProgrammaticScroll = false;
+        let programmaticScrollTimer = null;
+
+        function setActiveTabIndicator(tabName) {
+            const normalized = String(tabName || "").toLowerCase();
+            if (!TAB_NAMES.includes(normalized)) return;
+            currentActiveTab = normalized;
+
+            TAB_NAMES.forEach((t) => {
+                const cap = t.charAt(0).toUpperCase() + t.slice(1);
+                const btn = $("tab" + cap);
+                if (btn) {
+                    if (t === normalized) {
+                        btn.classList.add("active");
+                    } else {
+                        btn.classList.remove("active");
+                    }
                 }
             });
-            const targetName = tabName.charAt(0).toUpperCase() + tabName.slice(1);
-            const targetBtn = $("tab" + targetName);
-            const targetCnt = $("content" + targetName);
-            if (targetBtn && targetCnt) {
-                targetBtn.classList.add("active");
-                targetCnt.classList.remove("hidden");
-                targetCnt.classList.add("fade-in");
+
+            if (normalized === "klasemen" && typeof renderKlasemen === "function") {
+                renderKlasemen();
             }
-            if (targetName === "Klasemen") renderKlasemen();
+        }
+
+        window.switchTab = function (tabName) {
+            const normalized = String(tabName || "").toLowerCase();
+            const index = TAB_NAMES.indexOf(normalized);
+            if (index === -1) return;
+
+            const container = $("swipeContainer");
+            if (container) {
+                isProgrammaticScroll = true;
+                clearTimeout(programmaticScrollTimer);
+
+                const targetLeft = index * container.clientWidth;
+                container.scrollTo({
+                    left: targetLeft,
+                    behavior: "smooth"
+                });
+
+                programmaticScrollTimer = setTimeout(() => {
+                    isProgrammaticScroll = false;
+                }, 400);
+            }
+
+            setActiveTabIndicator(normalized);
         };
+
+        function initSwipeNavigation() {
+            const container = $("swipeContainer");
+            if (!container) return;
+
+            // 1. Sinkronisasi tab saat kontainer digeser (touch scroll / trackpad)
+            let scrollDebounce = null;
+            container.addEventListener("scroll", () => {
+                if (isProgrammaticScroll) return;
+                if (scrollDebounce) cancelAnimationFrame(scrollDebounce);
+                scrollDebounce = requestAnimationFrame(() => {
+                    const width = container.clientWidth;
+                    if (!width) return;
+                    const index = Math.round(container.scrollLeft / width);
+                    const clampedIndex = Math.max(0, Math.min(TAB_NAMES.length - 1, index));
+                    const targetTab = TAB_NAMES[clampedIndex];
+                    if (targetTab && targetTab !== currentActiveTab) {
+                        setActiveTabIndicator(targetTab);
+                    }
+                });
+            }, { passive: true });
+
+            // 2. Sesuaikan offset saat orientasi / ukuran window berubah
+            window.addEventListener("resize", () => {
+                const index = TAB_NAMES.indexOf(currentActiveTab);
+                if (index >= 0) {
+                    container.scrollTo({
+                        left: index * container.clientWidth,
+                        behavior: "auto"
+                    });
+                }
+            });
+
+            // 3. Dukungan Mouse Drag untuk Desktop (bisa klik & geser dengan mouse)
+            let isMouseDown = false;
+            let startX = 0;
+            let scrollStart = 0;
+            let isDragging = false;
+            let dragDistance = 0;
+
+            container.addEventListener("mousedown", (e) => {
+                if (e.button !== 0) return;
+                if (e.target.closest("input, textarea, select")) return;
+
+                isMouseDown = true;
+                isDragging = false;
+                dragDistance = 0;
+                startX = e.pageX;
+                scrollStart = container.scrollLeft;
+                container.style.scrollBehavior = "auto";
+                container.style.scrollSnapType = "none";
+                container.style.cursor = "grabbing";
+            });
+
+            window.addEventListener("mousemove", (e) => {
+                if (!isMouseDown) return;
+                const diffX = e.pageX - startX;
+                dragDistance = Math.abs(diffX);
+                if (dragDistance > 8) {
+                    isDragging = true;
+                    container.scrollLeft = scrollStart - diffX;
+                }
+            });
+
+            const finishDrag = (e) => {
+                if (!isMouseDown) return;
+                isMouseDown = false;
+                container.style.scrollBehavior = "smooth";
+                container.style.scrollSnapType = "x mandatory";
+                container.style.cursor = "";
+
+                if (isDragging) {
+                    const diffX = (e ? e.pageX : startX) - startX;
+                    const width = container.clientWidth;
+                    const currentIndex = TAB_NAMES.indexOf(currentActiveTab);
+                    let targetIndex = currentIndex;
+
+                    if (diffX < -50 && currentIndex < TAB_NAMES.length - 1) {
+                        targetIndex = currentIndex + 1;
+                    } else if (diffX > 50 && currentIndex > 0) {
+                        targetIndex = currentIndex - 1;
+                    } else {
+                        targetIndex = Math.round(container.scrollLeft / width);
+                    }
+                    targetIndex = Math.max(0, Math.min(TAB_NAMES.length - 1, targetIndex));
+                    window.switchTab(TAB_NAMES[targetIndex]);
+
+                    const blockClick = (ev) => {
+                        ev.stopPropagation();
+                        ev.stopImmediatePropagation();
+                        ev.preventDefault();
+                    };
+                    window.addEventListener("click", blockClick, { capture: true, once: true });
+                    setTimeout(() => window.removeEventListener("click", blockClick, { capture: true }), 150);
+                }
+                isDragging = false;
+            };
+
+            window.addEventListener("mouseup", finishDrag);
+        }
+
+        initSwipeNavigation();
 
         window.konfirmasiKeluar = function () {
             const btnAction = $("btnConfirmAction");
