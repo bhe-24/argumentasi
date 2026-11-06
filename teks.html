@@ -2,15 +2,16 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Teks Argumentasi - Argumentasi</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Fonts -->
+    <!-- Google Fonts Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <script>
@@ -27,212 +28,623 @@
     </script>
 
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #f1f5f9; 
+            -webkit-tap-highlight-color: transparent; 
+        }
         
-        /* Menyembunyikan scrollbar untuk estetika Mobile App */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        
-        /* Desain Tab Custom */
-        .tab-active { border-bottom: 3px solid #059669; color: #059669; font-weight: 700; }
-        .tab-inactive { border-bottom: 3px solid transparent; color: #64748b; font-weight: 500; hover:color: #059669; }
+        .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* SKELETON SHIMMER LOADING TANPA ANIMASI LONCAT */
+        .sk {
+            position: relative;
+            overflow: hidden;
+            background: #e2e8f0;
+            border-radius: 0.75rem;
+        }
+        .sk::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            transform: translateX(-100%);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+
+        /* SWIPE CONTAINER & PANELS (Bisa digeser kanan-kiri seperti Ruang Belajar) */
+        .swipe-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-x: contain;
+            touch-action: pan-x pan-y;
+        }
+
+        .swipe-panel {
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+            flex-shrink: 0;
+            height: 100%;
+            overflow-y: auto;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            box-sizing: border-box;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
+        }
+
+        /* TAB STYLING */
+        .tab-btn {
+            position: relative;
+            border-bottom: 2.5px solid transparent;
+            color: #64748b;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .tab-btn.tab-active {
+            border-bottom-color: #059669;
+            color: #059669;
+            font-weight: 700;
+            background-color: rgba(209, 250, 229, 0.35);
+        }
     </style>
 </head>
-<body class="flex justify-center min-h-screen">
+<body class="flex justify-center min-h-screen bg-slate-900 sm:bg-slate-200">
 
     <!-- CONTAINER UTAMA (Mobile App Frame) -->
-    <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col overflow-hidden sm:border-x border-slate-200">
+    <div class="w-full max-w-md bg-slate-50 relative shadow-2xl flex flex-col sm:border-x border-slate-300 overflow-hidden" style="height:100vh;height:100dvh;">
         
-        <!-- HEADER STICKY (Sistem Index) -->
-        <header class="bg-brand-green fixed w-full max-w-md z-50 px-4 py-3 flex items-center gap-3 shadow-md" id="topHeader">
-            <!-- Tombol Kembali -->
-            <a href="index.html" class="shrink-0 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors active:scale-95">
-                <i class="fas fa-chevron-left text-sm"></i>
-            </a>
-            
-            <!-- Search Bar yang diarahkan ke search.html -->
-            <div class="flex-1 bg-white/20 hover:bg-white/30 transition-colors rounded-full flex items-center px-3 py-1.5 border border-white/30 backdrop-blur-sm">
-                <i class="fas fa-search text-white text-sm"></i>
-                <input type="text" id="searchInput" placeholder="Cari teks argumentasi..." class="w-full bg-transparent outline-none text-white text-xs px-2 placeholder-white/70" onkeypress="if(event.key === 'Enter') alihkanKeSearch()">
+        <!-- HEADER STICKY (Tema Hijau Brand) -->
+        <header class="bg-brand-green shrink-0 shadow-md z-40" style="padding-top:env(safe-area-inset-top,0px);">
+            <!-- Bar Atas -->
+            <div class="px-4 py-3 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <a href="index.html" aria-label="Kembali ke Beranda" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
+                        <i class="fas fa-chevron-left text-sm"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-sm font-bold text-white tracking-wide leading-tight">Teks Argumentasi</h1>
+                        <p class="text-[10px] text-emerald-100 font-medium leading-none mt-0.5">Koleksi Argumentasi &amp; Analisis</p>
+                    </div>
+                </div>
+
+                <a href="profil.html" aria-label="Profil Siswa" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
+                    <i class="fas fa-user-astronaut text-sm"></i>
+                </a>
             </div>
-            
-            <!-- Ikon User -->
-            <a href="profil.html" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white relative hover:bg-white/20 transition-colors">
-                <i class="fas fa-user text-sm"></i>
-            </a>
+
+            <!-- Search Bar Terpadu -->
+            <div class="px-4 pb-3">
+                <div class="bg-white rounded-xl flex items-center px-3 py-2 shadow-2xs border border-emerald-700/30">
+                    <i class="fas fa-search text-slate-400 text-xs mr-2 shrink-0"></i>
+                    <input type="text" id="searchInput" 
+                           placeholder="Cari teks argumentasi, topik, kata kunci..." 
+                           class="w-full bg-transparent outline-none text-slate-800 text-xs placeholder-slate-400 font-normal"
+                           oninput="onCariInput(this.value)"
+                           onkeydown="if(event.key === 'Enter') alihkanKeSearchGlobal()">
+                    <button id="btnClearSearch" onclick="bersihkanPencarian()" class="hidden text-slate-300 hover:text-slate-500 ml-1.5 transition">
+                        <i class="fas fa-circle-xmark"></i>
+                    </button>
+                </div>
+            </div>
         </header>
 
-        <!-- PENGGANTI RUANG HEADER STICKY -->
-        <div class="h-[60px] bg-brand-green shrink-0"></div>
-
-        <!-- TABS NAVIGASI (Sticky setelah header) -->
-        <div class="bg-white border-b border-slate-200 z-40 relative shadow-sm">
-            <!-- Background lengkung hijau (biar nyambung dgn header) -->
-            <div class="absolute inset-x-0 top-0 h-4 bg-brand-green rounded-b-2xl -z-10"></div>
-            
-            <!-- Konten Tab -->
-            <div class="flex overflow-x-auto hide-scrollbar px-2 bg-white rounded-t-2xl pt-2">
-                <button onclick="ubahTab('terbaru', this)" class="tab-btn tab-active flex-1 min-w-[100px] py-3 text-center text-[10px] uppercase tracking-wider transition-all whitespace-nowrap">
+        <!-- TABS NAVIGASI (Bisa Diklik & Otomatis Tersinkron Saat Digeser) -->
+        <nav class="bg-white border-b border-slate-200 z-30 shrink-0 shadow-2xs">
+            <div class="flex items-center justify-around px-2">
+                <button id="tabBtn_terbaru" onclick="switchTab('terbaru')" class="tab-btn tab-active flex-1 py-3 text-center text-xs uppercase tracking-wider transition-all whitespace-nowrap">
                     ✨ Terbaru
                 </button>
-                <button onclick="ubahTab('populer', this)" class="tab-btn tab-inactive flex-1 min-w-[100px] py-3 text-center text-[10px] uppercase tracking-wider transition-all whitespace-nowrap">
+                <button id="tabBtn_populer" onclick="switchTab('populer')" class="tab-btn flex-1 py-3 text-center text-xs uppercase tracking-wider transition-all whitespace-nowrap">
                     🔥 Populer
                 </button>
-                <button onclick="ubahTab('terbaik', this)" class="tab-btn tab-inactive flex-1 min-w-[100px] py-3 text-center text-[10px] uppercase tracking-wider transition-all whitespace-nowrap">
+                <button id="tabBtn_terbaik" onclick="switchTab('terbaik')" class="tab-btn flex-1 py-3 text-center text-xs uppercase tracking-wider transition-all whitespace-nowrap">
                     🏆 Terbaik
                 </button>
             </div>
-        </div>
+        </nav>
 
-        <!-- MAIN KONTEN (Scrollable List) -->
-        <div class="flex-grow overflow-y-auto hide-scrollbar p-4 relative z-10">
-            
-            <!-- TITLE HALAMAN -->
-            <div class="mb-4 text-center">
-                <span class="bg-emerald-100 text-emerald-700 text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider border border-emerald-200">
-                    Koleksi Argumentasi
-                </span>
-            </div>
+        <!-- AREA KONTEN SWIPEABLE (Bisa Digeser Langsung Kiri-Kanan Tanpa Klik) -->
+        <div class="flex-1 min-h-0 relative overflow-hidden bg-slate-50">
+            <div id="swipeContainer" class="swipe-container hide-scrollbar">
 
-            <!-- STATE: LOADING -->
-            <div id="loadingState" class="flex flex-col items-center justify-center py-10 mt-10">
-                <div class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 animate-pulse w-full max-w-sm mx-auto">
-                    <div class="w-24 h-24 bg-slate-200 rounded-lg shrink-0"></div>
-                    <div class="flex-1 flex flex-col justify-between py-1">
-                        <div><div class="h-3 bg-slate-200 w-16 rounded mb-2"></div><div class="h-4 bg-slate-200 w-full rounded mb-1"></div><div class="h-4 bg-slate-200 w-3/4 rounded"></div></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- STATE: EMPTY / ERROR -->
-            <div id="emptyState" class="hidden flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-slate-100 shadow-sm mt-4">
-                <div class="w-16 h-16 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center text-3xl mb-3 text-slate-300 shadow-inner">
-                    <i class="fas fa-folder-open"></i>
-                </div>
-                <h3 class="font-bold text-slate-700 text-sm mb-1">Belum Ada Teks</h3>
-                <p class="text-[11px] text-slate-500 max-w-[200px] mx-auto" id="emptyMsg">Teks argumentasi publik belum tersedia untuk saat ini.</p>
-            </div>
-
-            <!-- LIST CONTAINER -->
-            <div id="listContainer" class="flex flex-col gap-3 fade-in hidden pb-6">
-                <!-- Card Data akan diinjeksi ke sini oleh JS -->
-            </div>
-
-        </div>
-    </div>
-
-    <!-- Container Toast -->
-    <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
-
-    <!-- SCRIPT UI DASAR & LOGIKA FILTER -->
-    <script>
-        let allDataTexts = []; // Menyimpan data asli dari Firebase
-        let currentFilter = 'terbaru'; // Tab aktif
-
-        // Alihkan pencarian spesifik ke search.html
-        function alihkanKeSearch() {
-            const query = document.getElementById('searchInput').value.trim();
-            if(query) {
-                window.location.href = `search.html?q=${encodeURIComponent(query)}`;
-            }
-        }
-
-        // Logic Ganti Tab
-        function ubahTab(jenis, btnElement) {
-            currentFilter = jenis;
-            
-            // Ubah Style Tab
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('tab-active');
-                btn.classList.add('tab-inactive');
-            });
-            btnElement.classList.remove('tab-inactive');
-            btnElement.classList.add('tab-active');
-
-            // Render ulang list
-            renderListByFilter();
-        }
-
-        // Logic Pengurutan Data
-        function renderListByFilter() {
-            let sortedData = [...allDataTexts];
-
-            if (currentFilter === 'terbaru') {
-                sortedData.sort((a, b) => b.timestamp - a.timestamp);
-            } 
-            else if (currentFilter === 'populer') {
-                // Urut berdasarkan penayangan tertinggi (jika tidak ada, fallback ke view buatan)
-                sortedData.sort((a, b) => b.views - a.views);
-            } 
-            else if (currentFilter === 'terbaik') {
-                // Urut berdasarkan rating tertinggi (jika tidak ada, fallback ke rating buatan)
-                sortedData.sort((a, b) => b.rating - a.rating);
-            }
-
-            renderHTML(sortedData);
-        }
-
-        // Logic Render HTML Horizontal Card (Mengikuti gaya Index)
-        function renderHTML(dataArray) {
-            const container = document.getElementById('listContainer');
-            let html = "";
-
-            dataArray.forEach((data, index) => {
-                
-                // Tambahkan lencana (badge) ranking untuk tab khusus
-                let rankBadge = '';
-                if (currentFilter === 'populer' && index < 3) {
-                    rankBadge = `<div class="absolute -top-2 -left-2 w-6 h-6 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md z-10"><i class="fas fa-fire"></i></div>`;
-                } else if (currentFilter === 'terbaik' && index < 3) {
-                    rankBadge = `<div class="absolute -top-2 -left-2 w-6 h-6 bg-amber-400 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md z-10"><i class="fas fa-star"></i></div>`;
-                }
-
-                // Render Tagar (Maksimal 2 tag)
-                let tagsHtml = "";
-                if (data.tags && Array.isArray(data.tags)) {
-                    tagsHtml = data.tags.slice(0, 2).map(tag => `<span class="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[8px] mr-1 mt-1">#${tag}</span>`).join('');
-                }
-
-                html += `
-                <div class="relative">
-                    ${rankBadge}
-                    <a href="baca.html?id=${data.id}" class="flex gap-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100 hover:border-brand-green transition-colors active:scale-[0.98]">
-                        <img src="${data.img}" alt="${data.judul}" class="w-24 h-24 object-cover rounded-lg shrink-0 bg-slate-100">
-                        
-                        <div class="flex-1 flex flex-col justify-between py-1 min-w-0">
-                            <div>
-                                <span class="text-[9px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 px-1.5 py-0.5 rounded uppercase tracking-widest">Argumentasi</span>
-                                <h3 class="font-bold text-sm text-slate-800 line-clamp-2 mt-1.5 leading-snug">${data.judul}</h3>
-                                <div class="flex flex-wrap">${tagsHtml}</div>
-                            </div>
-                            <div class="flex justify-between items-end mt-2">
-                                <span class="text-[10px] text-slate-400"><i class="far fa-clock"></i> ${data.waktuBaca || '5 Min'}</span>
-                                <span class="text-[11px] font-bold text-brand-green">Mulai <i class="fas fa-chevron-right text-[9px] ml-0.5"></i></span>
+                <!-- PANEL 1: TERBARU -->
+                <div id="panelTerbaru" class="swipe-panel px-4 py-3.5 hide-scrollbar">
+                    <!-- Skeleton Shimmer -->
+                    <div id="skelTerbaru" class="space-y-3">
+                        <div class="flex gap-3 bg-white p-3 rounded-2xl shadow-xs border border-slate-100">
+                            <div class="sk w-24 h-24 rounded-xl shrink-0"></div>
+                            <div class="flex-1 flex flex-col justify-between py-1">
+                                <div>
+                                    <div class="flex gap-1.5 mb-2">
+                                        <div class="sk h-3 w-16 rounded-md"></div>
+                                        <div class="sk h-3 w-12 rounded-md"></div>
+                                    </div>
+                                    <div class="sk h-4 w-full rounded-md mb-1.5"></div>
+                                    <div class="sk h-4 w-3/4 rounded-md"></div>
+                                </div>
+                                <div class="flex justify-between items-center mt-2 pt-1 border-t border-slate-50">
+                                    <div class="flex gap-3">
+                                        <div class="sk h-3 w-12 rounded"></div>
+                                        <div class="sk h-3 w-10 rounded"></div>
+                                    </div>
+                                    <div class="sk h-3 w-12 rounded"></div>
+                                </div>
                             </div>
                         </div>
-                    </a>
-                </div>`;
+                        <div class="flex gap-3 bg-white p-3 rounded-2xl shadow-xs border border-slate-100">
+                            <div class="sk w-24 h-24 rounded-xl shrink-0"></div>
+                            <div class="flex-1 flex flex-col justify-between py-1">
+                                <div>
+                                    <div class="flex gap-1.5 mb-2">
+                                        <div class="sk h-3 w-20 rounded-md"></div>
+                                        <div class="sk h-3 w-14 rounded-md"></div>
+                                    </div>
+                                    <div class="sk h-4 w-5/6 rounded-md mb-1.5"></div>
+                                    <div class="sk h-4 w-2/3 rounded-md"></div>
+                                </div>
+                                <div class="flex justify-between items-center mt-2 pt-1 border-t border-slate-50">
+                                    <div class="flex gap-3">
+                                        <div class="sk h-3 w-12 rounded"></div>
+                                        <div class="sk h-3 w-10 rounded"></div>
+                                    </div>
+                                    <div class="sk h-3 w-12 rounded"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- State Kosong -->
+                    <div id="emptyTerbaru" class="hidden flex-col items-center justify-center py-16 text-center">
+                        <div class="w-16 h-16 bg-slate-100 border border-slate-200/80 rounded-2xl flex items-center justify-center text-3xl mb-3 text-slate-300">
+                            <i class="fas fa-folder-open"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-700 text-sm mb-1">Belum Ada Teks</h3>
+                        <p class="text-xs text-slate-400 max-w-[220px] leading-relaxed" id="msgEmptyTerbaru">Teks argumentasi belum tersedia saat ini.</p>
+                    </div>
+
+                    <!-- List Konten -->
+                    <div id="listTerbaru" class="space-y-3 pb-8"></div>
+                </div>
+
+                <!-- PANEL 2: POPULER -->
+                <div id="panelPopuler" class="swipe-panel px-4 py-3.5 hide-scrollbar">
+                    <!-- Skeleton Shimmer -->
+                    <div id="skelPopuler" class="space-y-3">
+                        <div class="flex gap-3 bg-white p-3 rounded-2xl shadow-xs border border-slate-100">
+                            <div class="sk w-24 h-24 rounded-xl shrink-0"></div>
+                            <div class="flex-1 flex flex-col justify-between py-1">
+                                <div>
+                                    <div class="flex gap-1.5 mb-2">
+                                        <div class="sk h-3 w-16 rounded-md"></div>
+                                        <div class="sk h-3 w-12 rounded-md"></div>
+                                    </div>
+                                    <div class="sk h-4 w-full rounded-md mb-1.5"></div>
+                                    <div class="sk h-4 w-3/4 rounded-md"></div>
+                                </div>
+                                <div class="flex justify-between items-center mt-2 pt-1 border-t border-slate-50">
+                                    <div class="flex gap-3">
+                                        <div class="sk h-3 w-12 rounded"></div>
+                                        <div class="sk h-3 w-10 rounded"></div>
+                                    </div>
+                                    <div class="sk h-3 w-12 rounded"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- State Kosong -->
+                    <div id="emptyPopuler" class="hidden flex-col items-center justify-center py-16 text-center">
+                        <div class="w-16 h-16 bg-slate-100 border border-slate-200/80 rounded-2xl flex items-center justify-center text-3xl mb-3 text-slate-300">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-700 text-sm mb-1">Belum Ada Teks Populer</h3>
+                        <p class="text-xs text-slate-400 max-w-[220px] leading-relaxed">Teks dengan penayangan terbanyak akan muncul di sini.</p>
+                    </div>
+
+                    <!-- List Konten -->
+                    <div id="listPopuler" class="space-y-3 pb-8"></div>
+                </div>
+
+                <!-- PANEL 3: TERBAIK -->
+                <div id="panelTerbaik" class="swipe-panel px-4 py-3.5 hide-scrollbar">
+                    <!-- Skeleton Shimmer -->
+                    <div id="skelTerbaik" class="space-y-3">
+                        <div class="flex gap-3 bg-white p-3 rounded-2xl shadow-xs border border-slate-100">
+                            <div class="sk w-24 h-24 rounded-xl shrink-0"></div>
+                            <div class="flex-1 flex flex-col justify-between py-1">
+                                <div>
+                                    <div class="flex gap-1.5 mb-2">
+                                        <div class="sk h-3 w-16 rounded-md"></div>
+                                        <div class="sk h-3 w-12 rounded-md"></div>
+                                    </div>
+                                    <div class="sk h-4 w-full rounded-md mb-1.5"></div>
+                                    <div class="sk h-4 w-3/4 rounded-md"></div>
+                                </div>
+                                <div class="flex justify-between items-center mt-2 pt-1 border-t border-slate-50">
+                                    <div class="flex gap-3">
+                                        <div class="sk h-3 w-12 rounded"></div>
+                                        <div class="sk h-3 w-10 rounded"></div>
+                                    </div>
+                                    <div class="sk h-3 w-12 rounded"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- State Kosong -->
+                    <div id="emptyTerbaik" class="hidden flex-col items-center justify-center py-16 text-center">
+                        <div class="w-16 h-16 bg-slate-100 border border-slate-200/80 rounded-2xl flex items-center justify-center text-3xl mb-3 text-slate-300">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-700 text-sm mb-1">Belum Ada Teks Terbaik</h3>
+                        <p class="text-xs text-slate-400 max-w-[220px] leading-relaxed">Teks dengan penilaian tertinggi akan muncul di sini.</p>
+                    </div>
+
+                    <!-- List Konten -->
+                    <div id="listTerbaik" class="space-y-3 pb-8"></div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- LOGIKA SINKRONISASI SWIPE & SEARCH -->
+    <script>
+        const TAB_KEYS = ['terbaru', 'populer', 'terbaik'];
+        let activeTab = 'terbaru';
+        let isProgrammaticScroll = false;
+        let programmaticTimer = null;
+        let allDataTexts = [];
+        let queryPencarian = "";
+
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+        // Hitung waktu baca riil berdasarkan jumlah kata (Acuan tepat: per 100 kata = 35 detik)
+        function hitungWaktuBacaReal(data) {
+            const raw = String(data.isi || data.konten || data.deskripsi || '');
+            const cleanText = raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            const words = cleanText ? cleanText.split(/\s+/).filter(Boolean).length : 0;
+
+            let totalDetik = 0;
+            if (words > 0) {
+                totalDetik = Math.round((words / 100) * 35);
+            } else if (data.waktuBaca) {
+                const parsed = parseInt(data.waktuBaca, 10);
+                totalDetik = !isNaN(parsed) ? parsed * 60 : 35;
+            } else {
+                totalDetik = 35;
+            }
+
+            if (totalDetik < 60) {
+                return `${Math.max(15, totalDetik)} dtk`;
+            }
+            const menit = Math.round(totalDetik / 60);
+            return `${Math.max(1, menit)} mnt`;
+        }
+
+        // Update indikator tab aktif
+        function setActiveTabIndicator(tabKey) {
+            activeTab = tabKey;
+            TAB_KEYS.forEach(k => {
+                const btn = document.getElementById('tabBtn_' + k);
+                if (!btn) return;
+                if (k === tabKey) {
+                    btn.classList.add('tab-active');
+                } else {
+                    btn.classList.remove('tab-active');
+                }
+            });
+        }
+
+        // Berpindah tab saat tombol tab diklik
+        function switchTab(tabKey) {
+            const idx = TAB_KEYS.indexOf(tabKey);
+            if (idx === -1) return;
+
+            const container = document.getElementById('swipeContainer');
+            if (container) {
+                isProgrammaticScroll = true;
+                clearTimeout(programmaticTimer);
+
+                const targetLeft = idx * container.clientWidth;
+                container.scrollTo({
+                    left: targetLeft,
+                    behavior: 'smooth'
+                });
+
+                programmaticTimer = setTimeout(() => {
+                    isProgrammaticScroll = false;
+                }, 350);
+            }
+
+            setActiveTabIndicator(tabKey);
+        }
+
+        // Inisialisasi navigasi geser (swipeable container)
+        function initSwipeNavigation() {
+            const container = document.getElementById('swipeContainer');
+            if (!container) return;
+
+            // 1. Deteksi scroll sentuh / trackpad
+            let scrollDebounce = null;
+            container.addEventListener('scroll', () => {
+                if (isProgrammaticScroll) return;
+                if (scrollDebounce) cancelAnimationFrame(scrollDebounce);
+                scrollDebounce = requestAnimationFrame(() => {
+                    const width = container.clientWidth;
+                    if (!width) return;
+                    const idx = Math.round(container.scrollLeft / width);
+                    const clamped = Math.max(0, Math.min(TAB_KEYS.length - 1, idx));
+                    const targetTab = TAB_KEYS[clamped];
+                    if (targetTab && targetTab !== activeTab) {
+                        setActiveTabIndicator(targetTab);
+                    }
+                });
+            }, { passive: true });
+
+            // 2. Sesuaikan offset saat orientasi / ukuran window berubah
+            window.addEventListener('resize', () => {
+                const idx = TAB_KEYS.indexOf(activeTab);
+                if (idx >= 0 && container) {
+                    container.scrollTo({
+                        left: idx * container.clientWidth,
+                        behavior: 'auto'
+                    });
+                }
             });
 
-            if (dataArray.length === 0) {
-                document.getElementById('emptyState').classList.remove('hidden');
-                container.classList.add('hidden');
+            // 3. Dukungan Mouse Drag untuk Desktop
+            let isMouseDown = false;
+            let startX = 0;
+            let scrollStart = 0;
+            let isDragging = false;
+            let dragDistance = 0;
+
+            container.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                if (e.target.closest('input, textarea, select, button')) return;
+
+                isMouseDown = true;
+                isDragging = false;
+                dragDistance = 0;
+                startX = e.pageX;
+                scrollStart = container.scrollLeft;
+                container.style.scrollBehavior = 'auto';
+                container.style.scrollSnapType = 'none';
+                container.style.cursor = 'grabbing';
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isMouseDown) return;
+                const diffX = e.pageX - startX;
+                dragDistance = Math.abs(diffX);
+                if (dragDistance > 8) {
+                    isDragging = true;
+                    container.scrollLeft = scrollStart - diffX;
+                }
+            });
+
+            const finishDrag = (e) => {
+                if (!isMouseDown) return;
+                isMouseDown = false;
+                container.style.scrollBehavior = 'smooth';
+                container.style.scrollSnapType = 'x mandatory';
+                container.style.cursor = '';
+
+                if (isDragging) {
+                    const diffX = (e ? e.pageX : startX) - startX;
+                    const width = container.clientWidth;
+                    const currentIndex = TAB_KEYS.indexOf(activeTab);
+                    let targetIndex = currentIndex;
+
+                    if (diffX < -50 && currentIndex < TAB_KEYS.length - 1) {
+                        targetIndex = currentIndex + 1;
+                    } else if (diffX > 50 && currentIndex > 0) {
+                        targetIndex = currentIndex - 1;
+                    } else {
+                        targetIndex = Math.round(container.scrollLeft / width);
+                    }
+                    targetIndex = Math.max(0, Math.min(TAB_KEYS.length - 1, targetIndex));
+                    switchTab(TAB_KEYS[targetIndex]);
+
+                    const blockClick = (ev) => {
+                        ev.stopPropagation();
+                        ev.stopImmediatePropagation();
+                        ev.preventDefault();
+                    };
+                    window.addEventListener('click', blockClick, { capture: true, once: true });
+                    setTimeout(() => window.removeEventListener('click', blockClick, { capture: true }), 150);
+                }
+                isDragging = false;
+            };
+
+            window.addEventListener('mouseup', finishDrag);
+        }
+
+        // Render Kartu Teks Argumentasi
+        function renderCardHTML(data, rankIndex, tabType) {
+            const imgUrl = data.img || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=300";
+            
+            // Tagar (Maksimal 2 tag)
+            let tagsHtml = "";
+            if (data.tags && Array.isArray(data.tags) && data.tags.length > 0) {
+                tagsHtml = data.tags.filter(Boolean).slice(0, 2).map(tag => 
+                    `<span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md text-[8.5px] font-medium leading-none">#${esc(tag)}</span>`
+                ).join(' ');
             } else {
-                document.getElementById('emptyState').classList.add('hidden');
-                container.innerHTML = html;
-                
-                // Trigger animasi fade-in
-                container.classList.remove('hidden');
-                container.classList.remove('fade-in');
-                void container.offsetWidth; 
-                container.classList.add('fade-in');
+                tagsHtml = `<span class="bg-slate-100 text-slate-400 px-2 py-0.5 rounded-md text-[8.5px] font-medium leading-none">#Argumentasi</span>`;
+            }
+
+            // Durasi baca akurat (35 dtk per 100 kata)
+            const waktuStr = hitungWaktuBacaReal(data);
+
+            // Views jelas
+            const views = Number(data.views || 0);
+
+            // Rank badge khusus untuk tab populer & terbaik (3 teratas)
+            let rankBadge = '';
+            if (tabType === 'populer' && rankIndex < 3) {
+                if (rankIndex === 0) {
+                    rankBadge = `<div class="absolute -top-1.5 -left-1.5 w-6 h-6 bg-gradient-to-tr from-rose-600 to-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md z-10"><i class="fas fa-fire"></i></div>`;
+                } else if (rankIndex === 1) {
+                    rankBadge = `<div class="absolute -top-1.5 -left-1.5 w-6 h-6 bg-gradient-to-tr from-orange-500 to-amber-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md z-10">2</div>`;
+                } else {
+                    rankBadge = `<div class="absolute -top-1.5 -left-1.5 w-6 h-6 bg-gradient-to-tr from-amber-500 to-yellow-400 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md z-10">3</div>`;
+                }
+            } else if (tabType === 'terbaik' && rankIndex < 3) {
+                if (rankIndex === 0) {
+                    rankBadge = `<div class="absolute -top-1.5 -left-1.5 w-6 h-6 bg-gradient-to-tr from-amber-500 to-yellow-300 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md z-10"><i class="fas fa-crown"></i></div>`;
+                } else if (rankIndex === 1) {
+                    rankBadge = `<div class="absolute -top-1.5 -left-1.5 w-6 h-6 bg-gradient-to-tr from-slate-400 to-slate-300 text-slate-800 text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md z-10">2</div>`;
+                } else {
+                    rankBadge = `<div class="absolute -top-1.5 -left-1.5 w-6 h-6 bg-gradient-to-tr from-amber-700 to-amber-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md z-10">3</div>`;
+                }
+            }
+
+            return `
+            <div class="relative">
+                ${rankBadge}
+                <a href="baca.html?id=${data.id}" 
+                   class="flex gap-3 bg-white p-3 rounded-2xl shadow-xs border border-slate-200/90 hover:border-brand-green transition-colors active:scale-[0.98] group">
+                    
+                    <img src="${imgUrl}" alt="${esc(data.judul)}" 
+                         class="w-24 h-24 object-cover rounded-xl shrink-0 bg-slate-100 border border-slate-100" 
+                         loading="lazy">
+
+                    <div class="flex-1 flex flex-col justify-between py-0.5 min-w-0">
+                        <div>
+                            <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                                <span class="text-[8.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                    Argumentasi
+                                </span>
+                                ${tagsHtml}
+                            </div>
+                            <h3 class="font-bold text-[13px] text-slate-800 line-clamp-2 leading-snug group-hover:text-brand-green transition-colors">
+                                ${esc(data.judul)}
+                            </h3>
+                            ${data.deskripsi ? `<p class="text-[10px] text-slate-500 line-clamp-1 mt-0.5">${esc(data.deskripsi)}</p>` : ''}
+                        </div>
+
+                        <div class="flex justify-between items-center mt-2 pt-1.5 border-t border-slate-100 text-[10px] text-slate-400">
+                            <div class="flex items-center gap-3">
+                                <span class="flex items-center gap-1 font-medium" title="Durasi Baca: ${waktuStr} (Acuan: 35 dtk per 100 kata)">
+                                    <i class="far fa-clock text-amber-500"></i> ${waktuStr}
+                                </span>
+                                <span class="flex items-center gap-1 font-medium" title="${views} kali dibaca">
+                                    <i class="far fa-eye text-emerald-500"></i> ${views}x
+                                </span>
+                            </div>
+                            <span class="text-[11px] font-bold text-brand-green flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+                                Mulai <i class="fas fa-chevron-right text-[8px] ml-0.5"></i>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>`;
+        }
+
+        // Render data ke 3 panel secara independen
+        function renderAllPanels() {
+            const q = queryPencarian.trim().toLowerCase();
+            
+            const filtered = allDataTexts.filter(item => {
+                if (!q) return true;
+                const judul = (item.judul || '').toLowerCase();
+                const desk = (item.deskripsi || '').toLowerCase();
+                const tags = Array.isArray(item.tags) ? item.tags.join(' ').toLowerCase() : '';
+                return judul.includes(q) || desk.includes(q) || tags.includes(q);
+            });
+
+            // 1. Data Terbaru (Diurutkan berdasarkan timestamp)
+            const dataTerbaru = [...filtered].sort((a, b) => b.timestamp - a.timestamp);
+            renderSinglePanel('Terbaru', dataTerbaru, 'terbaru');
+
+            // 2. Data Populer (Diurutkan berdasarkan views)
+            const dataPopuler = [...filtered].sort((a, b) => (b.views || 0) - (a.views || 0));
+            renderSinglePanel('Populer', dataPopuler, 'populer');
+
+            // 3. Data Terbaik (Diurutkan berdasarkan rating)
+            const dataTerbaik = [...filtered].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            renderSinglePanel('Terbaik', dataTerbaik, 'terbaik');
+        }
+
+        function renderSinglePanel(panelName, dataList, tabType) {
+            const skel = document.getElementById('skel' + panelName);
+            const empty = document.getElementById('empty' + panelName);
+            const list = document.getElementById('list' + panelName);
+            const msgEmpty = document.getElementById('msgEmpty' + panelName);
+
+            if (skel) skel.classList.add('hidden');
+
+            if (dataList.length === 0) {
+                if (list) list.innerHTML = '';
+                if (empty) {
+                    empty.classList.remove('hidden');
+                    empty.classList.add('flex');
+                    if (msgEmpty && queryPencarian.trim()) {
+                        msgEmpty.textContent = `Pencarian "${queryPencarian}" tidak ditemukan.`;
+                    }
+                }
+            } else {
+                if (empty) {
+                    empty.classList.add('hidden');
+                    empty.classList.remove('flex');
+                }
+                if (list) {
+                    list.innerHTML = dataList.map((item, idx) => renderCardHTML(item, idx, tabType)).join('');
+                }
             }
         }
+
+        // Search Input Handler
+        let searchTimer = null;
+        function onCariInput(val) {
+            const btnClear = document.getElementById('btnClearSearch');
+            if (btnClear) btnClear.classList.toggle('hidden', !val);
+
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                queryPencarian = val;
+                renderAllPanels();
+            }, 200);
+        }
+
+        function bersihkanPencarian() {
+            const input = document.getElementById('searchInput');
+            if (input) input.value = '';
+            const btnClear = document.getElementById('btnClearSearch');
+            if (btnClear) btnClear.classList.add('hidden');
+            queryPencarian = '';
+            renderAllPanels();
+        }
+
+        function alihkanKeSearchGlobal() {
+            const input = document.getElementById('searchInput');
+            const val = input ? input.value.trim() : '';
+            if (val) {
+                window.location.href = `search.html?q=${encodeURIComponent(val)}`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initSwipeNavigation();
+        });
     </script>
 
     <!-- FIREBASE FETCH DATA LOGIC -->
@@ -245,61 +657,69 @@
         const db = getFirestore(app);
 
         async function fetchDataServer() {
-            const loadingState = document.getElementById('loadingState');
-            const emptyState = document.getElementById('emptyState');
-            const listContainer = document.getElementById('listContainer');
-
             try {
-                // Hanya menarik data Teks Argumentasi
-                const q = query(collection(db, "materials"), where("kategori", "==", "argumentasi"));
-                const snap = await getDocs(q);
-
-                loadingState.classList.add('hidden');
-
-                if (snap.empty) {
-                    emptyState.classList.remove('hidden');
-                    return;
+                // Menarik data Teks Argumentasi
+                let snap;
+                try {
+                    const q = query(collection(db, "materials"), where("kategori", "==", "argumentasi"));
+                    snap = await getDocs(q);
+                    if (snap.empty) {
+                        const qAll = query(collection(db, "materials"));
+                        snap = await getDocs(qAll);
+                    }
+                } catch (err) {
+                    const qAll = query(collection(db, "materials"));
+                    snap = await getDocs(qAll);
                 }
 
                 allDataTexts = [];
                 snap.forEach(doc => {
                     const d = doc.data();
                     
-                    // JANGAN masukkan data jika statusnya Draft atau Dihapus
+                    // Jangan masukkan jika statusnya draft atau dihapus
                     if (d.status === 'draft' || d.status === 'dihapus') return;
 
-                    // Mengatur Time Stamp untuk Sort Terbaru
+                    const k = String(d.kategori || '').toLowerCase().trim();
+                    // Pastikan kategori teks argumentasi (atau umum non-artikel berita)
+                    if (k && !k.includes('argumentasi') && (k.includes('artikel') || k.includes('berita') || k.includes('opini'))) {
+                        return;
+                    }
+
+                    // Format Timestamp
                     let timeVal = 0;
-                    if (d.createdAt && d.createdAt.toMillis) timeVal = d.createdAt.toMillis();
+                    if (d.createdAt && typeof d.createdAt.toMillis === 'function') timeVal = d.createdAt.toMillis();
+                    else if (d.createdAt && typeof d.createdAt.toDate === 'function') timeVal = d.createdAt.toDate().getTime();
                     else if (d.createdAt) timeVal = new Date(d.createdAt).getTime();
 
-                    // Simpan data bersih untuk render UI
                     allDataTexts.push({
                         id: doc.id,
                         judul: d.judul || "Tanpa Judul",
+                        deskripsi: d.cuplikan || d.deskripsiSingkat || d.ringkasan || "",
                         img: d.coverImage || d.gambarBase64 || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=300",
-                        waktuBaca: d.waktuBaca || "5 Min",
-                        tags: d.tags || [],
-                        timestamp: timeVal,
-                        views: d.views || Math.floor(Math.random() * 500) + 50, 
-                        rating: d.rating || Math.floor(Math.random() * 100) 
+                        waktuBaca: d.waktuBaca || "",
+                        isi: d.isi || d.konten || "",
+                        tags: Array.isArray(d.tags) ? d.tags : [],
+                        timestamp: timeVal || 0,
+                        views: Number(d.views || d.viewCount || 0),
+                        rating: Number(d.rating || 0)
                     });
                 });
 
-                // Cek ulang array setelah penyaringan draft
-                if (allDataTexts.length === 0) {
-                    emptyState.classList.remove('hidden');
-                    return;
-                }
-
-                // Tampilkan list mode Terbaru secara otomatis
-                renderListByFilter();
+                renderAllPanels();
 
             } catch (error) {
                 console.error("Firebase Error:", error);
-                loadingState.classList.add('hidden');
-                emptyState.classList.remove('hidden');
-                document.getElementById('emptyMsg').innerText = "Terjadi gangguan server. Silakan periksa koneksi internet Anda.";
+                ['Terbaru', 'Populer', 'Terbaik'].forEach(p => {
+                    const skel = document.getElementById('skel' + p);
+                    const empty = document.getElementById('empty' + p);
+                    const msg = document.getElementById('msgEmpty' + p);
+                    if (skel) skel.classList.add('hidden');
+                    if (empty) {
+                        empty.classList.remove('hidden');
+                        empty.classList.add('flex');
+                    }
+                    if (msg) msg.textContent = "Terjadi gangguan jaringan saat memuat data.";
+                });
             }
         }
 
