@@ -46,6 +46,10 @@
             },
             aktif() { const now = Date.now(); let best = null; for (const k in S.hari) { const h = S.hari[k]; if (h.spin && now < h.spin.ts + 864e5 && (!best || h.spin.ts > S.hari[best].spin.ts)) best = k; } return best; },
             hari(kunci) { if (kunci === undefined || kunci === null) { const a = L.aktif(); return a ? S.hari[a] : null; } return S.hari[kunci] || null; },
+            // Cari hari yang punya hasil untuk misi tertentu (tanpa batas waktu 24 jam)
+            cariHariDenganHasil(misiKey) { let best = null; for (const k in S.hari) { const h = S.hari[k]; if (h.hasil && h.hasil[misiKey]) { if (!best || (h.spin && S.hari[best] && h.spin.ts > (S.hari[best].spin ? S.hari[best].spin.ts : 0))) best = k; } } return best ? S.hari[best] : null; },
+            // Cari hari dengan sesi aktif yang sedang berjalan untuk misi tertentu
+            cariHariDenganSesi(misiKey) { const now = Date.now(); let best = null; for (const k in S.hari) { const h = S.hari[k]; if (h.sesi && h.sesi[misiKey] && now < h.sesi[misiKey].batas) { if (!best || h.sesi[misiKey].mulai > S.hari[best].sesi[misiKey].mulai) best = k; } } return best ? S.hari[best] : null; },
             nama: () => localStorage.getItem('namaSiswaCendekia') || 'Siswa',
             xp: () => (parseInt(localStorage.getItem('latihanPointsCendekia') || '0') + parseInt(localStorage.getItem('kelasPointsArg') || '0')),
             tambahXp(n) { localStorage.setItem('latihanPointsCendekia', String(parseInt(localStorage.getItem('latihanPointsCendekia') || '0') + n)); },
@@ -224,6 +228,34 @@ async function initLatihan() {
     const backUrl = urlKembali();
     $('btnBack').href = backUrl;
 
+    // 1. Cek apakah ada hasil lama (dari hari manapun, tanpa batas waktu)
+    const hDenganHasil = L.cariHariDenganHasil('pilgan');
+    if (hDenganHasil) {
+        window.H = hDenganHasil;
+        window.P = hDenganHasil.pack && hDenganHasil.pack.pilgan;
+        if (window.P) {
+            window.soal = window.normSoal(window.P.soal);
+            window.totalWaktu = window.P.total || window.P.waktu || window.soal.reduce((a, b) => a + (b.waktu || 60), 0) || 300;
+            if ($('hSub')) $('hSub').textContent = (hDenganHasil.spin && hDenganHasil.spin.judul) || 'Pilihan Ganda';
+            return window.tampilHasil();
+        }
+    }
+
+    // 2. Cek apakah ada sesi yang masih berjalan (belum timeout)
+    const hDenganSesi = L.cariHariDenganSesi('pilgan');
+    if (hDenganSesi) {
+        window.H = hDenganSesi;
+        window.P = hDenganSesi.pack && hDenganSesi.pack.pilgan;
+        if (window.P) {
+            window.soal = window.normSoal(window.P.soal);
+            window.totalWaktu = window.P.total || window.P.waktu || window.soal.reduce((a, b) => a + (b.waktu || 60), 0) || 300;
+            if ($('hSub')) $('hSub').textContent = (hDenganSesi.spin && hDenganSesi.spin.judul) || 'Pilihan Ganda';
+            window.sesi = hDenganSesi.sesi.pilgan;
+            return Date.now() >= window.sesi.batas ? window.kumpulkan(true) : window.renderUjian();
+        }
+    }
+
+    // 3. Tidak ada hasil/sesi — cari atau buat hari aktif
     let H = L.hari();
     if (!H) {
         const S = L.state();
@@ -262,11 +294,6 @@ async function initLatihan() {
     window.totalWaktu = window.P.total || window.P.waktu || window.soal.reduce((a, b) => a + (b.waktu || 60), 0) || 300;
     if ($('hSub')) $('hSub').textContent = (H.spin && H.spin.judul) || 'Pilihan Ganda';
 
-    if (H.hasil && H.hasil.pilgan) return window.tampilHasil();
-    if (H.sesi && H.sesi.pilgan) {
-        window.sesi = H.sesi.pilgan;
-        return Date.now() >= window.sesi.batas ? window.kumpulkan(true) : window.renderUjian();
-    }
     window.tampilIntro();
 }
 
