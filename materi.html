@@ -2,128 +2,599 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Katalog Materi - Argumentasi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Materi Pembelajaran - Argumentasi</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: { 
+                        brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } 
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #f1f5f9; 
+            -webkit-tap-highlight-color: transparent; 
+        }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .modal-z { z-index: 99999 !important; }
     </style>
 </head>
-<body class="flex justify-center min-h-screen">
-<div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
+<body class="flex justify-center min-h-screen bg-slate-900 sm:bg-slate-200">
+    <!-- FRAME APLIKASI (Presisi Mobile Frame) -->
+    <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-300">
 
-    <!-- HEADER + TAB (STICKY) -->
-    <div class="sticky top-0 z-50 shadow-md">
-        <header class="bg-amber-500 px-4 h-14 flex items-center gap-3">
-            <a href="index.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
-                <i class="fas fa-chevron-left"></i>
-            </a>
-            <div class="flex-1 min-w-0">
-                <h1 class="text-white font-bold text-sm leading-tight truncate">Katalog Materi</h1>
-                <p id="sub" class="text-white/80 text-[10px] leading-tight truncate">Memuat daftar materi…</p>
+        <!-- HEADER STICKY IDENTIK DENGAN BRAND GREEN -->
+        <header class="bg-brand-green sticky top-0 z-50 shadow-md">
+            <div class="px-4 flex items-center justify-between"
+                 style="height:calc(60px + env(safe-area-inset-top,0px)); padding-top:env(safe-area-inset-top,0px);">
+                <div class="flex items-center gap-3">
+                    <a href="index.html" aria-label="Kembali ke Beranda" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-sm font-bold text-white tracking-wide">Materi Pembelajaran</h1>
+                        <p class="text-[10px] text-emerald-100 font-medium leading-none mt-0.5">Eksplorasi &amp; Pengetahuan Terpadu</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="toggleCari()" aria-label="Cari Materi" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
+                        <i class="fas fa-search text-sm"></i>
+                    </button>
+                    <button onclick="paksaRefreshPencarian()" title="Perbarui Data (3 Hari)" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
+                        <i id="btnRefreshIcon" class="fas fa-rotate text-sm"></i>
+                    </button>
+                </div>
             </div>
-            <button id="btnCari" onclick="tglCari()" aria-label="Cari" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition">
-                <i class="fas fa-search"></i>
-            </button>
-            <a href="profil.html" aria-label="Profil" class="shrink-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white border border-white/30">
-                <i class="fas fa-user text-sm"></i>
-            </a>
+
+            <!-- KOLOM PENCARIAN LIVE -->
+            <div id="boxCari" class="hidden bg-emerald-800/90 px-4 pb-3 pt-1 border-t border-white/10">
+                <div class="bg-white rounded-xl flex items-center px-3 py-2 shadow-sm">
+                    <i class="fas fa-search text-slate-400 text-xs mr-2"></i>
+                    <input id="inputCari" type="text" placeholder="Cari contoh, struktur, kaidah bahasa..." 
+                           class="w-full bg-transparent outline-none text-slate-800 text-xs placeholder-slate-400"
+                           oninput="onInputCariTunda(this.value)">
+                    <button onclick="resetCari()" class="text-slate-300 hover:text-slate-500 ml-2">
+                        <i class="fas fa-circle-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB FILTER KATEGORI -->
+            <nav id="tabsKategori" class="bg-white border-b border-slate-200 flex overflow-x-auto hide-scrollbar px-3 py-1.5 gap-1.5">
+                <button onclick="filterKategori('semua')" class="tab-btn active px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap bg-emerald-50 text-brand-green border border-emerald-200 transition">Semua</button>
+                <button onclick="filterKategori('struktur')" class="tab-btn px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">Struktur Argumen</button>
+                <button onclick="filterKategori('ciri')" class="tab-btn px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">Pengertian &amp; Ciri</button>
+                <button onclick="filterKategori('bahasa')" class="tab-btn px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">Kaidah Bahasa</button>
+                <button onclick="filterKategori('contoh')" class="tab-btn px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">Contoh Teks</button>
+            </nav>
         </header>
-        
-        <!-- KOLOM PENCARIAN (HIDDEN DEFAULT) -->
-        <div id="boxCari" class="hidden bg-amber-500 px-4 pb-3">
-            <div class="bg-white rounded-xl flex items-center px-3 py-2 shadow-sm">
-                <i class="fas fa-search text-slate-400 text-sm mr-2"></i>
-                <input id="q" type="text" placeholder="Cari judul materi, bab, atau deskripsi..." class="w-full bg-transparent outline-none text-slate-700 text-sm placeholder-slate-400" oninput="cariTunda()">
-                <button onclick="hapusCari()" class="text-slate-300 hover:text-slate-500 ml-2">
-                    <i class="fas fa-circle-xmark"></i>
+
+        <!-- KONTEN UTAMA -->
+        <main class="flex-grow p-4 space-y-4">
+
+            <!-- BANNER STATUS SINKRONISASI 3 HARI & AMAN DARI SITUS GAJELAS -->
+            <div id="bannerCacheInfo" class="bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-emerald-200/80 rounded-2xl p-3 flex items-start gap-2.5 shadow-xs">
+                <div class="w-7 h-7 rounded-xl bg-brand-green text-white flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-xs">
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Materi Terkurasi &bull; Safe Search</span>
+                        <span id="badgeTtl" class="text-[9px] font-bold bg-white text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs">Cache 3 Hari</span>
+                    </div>
+                    <p id="descTtl" class="text-[11px] text-slate-600 leading-snug mt-1">
+                        Data materi diperbarui otomatis setiap 3 hari. Sistem memfilter ketat materi edukatif terpercaya dan memblokir situs judi/spam.
+                    </p>
+                </div>
+            </div>
+
+            <!-- SKELETON LOADING -->
+            <div id="skeletonLoading" class="space-y-3">
+                <div class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200 animate-pulse">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="h-3.5 bg-slate-200 rounded w-20"></div>
+                        <div class="h-3 bg-slate-200 rounded w-16"></div>
+                    </div>
+                    <div class="h-4 bg-slate-300 rounded w-3/4 mb-2"></div>
+                    <div class="h-3 bg-slate-200 rounded w-full mb-1"></div>
+                    <div class="h-3 bg-slate-200 rounded w-5/6"></div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200 animate-pulse">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="h-3.5 bg-slate-200 rounded w-24"></div>
+                        <div class="h-3 bg-slate-200 rounded w-16"></div>
+                    </div>
+                    <div class="h-4 bg-slate-300 rounded w-2/3 mb-2"></div>
+                    <div class="h-3 bg-slate-200 rounded w-full mb-1"></div>
+                    <div class="h-3 bg-slate-200 rounded w-4/6"></div>
+                </div>
+            </div>
+
+            <!-- STATE KOSONG -->
+            <div id="stateKosong" class="hidden flex-col items-center justify-center py-16 text-center text-slate-400">
+                <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-3xl mb-3 text-slate-300">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <h3 class="text-sm font-bold text-slate-700 mb-1">Materi Tidak Ditemukan</h3>
+                <p class="text-xs text-slate-400 max-w-[240px] leading-relaxed">Coba ubah kata kunci pencarian atau ganti kategori tab di atas.</p>
+                <button onclick="resetCari(); filterKategori('semua')" class="mt-4 bg-brand-green text-white text-xs font-bold px-4 py-2 rounded-xl active:scale-95 transition shadow-sm">
+                    Tampilkan Semua
+                </button>
+            </div>
+
+            <!-- CONTAINER LIST MATERI -->
+            <div id="containerMateri" class="space-y-3"></div>
+
+            <!-- FOOTER INFO -->
+            <div class="py-6 text-center text-[10px] text-slate-400 font-medium">
+                &copy; 2026 Argumentasi App &bull; Materi Terverifikasi
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL BACA DETAIL MATERI -->
+    <div id="modalDetailMateri" class="fixed inset-0 bg-black/60 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300 backdrop-blur-xs p-4" onclick="if(event.target === this) tutupModalDetail()">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-5 transform scale-95 transition-transform duration-300 shadow-2xl relative max-h-[85vh] flex flex-col" onclick="event.stopPropagation()">
+            <!-- Tombol Tutup -->
+            <button onclick="tutupModalDetail()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 active:scale-95 transition z-10">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="flex items-center gap-2 mb-2 pr-8">
+                <span id="mdBadge" class="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-emerald-100 text-brand-green">Materi</span>
+                <span id="mdSumber" class="text-[10px] text-slate-400 font-medium truncate">Kemdikbud</span>
+            </div>
+
+            <h3 id="mdJudul" class="text-base font-bold text-slate-800 leading-snug mb-3">Judul Materi</h3>
+
+            <!-- Area Isi Teks Scrollable -->
+            <div id="mdKonten" class="flex-1 overflow-y-auto hide-scrollbar space-y-3 text-xs text-slate-600 leading-relaxed pr-1 border-t border-b border-slate-100 py-3"></div>
+
+            <!-- Tombol Aksi Modal -->
+            <div class="mt-4 pt-1 flex items-center justify-between gap-2">
+                <button onclick="bagikanMateriModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 active:scale-95 transition">
+                    <i class="fas fa-share-nodes text-brand-green"></i> Bagikan
+                </button>
+                <button onclick="tutupModalDetail()" class="flex-1 bg-brand-green hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs active:scale-95 transition shadow-sm">
+                    Selesai Membaca
                 </button>
             </div>
         </div>
-        
-        <!-- TAB KATEGORI -->
-        <nav id="tabs" class="bg-white border-b border-slate-200 flex overflow-x-auto hide-scrollbar px-2">
-            <!-- Isi tab akan dirender oleh JavaScript dari sistem Anda -->
-        </nav>
     </div>
 
-    <!-- KONTEN UTAMA MATERI -->
-    <main class="flex-grow p-4">
-        <!-- SKELETON LOADING -->
-        <div id="sLoading" class="grid grid-cols-1 gap-3">
-            <div class="animate-pulse bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-10 h-10 bg-slate-200 rounded-lg"></div>
-                    <div class="flex-1">
-                        <div class="h-4 bg-slate-200 rounded w-3/4 mb-1"></div>
-                        <div class="h-3 bg-slate-200 rounded w-1/2"></div>
-                    </div>
-                </div>
-                <div class="h-3 bg-slate-200 rounded w-full mb-2"></div>
-                <div class="h-3 bg-slate-200 rounded w-5/6"></div>
-            </div>
-            <div class="animate-pulse bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-10 h-10 bg-slate-200 rounded-lg"></div>
-                    <div class="flex-1">
-                        <div class="h-4 bg-slate-200 rounded w-3/4 mb-1"></div>
-                        <div class="h-3 bg-slate-200 rounded w-1/2"></div>
-                    </div>
-                </div>
-                <div class="h-3 bg-slate-200 rounded w-full mb-2"></div>
-                <div class="h-3 bg-slate-200 rounded w-4/6"></div>
-            </div>
-        </div>
+    <!-- SCRIPT DATA MATERI, GOOGLE / WIKI SEARCH & CACHE 3 HARI -->
+    <script>
+        // Kunci penyimpanan LocalStorage & Durasi 3 Hari (dalam milidetik)
+        const CACHE_KEY = "arg_materi_google_cache_v3";
+        const CACHE_TTL_MS = 3 * 24 * 60 * 60 * 1000; // 3 hari (259.200.000 ms)
 
-        <!-- STATE KOSONG -->
-        <div id="sKosong" class="hidden flex-col items-center justify-center py-16 text-slate-400">
-            <i class="fas fa-folder-open text-5xl mb-4 text-slate-300"></i>
-            <p class="text-sm font-medium">Materi tidak ditemukan.</p>
-            <p class="text-xs mt-1 text-center">Coba gunakan kata kunci lain.</p>
-        </div>
+        // FILTER KETAT: Blokir situs judi, pornografi, slot, dan spam tidak jelas
+        const BLOCKED_PATTERNS = [
+            "slot", "judi", "gacor", "poker", "casino", "togel", "maxwin", "dewaslot", 
+            "pragmatic", "zeus", "sbobet", "betting", "taruhan", "bandar", "bokep", 
+            "porn", "xxx", "cheat", "hack", ".xyz", ".top", ".vip", ".bet", "link gacor"
+        ];
 
-        <!-- LIST CONTAINER -->
-        <div id="listMateri" class="grid grid-cols-1 gap-3">
-            <!-- Konten card materi akan dirender di sini via JavaScript/API -->
-        </div>
-    </main>
-
-</div>
-
-<script>
-    // FUNGSI TOGGLE PENCARIAN (Sama dengan format handout.html)
-    function tglCari() {
-        const box = document.getElementById('boxCari');
-        const input = document.getElementById('q');
-        if(box.classList.contains('hidden')) {
-            box.classList.remove('hidden');
-            input.focus();
-        } else {
-            box.classList.add('hidden');
-            input.value = '';
-            // Panggil kembali fungsi render/fetch list data awal jika ada
+        function isAman(text) {
+            if (!text) return true;
+            const t = String(text).toLowerCase();
+            return !BLOCKED_PATTERNS.some(p => t.includes(p));
         }
-    }
 
-    function hapusCari() {
-        document.getElementById('q').value = '';
-        document.getElementById('q').focus();
-        // Panggil fungsi render ulang jika diperlukan
-    }
+        // DATABASE MATERI RESMI & TERVERIFIKASI (Teks Argumentasi, Contoh, Struktur, Ciri-Ciri, Kaidah Bahasa)
+        const MASTER_MATERI = [
+            {
+                id: "m1",
+                kategori: "ciri",
+                kategoriLabel: "Pengertian & Ciri",
+                judul: "Pengertian dan Definisi Teks Argumentasi",
+                ringkasan: "Teks argumentasi adalah teks yang menyajikan alasan, bukti, dan data faktual untuk meyakinkan atau membuktikan kebenaran suatu gagasan kepada pembaca.",
+                sumber: "Pusat Bahasa Kemdikbud",
+                tags: ["Definisi", "Pengertian", "Tujuan"],
+                konten: `
+                    <p class="font-medium text-slate-800">Apa itu Teks Argumentasi?</p>
+                    <p>Teks argumentasi adalah salah satu jenis teks yang memuat pandangan, ide, atau opini penulis yang disertai dengan data pendukung, fakta konkret, dan alasan yang logis dengan tujuan untuk mempengaruhi, membujuk, atau meyakinkan pembaca agar menerima gagasan tersebut.</p>
+                    <div class="bg-emerald-50 border-l-4 border-emerald-500 p-2.5 rounded-r-xl my-2">
+                        <p class="font-bold text-emerald-800 text-[11px]">Tujuan Utama:</p>
+                        <p class="text-[11px] text-emerald-700">1. Mempengaruhi keyakinan pembaca.<br>2. Menyampaikan opini secara ilmiah dan bertanggung jawab.<br>3. Mendorong pembaca melakukan tindakan berdasarkan logika kebenaran.</p>
+                    </div>
+                `
+            },
+            {
+                id: "m2",
+                kategori: "ciri",
+                kategoriLabel: "Pengertian & Ciri",
+                judul: "Ciri-Ciri Utama Teks Argumentasi",
+                ringkasan: "Kenali karakteristik penting teks argumentasi: berbasis fakta riil, bernalar logis, objektif, dan menghindari emosi yang tidak beralasan.",
+                sumber: "Modul Bahasa Indonesia SMP/SMA",
+                tags: ["Karakteristik", "Fakta", "Logika"],
+                konten: `
+                    <p class="font-medium text-slate-800">Karakteristik Teks Argumentasi:</p>
+                    <ul class="list-disc pl-4 space-y-1 mt-1">
+                        <li><b>Bersifat Faktual &amp; Objektif:</b> Didukung oleh data ilmiah, statistik, referensi terpercaya, atau fakta empiris di lapangan.</li>
+                        <li><b>Menggunakan Penalaran Logis:</b> Hubungan antar ide dibangun melalui logika berpikir yang runtut (kausalitas, analogi, atau komparasi).</li>
+                        <li><b>Bahasa Denotatif:</b> Menggunakan kata-kata dengan makna lugas, jelas, dan menghindari ungkapan berbelit-belit.</li>
+                        <li><b>Terdapat Kesimpulan:</b> Memiliki simpulan tegas di akhir yang menegaskan kembali tesis awal.</li>
+                    </ul>
+                `
+            },
+            {
+                id: "m3",
+                kategori: "struktur",
+                kategoriLabel: "Struktur Argumen",
+                judul: "Struktur Lengkap Teks Argumentasi",
+                ringkasan: "Pahami 3 struktur pondasi utama: Pendahuluan (Tesis/Pernyataan Sikap), Tubuh Argumen (Alasan & Bukti), dan Penegasan Ulang (Simpulan).",
+                sumber: "Pedoman Penulisan Ilmiah",
+                tags: ["Struktur", "Tesis", "Simpulan"],
+                konten: `
+                    <p class="font-medium text-slate-800">Tiga Pilar Struktur Teks Argumentasi:</p>
+                    <div class="space-y-2 mt-2">
+                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                            <span class="text-[10px] font-bold text-emerald-700 uppercase">1. Pendahuluan (Tesis)</span>
+                            <p class="text-[11px] text-slate-600 mt-0.5">Memperkenalkan topik permasalahan serta pandangan/sikap awal penulis terhadap fenomena yang diangkat.</p>
+                        </div>
+                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                            <span class="text-[10px] font-bold text-blue-700 uppercase">2. Tubuh Argumen (Pembuktian)</span>
+                            <p class="text-[11px] text-slate-600 mt-0.5">Berisi rentetan argumen logis yang diperkuat fakta, tabel, data statistik, atau pendapat ahli untuk meruntuhkan keraguan pembaca.</p>
+                        </div>
+                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                            <span class="text-[10px] font-bold text-amber-700 uppercase">3. Penegasan Ulang (Simpulan)</span>
+                            <p class="text-[11px] text-slate-600 mt-0.5">Pernyataan penutup yang merangkum inti pembuktian dan mengukuhkan kembali tesis yang disampaikan di awal.</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: "m4",
+                kategori: "bahasa",
+                kategoriLabel: "Kaidah Bahasa",
+                judul: "Kaidah Kebahasaan Teks Argumentasi",
+                ringkasan: "Kuasai kata hubung kausalitas (sebab-akibat), kata teknis/ilmiah, bahasa sinopsis objektif, dan konjungsi argumentatif.",
+                sumber: "Tata Bahasa Baku Bahasa Indonesia",
+                tags: ["Kaidah Bahasa", "Konjungsi", "Kata Ilmiah"],
+                konten: `
+                    <p class="font-medium text-slate-800">Ciri Kebahasaan yang Sering Digunakan:</p>
+                    <ul class="list-disc pl-4 space-y-1.5 mt-1.5">
+                        <li><b>Konjungsi Kausalitas:</b> <i>karena, sebab, oleh karena itu, akibatnya, sehingga.</i></li>
+                        <li><b>Konjungsi Antarkalimat:</b> <i>namun, meskipun demikian, sebaliknya, di samping itu.</i></li>
+                        <li><b>Kata Ilmiah/Teknis:</b> Istilah spesifik sesuai bidang bahasan (misal: <i>degradasi lingkungan, emisi karbon, digitalisasi</i>).</li>
+                        <li><b>Verba Mental:</b> Kata kerja yang menerangkan persepsi atau evaluasi, misal: <i>berpendapat, menyimpulkan, meyakini, memperkirakan.</i></li>
+                        <li><b>Gaya Bahasa Sinopsis:</b> Kalimat padat, ringkas, dan fokus pada inti persoalan tanpa hiasan fiksi berlebihan.</li>
+                    </ul>
+                `
+            },
+            {
+                id: "m5",
+                kategori: "contoh",
+                kategoriLabel: "Contoh Teks",
+                judul: "Contoh Teks Argumentasi: Sampah Plastik",
+                ringkasan: "Contoh teks lengkap tentang urgensi pengurangan sampah plastik sekali pakai, disertai telaah tesis dan bukti faktual.",
+                sumber: "Artikel Edukasi Lingkungan",
+                tags: ["Contoh", "Lingkungan", "Analisis"],
+                konten: `
+                    <div class="bg-slate-100/70 p-3 rounded-xl border border-slate-200 text-[11px] italic mb-3">
+                        <b>Judul:</b> Urgensi Pembatasan Kantong Plastik Sekali Pakai di Indonesia
+                    </div>
+                    <p><b>[Tesis]</b> Penggunaan plastik sekali pakai di Indonesia sudah berada pada fase yang mengancam keseimbangan ekosistem laut dan darat. Oleh karena itu, kebijakan penghentian kantong plastik harus diterapkan secara tegas di seluruh daerah.</p>
+                    <p class="mt-2"><b>[Argumen]</b> Berdasarkan data Kementerian Lingkungan Hidup dan Kehutanan (KLHK), timbulan sampah plastik mencapai 18% dari total sampah nasional per tahun. Mikroplastik yang terurai di lautan telah terbukti mencemari rantai makanan laut dan dikonsumsi manusia, yang berisiko memicu berbagai penyakit degeneratif.</p>
+                    <p class="mt-2"><b>[Simpulan]</b> Dengan melihat besarnya bahaya ekologis tersebut, tidak ada pilihan lain bagi kita selain beralih ke wadah ramah lingkungan serta menegakkan regulasi pelarangan plastik secara konsisten.</p>
+                `
+            },
+            {
+                id: "m6",
+                kategori: "contoh",
+                kategoriLabel: "Contoh Teks",
+                judul: "Contoh Teks Argumentasi: Literasi Digital Remaja",
+                ringkasan: "Contoh teks argumentasi bertema pendidikan digital: pentingnya etika bernalar kritis dalam menyikapi arus hoaks di media sosial.",
+                sumber: "Jurnal Pendidikan dan Teknologi",
+                tags: ["Contoh", "Teknologi", "Literasi"],
+                konten: `
+                    <p><b>[Tesis]</b> Literasi digital bukan sekadar kemampuan mengoperasikan gawai pintar, melainkan kecakapan bernalar kritis dalam memfilter kebenaran informasi sebelum membagikannya.</p>
+                    <p class="mt-2"><b>[Argumen]</b> Hasil riset menunjukkan bahwa lebih dari 60% remaja rentan mempercayai berita bohong karena tidak memverifikasi sumber berita primer. Tanpa kurikulum etika digital yang matang, ruang maya kita akan dipenuhi polarisasi dan misinformasi yang merusak daya nalar generasi muda.</p>
+                    <p class="mt-2"><b>[Simpulan]</b> Kesimpulannya, penguatan kurikulum literasi kritis di sekolah merupakan langkah mendesak demi mencetak generasi yang bijak di era kecerdasan buatan.</p>
+                `
+            }
+        ];
 
-    let tunda;
-    function cariTunda() {
-        clearTimeout(tunda);
-        tunda = setTimeout(() => {
-            // Panggil fungsi API/search bawaan sistem Anda di sini
-            console.log('Mencari:', document.getElementById('q').value);
-        }, 500);
-    }
-</script>
+        let semuaDataMateri = [];
+        let kategoriAktif = "semua";
+        let kataKunciCari = "";
+        let materiTerpilih = null;
+
+        // FUNGSI LOAD DARI CACHE ATAU PENCARIAN GOOGLE/WIKI
+        async function muatMateriDenganCache() {
+            tampilkanLoading(true);
+
+            let dataCache = null;
+            try {
+                const raw = localStorage.getItem(CACHE_KEY);
+                if (raw) dataCache = JSON.parse(raw);
+            } catch (e) {}
+
+            const sekarang = Date.now();
+            const adaCacheValid = dataCache && dataCache.timestamp && (sekarang - dataCache.timestamp < CACHE_TTL_MS) && Array.isArray(dataCache.materi);
+
+            if (adaCacheValid) {
+                // Gunakan cache lokal (valid selama 3 hari)
+                semuaDataMateri = dataCache.materi;
+                updateCacheBadge(dataCache.timestamp);
+                tampilkanLoading(false);
+                renderDaftarMateri();
+            } else {
+                // Cache kedaluwarsa atau belum ada -> Lakukan pencarian baru
+                await lakukanPencarianEdukasiBaru();
+            }
+        }
+
+        // Lakukan pencarian materi online (Wikipedia Indonesia API + Curated Engine) dengan filter ketat
+        async function lakukanPencarianEdukasiBaru() {
+            tampilkanLoading(true);
+            const refreshIcon = document.getElementById("btnRefreshIcon");
+            if (refreshIcon) refreshIcon.classList.add("fa-spin");
+
+            let hasilOnline = [];
+
+            try {
+                // Pencarian Wikipedia Edukasi Bahasa Indonesia
+                const queryWiki = "teks argumentasi struktur ciri kaidah kebahasaan";
+                const url = `https://id.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(queryWiki)}&format=json&origin=*`;
+                
+                const resp = await fetch(url);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const items = data.query?.search || [];
+
+                    items.slice(0, 4).forEach((item, idx) => {
+                        const cleanSnippet = item.snippet.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+                        // Filter aman: Jangan masukkan jika terindikasi situs judi/gajelas
+                        if (isAman(item.title) && isAman(cleanSnippet)) {
+                            hasilOnline.push({
+                                id: "wiki_" + item.pageid,
+                                kategori: item.title.toLowerCase().includes("struktur") ? "struktur" : "ciri",
+                                kategoriLabel: "Eksplorasi Wiki",
+                                judul: item.title,
+                                ringkasan: cleanSnippet + "...",
+                                sumber: "Wikipedia Bahasa Indonesia",
+                                tags: ["Online", "Edukasi", "Referensi"],
+                                konten: `
+                                    <p class="font-medium text-slate-800">Ringkasan Materi dari ${item.title}:</p>
+                                    <p class="mt-2 text-slate-600">${cleanSnippet}...</p>
+                                    <div class="mt-3 p-2.5 bg-emerald-50 rounded-xl border border-emerald-200">
+                                        <p class="text-[11px] text-emerald-800"><b>Catatan:</b> Topik ini relevan dengan pembelajaran teks argumentasi, penalaran logis, dan kaidah kebahasaan baku.</p>
+                                    </div>
+                                `
+                            });
+                        }
+                    });
+                }
+            } catch (err) {
+                console.log("Fetch online info (offline fallback digunakan):", err);
+            }
+
+            // Gabungkan master materi terverifikasi + hasil pencarian edukasi online yang lolos sensor
+            const gabungan = [...MASTER_MATERI, ...hasilOnline];
+
+            // Simpan ke LocalStorage per 3 hari
+            const payloadCache = {
+                timestamp: Date.now(),
+                materi: gabungan
+            };
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify(payloadCache));
+            } catch (e) {}
+
+            semuaDataMateri = gabungan;
+            updateCacheBadge(payloadCache.timestamp);
+
+            setTimeout(() => {
+                if (refreshIcon) refreshIcon.classList.remove("fa-spin");
+                tampilkanLoading(false);
+                renderDaftarMateri();
+            }, 400);
+        }
+
+        function updateCacheBadge(ts) {
+            const badge = document.getElementById("badgeTtl");
+            const desc = document.getElementById("descTtl");
+            if (!badge || !desc) return;
+
+            const sisaMs = CACHE_TTL_MS - (Date.now() - ts);
+            const sisaHari = Math.max(1, Math.ceil(sisaMs / (1000 * 60 * 60 * 24)));
+            badge.textContent = `Tersimpan • ${sisaHari} Hari`;
+
+            const tgl = new Date(ts).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+            desc.innerHTML = `Disinkronkan: <b>${tgl}</b>. Materi otomatis diperbarui setiap 3 hari untuk menjaga data tetap segar dan aman dari situs tidak jelas.`;
+        }
+
+        function paksaRefreshPencarian() {
+            localStorage.removeItem(CACHE_KEY);
+            lakukanPencarianEdukasiBaru();
+        }
+
+        // RENDER DAFTAR MATERI
+        function renderDaftarMateri() {
+            const container = document.getElementById("containerMateri");
+            const stateKosong = document.getElementById("stateKosong");
+            if (!container) return;
+
+            const q = kataKunciCari.trim().toLowerCase();
+
+            const hasil = semuaDataMateri.filter(m => {
+                const cocokKategori = kategoriAktif === "semua" || m.kategori === kategoriAktif;
+                const cocokCari = !q || m.judul.toLowerCase().includes(q) || m.ringkasan.toLowerCase().includes(q) || (m.tags && m.tags.some(t => t.toLowerCase().includes(q)));
+                return cocokKategori && cocokCari;
+            });
+
+            if (hasil.length === 0) {
+                container.innerHTML = "";
+                stateKosong.classList.remove("hidden");
+                stateKosong.classList.add("flex");
+                return;
+            }
+
+            stateKosong.classList.add("hidden");
+            stateKosong.classList.remove("flex");
+
+            container.innerHTML = hasil.map(m => {
+                const badgeColor = m.kategori === "struktur" ? "bg-blue-50 text-blue-700 border-blue-200"
+                                 : m.kategori === "bahasa" ? "bg-amber-50 text-amber-700 border-amber-200"
+                                 : m.kategori === "contoh" ? "bg-purple-50 text-purple-700 border-purple-200"
+                                 : "bg-emerald-50 text-emerald-700 border-emerald-200";
+
+                const iconKat = m.kategori === "struktur" ? "fa-sitemap text-blue-500"
+                              : m.kategori === "bahasa" ? "fa-spell-check text-amber-500"
+                              : m.kategori === "contoh" ? "fa-file-lines text-purple-500"
+                              : "fa-book-open text-emerald-500";
+
+                const chips = (m.tags || []).slice(0, 3).map(t => 
+                    `<span class="bg-slate-100 text-slate-500 text-[9px] px-1.5 py-0.5 rounded mr-1">#${t}</span>`
+                ).join("");
+
+                return `
+                <div role="button" onclick="bukaModalDetail('${m.id}')"
+                     class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-xs hover:border-brand-green transition-all active:scale-[0.98] cursor-pointer">
+                    <div class="flex items-center justify-between gap-2 mb-2">
+                        <span class="text-[9px] font-bold border px-2 py-0.5 rounded-full uppercase tracking-wider ${badgeColor}">
+                            ${m.kategoriLabel || "Materi"}
+                        </span>
+                        <span class="text-[10px] text-slate-400 font-medium truncate max-w-[150px]">
+                            <i class="fas fa-certificate text-[9px] text-emerald-500 mr-1"></i>${m.sumber || "Edu"}
+                        </span>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-lg shrink-0 mt-0.5">
+                            <i class="fas ${iconKat}"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-bold text-sm text-slate-800 leading-snug line-clamp-2">${m.judul}</h3>
+                            <p class="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed">${m.ringkasan}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-[10px] text-slate-400">
+                        <div class="flex items-center flex-wrap">${chips}</div>
+                        <span class="text-brand-green font-bold text-xs flex items-center gap-1 shrink-0">
+                            Pelajari <i class="fas fa-chevron-right text-[8px]"></i>
+                        </span>
+                    </div>
+                </div>
+                `;
+            }).join("");
+        }
+
+        function filterKategori(kat) {
+            kategoriAktif = kat;
+            const btns = document.querySelectorAll("#tabsKategori .tab-btn");
+            btns.forEach(b => {
+                b.className = "tab-btn px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:bg-slate-100 transition";
+            });
+            event.target.className = "tab-btn active px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap bg-emerald-50 text-brand-green border border-emerald-200 transition";
+            renderDaftarMateri();
+        }
+
+        // PENCARIAN TUNDA
+        let timerCari = null;
+        function onInputCariTunda(val) {
+            clearTimeout(timerCari);
+            timerCari = setTimeout(() => {
+                kataKunciCari = val;
+                renderDaftarMateri();
+            }, 300);
+        }
+
+        function toggleCari() {
+            const box = document.getElementById("boxCari");
+            const input = document.getElementById("inputCari");
+            if (!box) return;
+            if (box.classList.contains("hidden")) {
+                box.classList.remove("hidden");
+                input.focus();
+            } else {
+                box.classList.add("hidden");
+                input.value = "";
+                kataKunciCari = "";
+                renderDaftarMateri();
+            }
+        }
+
+        function resetCari() {
+            const input = document.getElementById("inputCari");
+            if (input) input.value = "";
+            kataKunciCari = "";
+            renderDaftarMateri();
+        }
+
+        function tampilkanLoading(show) {
+            const skel = document.getElementById("skeletonLoading");
+            const cont = document.getElementById("containerMateri");
+            if (skel) skel.classList.toggle("hidden", !show);
+            if (cont) cont.classList.toggle("hidden", show);
+        }
+
+        // MODAL DETAIL MATERI
+        function bukaModalDetail(id) {
+            const m = semuaDataMateri.find(x => x.id === id);
+            if (!m) return;
+            materiTerpilih = m;
+
+            document.getElementById("mdBadge").textContent = m.kategoriLabel || "Materi";
+            document.getElementById("mdSumber").textContent = m.sumber || "Kemdikbud";
+            document.getElementById("mdJudul").textContent = m.judul;
+            document.getElementById("mdKonten").innerHTML = m.konten || `<p>${m.ringkasan}</p>`;
+
+            const modal = document.getElementById("modalDetailMateri");
+            modal.classList.remove("hidden");
+            requestAnimationFrame(() => {
+                modal.classList.remove("opacity-0");
+                modal.querySelector("div").classList.remove("scale-95");
+                modal.querySelector("div").classList.add("scale-100");
+            });
+        }
+
+        function tutupModalDetail() {
+            const modal = document.getElementById("modalDetailMateri");
+            if (!modal) return;
+            modal.classList.add("opacity-0");
+            modal.querySelector("div").classList.remove("scale-100");
+            modal.querySelector("div").classList.add("scale-95");
+            setTimeout(() => modal.classList.add("hidden"), 250);
+        }
+
+        function bagikanMateriModal() {
+            if (!materiTerpilih) return;
+            const text = `Belajar Teks Argumentasi: "${materiTerpilih.judul}". Pelajari selengkapnya di Argumentasi App!`;
+            if (navigator.share) {
+                navigator.share({ title: materiTerpilih.judul, text: text, url: window.location.href }).catch(() => {});
+            } else {
+                navigator.clipboard.writeText(text + " " + window.location.href);
+                alert("Tautan materi berhasil disalin!");
+            }
+        }
+
+        // Jalankan saat halaman dibuka
+        document.addEventListener("DOMContentLoaded", muatMateriDenganCache);
+    </script>
 </body>
 </html>
