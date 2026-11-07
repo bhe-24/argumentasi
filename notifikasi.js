@@ -100,39 +100,319 @@ const NotifikasiApp = (function() {
         localStorage.setItem(STORAGE_KEYS.DELIVERED, JSON.stringify(delivered));
     }
 
-    // Minta Izin Notifikasi Ponsel
-    async function requestPermission() {
+    // TOAST NOTIFIKASI GLOBAL
+    function tampilkanToast(msg, isError = false) {
+        let container = document.getElementById('toastContainer');
+        if (!container) {
+            container = document.getElementById('argGlobalToastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'argGlobalToastContainer';
+                container.className = 'fixed top-5 left-1/2 transform -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none';
+                document.body.appendChild(container);
+            }
+        }
+
+        const toast = document.createElement('div');
+        const bgClass = isError ? 'bg-rose-600' : 'bg-slate-900';
+        const iconClass = isError ? 'fa-exclamation-circle text-rose-300' : 'fa-check-circle text-emerald-400';
+        
+        toast.className = `${bgClass} text-white px-4 py-3 rounded-2xl shadow-2xl text-xs font-semibold flex items-center gap-3 transform translate-y-[-20px] opacity-0 transition-all duration-300 pointer-events-auto border border-white/10`;
+        toast.innerHTML = `<i class="fas ${iconClass} text-base shrink-0"></i> <span class="flex-1 leading-snug">${msg}</span>`;
+        
+        container.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.remove('translate-y-[-20px]', 'opacity-0'));
+        setTimeout(() => {
+            toast.classList.add('translate-y-[-20px]', 'opacity-0');
+            setTimeout(() => toast.remove(), 350);
+        }, 3800);
+    }
+
+    // MODAL PANDUAN AKTIFKAN / BUKA BLOKIR IZIN NOTIFIKASI PONSEL
+    function pastikanModalPanduanIzinAda() {
+        let modal = document.getElementById('modalPanduanIzinPonsel');
+        if (modal) return modal;
+
+        modal = document.createElement('div');
+        modal.id = 'modalPanduanIzinPonsel';
+        modal.className = 'fixed inset-0 bg-slate-900/80 backdrop-blur-xs z-[999999] flex items-center justify-center p-4 transition-all duration-300 hidden opacity-0';
+        modal.innerHTML = `
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 flex flex-col relative transform transition-all duration-300 scale-95">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-base border border-amber-200">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold text-slate-800 leading-tight">Izin Notifikasi Ponsel</h3>
+                        <p class="text-[10px] text-slate-400">Pengaturan akses sistem perangkat</p>
+                    </div>
+                </div>
+                <button type="button" onclick="NotifikasiApp.tutupModalPanduanIzin()" class="w-7 h-7 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center text-xs">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3.5 mb-5">
+                <div class="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-amber-900 text-xs">
+                    <p class="font-bold flex items-center gap-1.5 text-amber-800 mb-1">
+                        <i class="fas fa-lock text-xs"></i> Izin Belum Aktif di Ponsel
+                    </p>
+                    <p class="text-[11px] leading-relaxed text-amber-700">
+                        Peramban ponsel Anda memerlukan izin resmi untuk menampilkan notifikasi latihan dan info sistem di bilah status layar HP.
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <p class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Langkah Mudah Mengaktifkan di HP:</p>
+                    
+                    <div class="flex items-start gap-3 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-extrabold shrink-0 mt-0.5">1</span>
+                        <div class="text-[11px] text-slate-700">
+                            Ketuk ikon <strong>Gembok (🔒)</strong> atau <strong>Setelan Situs</strong> di bilah alamat atas peramban HP Anda.
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-extrabold shrink-0 mt-0.5">2</span>
+                        <div class="text-[11px] text-slate-700">
+                            Pilih menu <strong>Izin (Permissions)</strong> &rarr; pilih <strong>Notifikasi</strong>.
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-extrabold shrink-0 mt-0.5">3</span>
+                        <div class="text-[11px] text-slate-700">
+                            Ubah menjadi <strong>Izinkan (Allow)</strong>, lalu kembali ke halaman ini.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <button type="button" onclick="NotifikasiApp.periksaDanTesIzin()" class="w-full bg-brand-green hover:bg-emerald-700 text-white py-3 rounded-2xl text-xs font-extrabold shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-circle-check text-sm"></i>
+                    <span>Saya Sudah Izinkan, Uji Sekarang!</span>
+                </button>
+                <button type="button" onclick="NotifikasiApp.tutupModalPanduanIzin()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 py-2.5 rounded-2xl text-xs font-bold transition-all">
+                    Tutup
+                </button>
+            </div>
+        </div>`;
+
+        document.body.appendChild(modal);
+        return modal;
+    }
+
+    function bukaModalPanduanIzin() {
+        const modal = pastikanModalPanduanIzinAda();
+        modal.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            modal.classList.remove('opacity-0');
+            const box = modal.querySelector('div');
+            if (box) box.classList.replace('scale-95', 'scale-100');
+        });
+    }
+
+    function tutupModalPanduanIzin() {
+        const modal = document.getElementById('modalPanduanIzinPonsel');
+        if (!modal) return;
+        modal.classList.add('opacity-0');
+        const box = modal.querySelector('div');
+        if (box) box.classList.replace('scale-100', 'scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    }
+
+    // Tanya izin ke browser dengan fallback Promise & Callback universal
+    function tanyaIzinPeramban() {
+        return new Promise((resolve) => {
+            if (!('Notification' in window)) return resolve('unsupported');
+            let resolved = false;
+            try {
+                const res = Notification.requestPermission(function(perm) {
+                    if (!resolved) {
+                        resolved = true;
+                        resolve(perm);
+                    }
+                });
+                if (res && typeof res.then === 'function') {
+                    res.then(function(perm) {
+                        if (!resolved) {
+                            resolved = true;
+                            resolve(perm);
+                        }
+                    }).catch(function() {
+                        if (!resolved) {
+                            resolved = true;
+                            resolve(Notification.permission || 'denied');
+                        }
+                    });
+                }
+            } catch(e) {
+                if (!resolved) {
+                    resolved = true;
+                    resolve(Notification.permission || 'denied');
+                }
+            }
+        });
+    }
+
+    // MINTA IZIN NOTIFIKASI PONSEL (Dengan respon getar haptic & panduan lengkap)
+    async function requestPermission(triggerBtn = null) {
+        // 1. Respon haptic instan di ponsel saat tombol disentuh
+        if ('vibrate' in navigator) {
+            try { navigator.vibrate([40, 30, 40]); } catch(e){}
+        }
+
+        // Simpan teks tombol jika ada
+        let originalBtnHtml = '';
+        if (triggerBtn && triggerBtn.innerHTML) {
+            originalBtnHtml = triggerBtn.innerHTML;
+            triggerBtn.disabled = true;
+            triggerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menghubungkan HP...';
+        }
+
+        const pulihkanTombol = () => {
+            if (triggerBtn && originalBtnHtml) {
+                triggerBtn.disabled = false;
+                triggerBtn.innerHTML = originalBtnHtml;
+            }
+        };
+
+        // 2. Periksa dukungan peramban
         if (!('Notification' in window)) {
-            alert('Peramban Anda tidak mendukung Notifikasi Web.');
+            pulihkanTombol();
+            tampilkanToast('Peramban ponsel ini belum mendukung Web Notification API', true);
+            bukaModalPanduanIzin();
             return false;
         }
 
+        // 3. Pastikan Service Worker terdaftar dan aktif
+        if ('serviceWorker' in navigator) {
+            try {
+                let reg = await navigator.serviceWorker.getRegistration();
+                if (!reg) {
+                    reg = await navigator.serviceWorker.register('./sw.js');
+                }
+            } catch(swErr) {
+                console.log('SW register check err:', swErr);
+            }
+        }
+
+        const statusSaatIni = Notification.permission;
+
+        // KASUS A: SUDAH DISETUJUI SEBELUMNYA
+        if (statusSaatIni === 'granted') {
+            pulihkanTombol();
+            tampilkanToast('🎉 Izin notifikasi ponsel Anda sudah aktif!');
+            updatePermissionBannerUI();
+            
+            // Tembakkan notifikasi uji coba langsung ke status bar HP
+            await kirimNotifikasiKePonsel({
+                id: 'notif_pwa_ready_' + Date.now(),
+                title: '🎉 Notifikasi Ponsel Terhubung!',
+                body: 'Sistem notifikasi ponsel Argumentasi berfungsi sempurna di perangkat Anda.',
+                category: 'sistem',
+                url: 'index.html'
+            });
+            return true;
+        }
+
+        // KASUS B: STATUS DIBLOKIR / DENIED (Browser HP tidak akan memunculkan dialog lagi secara otomatis)
+        if (statusSaatIni === 'denied') {
+            pulihkanTombol();
+            tampilkanToast('Izin notifikasi diblokir oleh peramban HP. Buka gembok 🔒 di atas untuk mengizinkan.', true);
+            bukaModalPanduanIzin();
+            return false;
+        }
+
+        // KASUS C: STATUS DEFAULT (Minta izin ke peramban HP)
         try {
-            const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-                kirimNotifikasiKePonsel({
+            tampilkanToast('Silakan pilih "Izinkan" / "Allow" pada pop-up layar HP Anda...');
+            const hasil = await tanyaIzinPeramban();
+            pulihkanTombol();
+
+            if (hasil === 'granted') {
+                tampilkanToast('🎉 Selamat! Notifikasi ponsel berhasil diaktifkan.');
+                updatePermissionBannerUI();
+
+                // Putar suara dering & tembakkan notifikasi ke status bar HP
+                putarNadaNotifikasi();
+                if ('vibrate' in navigator) {
+                    try { navigator.vibrate([100, 50, 150]); } catch(e){}
+                }
+
+                await kirimNotifikasiKePonsel({
                     id: 'notif_welcome_granted_' + Date.now(),
                     title: '🎉 Notifikasi Ponsel Aktif!',
-                    body: 'Ponsel Anda kini terhubung. Pembaruan latihan 24 jam dan info penting akan masuk langsung ke sini.',
+                    body: 'Ponsel Anda kini terhubung resmi. Pembaruan latihan 24 jam dan info penting akan masuk ke sini.',
                     category: 'sistem',
                     url: 'index.html'
                 });
-                updatePermissionBannerUI();
                 return true;
             } else {
                 updatePermissionBannerUI();
+                tampilkanToast('Izin notifikasi belum diaktifkan.', true);
+                bukaModalPanduanIzin();
                 return false;
             }
-        } catch(e) {
-            console.error('Error saat meminta izin notifikasi:', e);
+        } catch(err) {
+            pulihkanTombol();
+            console.error('Error requestPermission:', err);
+            bukaModalPanduanIzin();
             return false;
+        }
+    }
+
+    // FUNGSI CEK ULANG DARI MODAL PANDUAN
+    async function periksaDanTesIzin() {
+        if (!('Notification' in window)) {
+            tampilkanToast('Peramban ini tidak mendukung notifikasi', true);
+            return;
+        }
+
+        const perm = Notification.permission;
+        if (perm === 'granted') {
+            tutupModalPanduanIzin();
+            tampilkanToast('✓ Izin terverifikasi! Mengirim notifikasi ke HP...');
+            updatePermissionBannerUI();
+            
+            putarNadaNotifikasi();
+            if ('vibrate' in navigator) {
+                try { navigator.vibrate([100, 50, 150]); } catch(e){}
+            }
+
+            await kirimNotifikasiKePonsel({
+                id: 'notif_verified_success_' + Date.now(),
+                title: '🔔 Notifikasi Ponsel Aktif!',
+                body: 'Luar biasa! Sistem kini dapat mengirimkan pemberitahuan latihan dan materi ke ponsel Anda.',
+                category: 'sistem',
+                url: 'index.html'
+            });
+        } else {
+            // Coba minta izin sekali lagi jika status belum granted
+            const hasil = await tanyaIzinPeramban();
+            if (hasil === 'granted') {
+                tutupModalPanduanIzin();
+                tampilkanToast('🎉 Izin berhasil diaktifkan!');
+                updatePermissionBannerUI();
+                kirimNotifikasiKePonsel({
+                    id: 'notif_granted_retry_' + Date.now(),
+                    title: '🎉 Notifikasi Ponsel Aktif!',
+                    body: 'Perangkat Anda telah tersambung sempurna.',
+                    category: 'sistem',
+                    url: 'index.html'
+                });
+            } else {
+                tampilkanToast('Peramban masih memblokir notifikasi. Pastikan Anda sudah mengubah setelan di ikon gembok 🔒 di atas.', true);
+            }
         }
     }
 
     // KIRIM NOTIFIKASI KE STATUS BAR / LOCK SCREEN PONSEL
     function kirimNotifikasiKePonsel(options) {
         const settings = getSettings();
-        if (!settings.enabled) return;
+        if (!settings.enabled) return Promise.resolve();
 
         const { id, title, body, category = 'pengumuman', url = 'index.html', icon = 'icon-192.png' } = options;
 
@@ -157,15 +437,7 @@ const NotifikasiApp = (function() {
         if (list.length > 50) list.pop(); // Batasi 50 riwayat
         saveNotifications(list);
 
-        // 2. Periksa apakah sudah pernah ditembakkan ke bilah status ponsel
-        const delivered = getDeliveredIds();
-        if (id && delivered[id]) {
-            return; // Cegah spam notifikasi berulang di layar HP
-        }
-
-        if (id) markDelivered(id);
-
-        // Mainkan getar dan suara
+        // 2. Mainkan getar dan audio sintetis
         if (settings.vibrate && 'vibrate' in navigator) {
             try { navigator.vibrate([100, 60, 100]); } catch(e){}
         }
@@ -173,33 +445,37 @@ const NotifikasiApp = (function() {
             putarNadaNotifikasi();
         }
 
-        // Tampilkan Notifikasi Sistem Ponsel jika Diizinkan
+        // 3. Tampilkan ke Bilah Status / Layar Kunci Ponsel jika diizinkan
         if ('Notification' in window && Notification.permission === 'granted') {
             const notifOpts = {
                 body,
                 icon: icon.startsWith('http') ? icon : ('./' + icon),
                 badge: './icon-192.png',
                 vibrate: [100, 50, 100],
-                data: { url: url || './index.html', id },
-                tag: id || 'arg_pwa_notification',
+                data: { url: url || './index.html', id: notifItem.id },
+                tag: notifItem.id,
                 renotify: true
             };
 
-            // Gunakan Service Worker jika tersedia (wajib untuk PWA di Android/Chrome/iOS)
-            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.ready.then(reg => {
-                    reg.showNotification(title, notifOpts);
-                }).catch(() => {
-                    new Notification(title, notifOpts);
+            // Selalu utamakan Service Worker Registration di perangkat mobile Android / iOS
+            if ('serviceWorker' in navigator) {
+                return navigator.serviceWorker.ready.then(reg => {
+                    return reg.showNotification(title, notifOpts);
+                }).catch(err => {
+                    console.log('SW showNotification fallback:', err);
+                    try {
+                        new Notification(title, notifOpts);
+                    } catch(e){}
                 });
             } else {
                 try {
                     new Notification(title, notifOpts);
                 } catch(e) {
-                    console.log('Fallback notification error:', e);
+                    console.log('Fallback Notification error:', e);
                 }
             }
         }
+        return Promise.resolve();
     }
 
     // =========================================================================
@@ -547,6 +823,10 @@ const NotifikasiApp = (function() {
         kirimNotifikasiKePonsel,
         bukaPusatNotifikasi,
         tutupPusatNotifikasi,
+        bukaModalPanduanIzin,
+        tutupModalPanduanIzin,
+        periksaDanTesIzin,
+        tampilkanToast,
         tandaiSemuaDibaca,
         bersihkanSemuaNotifikasi,
         bukaAksiNotifikasi,

@@ -144,7 +144,7 @@
                         <p class="text-xs font-bold text-slate-800">Izin Notifikasi Belum Aktif</p>
                         <p class="text-[10px] text-slate-500 leading-tight mt-0.5">Izinkan peramban agar ponsel Anda menerima info latihan & sistem.</p>
                     </div>
-                    <button type="button" onclick="mintaIzinNotifikasiSetting()" class="bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[10px] px-3 py-1.5 rounded-xl shadow-xs shrink-0 active:scale-95 transition">
+                    <button type="button" onclick="mintaIzinNotifikasiSetting(this)" class="bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[10px] px-3 py-1.5 rounded-xl shadow-xs shrink-0 active:scale-95 transition">
                         Aktifkan
                     </button>
                 </div>
@@ -203,7 +203,7 @@
                 <!-- Tombol Uji Notifikasi Ponsel -->
                 <div class="p-3 bg-slate-50 flex items-center justify-between">
                     <span class="text-[10px] text-slate-400 font-medium">Uji kirim notifikasi ke layar HP Anda</span>
-                    <button type="button" onclick="tesNotifikasiPonsel()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow-xs active:scale-95 transition flex items-center gap-1.5">
+                    <button type="button" onclick="tesNotifikasiPonsel(this)" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow-xs active:scale-95 transition flex items-center gap-1.5">
                         <i class="fas fa-paper-plane text-[10px] text-amber-400"></i> Tes Kirim ke HP
                     </button>
                 </div>
@@ -509,17 +509,16 @@
             }
         }
 
-        async function mintaIzinNotifikasiSetting() {
+        async function mintaIzinNotifikasiSetting(btn = null) {
             if (!window.NotifikasiApp) {
                 showToast('Modul notifikasi belum siap', true);
                 return;
             }
-            const granted = await window.NotifikasiApp.requestPermission();
+            if ('vibrate' in navigator) navigator.vibrate(50);
+            const granted = await window.NotifikasiApp.requestPermission(btn);
             updateStatusIzinNotifikasiSetting();
             if (granted) {
-                showToast('Izin notifikasi ponsel berhasil diaktifkan!');
-            } else {
-                showToast('Izin notifikasi belum diizinkan atau diblokir', true);
+                showToast('🎉 Izin notifikasi ponsel berhasil diaktifkan!');
             }
         }
 
@@ -540,34 +539,45 @@
             showToast(msg);
         }
 
-        async function tesNotifikasiPonsel() {
+        async function tesNotifikasiPonsel(btn = null) {
             if (!window.NotifikasiApp) {
                 showToast('Modul notifikasi belum siap', true);
                 return;
             }
 
+            if ('vibrate' in navigator) navigator.vibrate([80, 40, 80]);
+
             if ('Notification' in window && Notification.permission !== 'granted') {
-                const granted = await window.NotifikasiApp.requestPermission();
+                const granted = await window.NotifikasiApp.requestPermission(btn);
                 updateStatusIzinNotifikasiSetting();
-                if (!granted) {
-                    showToast('Aktifkan izin notifikasi terlebih dahulu!', true);
-                    return;
-                }
+                if (!granted) return;
             }
 
-            showToast('Mengirim notifikasi uji coba ke layar HP...');
-            await window.NotifikasiApp.kirimNotifikasiKePonsel({
-                title: 'Uji Notifikasi Argumentasi 🔔',
-                body: 'Sistem notifikasi ponsel PWA berfungsi sempurna di perangkat Anda!',
-                icon: 'icon-192.png',
-                badge: 'icon-192.png',
-                url: 'index.html',
-                tag: 'tes-notif-pwa-' + Date.now(),
-                data: {
-                    kategori: 'sistem',
-                    aksiUrl: 'index.html'
+            let orig = '';
+            if (btn) {
+                orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin text-[10px]"></i> Mengirim...';
+            }
+
+            showToast('Mengirimkan notifikasi uji coba ke status bar HP Anda...');
+            try {
+                await window.NotifikasiApp.kirimNotifikasiKePonsel({
+                    id: 'tes-notif-pwa-' + Date.now(),
+                    title: '🔔 Uji Coba Notifikasi Argumentasi',
+                    body: 'Hebat! Sistem notifikasi ponsel PWA berfungsi sempurna di perangkat Anda.',
+                    icon: 'icon-192.png',
+                    badge: 'icon-192.png',
+                    url: 'index.html',
+                    tag: 'tes-notif-pwa-' + Date.now(),
+                    category: 'sistem'
+                });
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = orig;
                 }
-            });
+            }
         }
 
         function simpanSetting(key, val) {
