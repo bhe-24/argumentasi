@@ -1,4 +1,4 @@
-const CACHE_NAME = 'arg-pwa-otomatis-v2';
+const CACHE_NAME = 'arg-pwa-otomatis-v3';
 
 const urlsToCache = [
     './',
@@ -37,8 +37,8 @@ self.addEventListener('activate', (e) => {
 
 // 3. Strategi "Network First, fallback to Cache" (Internet Dulu, Baru Memori)
 self.addEventListener('fetch', (e) => {
-    // Jangan cache request API serverless atau firebase
-    if (e.request.url.includes('/api/') || e.request.url.includes('firestore.googleapis.com')) {
+    // Jangan cache request API serverless, firebase, atau folder admin (admin selalu live network)
+    if (e.request.url.includes('/api/') || e.request.url.includes('firestore.googleapis.com') || e.request.url.includes('/admin/')) {
         return;
     }
 
