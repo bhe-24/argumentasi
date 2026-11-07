@@ -15,6 +15,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Chart.js untuk Grafik Nilaiku 3D -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Sistem Notifikasi PWA Terpadu -->
+    <script src="notifikasi.js"></script>
     <script>
         tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }
     </script>
@@ -114,13 +116,36 @@
                 <i class="fas fa-search text-white text-sm"></i>
                 <input type="text" id="searchInput" placeholder="Cari materi, artikel..." class="w-full bg-transparent outline-none text-white text-xs px-2 placeholder-white/70" onkeypress="if(event.key === 'Enter') cariMateri()">
             </div>
-            <a href="panduan.html" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white relative hover:bg-white/20 transition-colors">
-                <i class="far fa-question-circle text-2xl"></i>
-                <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+            <a href="panduan.html" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white relative hover:bg-white/20 transition-colors" title="Panduan">
+                <i class="far fa-question-circle text-xl"></i>
+                <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-brand-green"></span>
             </a>
+            <!-- Tombol Notifikasi Bell dengan Live Unread Counter -->
+            <button type="button" onclick="NotifikasiApp.bukaPusatNotifikasi()" id="btnNotifBell" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white relative hover:bg-white/20 transition-colors" title="Pusat Notifikasi">
+                <i class="far fa-bell text-xl"></i>
+                <span id="notifBadgeCount" class="absolute -top-1 -right-1 bg-amber-400 text-slate-900 font-black text-[9px] min-w-4 h-4 px-1 rounded-full flex items-center justify-center border-2 border-brand-green shadow-xs hidden">0</span>
+            </button>
         </header>
 
         <div class="h-[60px] bg-brand-green"></div>
+
+        <!-- BANNER AJAKAN AKTIFKAN NOTIFIKASI PONSEL (Jika Belum Diizinkan) -->
+        <div id="notifPermissionBanner" class="bg-amber-500 text-white px-4 py-2.5 flex items-center justify-between gap-3 text-xs shadow-md z-40 relative hidden">
+            <div class="flex items-center gap-2 min-w-0">
+                <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                    <i class="fas fa-bell text-xs animate-bounce"></i>
+                </div>
+                <p class="text-[10px] font-semibold leading-tight truncate">Aktifkan notifikasi ponsel untuk info latihan harian & sistem!</p>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="NotifikasiApp.requestPermission()" class="bg-white text-slate-900 font-extrabold text-[10px] px-2.5 py-1 rounded-lg shadow-xs hover:bg-slate-100 active:scale-95 transition">
+                    Aktifkan
+                </button>
+                <button onclick="document.getElementById('notifPermissionBanner').remove()" class="text-white/80 hover:text-white p-1 text-xs">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
         <div class="bg-brand-green pb-10 px-4 relative z-10 rounded-b-[2rem] -mt-1"></div>
 
         <div class="px-4 -mt-10 relative z-20">
@@ -426,6 +451,67 @@
             <button id="btnInstall" class="bg-brand-green text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-brand-dark transition-colors active:scale-95">
                 Unduh
             </button>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL PUSAT NOTIFIKASI ==================== -->
+    <div id="modalPusatNotifikasi" class="fixed inset-0 bg-black/60 hidden modal-z flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300 pb-0 sm:pb-10" onclick="if(event.target === this) NotifikasiApp.tutupPusatNotifikasi()">
+        <div id="notifDrawerBox" class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 transform translate-y-full sm:translate-y-0 transition-transform duration-300 relative max-h-[85vh] flex flex-col">
+            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-3 sm:hidden shrink-0"></div>
+            
+            <!-- Header Modal Notifikasi -->
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold shadow-2xs">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 leading-tight">Pusat Notifikasi</h3>
+                        <p class="text-[10px] text-slate-400">Pembaruan Latihan, Sistem & Pengumuman</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="NotifikasiApp.tandaiSemuaDibaca()" class="text-[10px] font-bold text-brand-green hover:underline px-2 py-1 bg-emerald-50 rounded-lg" title="Tandai Semua Dibaca">
+                        Baca Semua
+                    </button>
+                    <button onclick="NotifikasiApp.tutupPusatNotifikasi()" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center text-xs">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Kategori Tabs -->
+            <div class="flex gap-1.5 py-2.5 border-b border-slate-100 shrink-0 overflow-x-auto hide-scrollbar text-[11px] font-bold">
+                <button type="button" onclick="pilihFilterNotif(this, 'all')" class="px-3 py-1 rounded-full bg-slate-800 text-white shrink-0 shadow-2xs">Semua</button>
+                <button type="button" onclick="pilihFilterNotif(this, 'latihan')" class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 shrink-0 hover:bg-slate-200">🎯 Latihan</button>
+                <button type="button" onclick="pilihFilterNotif(this, 'sistem')" class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 shrink-0 hover:bg-slate-200">🚀 Sistem</button>
+                <button type="button" onclick="pilihFilterNotif(this, 'pengumuman')" class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 shrink-0 hover:bg-slate-200">📢 Pengumuman</button>
+            </div>
+
+            <!-- Area Daftar Notifikasi -->
+            <div class="flex-grow overflow-y-auto hide-scrollbar py-3 space-y-2.5 min-h-[180px]">
+                <div id="notifListContainer" class="space-y-2.5">
+                    <!-- Item notifikasi akan dirender otomatis via notifikasi.js -->
+                </div>
+                <!-- Empty State -->
+                <div id="notifEmptyState" class="hidden flex-col items-center justify-center py-10 text-center">
+                    <div class="w-14 h-14 rounded-full bg-slate-100 text-slate-300 flex items-center justify-center text-2xl mb-2">
+                        <i class="far fa-bell-slash"></i>
+                    </div>
+                    <p class="text-xs font-bold text-slate-600">Tidak ada notifikasi</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Semua pembaruan latihan dan sistem telah terbaca.</p>
+                </div>
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between shrink-0 text-xs">
+                <a href="setting.html" class="text-slate-500 hover:text-brand-green font-semibold text-[11px] flex items-center gap-1.5">
+                    <i class="fas fa-sliders text-xs"></i> Pengaturan Notifikasi
+                </a>
+                <button onclick="NotifikasiApp.bersihkanSemuaNotifikasi()" class="text-red-500 hover:text-red-700 font-semibold text-[11px] flex items-center gap-1">
+                    <i class="fas fa-trash-can text-xs"></i> Bersihkan
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1351,6 +1437,17 @@
                     <p class="text-[10px] text-red-400 font-medium">Gagal memuat tim pengembang.</p></div>`;
             }
         }
+
+        // Filter Kategori di Pusat Notifikasi
+        window.pilihFilterNotif = function(btn, cat) {
+            btn.parentElement.querySelectorAll('button').forEach(b => {
+                b.className = 'px-3 py-1 rounded-full bg-slate-100 text-slate-600 shrink-0 hover:bg-slate-200';
+            });
+            btn.className = 'px-3 py-1 rounded-full bg-slate-800 text-white shrink-0 shadow-2xs';
+            if (window.NotifikasiApp) {
+                NotifikasiApp.renderNotificationCenter(cat);
+            }
+        };
 
         document.addEventListener('DOMContentLoaded', () => { fetchMateri(); fetchDevelopers(); });
     </script>

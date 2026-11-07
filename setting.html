@@ -12,6 +12,8 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Sistem Notifikasi PWA Terpadu -->
+    <script src="notifikasi.js"></script>
 
     <script>
         tailwind.config = {
@@ -121,6 +123,89 @@
                     <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">
                         Aktif
                     </span>
+                </div>
+            </div>
+
+            <!-- SEKSI 2: NOTIFIKASI PONSEL (PWA) -->
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden">
+                <div class="px-4 py-3 bg-slate-50/70 border-b border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-bell text-amber-500 text-xs"></i>
+                        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Notifikasi Ponsel (PWA)</h3>
+                    </div>
+                    <span id="badgeIzinPonselSetting" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                        Memeriksa...
+                    </span>
+                </div>
+
+                <!-- Tombol Minta Izin jika Belum Diizinkan -->
+                <div id="boxIzinNotifikasiSetting" class="p-3.5 bg-amber-50/70 border-b border-amber-100 flex items-center justify-between gap-3 hidden">
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-slate-800">Izin Notifikasi Belum Aktif</p>
+                        <p class="text-[10px] text-slate-500 leading-tight mt-0.5">Izinkan peramban agar ponsel Anda menerima info latihan & sistem.</p>
+                    </div>
+                    <button type="button" onclick="mintaIzinNotifikasiSetting()" class="bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[10px] px-3 py-1.5 rounded-xl shadow-xs shrink-0 active:scale-95 transition">
+                        Aktifkan
+                    </button>
+                </div>
+
+                <!-- Toggle Notifikasi Latihan Harian -->
+                <div class="flex items-center justify-between p-4 border-b border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-800">Pemberitahuan Latihan 24 Jam</p>
+                            <p class="text-[10px] text-slate-400">Pemberitahuan saat materi & soal baru dibuka</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleNotifLatihan" class="sr-only peer" checked onchange="updatePrefNotifikasi('latihan', this.checked)">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-green"></div>
+                    </label>
+                </div>
+
+                <!-- Toggle Notifikasi Pembaruan Sistem & Admin -->
+                <div class="flex items-center justify-between p-4 border-b border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-800">Pembaruan Sistem & Broadcast Admin</p>
+                            <p class="text-[10px] text-slate-400">Info fitur terbaru & siaran pengumuman</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleNotifSistem" class="sr-only peer" checked onchange="updatePrefNotifikasi('sistem', this.checked)">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-green"></div>
+                    </label>
+                </div>
+
+                <!-- Toggle Getar Ponsel -->
+                <div class="flex items-center justify-between p-4 border-b border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs">
+                            <i class="fas fa-mobile-screen"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-800">Getar Perangkat</p>
+                            <p class="text-[10px] text-slate-400">Getarkan ponsel saat notifikasi masuk</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleNotifVibrate" class="sr-only peer" checked onchange="updatePrefNotifikasi('vibrate', this.checked)">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-green"></div>
+                    </label>
+                </div>
+
+                <!-- Tombol Uji Notifikasi Ponsel -->
+                <div class="p-3 bg-slate-50 flex items-center justify-between">
+                    <span class="text-[10px] text-slate-400 font-medium">Uji kirim notifikasi ke layar HP Anda</span>
+                    <button type="button" onclick="tesNotifikasiPonsel()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow-xs active:scale-95 transition flex items-center gap-1.5">
+                        <i class="fas fa-paper-plane text-[10px] text-amber-400"></i> Tes Kirim ke HP
+                    </button>
                 </div>
             </div>
 
@@ -374,6 +459,115 @@
             if (soundPref !== null) {
                 document.getElementById('toggleSound').checked = soundPref === 'true';
             }
+
+            // Load preferensi notifikasi PWA
+            if (window.NotifikasiApp) {
+                const notifSettings = window.NotifikasiApp.getSettings();
+                const togLatihan = document.getElementById('toggleNotifLatihan');
+                const togSistem = document.getElementById('toggleNotifSistem');
+                const togVibrate = document.getElementById('toggleNotifVibrate');
+
+                if (togLatihan) togLatihan.checked = notifSettings.latihan !== false;
+                if (togSistem) togSistem.checked = notifSettings.sistem !== false;
+                if (togVibrate) togVibrate.checked = notifSettings.vibrate !== false;
+
+                updateStatusIzinNotifikasiSetting();
+            }
+        }
+
+        function updateStatusIzinNotifikasiSetting() {
+            const badge = document.getElementById('badgeIzinPonselSetting');
+            const boxIzin = document.getElementById('boxIzinNotifikasiSetting');
+            if (!badge) return;
+
+            if (!('Notification' in window)) {
+                badge.textContent = 'Tidak Didukung';
+                badge.className = 'text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500';
+                if (boxIzin) boxIzin.classList.add('hidden');
+                return;
+            }
+
+            const perm = Notification.permission;
+            if (perm === 'granted') {
+                badge.textContent = 'Aktif (Diizinkan)';
+                badge.className = 'text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
+                if (boxIzin) boxIzin.classList.add('hidden');
+            } else if (perm === 'denied') {
+                badge.textContent = 'Diblokir HP';
+                badge.className = 'text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200';
+                if (boxIzin) {
+                    boxIzin.classList.remove('hidden');
+                    const desc = boxIzin.querySelector('p.text-\\[10px\\]');
+                    if (desc) desc.textContent = 'Izin diblokir di setelan peramban HP Anda. Buka Info Situs untuk mengizinkan.';
+                    const btn = boxIzin.querySelector('button');
+                    if (btn) btn.textContent = 'Coba Lagi';
+                }
+            } else {
+                badge.textContent = 'Belum Aktif';
+                badge.className = 'text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200';
+                if (boxIzin) boxIzin.classList.remove('hidden');
+            }
+        }
+
+        async function mintaIzinNotifikasiSetting() {
+            if (!window.NotifikasiApp) {
+                showToast('Modul notifikasi belum siap', true);
+                return;
+            }
+            const granted = await window.NotifikasiApp.requestPermission();
+            updateStatusIzinNotifikasiSetting();
+            if (granted) {
+                showToast('Izin notifikasi ponsel berhasil diaktifkan!');
+            } else {
+                showToast('Izin notifikasi belum diizinkan atau diblokir', true);
+            }
+        }
+
+        function updatePrefNotifikasi(key, val) {
+            if (!window.NotifikasiApp) return;
+            const settings = window.NotifikasiApp.getSettings();
+            settings[key] = val;
+            window.NotifikasiApp.saveSettings(settings);
+
+            let msg = 'Preferensi notifikasi diperbarui';
+            if (key === 'latihan') {
+                msg = val ? 'Notifikasi latihan 24 jam diaktifkan' : 'Notifikasi latihan dinonaktifkan';
+            } else if (key === 'sistem') {
+                msg = val ? 'Pembaruan sistem & siaran diaktifkan' : 'Pembaruan sistem dinonaktifkan';
+            } else if (key === 'vibrate') {
+                msg = val ? 'Getar ponsel diaktifkan' : 'Getar ponsel dinonaktifkan';
+            }
+            showToast(msg);
+        }
+
+        async function tesNotifikasiPonsel() {
+            if (!window.NotifikasiApp) {
+                showToast('Modul notifikasi belum siap', true);
+                return;
+            }
+
+            if ('Notification' in window && Notification.permission !== 'granted') {
+                const granted = await window.NotifikasiApp.requestPermission();
+                updateStatusIzinNotifikasiSetting();
+                if (!granted) {
+                    showToast('Aktifkan izin notifikasi terlebih dahulu!', true);
+                    return;
+                }
+            }
+
+            showToast('Mengirim notifikasi uji coba ke layar HP...');
+            await window.NotifikasiApp.kirimNotifikasiKePonsel({
+                title: 'Uji Notifikasi Argumentasi 🔔',
+                body: 'Sistem notifikasi ponsel PWA berfungsi sempurna di perangkat Anda!',
+                icon: 'icon-192.png',
+                badge: 'icon-192.png',
+                url: 'index.html',
+                tag: 'tes-notif-pwa-' + Date.now(),
+                data: {
+                    kategori: 'sistem',
+                    aksiUrl: 'index.html'
+                }
+            });
         }
 
         function simpanSetting(key, val) {

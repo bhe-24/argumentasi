@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kelola Notifikasi - Argumentasi Admin</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } }
+                }
+            }
+        }
+
+        // Penyelaras Tautan Admin
+        document.addEventListener('click', function(e) {
+            const a = e.target.closest('a');
+            if (!a) return;
+            const href = a.getAttribute('href');
+            if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('http') || href.startsWith('mailto:')) return;
+            if (href.startsWith('admin/')) {
+                const p = (window.location && window.location.pathname) || '';
+                const proto = (window.location && window.location.protocol) || '';
+                if (p.includes('/admin/') || p.endsWith('/admin/index.html') || proto === 'file:') {
+                    e.preventDefault();
+                    window.location.href = href.replace(/^admin\//, '');
+                }
+            }
+        });
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .modal-z { z-index: 99999 !important; }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen">
+
+    <!-- CONTAINER UTAMA (Mobile App Frame) -->
+    <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col overflow-x-hidden sm:border-x border-slate-200">
+        
+        <!-- HEADER ADMIN -->
+        <header class="bg-brand-green fixed w-full max-w-md z-50 px-4 py-3.5 flex items-center justify-between shadow-md">
+            <div class="flex items-center gap-3">
+                <a href="admin/index.html" class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors" title="Kembali ke Dashboard">
+                    <i class="fas fa-arrow-left text-sm"></i>
+                </a>
+                <div>
+                    <h1 class="text-white font-bold text-sm leading-tight">Siaran Notifikasi</h1>
+                    <p class="text-white/70 text-[10px]">Kirim Langsung ke Ponsel Siswa</p>
+                </div>
+            </div>
+            <button onclick="ujiNotifikasiLokal()" class="px-2.5 py-1 bg-amber-400 hover:bg-amber-500 text-slate-900 rounded-lg text-[10px] font-extrabold shadow-sm flex items-center gap-1 active:scale-95 transition-all">
+                <i class="fas fa-bell"></i> Tes HP
+            </button>
+        </header>
+
+        <!-- PENGGANTI RUANG HEADER -->
+        <div class="h-[60px] bg-brand-green shrink-0"></div>
+
+        <!-- MAIN KONTEN -->
+        <div class="flex-grow overflow-y-auto hide-scrollbar p-4 space-y-4 pb-12">
+            
+            <!-- STATUS KONEKSI NOTIFIKASI PWA -->
+            <div class="bg-gradient-to-r from-emerald-800 to-teal-900 rounded-2xl p-4 text-white shadow-md relative overflow-hidden">
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[9px] font-extrabold uppercase tracking-wider bg-white/20 text-white px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <i class="fas fa-satellite-dish animate-pulse"></i> PWA Push Gateway
+                        </span>
+                        <span id="badgeIzinPonsel" class="text-[9px] font-bold text-emerald-300">Memeriksa...</span>
+                    </div>
+                    <h2 class="text-sm font-black leading-tight">Pusat Distribusi Notifikasi</h2>
+                    <p class="text-[11px] text-white/80 mt-1 leading-relaxed">
+                        Pesan yang Anda kirimkan dari panel ini akan langsung memunculkan notifikasi di bilah status ponsel seluruh siswa yang terhubung.
+                    </p>
+                </div>
+                <i class="fas fa-paper-plane absolute -bottom-3 -right-3 text-white/10 text-7xl pointer-events-none"></i>
+            </div>
+
+            <!-- FORMULIR BUAT NOTIFIKASI BARU -->
+            <div class="bg-white rounded-2xl p-4 shadow-xs border border-slate-200">
+                <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-emerald-50 text-brand-green flex items-center justify-center text-xs">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <h3 class="text-xs font-bold text-slate-800">Buat Siaran Notifikasi Baru</h3>
+                    </div>
+                    <span class="text-[9px] text-slate-400">Admin Post</span>
+                </div>
+
+                <form id="formNotifikasi" onsubmit="kirimSiaranAdmin(event)" class="space-y-3">
+                    
+                    <!-- Kategori Notifikasi -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Kategori Notifikasi</label>
+                        <select id="notifKategori" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:border-brand-green">
+                            <option value="latihan">🎯 Latihan & Misi (Tantangan 24 Jam)</option>
+                            <option value="sistem">🚀 Pembaruan Sistem & Fitur Baru</option>
+                            <option value="pengumuman" selected>📢 Pengumuman Penting / Mading</option>
+                            <option value="motivasi">💡 Motivasi & Pengingat Belajar</option>
+                        </select>
+                    </div>
+
+                    <!-- Judul Notifikasi -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Judul Notifikasi</label>
+                        <input type="text" id="notifJudul" required placeholder="Contoh: 🎯 Tantangan Baru: Lomba Menulis Argumentasi!" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-brand-green placeholder:font-normal placeholder:text-slate-300">
+                    </div>
+
+                    <!-- Isi Pesan -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Isi Pesan Notifikasi (Maks. 200 karakter)</label>
+                        <textarea id="notifPesan" required rows="3" maxlength="200" placeholder="Tuliskan pesan ringkas dan jelas yang akan tampil di layar ponsel siswa..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 focus:outline-none focus:border-brand-green placeholder:text-slate-300 resize-none"></textarea>
+                    </div>
+
+                    <!-- Target URL / Halaman yang Dibuka Saat Ditekan -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Halaman Tujuan Saat Notifikasi Diketuk</label>
+                        <select id="notifUrl" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:border-brand-green">
+                            <option value="latihan.html">Halaman Latihan 24 Jam (latihan.html)</option>
+                            <option value="artikel.html">Halaman Artikel & Berita (artikel.html)</option>
+                            <option value="materi.html">Halaman Materi Belajar (materi.html)</option>
+                            <option value="kreasi/index.html">Ruang Kreasi Siswa (kreasi/index.html)</option>
+                            <option value="profil.html">Profil & Kartu Identitas (profil.html)</option>
+                            <option value="index.html" selected>Beranda Utama (index.html)</option>
+                        </select>
+                    </div>
+
+                    <!-- Sasaran Penerima -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sasaran Pengguna</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer">
+                                <input type="radio" name="sasaran" value="all" checked class="text-brand-green">
+                                <span class="text-xs font-semibold text-slate-700">Semua Siswa</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer">
+                                <input type="radio" name="sasaran" value="aktif" class="text-brand-green">
+                                <span class="text-xs font-semibold text-slate-700">Siswa Aktif</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Eksekusi -->
+                    <div class="pt-2 flex gap-2">
+                        <button type="button" onclick="ujiNotifikasiLokal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition-colors active:scale-95 flex items-center justify-center gap-1.5">
+                            <i class="fas fa-vial text-amber-500"></i> Tes Lokal
+                        </button>
+                        <button type="submit" id="btnSubmitSiaran" class="flex-2 bg-brand-green hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+                            <i class="fas fa-paper-plane text-xs"></i>
+                            <span>Siarkan Notifikasi Sekarang</span>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- DAFTAR RIWAYAT SIARAN NOTIFIKASI -->
+            <div class="bg-white rounded-2xl p-4 shadow-xs border border-slate-200">
+                <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <h3 class="text-xs font-bold text-slate-800">Riwayat Siaran Notifikasi</h3>
+                    </div>
+                    <button onclick="muatRiwayatNotifikasi()" class="text-slate-400 hover:text-brand-green text-xs p-1" title="Muat Ulang">
+                        <i class="fas fa-rotate"></i>
+                    </button>
+                </div>
+
+                <!-- Container List -->
+                <div id="riwayatListContainer" class="space-y-2.5">
+                    <p class="text-xs text-center text-slate-400 py-6">Memuat riwayat siaran...</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- TOAST NOTIFIKASI -->
+    <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
+
+    <!-- FIREBASE & SCRIPT -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Konfigurasi Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0",
+            authDomain: "mading-cf676.firebaseapp.com",
+            projectId: "mading-cf676",
+            storageBucket: "mading-cf676.firebasestorage.app",
+            messagingSenderId: "72175203671",
+            appId: "1:72175203671:web:7a0676a55beb64bc96ba12",
+            measurementId: "G-590P9LLK7J"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Periksa izin notifikasi perangkat saat ini
+        function periksaIzin() {
+            const badge = document.getElementById('badgeIzinPonsel');
+            if (!('Notification' in window)) {
+                badge.textContent = 'Tidak Didukung';
+                badge.className = 'text-[9px] font-bold text-red-300';
+            } else if (Notification.permission === 'granted') {
+                badge.textContent = '✓ Izin HP Aktif';
+                badge.className = 'text-[9px] font-bold text-emerald-300';
+            } else if (Notification.permission === 'denied') {
+                badge.textContent = '❌ Ditolak';
+                badge.className = 'text-[9px] font-bold text-red-300';
+            } else {
+                badge.textContent = '⏳ Belum Diizinkan';
+                badge.className = 'text-[9px] font-bold text-amber-300 cursor-pointer';
+                badge.onclick = () => Notification.requestPermission().then(periksaIzin);
+            }
+        }
+
+        // 1. KIRIM SIARAN DARI ADMIN KE SELURUH PENGGUNA
+        window.kirimSiaranAdmin = async function(event) {
+            event.preventDefault();
+            const btn = document.getElementById('btnSubmitSiaran');
+            const judul = document.getElementById('notifJudul').value.trim();
+            const pesan = document.getElementById('notifPesan').value.trim();
+            const kategori = document.getElementById('notifKategori').value;
+            const targetUrl = document.getElementById('notifUrl').value;
+            const sasaran = document.querySelector('input[name="sasaran"]:checked')?.value || 'all';
+
+            if (!judul || !pesan) {
+                showToast("Judul dan isi pesan wajib diisi", true);
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyebarkan...`;
+
+            try {
+                // A. Kirim ke REST API Serverless Vercel
+                const payload = {
+                    title: judul,
+                    body: pesan,
+                    category: kategori,
+                    url: targetUrl,
+                    target: sasaran,
+                    createdBy: 'Admin Argumentasi'
+                };
+
+                let apiSuccess = false;
+                try {
+                    const apiResp = await fetch('/api/notifikasi', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (apiResp.ok) apiSuccess = true;
+                } catch(err) {
+                    console.log('API fetch fallback to Firestore:', err);
+                }
+
+                // B. Simpan ke Firebase Firestore (Collection: 'notifications')
+                try {
+                    await addDoc(collection(db, "notifications"), {
+                        title: judul,
+                        body: pesan,
+                        category: kategori,
+                        url: targetUrl,
+                        target: sasaran,
+                        createdAt: serverTimestamp(),
+                        createdBy: 'Admin Argumentasi'
+                    });
+                } catch(fErr) {
+                    console.log('Firestore save fallback to local:', fErr);
+                }
+
+                // C. Tembakkan notifikasi lokal ke admin yang sedang mengirim juga
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification(judul, {
+                        body: pesan,
+                        icon: './icon-192.png',
+                        data: { url: targetUrl }
+                    });
+                }
+
+                showToast("🎉 Notifikasi berhasil disiarkan ke ponsel seluruh siswa!");
+                document.getElementById('formNotifikasi').reset();
+                muatRiwayatNotifikasi();
+
+            } catch (error) {
+                console.error("Gagal menyiarkan notifikasi:", error);
+                showToast("Gagal menyiarkan notifikasi: " + error.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fas fa-paper-plane text-xs"></i> <span>Siarkan Notifikasi Sekarang</span>`;
+            }
+        };
+
+        // 2. TES NOTIFIKASI DI PONSEL SAAT INI
+        window.ujiNotifikasiLokal = async function() {
+            if (!('Notification' in window)) {
+                alert('Peramban Anda tidak mendukung Notifikasi Web.');
+                return;
+            }
+
+            if (Notification.permission !== 'granted') {
+                const res = await Notification.requestPermission();
+                if (res !== 'granted') {
+                    showToast('Izin notifikasi ditolak oleh peramban.', true);
+                    return;
+                }
+            }
+
+            const judul = document.getElementById('notifJudul').value.trim() || '🔔 Uji Notifikasi Ponsel Admin';
+            const pesan = document.getElementById('notifPesan').value.trim() || 'Ini adalah contoh tampilan notifikasi di status bar ponsel siswa.';
+
+            if ('vibrate' in navigator) navigator.vibrate([100, 50, 100]);
+
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.ready.then(reg => {
+                    reg.showNotification(judul, {
+                        body: pesan,
+                        icon: './icon-192.png',
+                        badge: './icon-192.png',
+                        vibrate: [100, 50, 100],
+                        data: { url: './index.html' }
+                    });
+                });
+            } else {
+                new Notification(judul, {
+                    body: pesan,
+                    icon: './icon-192.png',
+                    data: { url: './index.html' }
+                });
+            }
+
+            showToast('Notifikasi tes berhasil ditembakkan ke ponsel Anda!');
+            periksaIzin();
+        };
+
+        // 3. MUAT RIWAYAT NOTIFIKASI TERKIRIM
+        window.muatRiwayatNotifikasi = async function() {
+            const container = document.getElementById('riwayatListContainer');
+            container.innerHTML = `<p class="text-xs text-center text-slate-400 py-4"><i class="fas fa-spinner fa-spin mr-1"></i> Memuat...</p>`;
+
+            try {
+                // Tarik dari API
+                let list = [];
+                try {
+                    const resp = await fetch('/api/notifikasi?limit=15', { cache: 'no-store' });
+                    if (resp.ok) {
+                        const json = await resp.json();
+                        if (json.success) list = json.data;
+                    }
+                } catch(e){}
+
+                // Fallback / gabungkan dengan Firestore
+                if (list.length === 0) {
+                    try {
+                        const q = query(collection(db, "notifications"), orderBy("createdAt", "desc"), limit(15));
+                        const snap = await getDocs(q);
+                        snap.forEach(d => {
+                            list.push({ id: d.id, ...d.data() });
+                        });
+                    } catch(e){}
+                }
+
+                if (list.length === 0) {
+                    container.innerHTML = `<p class="text-xs text-center text-slate-400 py-6">Belum ada riwayat siaran notifikasi.</p>`;
+                    return;
+                }
+
+                function getCategoryPill(cat) {
+                    switch(cat) {
+                        case 'latihan': return '<span class="text-[9px] font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200">🎯 Latihan</span>';
+                        case 'sistem': return '<span class="text-[9px] font-bold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200">🚀 Sistem</span>';
+                        case 'motivasi': return '<span class="text-[9px] font-bold bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200">💡 Motivasi</span>';
+                        default: return '<span class="text-[9px] font-bold bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200">📢 Pengumuman</span>';
+                    }
+                }
+
+                let html = '';
+                list.forEach(item => {
+                    const tgl = item.createdAt ? new Date(item.createdAt).toLocaleDateString('id-ID', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : 'Baru saja';
+                    html += `
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col gap-1 relative group">
+                        <div class="flex items-center justify-between">
+                            ${getCategoryPill(item.category)}
+                            <span class="text-[9px] text-slate-400">${tgl}</span>
+                        </div>
+                        <h4 class="text-xs font-bold text-slate-800 leading-snug mt-1">${item.title}</h4>
+                        <p class="text-[11px] text-slate-600 line-clamp-2">${item.body}</p>
+                        <div class="flex items-center justify-between pt-1 mt-1 border-t border-slate-200/50 text-[10px] text-slate-400">
+                            <span><i class="fas fa-link mr-1"></i>${item.url || 'index.html'}</span>
+                            <button onclick="hapusNotifikasi('${item.id}')" class="text-red-500 hover:text-red-700 p-1 font-semibold" title="Hapus Siaran">
+                                <i class="fas fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>`;
+                });
+
+                container.innerHTML = html;
+
+            } catch(err) {
+                container.innerHTML = `<p class="text-xs text-center text-red-500 py-4">Gagal memuat: ${err.message}</p>`;
+            }
+        };
+
+        window.hapusNotifikasi = async function(id) {
+            if (!confirm('Hapus siaran notifikasi ini?')) return;
+            try {
+                await fetch(`/api/notifikasi?id=${id}`, { method: 'DELETE' });
+                try {
+                    await deleteDoc(doc(db, "notifications", id));
+                } catch(e){}
+                showToast('Notifikasi berhasil dihapus');
+                muatRiwayatNotifikasi();
+            } catch(e) {
+                showToast('Gagal menghapus', true);
+            }
+        };
+
+        function showToast(msg, isError = false) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bgClass = isError ? 'bg-red-600' : 'bg-slate-900';
+            const iconClass = isError ? 'fa-exclamation-circle text-red-200' : 'fa-check-circle text-emerald-400';
+            
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold flex items-center gap-3 transform translate-y-[-20px] opacity-0 transition-all duration-300 pointer-events-auto`;
+            toast.innerHTML = `<i class="fas ${iconClass} text-base shrink-0"></i> <span class="flex-1">${msg}</span>`;
+            
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-y-[-20px]', 'opacity-0'));
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-20px]', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            periksaIzin();
+            muatRiwayatNotifikasi();
+        });
+    </script>
+</body>
+</html>

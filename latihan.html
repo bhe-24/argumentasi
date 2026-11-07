@@ -10,6 +10,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }</script>
+    <!-- Sistem Notifikasi PWA Terpadu -->
+    <script src="notifikasi.js"></script>
     <script>
 /* latihan-core — penyimpanan per-browser (localStorage + IndexedDB), XP, timer, toast, PDF */
 (function () {
@@ -352,7 +354,22 @@ window.galatHandouts = () => { handouts = []; if ($('modal').classList.contains(
 
 function tickReset() {
     const el = $('resetInfo'), H = hariIni();
-    if (!H || !H.spin) { if (adaSiklus) { render(); L.toast('Sudah 24 jam! Putar gacha untuk materi baru.'); } return; }
+    if (!H || !H.spin) {
+        if (adaSiklus) {
+            render();
+            L.toast('Sudah 24 jam! Putar gacha untuk materi baru.');
+            if (window.NotifikasiApp) {
+                NotifikasiApp.kirimNotifikasiKePonsel({
+                    id: 'lat_24h_cycle_reset_' + Date.now(),
+                    title: '🎯 Siklus Latihan 24 Jam Telah Direset!',
+                    body: 'Materi dan tantangan baru siap dibuka. Putar gacha sekarang dan raih XP harianmu!',
+                    category: 'latihan',
+                    url: 'latihan.html'
+                });
+            }
+        }
+        return;
+    }
     if (el) el.textContent = L.jam(L.sisaReset());
 }
 
