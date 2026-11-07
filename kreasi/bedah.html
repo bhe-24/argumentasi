@@ -218,6 +218,15 @@ window.periksa = () => {
     if (jawab.some(x => !x)) return;
     selesai = true; const t = data.kalimat.length, b = data.kalimat.filter((s, i) => jawab[i] === s.label).length;
     const xp = xpHarian('bedah', b * 4 + (b === t ? 10 : 0), 'Bedah struktur');
+    const skor = Math.round(b / t * 100);
+    try {
+        const st = JSON.parse(localStorage.getItem('kreasi_exercises_status') || '{}');
+        st.bedah = { skor: skor, xp: xp || (b * 4), ts: Date.now(), benar: b, total: t, selesai: true };
+        localStorage.setItem('kreasi_exercises_status', JSON.stringify(st));
+        const latArg = JSON.parse(localStorage.getItem('hasilLatihanArg') || '{}');
+        latArg['kreasi_bedah'] = skor;
+        localStorage.setItem('hasilLatihanArg', JSON.stringify(latArg));
+    } catch (e) {}
     render();
     const w = b === t ? ['emerald', 'Sempurna! Kamu paham kerangka teks argumentasi.', 'fa-trophy'] : b / t >= .6 ? ['amber', 'Bagus! Tinggal teliti sedikit lagi.', 'fa-thumbs-up'] : ['rose', 'Tidak apa-apa, pelajari penjelasan di bawah.', 'fa-book-open'];
     $('boxHasil').classList.remove('hidden');

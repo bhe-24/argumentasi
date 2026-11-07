@@ -847,10 +847,30 @@
                 }
             } catch (e) {}
 
+            // 2b. Pindai Status Latihan Kreasi Harian (kreasi_exercises_status)
+            try {
+                const kStatus = JSON.parse(localStorage.getItem('kreasi_exercises_status') || '{}');
+                for (const k in kStatus) {
+                    const item = kStatus[k];
+                    if (item && item.selesai) {
+                        const skor = Number(item.skor || 0);
+                        const xp = Number(item.xp || 0);
+                        const ts = item.ts ? new Date(item.ts) : new Date();
+                        const entryDate = !isNaN(ts.getTime()) ? ts.toISOString().split('T')[0] : todayStr;
+                        const entryHour = !isNaN(ts.getTime()) ? ts.getHours() : currentHour;
+                        const uniqueId = `kreasi_status_${k}_${entryDate}_s${skor}_x${xp}`;
+                        if (skor > 0 || xp > 0) {
+                            catatKeLog(log, uniqueId, entryDate, entryHour, xp, skor);
+                        }
+                    }
+                }
+            } catch (e) {}
+
             // 3. Pindai Latihan Umum (hasilLatihanArg)
             try {
                 const latArg = JSON.parse(localStorage.getItem('hasilLatihanArg') || '{}');
                 for (const k in latArg) {
+                    if (k.startsWith('kreasi_')) continue; // Sudah ditangani detail di kreasi_exercises_status
                     const skor = Number(latArg[k]) || 0;
                     if (skor > 0) {
                         const uniqueId = `latarg_${k}_s${skor}`;
@@ -1116,11 +1136,12 @@
         // Auto-sync setiap 1 jam (3.600.000 ms)
         setInterval(cekDanJalankanSyncGrafik, 3600000);
 
-        // Sinkron ulang saat aplikasi kembali dibuka / fokus
+        // Sinkron ulang saat aplikasi kembali dibuka / fokus / data localStorage berubah
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) cekDanJalankanSyncGrafik();
         });
         window.addEventListener('pageshow', cekDanJalankanSyncGrafik);
+        window.addEventListener('storage', cekDanJalankanSyncGrafik);
     </script>
 
     <script type="module">

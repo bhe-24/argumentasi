@@ -276,6 +276,17 @@ function main() {
             if (n.skor >= 70) { K.beep('success'); setTimeout(() => window.confetti && confetti({ particleCount: 130, spread: 75, origin: { y: .45 }, zIndex: 100000 }), 500); }
         }
     }
+    try {
+        const st = JSON.parse(localStorage.getItem('kreasi_exercises_status') || '{}');
+        st.menulis = { skor: n.skor, xp: n.xp || gain || 20, ts: n.tanggal || Date.now(), selesai: true };
+        if (delta !== null) {
+            st.revisi = { skor: n.skor, xp: gain || 15, ts: Date.now(), selesai: true };
+        }
+        localStorage.setItem('kreasi_exercises_status', JSON.stringify(st));
+        const latArg = JSON.parse(localStorage.getItem('hasilLatihanArg') || '{}');
+        latArg['kreasi_menulis'] = n.skor;
+        localStorage.setItem('hasilLatihanArg', JSON.stringify(latArg));
+    } catch (e) {}
     const prof = K.profile(); $('hStreak').textContent = prof.streak; $('hXp').textContent = prof.xp;
     $('hSub').textContent = n.judul;
 

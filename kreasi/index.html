@@ -253,10 +253,14 @@ const MIN = { tesis: 15, argumen: 50, kesimpulan: 20 };
 const bagianSelesai = d ? ['tesis', 'argumen', 'kesimpulan'].filter(k => K.words(d[k]) >= (k === 'kesimpulan' ? 15 : MIN[k])).length : 0;
 
 /* ---------- Header & progres ---------- */
-$('hStreak').textContent = p.streak; $('hXp').textContent = p.xp;
-$('lvNum').textContent = L.lv; $('lvTitle').textContent = L.title;
-$('lvNext').textContent = `${p.xp} XP · ${L.next - L.cur} XP lagi ke Level ${L.lv + 1}`;
-setTimeout(() => $('lvBar').style.width = L.pct + '%', 150);
+function refreshHeaderProgres() {
+    const prof = K.profile(), lv = K.level(prof.xp);
+    $('hStreak').textContent = prof.streak; $('hXp').textContent = prof.xp;
+    $('lvNum').textContent = lv.lv; $('lvTitle').textContent = lv.title;
+    $('lvNext').textContent = `${prof.xp} XP · ${lv.next - lv.cur} XP lagi ke Level ${lv.lv + 1}`;
+    setTimeout(() => { const bar = $('lvBar'); if (bar) bar.style.width = lv.pct + '%'; }, 150);
+}
+refreshHeaderProgres();
 
 /* ---------- Lanjutkan ---------- */
 if (adaIde) {
@@ -273,18 +277,81 @@ if (adaIde) {
 /* ---------- Katalog latihan ---------- */
 const KAT = [['semua', 'Semua'], ['ide', 'Ide'], ['menulis', 'Menulis'], ['revisi', 'Revisi']];
 const LATIHAN = [
-    { kat: 'menulis', ico: 'fa-circle-check', c: 'teal', judul: 'Pilihan Ganda Kreasi', desk: 'Latihan soal pilihan ganda menguji pemahaman struktur, kaidah kebahasaan, dan teknik argumen dengan pembahasan lengkap.', durasi: '10 mnt', xp: 'hingga +50 XP', level: 'Menengah', href: 'kreasi/pilgan.html', status: 'baru' },
-    { kat: 'ide', ico: 'fa-lightbulb', c: 'amber', judul: 'Kreasi Ide', desk: 'Temukan topik menarik beserta bahan informasinya dengan bantuan mentor AI, atau tulis idemu sendiri.', durasi: '5 mnt', xp: '+10 XP', level: 'Pemula', href: 'kreasi/ide.html', status: adaIde ? 'selesai' : 'baru' },
-    { kat: 'menulis', ico: 'fa-pen-nib', c: 'emerald', judul: 'Tulis Naskah Argumentasi', desk: 'Susun tesis, argumen, dan kesimpulan dari bahan informasi. Minta petunjuk saat buntu.', durasi: '15 mnt', xp: 'hingga +70 XP', level: 'Menengah', href: adaIde ? 'kreasi/tulis.html' : null, kunci: 'Selesaikan Kreasi Ide dulu', status: adaHasil ? 'selesai' : adaIde ? 'berjalan' : 'kunci' },
-    { kat: 'revisi', ico: 'fa-spell-check', c: 'blue', judul: 'Revisi & Umpan Balik', desk: 'Cek tiap bagian, terima umpan balik mentor, lalu perbaiki. Nilai naik = bonus XP.', durasi: '10 mnt', xp: '+15 XP / kenaikan', level: 'Menengah', href: adaIde ? 'kreasi/tulis.html' : null, kunci: 'Mulai menulis dulu', status: adaIde ? 'berjalan' : 'kunci' },
-    { kat: 'menulis', ico: 'fa-layer-group', c: 'purple', judul: 'Bedah Struktur Teks', desk: 'Kenali tesis, argumen, dan kesimpulan pada contoh teks sebelum menulis sendiri.', durasi: '8 mnt', xp: 'hingga +30 XP', level: 'Pemula', href: 'kreasi/bedah.html', status: 'baru' },
-    { kat: 'revisi', ico: 'fa-link', c: 'rose', judul: 'Kata Penghubung Argumen', desk: 'Latihan memakai karena, sehingga, misalnya, dan sejenisnya agar alur lebih runtut.', durasi: '8 mnt', xp: 'hingga +30 XP', level: 'Pemula', href: 'kreasi/penghubung.html', status: 'baru' },
-    { kat: 'ide', ico: 'fa-people-arrows', c: 'cyan', judul: 'Argumen Tandingan', desk: 'Pikirkan sudut pandang lawan dan siapkan bantahan agar tesismu makin kuat.', durasi: '10 mnt', xp: '+25 XP', level: 'Mahir', href: 'kreasi/tandingan.html', status: 'baru' }
+    { id: 'pilgan', kat: 'menulis', ico: 'fa-circle-check', c: 'teal', judul: 'Pilihan Ganda Kreasi', desk: 'Latihan soal pilihan ganda menguji pemahaman struktur, kaidah kebahasaan, dan teknik argumen dengan pembahasan lengkap.', durasi: '10 mnt', xp: 'hingga +50 XP', level: 'Menengah', href: 'kreasi/pilgan.html', status: 'baru' },
+    { id: 'ide', kat: 'ide', ico: 'fa-lightbulb', c: 'amber', judul: 'Kreasi Ide', desk: 'Temukan topik menarik beserta bahan informasinya dengan bantuan mentor AI, atau tulis idemu sendiri.', durasi: '5 mnt', xp: '+10 XP', level: 'Pemula', href: 'kreasi/ide.html', status: adaIde ? 'selesai' : 'baru' },
+    { id: 'menulis', kat: 'menulis', ico: 'fa-pen-nib', c: 'emerald', judul: 'Tulis Naskah Argumentasi', desk: 'Susun tesis, argumen, dan kesimpulan dari bahan informasi. Minta petunjuk saat buntu.', durasi: '15 mnt', xp: 'hingga +70 XP', level: 'Menengah', href: adaIde ? 'kreasi/tulis.html' : null, kunci: 'Selesaikan Kreasi Ide dulu', status: adaHasil ? 'selesai' : adaIde ? 'berjalan' : 'kunci' },
+    { id: 'revisi', kat: 'revisi', ico: 'fa-spell-check', c: 'blue', judul: 'Revisi & Umpan Balik', desk: 'Cek tiap bagian, terima umpan balik mentor, lalu perbaiki. Nilai naik = bonus XP.', durasi: '10 mnt', xp: '+15 XP / kenaikan', level: 'Menengah', href: adaIde ? 'kreasi/tulis.html' : null, kunci: 'Mulai menulis dulu', status: adaIde ? 'berjalan' : 'kunci' },
+    { id: 'bedah', kat: 'menulis', ico: 'fa-layer-group', c: 'purple', judul: 'Bedah Struktur Teks', desk: 'Kenali tesis, argumen, dan kesimpulan pada contoh teks sebelum menulis sendiri.', durasi: '8 mnt', xp: 'hingga +30 XP', level: 'Pemula', href: 'kreasi/bedah.html', status: 'baru' },
+    { id: 'penghubung', kat: 'revisi', ico: 'fa-link', c: 'rose', judul: 'Kata Penghubung Argumen', desk: 'Latihan memakai karena, sehingga, misalnya, dan sejenisnya agar alur lebih runtut.', durasi: '8 mnt', xp: 'hingga +30 XP', level: 'Pemula', href: 'kreasi/penghubung.html', status: 'baru' },
+    { id: 'tandingan', kat: 'ide', ico: 'fa-people-arrows', c: 'cyan', judul: 'Argumen Tandingan', desk: 'Pikirkan sudut pandang lawan dan siapkan bantahan agar tesismu makin kuat.', durasi: '10 mnt', xp: '+25 XP', level: 'Mahir', href: 'kreasi/tandingan.html', status: 'baru' }
 ];
 const STATUS = {
     baru: ['Baru', 'bg-brand-light text-brand-dark border-emerald-200'], berjalan: ['Berjalan', 'bg-amber-50 text-amber-600 border-amber-100'],
     selesai: ['Selesai', 'bg-emerald-50 text-emerald-600 border-emerald-100'], kunci: ['Terkunci', 'bg-slate-100 text-slate-400 border-slate-200'], segera: ['Segera Hadir', 'bg-slate-100 text-slate-400 border-slate-200']
 };
+
+const RESET_WINDOW_MS = 24 * 60 * 60 * 1000; // Reset setiap 24 jam kembali ke awal
+
+function getStatusLatihan(id) {
+    let raw = {};
+    try {
+        raw = JSON.parse(localStorage.getItem('kreasi_exercises_status') || '{}');
+    } catch (e) { raw = {}; }
+
+    // Kompatibilitas data tersimpan sebelumnya
+    if (!raw[id]) {
+        if (id === 'pilgan') {
+            try {
+                const pData = JSON.parse(localStorage.getItem('kreasi_lat_pilgan_v1') || '{}');
+                if (pData && pData.hasil && pData.hasil.pilgan) {
+                    const h = pData.hasil.pilgan;
+                    raw.pilgan = { skor: h.skor || 0, xp: h.xp || 0, ts: h.ts || Date.now(), selesai: true };
+                }
+            } catch(e) {}
+        } else if (id === 'menulis' && adaHasil && d && d.result) {
+            raw.menulis = { skor: d.result.skor || 0, xp: d.result.xp || 20, ts: d.result.tanggal || Date.now(), selesai: true };
+        } else if (id === 'ide' && adaIde && d && d.start) {
+            raw.ide = { skor: 100, xp: 10, ts: d.start || Date.now(), selesai: true };
+        }
+    }
+
+    const item = raw[id];
+    if (!item || !item.selesai) return null;
+
+    const now = Date.now();
+    const ts = Number(item.ts) || now;
+    const elapsed = now - ts;
+
+    // Jika telah lewat 24 jam, hapus status dan kembalikan ke awal (Baru)
+    if (elapsed >= RESET_WINDOW_MS) {
+        delete raw[id];
+        try {
+            localStorage.setItem('kreasi_exercises_status', JSON.stringify(raw));
+            if (id === 'pilgan') {
+                const pData = JSON.parse(localStorage.getItem('kreasi_lat_pilgan_v1') || '{}');
+                if (pData && pData.hasil && pData.hasil.pilgan) {
+                    delete pData.hasil.pilgan;
+                    localStorage.setItem('kreasi_lat_pilgan_v1', JSON.stringify(pData));
+                }
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    // Masih aktif dalam 24 jam
+    const sisaMs = RESET_WINDOW_MS - elapsed;
+    const sisaJam = Math.floor(sisaMs / (60 * 60 * 1000));
+    const sisaMnt = Math.floor((sisaMs % (60 * 60 * 1000)) / (60 * 1000));
+    const sisaTeks = sisaJam > 0 ? `${sisaJam} jam lagi` : `${Math.max(1, sisaMnt)} mnt lagi`;
+
+    return {
+        selesai: true,
+        skor: item.skor ?? 0,
+        xp: item.xp ?? 0,
+        ts: ts,
+        sisaTeks: sisaTeks
+    };
+}
 
 function formatKreasiHref(url) {
     if (!url) return '';
@@ -310,24 +377,87 @@ function renderLatihan() {
     const arr = LATIHAN.filter(x => aktif === 'semua' || x.kat === aktif);
     $('cntLatihan').textContent = arr.length + ' latihan';
     $('listLatihan').innerHTML = arr.map((x, i) => {
-        const off = x.status === 'segera' || x.status === 'kunci', st = STATUS[x.status];
+        const stData = getStatusLatihan(x.id);
+        const isSelesai = !!stData;
+        const curStatus = isSelesai ? 'selesai' : x.status;
+        const off = curStatus === 'segera' || curStatus === 'kunci';
+        const st = STATUS[curStatus] || STATUS.baru;
         const tag = off ? 'div' : 'a', href = !off ? `href="${formatKreasiHref(x.href)}"` : '';
-        const aksi = x.status === 'segera' ? '<span class="text-[11px] font-semibold text-slate-400"><i class="far fa-clock mr-1"></i>Menyusul</span>'
-            : x.status === 'kunci' ? `<span class="text-[11px] font-semibold text-slate-400"><i class="fas fa-lock mr-1"></i>${x.kunci}</span>`
-            : `<span class="text-[11px] font-bold text-white bg-brand-green px-3.5 py-1.5 rounded-full">${x.status === 'selesai' ? 'Ulangi' : x.status === 'berjalan' ? 'Lanjut' : 'Mulai'} <i class="fas fa-arrow-right text-[9px] ml-1"></i></span>`;
-        return `<${tag} ${href} style="animation-delay:${i * 50}ms" class="item flex gap-3 bg-white p-3.5 rounded-2xl shadow-sm border ${off ? 'border-slate-100 opacity-75' : 'border-slate-100 hover:border-brand-green active:scale-[0.98]'} transition">
-            <div class="w-14 h-14 rounded-xl flex items-center justify-center text-2xl shrink-0 ${off ? 'bg-slate-100 text-slate-300' : `bg-${x.c}-50 text-${x.c}-500`}"><i class="fas ${x.ico}"></i></div>
+
+        let badgeHtml = `<span class="text-[9px] font-bold border px-1.5 py-0.5 rounded ${st[1]}">${st[0]}</span>`;
+        if (isSelesai) {
+            badgeHtml = `<span class="inline-flex items-center gap-1 text-[9px] font-bold border px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border-emerald-300"><i class="fas fa-check-circle text-emerald-600"></i> Selesai</span>`;
+        }
+
+        let aksi = '';
+        if (curStatus === 'segera') {
+            aksi = '<span class="text-[11px] font-semibold text-slate-400"><i class="far fa-clock mr-1"></i>Menyusul</span>';
+        } else if (curStatus === 'kunci') {
+            aksi = `<span class="text-[11px] font-semibold text-slate-400"><i class="fas fa-lock mr-1"></i>${x.kunci}</span>`;
+        } else if (isSelesai) {
+            aksi = `<span class="text-[11px] font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 px-3.5 py-1.5 rounded-full flex items-center gap-1.5 transition"><i class="fas fa-rotate text-[10px]"></i> Ulangi <i class="fas fa-arrow-right text-[9px]"></i></span>`;
+        } else {
+            aksi = `<span class="text-[11px] font-bold text-white bg-brand-green px-3.5 py-1.5 rounded-full">${curStatus === 'berjalan' ? 'Lanjut' : 'Mulai'} <i class="fas fa-arrow-right text-[9px] ml-1"></i></span>`;
+        }
+
+        let extraCompletedHtml = '';
+        if (isSelesai) {
+            extraCompletedHtml = `
+            <div class="mt-2.5 p-2 bg-emerald-50/90 rounded-xl border border-emerald-200 flex flex-wrap items-center justify-between gap-1.5 text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1 font-extrabold text-emerald-800 text-[11px] bg-white px-2 py-0.5 rounded-lg border border-emerald-200 shadow-xs">
+                        <i class="fas fa-trophy text-amber-500"></i> Nilai: ${stData.skor}/100
+                    </span>
+                    <span class="inline-flex items-center gap-1 font-bold text-amber-700 text-[11px] bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">
+                        <i class="fas fa-bolt text-amber-500"></i> +${stData.xp} XP
+                    </span>
+                </div>
+                <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700" title="Latihan ini akan reset ke awal setelah 24 jam">
+                    <i class="far fa-clock text-emerald-500"></i> Reset ${stData.sisaTeks}
+                </span>
+            </div>`;
+        }
+
+        const cardBorderClass = isSelesai
+            ? 'border-2 border-emerald-400 bg-gradient-to-br from-white to-emerald-50/30 hover:border-emerald-500 active:scale-[0.98]'
+            : off
+            ? 'border-slate-100 opacity-75'
+            : 'border-slate-100 hover:border-brand-green active:scale-[0.98]';
+
+        const iconBoxClass = isSelesai
+            ? 'bg-emerald-500 text-white shadow-sm ring-2 ring-emerald-200'
+            : off
+            ? 'bg-slate-100 text-slate-300'
+            : `bg-${x.c}-50 text-${x.c}-500`;
+
+        return `<${tag} ${href} style="animation-delay:${i * 50}ms" class="item flex gap-3 bg-white p-3.5 rounded-2xl shadow-sm border ${cardBorderClass} transition">
+            <div class="w-14 h-14 rounded-xl flex items-center justify-center text-2xl shrink-0 ${iconBoxClass}"><i class="fas ${x.ico}"></i></div>
             <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between gap-2"><span class="text-[9px] font-bold uppercase tracking-widest text-slate-400">${x.kat}</span><span class="text-[9px] font-bold border px-1.5 py-0.5 rounded ${st[1]}">${st[0]}</span></div>
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-[9px] font-bold uppercase tracking-widest text-slate-400">${x.kat}</span>
+                    ${badgeHtml}
+                </div>
                 <h3 class="font-bold text-[13px] text-slate-800 leading-snug mt-0.5">${x.judul}</h3>
                 <p class="text-[11px] text-slate-500 leading-relaxed mt-1 line-clamp-2">${x.desk}</p>
-                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[10px] text-slate-400"><span><i class="far fa-clock"></i> ${x.durasi}</span><span><i class="fas fa-bolt text-amber-400"></i> ${x.xp}</span><span><i class="fas fa-signal"></i> ${x.level}</span></div>
+                ${extraCompletedHtml}
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[10px] text-slate-400">
+                    <span><i class="far fa-clock"></i> ${x.durasi}</span>
+                    <span><i class="fas fa-bolt text-amber-400"></i> ${x.xp}</span>
+                    <span><i class="fas fa-signal"></i> ${x.level}</span>
+                </div>
                 <div class="flex justify-end mt-2.5">${aksi}</div>
             </div></${tag}>`;
     }).join('');
 }
 window.setTab = k => { aktif = k; renderTabs(); renderLatihan(); };
 renderTabs(); renderLatihan();
+
+['pageshow', 'focus', 'storage'].forEach(ev => {
+    window.addEventListener(ev, () => {
+        refreshHeaderProgres();
+        renderLatihan();
+    });
+});
 
 /* ---------- Karya saya ---------- */
 const ks = K.karya();

@@ -218,6 +218,15 @@ window.lanjut = () => { kunci = false; if (idx < soal.length - 1) { idx++; tampi
 
 function selesai() {
     const t = soal.length, xp = xpHarian('hubung', benar * 4 + (benar === t ? 10 : 0), 'Kata penghubung');
+    const skor = Math.round(benar / t * 100);
+    try {
+        const st = JSON.parse(localStorage.getItem('kreasi_exercises_status') || '{}');
+        st.penghubung = { skor: skor, xp: xp || (benar * 4), ts: Date.now(), benar: benar, total: t, selesai: true };
+        localStorage.setItem('kreasi_exercises_status', JSON.stringify(st));
+        const latArg = JSON.parse(localStorage.getItem('hasilLatihanArg') || '{}');
+        latArg['kreasi_penghubung'] = skor;
+        localStorage.setItem('hasilLatihanArg', JSON.stringify(latArg));
+    } catch (e) {}
     $('progBar').style.width = '100%'; $('prog').textContent = 'Selesai'; $('kuis').classList.add('hidden'); $('hasil').classList.remove('hidden');
     const w = benar === t ? ['emerald', 'fa-trophy', 'Sempurna! Alur argumenmu makin runtut.'] : benar / t >= .6 ? ['amber', 'fa-thumbs-up', 'Bagus! Sedikit lagi sempurna.'] : ['rose', 'fa-book-open', 'Pelajari kamus kata penghubung di atas, lalu coba lagi.'];
     $('hasil').innerHTML = `<div class="item bg-white rounded-2xl border border-slate-200 shadow-sm p-5 text-center">

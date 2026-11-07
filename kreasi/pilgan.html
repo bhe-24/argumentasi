@@ -629,6 +629,20 @@ window.kumpulkan = async function(auto) {
         localStorage.setItem('hasilLatihanArg', JSON.stringify(latArg));
     } catch (e) {}
 
+    // Simpan status modul kreasi untuk fallback 24 jam & sinkronisasi grafik Nilaiku
+    try {
+        const st = JSON.parse(localStorage.getItem('kreasi_exercises_status') || '{}');
+        st.pilgan = {
+            skor: skor,
+            xp: xp,
+            ts: Date.now(),
+            benar: benar,
+            total: window.soal.length,
+            selesai: true
+        };
+        localStorage.setItem('kreasi_exercises_status', JSON.stringify(st));
+    } catch (e) {}
+
     window.H.hasil = window.H.hasil || {};
     window.H.hasil.pilgan = {
         skor: skor,
@@ -798,6 +812,11 @@ window.ulangiLatihan = async function() {
     if (!(await modal('Ulangi latihan?', 'Hasil latihan sebelumnya akan direset dan Anda dapat mengerjakan ulang.', 'Ulangi', 'Batal', 'fa-rotate'))) return;
     delete window.H.hasil.pilgan;
     L.simpan();
+    try {
+        const st = JSON.parse(localStorage.getItem('kreasi_exercises_status') || '{}');
+        delete st.pilgan;
+        localStorage.setItem('kreasi_exercises_status', JSON.stringify(st));
+    } catch(e) {}
     initLatihan();
 };
 

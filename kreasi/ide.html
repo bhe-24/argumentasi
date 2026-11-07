@@ -328,6 +328,14 @@ window.pilih = async idx => {
     K.setDraft({ ide: bersih, tesis: '', argumen: '', kesimpulan: '', hints: 3, best: {}, level: K.profile().level, start: Date.now() }, true);
     const p = K.profile();
     if (p.ideDay !== hariIni()) { p.ideDay = hariIni(); K.saveProfile(p); K.addXP(10, 'Ide dipilih'); } else K.toast('Ide dipilih. Selamat menulis!');
+    try {
+        const st = JSON.parse(localStorage.getItem('kreasi_exercises_status') || '{}');
+        st.ide = { skor: 100, xp: 10, ts: Date.now(), selesai: true };
+        localStorage.setItem('kreasi_exercises_status', JSON.stringify(st));
+        const latArg = JSON.parse(localStorage.getItem('hasilLatihanArg') || '{}');
+        latArg['kreasi_ide'] = 100;
+        localStorage.setItem('hasilLatihanArg', JSON.stringify(latArg));
+    } catch (e) {}
     K.badge('ide'); K.beep('success'); sessionStorage.removeItem(CACHE);
     setTimeout(() => location.href = 'tulis.html', 900);
 };
