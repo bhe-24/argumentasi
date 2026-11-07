@@ -1,7 +1,15 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" }
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/kreasi", "destination": "/kreasi/index.html" },
+    { "source": "/kreasi/", "destination": "/kreasi/index.html" },
+    { "source": "/kreasi-ide", "destination": "/kreasi/ide.html" },
+    { "source": "/kreasi-tulis", "destination": "/kreasi/tulis.html" },
+    { "source": "/kreasi-hasil", "destination": "/kreasi/hasil.html" },
+    { "source": "/kreasi-bedah", "destination": "/kreasi/bedah.html" },
+    { "source": "/kreasi-penghubung", "destination": "/kreasi/penghubung.html" },
+    { "source": "/kreasi-tandingan", "destination": "/kreasi/tandingan.html" }
   ],
   "headers": [
     {

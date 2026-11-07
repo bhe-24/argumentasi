@@ -25,7 +25,7 @@
     document.head.insertAdjacentHTML('beforeend', `<style>
         body{font-family:'Poppins',sans-serif;background:#f1f5f9;-webkit-tap-highlight-color:transparent}
         .hide-scrollbar::-webkit-scrollbar{display:none}.hide-scrollbar{scrollbar-width:none}
-        .fade-in{animation:kf .35s ease-out both}@keyframes kf{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+        .fade-in{animation:kf .25s ease both}@keyframes kf{from{opacity:0}to{opacity:1}}
         .line-clamp-1{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}.line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.lc2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
         .sk{position:relative;overflow:hidden;background:#e2e8f0;border-radius:.6rem}.sk::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:sh 1.3s infinite}@keyframes sh{100%{transform:translateX(100%)}}
         .btn{display:flex;align-items:center;justify-content:center;gap:.5rem;font-weight:700;border-radius:.85rem;transition:transform .15s}.btn:active{transform:scale(.96)}.btn:disabled{opacity:.45}
@@ -118,7 +118,7 @@
     </script>
     <style>
         .tabs-scroll::-webkit-scrollbar { display: none; }
-        .item { animation: kf .3s ease-out both; }
+        .item { animation: kf .25s ease both }
         details > summary { list-style: none; } details > summary::-webkit-details-marker { display: none; }
         details[open] .chev { transform: rotate(180deg); } .chev { transition: transform .2s; }
         #ta { font-family: 'Merriweather', serif; line-height: 1.85; font-size: 14px; resize: none; }
@@ -231,7 +231,12 @@
 <script>
 const $ = id => document.getElementById(id);
 const d = K.draft();
-if (!d || !d.ide) location.replace('ide.html'); else main();
+if (!d || !d.ide) {
+    const m = document.querySelector('main');
+    if (m) m.innerHTML = '<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center my-8 mx-4"><div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-2xl mx-auto mb-3"><i class="fas fa-lightbulb"></i></div><p class="text-sm font-bold text-slate-700">Pilih Topik Ide Terlebih Dahulu</p><p class="text-[11px] text-slate-500 mt-1 mb-5 leading-relaxed">Ruang tulis memerlukan topik dan bahan informasi sebelum kamu mulai menyusun teks argumentasi.</p><a href="ide.html" class="inline-flex items-center gap-2 bg-brand-green text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-md active:scale-95 transition"><i class="fas fa-arrow-right"></i><span>Buka Kreasi Ide</span></a></div>';
+    const b = document.querySelector('.sticky.bottom-0'); if (b && b.classList) b.classList.add('hidden');
+    const t = document.getElementById('tabs'); if (t && t.parentElement && t.parentElement.classList) t.parentElement.classList.add('hidden');
+} else main();
 
 function main() {
     const SEC = {
@@ -295,7 +300,7 @@ function main() {
 
     /* ---------- AI: petunjuk & cek ---------- */
     const li = (a, ic, c) => (a || []).map(x => `<li class="flex gap-2 text-[11px] text-slate-700 leading-relaxed"><i class="fas ${ic} ${c} mt-1 text-[9px]"></i><span>${K.esc(x)}</span></li>`).join('');
-    const loadingFb = () => $('fb').innerHTML = '<div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm"><div class="sk h-3 w-1/2 mb-3"></div><div class="sk h-3 w-full mb-2"></div><div class="sk h-3 w-4/5"></div></div>';
+    const loadingFb = () => $('fb').innerHTML = '<div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm"><div class="flex items-center gap-3 mb-3.5"><div class="sk w-14 h-14 rounded-full shrink-0"></div><div class="flex-1 space-y-2"><div class="sk h-3.5 w-1/3"></div><div class="sk h-2.5 w-2/3"></div></div></div><div class="space-y-2"><div class="sk h-3 w-full"></div><div class="sk h-3 w-5/6"></div><div class="sk h-3 w-4/5"></div></div></div>';
     window.minta = async type => {
         if (busy) return;
         const teks = $('ta').value.trim();

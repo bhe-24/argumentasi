@@ -26,7 +26,7 @@
     document.head.insertAdjacentHTML('beforeend', `<style>
         body{font-family:'Poppins',sans-serif;background:#f1f5f9;-webkit-tap-highlight-color:transparent}
         .hide-scrollbar::-webkit-scrollbar{display:none}.hide-scrollbar{scrollbar-width:none}
-        .fade-in{animation:kf .35s ease-out both}@keyframes kf{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+        .fade-in{animation:kf .25s ease both}@keyframes kf{from{opacity:0}to{opacity:1}}
         .line-clamp-1{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}.line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.lc2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
         .sk{position:relative;overflow:hidden;background:#e2e8f0;border-radius:.6rem}.sk::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:sh 1.3s infinite}@keyframes sh{100%{transform:translateX(100%)}}
         .btn{display:flex;align-items:center;justify-content:center;gap:.5rem;font-weight:700;border-radius:.85rem;transition:transform .15s}.btn:active{transform:scale(.96)}.btn:disabled{opacity:.45}
@@ -118,9 +118,9 @@
 
     </script>
     <style>
-        .item { animation: kf .35s ease-out both; }
+        .item { animation: kf .25s ease both }
         .ring-bg { stroke: rgba(255,255,255,.25); } .ring-fg { stroke: #fcd34d; transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1); }
-        .sheet { animation: kf .25s ease-out both; }
+        .sheet { animation: kf .2s ease both }
         @media print {
             header, #strip, #tabsWrap, #bar, footer, #modal, .noprint { display: none !important; }
             body { background: #fff !important; } #app { box-shadow: none !important; border: none !important; }
@@ -256,8 +256,8 @@ else if (d && d.result && d.ide) {
 }
 
 if (!n) {
-    if (idParam) { document.querySelector('main').innerHTML = '<div class="text-center py-16"><i class="fas fa-file-circle-question text-4xl text-slate-300 mb-3"></i><p class="text-sm font-bold text-slate-700">Karya tidak ditemukan</p><p class="text-[11px] text-slate-500 mt-1 mb-4">Karya ini mungkin sudah dihapus atau dibuat di perangkat lain.</p><a href="index.html" class="bg-brand-green text-white text-xs font-bold px-5 py-2.5 rounded-full">Kembali ke Ruang Kreasi</a></div>'; ['bar', 'tabsWrap', 'strip'].forEach(i => $(i).classList.add('hidden')); }
-    else location.replace('index.html');
+    document.querySelector('main').innerHTML = '<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center my-8"><div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-2xl mx-auto mb-3"><i class="fas fa-feather"></i></div><p class="text-sm font-bold text-slate-700">Belum Ada Naskah yang Dievaluasi</p><p class="text-[11px] text-slate-500 mt-1 mb-5 leading-relaxed">Pilih ide dan tulis teks argumentasimu terlebih dahulu untuk melihat hasil penilaian resmi di sini.</p><a href="ide.html" class="inline-flex items-center gap-2 bg-brand-green text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-md active:scale-95 transition"><i class="fas fa-lightbulb"></i><span>Mulai dari Kreasi Ide</span></a></div>';
+    ['bar', 'tabsWrap', 'strip'].forEach(i => { const el = $(i); if (el) el.classList.add('hidden'); });
 } else main();
 
 function main() {

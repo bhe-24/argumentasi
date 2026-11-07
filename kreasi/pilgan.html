@@ -32,9 +32,43 @@
         const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'k' + Math.random().toString(36).slice(2) + Date.now().toString(36);
         const today = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
         const lsRead = () => { try { return JSON.parse(localStorage.getItem(LS)); } catch (e) { return null; } };
-        const idbOpen = () => new Promise((ok, no) => { const r = indexedDB.open(DBN, 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
-        const idbGet = async () => { try { const d = await idbOpen(); return await new Promise(ok => { const q = d.transaction('kv').objectStore('kv').get('state'); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); }); } catch (e) { return null; } };
-        const idbSet = async v => { try { const d = await idbOpen(); await new Promise(ok => { const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, 'state'); t.oncomplete = ok; t.onerror = ok; t.onabort = ok; }); } catch (e) {} };
+        const idbOpen = () => new Promise((ok, no) => {
+            if (typeof indexedDB === 'undefined') return no(new Error('no idb'));
+            try {
+                const r = indexedDB.open(DBN, 1);
+                r.onupgradeneeded = () => { try { r.result.createObjectStore('kv'); } catch(e){} };
+                r.onsuccess = () => ok(r.result);
+                r.onerror = () => no(r.error || new Error('idb error'));
+            } catch(e) { no(e); }
+        });
+        const idbGet = async () => {
+            try {
+                const d = await Promise.race([
+                    idbOpen(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('idb timeout')), 400))
+                ]);
+                return await new Promise(ok => {
+                    const q = d.transaction('kv').objectStore('kv').get('state');
+                    q.onsuccess = () => ok(q.result || null);
+                    q.onerror = () => ok(null);
+                });
+            } catch (e) { return null; }
+        };
+        const idbSet = async v => {
+            try {
+                const d = await Promise.race([
+                    idbOpen(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('idb timeout')), 400))
+                ]);
+                await new Promise(ok => {
+                    const t = d.transaction('kv', 'readwrite');
+                    t.objectStore('kv').put(v, 'state');
+                    t.oncomplete = ok;
+                    t.onerror = ok;
+                    t.onabort = ok;
+                });
+            } catch (e) {}
+        };
 
         const L = {
             esc, today, pad,
@@ -111,6 +145,9 @@
         .nav-n.nav-a.nav-r::after { content: ''; position: absolute; top: 2px; right: 2px; width: 6px; height: 6px; border-radius: 9999px; background: #f59e0b; border: 1px solid #fff; }
         .waktu-kritis { animation: pulseBg 1s infinite; }
         @keyframes pulseBg { 50% { background: #dc2626; color: #ffffff; } }
+        .sk { position: relative; overflow: hidden; background: #e2e8f0; border-radius: .6rem; }
+        .sk::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent); animation: sh 1.3s infinite; }
+        @keyframes sh { 100% { transform: translateX(100%); } }
     </style>
 </head>
 <body class="flex justify-center min-h-screen">
@@ -129,7 +166,43 @@
 
     <!-- MAIN CONTAINER -->
     <main id="main" class="flex-grow px-3 py-4">
-        <div class="text-center py-16 text-slate-400"><i class="fas fa-circle-notch fa-spin text-2xl"></i></div>
+        <!-- SKELETON SHIMMER: sesuai bentuk lembar kerja -->
+        <div id="skelView" class="space-y-4">
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="sk w-8 h-8 rounded-full"></div>
+                    <div class="flex-1 space-y-2">
+                        <div class="sk h-3 w-2/3"></div>
+                        <div class="sk h-2.5 w-1/3"></div>
+                    </div>
+                </div>
+                <div class="sk h-3.5 w-16 mb-3 rounded-full"></div>
+                <div class="space-y-2 mb-4">
+                    <div class="sk h-3 w-full"></div>
+                    <div class="sk h-3 w-5/6"></div>
+                    <div class="sk h-3 w-4/5"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="sk h-11 rounded-xl"></div>
+                    <div class="sk h-11 rounded-xl"></div>
+                    <div class="sk h-11 rounded-xl"></div>
+                    <div class="sk h-11 rounded-xl"></div>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                <div class="sk h-3 w-16 mb-3 rounded-full"></div>
+                <div class="space-y-2 mb-4">
+                    <div class="sk h-3 w-full"></div>
+                    <div class="sk h-3 w-3/4"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="sk h-11 rounded-xl"></div>
+                    <div class="sk h-11 rounded-xl"></div>
+                    <div class="sk h-11 rounded-xl"></div>
+                    <div class="sk h-11 rounded-xl"></div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- ACTION BAR BAWAH -->
@@ -150,7 +223,7 @@
 
 <!-- DRAWER BOTTOM SHEET DAFTAR SOAL -->
 <div id="sheet" class="fixed inset-0 bg-slate-900/60 z-[99998] hidden items-end justify-center" onclick="if(event.target===this) tutupNav()">
-    <div class="bg-white w-full max-w-md rounded-t-3xl p-5 shadow-2xl animate-in slide-in-from-bottom duration-200">
+    <div class="bg-white w-full max-w-md rounded-t-3xl p-5 shadow-2xl">
         <div class="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
                 <h3 class="font-bold text-slate-800 text-sm">Navigasi Nomor Soal</h3>
@@ -345,7 +418,11 @@ window.badge = t => {
 
 /* ===== INISIALISASI LATIHAN ===== */
 async function initLatihan() {
-    await L.siap();
+    try {
+        await L.siap();
+    } catch (e) {
+        console.warn('L.siap warn:', e);
+    }
 
     // 1. Cek apakah ada hasil tersimpan
     const hDenganHasil = L.cariHariDenganHasil();
@@ -679,7 +756,7 @@ window.filterBahas = function(f) {
     window.soal.forEach((s, i) => { const st = status(i); if (st === 'benar') cnt.benar++; else cnt.salah++; });
 
     $('filter').innerHTML = [['semua', 'Semua'], ['salah', 'Salah / Kosong'], ['benar', 'Benar']].map(x =>
-        '<button onclick="filterBahas(\'${x[0]}\')" class="px-3 py-1.5 rounded-full text-[10px] font-bold border transition ' + (f === x[0] ? 'bg-brand-green text-white border-brand-green' : 'bg-white text-slate-500 border-slate-200') + '">' + x[1] + ' (' + cnt[x[0]] + ')</button>').join('');
+        '<button onclick="filterBahas(\'' + x[0] + '\')" class="px-3 py-1.5 rounded-full text-[10px] font-bold border transition ' + (f === x[0] ? 'bg-brand-green text-white border-brand-green' : 'bg-white text-slate-500 border-slate-200') + '">' + x[1] + ' (' + cnt[x[0]] + ')</button>').join('');
 
     const arr = window.soal.map((s, i) => [s, i]).filter(x => {
         const st = status(x[1]);
