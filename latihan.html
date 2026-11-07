@@ -79,7 +79,6 @@
     </script>
     <style>
         body { font-family: 'Poppins', sans-serif; background: #f1f5f9; -webkit-tap-highlight-color: transparent; }
-        .up { animation: up .35s ease-out both; } @keyframes up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
         .lc2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         /* Skeleton loading anti-bocor (clipping ketat di semua browser mobile) */
         .sk, .sk-w { position: relative; overflow: hidden; isolation: isolate; transform: translateZ(0); }
@@ -159,7 +158,7 @@
 
 <!-- MODAL GACHA -->
 <div id="modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[99999] hidden items-end sm:items-center justify-center">
-    <div class="up bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 pb-6 max-h-[94vh] overflow-y-auto relative">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 pb-6 max-h-[94vh] overflow-y-auto relative">
         <button id="btnTutup" onclick="tutupRoda()" class="absolute top-3 right-4 text-slate-400 hover:text-slate-600"><i class="fas fa-xmark text-xl"></i></button>
 
         <div id="vRoda">
@@ -177,7 +176,7 @@
 
         <div id="vHasil" class="hidden text-center">
             <p class="text-[10px] font-bold text-brand-green uppercase tracking-widest">Materi terpilih</p>
-            <div id="hasilCover" class="w-28 aspect-[3/4] mx-auto mt-3 rounded-xl overflow-hidden shadow-xl bg-slate-100 border border-slate-200 up"></div>
+            <div id="hasilCover" class="w-28 aspect-[3/4] mx-auto mt-3 rounded-xl overflow-hidden shadow-xl bg-slate-100 border border-slate-200"></div>
             <h3 id="hasilJudul" class="font-extrabold text-slate-800 text-base leading-snug mt-4"></h3>
             <p class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">Guru akan membaca isi materi ini dan menyusun soal pilihan ganda, bedah struktur, isi argumentasi, dan uji berpikir untukmu.</p>
             <button onclick="siapkan()" class="mt-5 w-full bg-brand-green text-white font-bold py-3.5 rounded-xl shadow-md text-sm active:scale-95 transition"><i class="fas fa-wand-magic-sparkles mr-1.5"></i>Ambil Materi & Siapkan Soal</button>
@@ -258,7 +257,7 @@ function render() {
         else if (sesi) { status = 'Sedang berjalan'; gaya = 'bg-amber-50 text-amber-600'; }
         else { status = 'Siap dikerjakan'; gaya = 'bg-brand-light text-brand-dark'; }
         const off = kunci || belum;
-        return `<button onclick="buka('${k}')" class="up text-left bg-white rounded-2xl border border-slate-100 shadow-sm p-3.5 active:scale-95 transition ${off ? 'opacity-70' : 'hover:border-brand-green'}" style="animation-delay:${i * 60}ms">
+        return `<button onclick="buka('${k}')" class="text-left bg-white rounded-2xl border border-slate-100 shadow-sm p-3.5 active:scale-95 transition ${off ? 'opacity-70' : 'hover:border-brand-green'}">
             <div class="flex items-center justify-between"><div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl ${off ? 'bg-slate-100 text-slate-300' : `bg-${b.c}-50 text-${b.c}-500`}"><i class="fas ${kunci && !belum ? 'fa-lock' : b.ic}"></i></div>${hasil ? '<i class="fas fa-circle-check text-emerald-500"></i>' : ''}</div>
             <h3 class="font-bold text-[13px] text-slate-800 mt-3 leading-tight">${b.n}</h3><p class="text-[10px] text-slate-500 mt-0.5 leading-snug">${b.d}</p>
             <p class="text-[10px] text-slate-400 mt-1.5 h-3.5">${pack && !belum ? b.meta(pack) : '&nbsp;'}</p>
