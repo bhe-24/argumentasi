@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }</script>
@@ -364,37 +366,158 @@ window.filterBahas = function(f) {
     }
 }
 
-window.isiLaporan = function() {
-    const R = window.H.hasil.pilgan, tk = {}; window.soal.forEach((s, i) => { const t = tk[s.tingkat] = tk[s.tingkat] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
-    const tgls = new Date(window.H.spin.ts).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    const A = i => R.jawab[i] === undefined ? '-' : HURUF[R.jawab[i]] + '. ' + esc(window.soal[i].opsi[R.jawab[i]]);
-    
-    let repHtml = [
-        '<div style="padding:4px"><div style="border-bottom:3px solid #059669;padding-bottom:8px;margin-bottom:12px"><div style="font-size:17px;font-weight:800;color:#064e3b">LAPORAN LATIHAN — PILIHAN GANDA</div><div style="color:#64748b;font-size:11px">Platform Argumentasi · Ruang Latihan</div></div>',
-        '<table style="width:100%;font-size:12px;margin-bottom:12px"><tr><td style="width:90px;color:#64748b">Nama</td><td><b>' + esc(L.nama()) + '</b></td></tr><tr><td style="color:#64748b">Tanggal</td><td>' + tgls + '</td></tr><tr><td style="color:#64748b">Materi</td><td>' + esc(window.H.spin.judul) + '</td></tr><tr><td style="color:#64748b">Waktu</td><td>' + L.fmt(R.durasi) + ' dari ' + L.fmt(R.batas) + (R.auto ? ' (waktu habis)' : '') + '</td></tr></table>',
-        '<div class="nobreak" style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:10px 14px;margin-bottom:12px"><span style="font-size:30px;font-weight:800;color:#059669">' + R.skor + '</span><span style="color:#64748b"> / 100</span> &nbsp;·&nbsp; Benar <b>' + R.benar + '</b> dari <b>' + R.total + '</b> soal</div>',
-        '<table class="nobreak" style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px"><tr style="background:#f1f5f9"><th style="text-align:left;padding:5px 8px;border:1px solid #e2e8f0">Tingkat</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Benar</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Jumlah</th><th style="padding:5px 8px;border:1px solid #e2e8f0">Ketepatan</th></tr>',
-        ['mudah', 'sedang', 'sulit', 'hots'].filter(t => tk[t]).map(t => '<tr><td style="padding:5px 8px;border:1px solid #e2e8f0">' + TKT[t][0] + '</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">' + tk[t].b + '</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">' + tk[t].n + '</td><td style="text-align:center;padding:5px 8px;border:1px solid #e2e8f0">' + Math.round(tk[t].b / tk[t].n * 100) + '%</td></tr>').join(''),
-        '</table><div style="font-size:13px;font-weight:800;margin-bottom:6px;color:#064e3b">Rincian Jawaban & Pembahasan</div>'
-    ];
-    
-    window.soal.forEach((s, i) => { 
-        const ok = R.jawab[i] === s.j; 
-        let d = '<div class="nobreak" style="border:1px solid ' + (ok ? '#a7f3d0' : '#fecdd3') + ';border-radius:6px;padding:8px 10px;margin-bottom:8px"><div style="font-size:11px"><b>' + (i + 1) + '.</b> <span style="color:#64748b">[' + TKT[s.tingkat][0] + ']</span> <b style="color:' + (ok ? '#059669' : '#e11d48') + '">' + (ok ? 'BENAR' : 'SALAH') + '</b></div><div style="margin:3px 0;font-size:12px">' + esc(s.p) + '</div><div style="font-size:11px"><span style="color:#64748b">Jawabanmu:</span> ' + A(i) + '</div><div style="font-size:11px"><span style="color:#64748b">Kunci:</span> <b>' + HURUF[s.j] + '. ' + esc(s.opsi[s.j]) + '</b></div>';
-        if(s.bahas) d += '<div style="font-size:11px;color:#475569;margin-top:3px"><i>Pembahasan:</i> ' + esc(s.bahas) + '</div>';
-        d += '</div>';
-        repHtml.push(d);
+const tglIndo = t => new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+/* ===== UNDUH PDF (pdfMake, teks asli, layout resmi kelas/pilgan) ===== */
+function buatDokumenPdf() {
+    const R = window.H.hasil.pilgan;
+    const nama = L.nama ? L.nama() : 'Siswa', materi = (window.H.spin && window.H.spin.judul) || '-';
+    const W = { gelap: '#064e3b', hijau: '#059669', hijauMuda: '#d1fae5', merah: '#e11d48', merahMuda: '#ffe4e6', amber: '#d97706', amberMuda: '#fffbeb', abu: '#64748b', garis: '#e2e8f0', latar: '#f8fafc', biruMuda: '#e0f2fe', biru: '#0369a1' };
+    const warnaSkor = R.skor >= 80 ? W.hijau : R.skor >= 60 ? '#f59e0b' : W.merah;
+    const status = i => R.jawab[i] === undefined ? 'kosong' : (R.jawab[i] === window.soal[i].j ? 'benar' : 'salah');
+    const kosong = window.soal.filter((s, i) => R.jawab[i] === undefined).length;
+    const salah = R.total - R.benar - kosong;
+
+    const lbl = t => ({ text: t, fontSize: 7.5, bold: true, color: '#ffffff', fillColor: W.hijau, margin: [7, 5, 7, 5] });
+    const val = t => ({ text: String(t), bold: true, fontSize: 10, color: W.gelap, fillColor: W.latar, margin: [7, 7, 7, 7] });
+    const layoutKotak = { hLineWidth: () => 0.7, vLineWidth: () => 0.7, hLineColor: () => W.hijau, vLineColor: () => '#ffffff', paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 };
+    const judulBagian = t => ({ stack: [{ text: t, bold: true, fontSize: 12, color: W.gelap }, { canvas: [{ type: 'line', x1: 0, y1: 3, x2: 523, y2: 3, lineWidth: 1.2, lineColor: W.hijau }] }], margin: [0, 16, 0, 8] });
+
+    const content = [];
+
+    // Banner Utama
+    content.push({
+        table: { widths: ['*'], body: [[{ stack: [
+            { text: 'LEMBAR HASIL LATIHAN', fontSize: 8.5, bold: true, color: '#a7f3d0', characterSpacing: 2 },
+            { text: 'Pilihan Ganda', fontSize: 22, bold: true, color: '#ffffff', margin: [0, 3, 0, 2] },
+            { text: 'Ruang Latihan Argumentasi', fontSize: 9.5, color: '#d1fae5' }
+        ], fillColor: W.gelap, margin: [18, 16, 18, 16] }]] },
+        layout: 'noBorders'
     });
-    
-    repHtml.push('<div style="font-size:9px;color:#94a3b8;margin-top:10px;text-align:center">Dihasilkan otomatis oleh Platform Argumentasi · ' + new Date(R.selesai).toLocaleString('id-ID') + '</div></div>');
-    $('laporan').innerHTML = repHtml.join('');
+
+    // Identitas
+    content.push({ margin: [0, 12, 0, 0], table: { widths: ['*', '*', '*', '*'], body: [
+        [lbl('NAMA SISWA'), lbl('JENIS TUGAS'), lbl('MATERI'), lbl('TANGGAL')],
+        [val(nama), val('Pilihan Ganda'), val(materi), val(tglIndo(R.selesai || window.H.spin.ts))]
+    ] }, layout: layoutKotak });
+
+    // Skor & Statistik
+    const sel = (label, nilai, fill, warnaTeks, ukuran) => ({ fillColor: fill, margin: [7, 8, 7, 8], stack: [
+        { text: label, fontSize: 7.5, bold: true, color: warnaTeks, characterSpacing: 0.5 },
+        { text: String(nilai), fontSize: ukuran || 16, bold: true, color: warnaTeks, margin: [0, 2, 0, 0] }
+    ] });
+    content.push({ margin: [0, 8, 0, 0], table: { widths: ['*', '*', '*', '*', '*'], body: [[
+        sel('SKOR AKHIR', R.skor + ' / 100', warnaSkor, '#ffffff', 18),
+        sel('BENAR', R.benar, W.hijauMuda, W.gelap),
+        sel('SALAH', salah, W.merahMuda, W.merah),
+        sel('KOSONG', kosong, W.latar, W.abu),
+        sel('XP DIPEROLEH', '+' + (R.xp || 0), W.amberMuda, W.amber)
+    ]] }, layout: layoutKotak });
+
+    content.push({ text: 'Durasi pengerjaan ' + L.fmt(R.durasi) + ' dari ' + L.fmt(R.batas) + (R.auto ? '  •  dikumpulkan otomatis (waktu habis)' : ''), fontSize: 8.5, color: W.abu, margin: [0, 6, 0, 0] });
+
+    // Analisis per Tingkat Kesulitan
+    const tk = {}; window.soal.forEach((s, i) => { const t = tk[s.tingkat] = tk[s.tingkat] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
+    const urut = ['mudah', 'sedang', 'sulit', 'hots'].filter(t => tk[t]);
+    const th = t => ({ text: t, bold: true, fontSize: 8.5, color: '#ffffff', fillColor: W.gelap, margin: [7, 5, 7, 5] });
+    content.push(judulBagian('Analisis per Tingkat Kesulitan'));
+    content.push({ table: { widths: [80, 60, '*'], body: [
+        [th('Tingkat'), th('Benar / Total'), th('Persentase')],
+        ...urut.map(t => {
+            const p = Math.round(tk[t].b / tk[t].n * 100);
+            return [
+                { text: TKT[t][0], bold: true, fontSize: 9.5, color: TKT_HEX[t], margin: [7, 6, 7, 6] },
+                { text: tk[t].b + ' / ' + tk[t].n, fontSize: 9.5, margin: [7, 6, 7, 6] },
+                { margin: [7, 6, 7, 6], columns: [
+                    { width: 110, canvas: [{ type: 'rect', x: 0, y: 3, w: 110, h: 7, r: 3, color: W.garis }, { type: 'rect', x: 0, y: 3, w: Math.max(0.1, 110 * p / 100), h: 7, r: 3, color: TKT_HEX[t] }] },
+                    { text: p + '%', bold: true, fontSize: 9.5, margin: [6, 1, 0, 0] }
+                ] }
+            ];
+        })
+    ] }, layout: { hLineWidth: () => 0.6, vLineWidth: () => 0.6, hLineColor: () => W.garis, vLineColor: () => W.garis, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 } });
+
+    // Soal, Jawaban Siswa & Pembahasan
+    content.push(judulBagian('Soal, Jawaban & Pembahasan'));
+    window.soal.forEach((s, i) => {
+        const st = status(i), u = R.jawab[i];
+        const c = st === 'benar' ? W.hijau : W.merah;
+        const label = st === 'benar' ? 'BENAR' : st === 'kosong' ? 'TIDAK DIJAWAB' : 'SALAH';
+        const tanpaPadding = { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 };
+
+        const opsiRows = s.opsi.map((o, k) => {
+            const kunci = k === s.j, pilih = k === u;
+            const fill = kunci ? W.hijauMuda : (pilih ? W.merahMuda : '#ffffff');
+            const fillHuruf = kunci ? W.hijau : (pilih ? W.merah : W.garis);
+            const teks = [{ text: String(o), color: kunci ? W.gelap : '#334155', bold: kunci || pilih }];
+            if (kunci && pilih) teks.push({ text: '   [JAWABAN SISWA = KUNCI]', fontSize: 7.5, bold: true, color: W.hijau });
+            else if (kunci) teks.push({ text: '   [KUNCI]', fontSize: 7.5, bold: true, color: W.hijau });
+            else if (pilih) teks.push({ text: '   [JAWABAN SISWA]', fontSize: 7.5, bold: true, color: W.merah });
+            return [
+                { text: HURUF[k] || String(k + 1), bold: true, alignment: 'center', color: (kunci || pilih) ? '#ffffff' : W.abu, fillColor: fillHuruf, margin: [0, 4, 0, 4] },
+                { text: teks, fillColor: fill, margin: [8, 4, 8, 4], fontSize: 9.5 }
+            ];
+        });
+
+        const teksJawab = u === undefined ? 'Tidak dijawab' : (HURUF[u] + '. ' + (s.opsi[u] ?? ''));
+        const teksKunci = HURUF[s.j] + '. ' + (s.opsi[s.j] ?? '');
+
+        content.push({
+            margin: [0, 0, 0, 12],
+            table: {
+                dontBreakRows: true, widths: ['*'],
+                body: [
+                    [{ fillColor: c, margin: [10, 6, 10, 6], columns: [
+                        { text: 'SOAL ' + (i + 1) + '   |   ' + TKT[s.tingkat][0].toUpperCase(), bold: true, fontSize: 9, color: '#ffffff' },
+                        { text: label, bold: true, fontSize: 9, color: '#ffffff', alignment: 'right' }
+                    ] }],
+                    [{ text: String(s.p), bold: true, fontSize: 10.5, lineHeight: 1.35, color: '#0f172a', fillColor: W.latar, margin: [10, 8, 10, 8] }],
+                    [{ table: { widths: [20, '*'], body: opsiRows }, layout: tanpaPadding }],
+                    [{ table: { widths: ['*', '*'], body: [[
+                        { fillColor: W.biruMuda, margin: [10, 6, 10, 6], stack: [{ text: 'JAWABAN SISWA', fontSize: 7.5, bold: true, color: W.biru }, { text: teksJawab, fontSize: 9.5, bold: true, color: u === undefined ? W.abu : '#0f172a', margin: [0, 2, 0, 0] }] },
+                        { fillColor: W.hijauMuda, margin: [10, 6, 10, 6], stack: [{ text: 'KUNCI JAWABAN', fontSize: 7.5, bold: true, color: W.hijau }, { text: teksKunci, fontSize: 9.5, bold: true, color: W.gelap, margin: [0, 2, 0, 0] }] }
+                    ]] }, layout: tanpaPadding }],
+                    [{ fillColor: W.amberMuda, margin: [10, 7, 10, 8], stack: [
+                        { text: 'PENJELASAN / PEMBAHASAN', fontSize: 7.5, bold: true, color: W.amber },
+                        { text: s.bahas ? String(s.bahas) : 'Pembahasan belum tersedia untuk soal ini.', fontSize: 9.5, lineHeight: 1.35, color: s.bahas ? '#334155' : W.abu, margin: [0, 3, 0, 0] }
+                    ] }]
+                ]
+            },
+            layout: { hLineWidth: () => 0.8, vLineWidth: () => 0.8, hLineColor: () => c, vLineColor: () => c, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 }
+        });
+    });
+
+    content.push({ text: 'Dokumen ini dibuat otomatis oleh Argumentasi App pada ' + tglIndo(Date.now()) + '.', fontSize: 8, color: W.abu, alignment: 'center', margin: [0, 8, 0, 0] });
+
+    return {
+        info: { title: 'Hasil Latihan Pilihan Ganda - ' + nama, author: 'Argumentasi App', subject: materi },
+        pageSize: 'A4',
+        pageMargins: [36, 36, 36, 46],
+        defaultStyle: { fontSize: 10, lineHeight: 1.2, color: '#334155' },
+        footer: (cur, total) => ({ columns: [
+            { text: 'Argumentasi App  •  ' + nama + '  •  Pilihan Ganda', fontSize: 8, color: W.abu, margin: [36, 0, 0, 0] },
+            { text: 'Halaman ' + cur + ' dari ' + total, fontSize: 8, color: W.abu, alignment: 'right', margin: [0, 0, 36, 0] }
+        ], margin: [0, 18, 0, 0] }),
+        content
+    };
 }
 
-window.unduhPdf = async function() {
-    const b = $('btnPdf'), isi = b.innerHTML; b.disabled = true; b.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1.5"></i>Membuat PDF…';
-    try { isiLaporan(); await L.pdf($('laporan'), 'Laporan-Pilihan-Ganda-' + new Date(window.H.spin.ts).toISOString().slice(0, 10) + '.pdf'); L.toast('PDF berhasil dibuat.'); }
-    catch (e) { console.error(e); L.toast('Gagal membuat PDF. Memakai cetak browser…', true); setTimeout(() => window.print(), 600); }
-    finally { b.disabled = false; b.innerHTML = isi; }
+window.unduhPdf = function() {
+    if (typeof pdfMake === 'undefined') { L.toast('Pustaka PDF belum termuat. Periksa koneksi lalu coba lagi.', true); return; }
+    const b = $('btnPdf');
+    if (b) { b.disabled = true; b.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1.5"></i>Membuat PDF…'; }
+    try {
+        const R = window.H.hasil.pilgan;
+        const d = new Date(R.selesai || (window.H.spin && window.H.spin.ts) || Date.now());
+        const tgl = d.getFullYear() + '-' + L.pad(d.getMonth() + 1) + '-' + L.pad(d.getDate());
+        const nama = ('Hasil-Pilgan_' + (L.nama ? L.nama() : 'Siswa') + '_' + tgl + '.pdf').replace(/[^\w\-.]+/g, '_');
+        pdfMake.createPdf(buatDokumenPdf()).download(nama);
+        L.toast('PDF berhasil dibuat dan sedang diunduh…');
+    } catch (e) {
+        console.error(e);
+        L.toast('Gagal membuat PDF.', true);
+    } finally {
+        if (b) { b.disabled = false; b.innerHTML = '<i class="fas fa-file-pdf text-red-500 mr-1.5"></i>Unduh PDF'; }
+    }
 };
 
 initLatihan();

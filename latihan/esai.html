@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }</script>
@@ -342,34 +344,131 @@ window.tampilHasil = function(baru) {
     $('bahas').innerHTML = ulasanHtml; 
 } 
 
-window.isiLaporan = function() {
+const tglIndo = t => new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+const valid = v => typeof v === 'string' && v.trim().length > 10;
+const hitungKata = v => { const t = String(v || '').trim(); return t ? t.split(/\s+/).length : 0; };
+
+/* ===== UNDUH PDF (pdfMake, teks asli, layout resmi kelas/esai) ===== */
+function buatDokumenPdf() {
     const R = window.H.hasil.esai;
-    const tgls = new Date(window.H.spin.ts).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    
-    let repHtml = [
-        '<div style="padding:4px"><div style="border-bottom:3px solid #059669;padding-bottom:8px;margin-bottom:12px"><div style="font-size:17px;font-weight:800;color:#064e3b">LAPORAN LATIHAN — ESAI ARGUMENTASI</div><div style="color:#64748b;font-size:11px">Platform Argumentasi · Ruang Latihan</div></div>',
-        '<table style="width:100%;font-size:12px;margin-bottom:12px"><tr><td style="width:90px;color:#64748b">Nama</td><td><b>' + esc(L.nama()) + '</b></td></tr><tr><td style="color:#64748b">Tanggal</td><td>' + tgls + '</td></tr><tr><td style="color:#64748b">Materi</td><td>' + esc(window.H.spin.judul) + '</td></tr><tr><td style="color:#64748b">Waktu</td><td>' + L.fmt(R.durasi) + ' dari ' + L.fmt(R.batas) + (R.auto ? ' (waktu habis)' : '') + '</td></tr></table>',
-        '<div class="nobreak" style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:10px 14px;margin-bottom:12px"><span style="font-size:24px;font-weight:800;color:#059669">Selesai</span> &nbsp;·&nbsp; Dijawab <b>' + R.benar + '</b> dari <b>' + R.total + '</b> soal</div>',
-        '<div style="font-size:13px;font-weight:800;margin-bottom:6px;color:#064e3b">Rincian Jawaban</div>'
-    ];
-    
-    window.soal.forEach((s, i) => { 
-        const jwb = R.jawab[i] || '';
-        let item = '<div class="nobreak" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;margin-bottom:8px"><div style="font-size:11px"><b>' + (i + 1) + '.</b> <span style="color:#64748b">[' + TKT[s.tingkat][0] + ']</span></div><div style="margin:3px 0;font-size:12px">' + esc(s.p) + '</div><div style="font-size:11px;margin-bottom:4px"><span style="color:#64748b">Jawabanmu:</span><br> ' + (jwb ? esc(jwb) : '<i>Kosong</i>') + '</div>';
-        if(s.bahas) item += '<div style="font-size:11px;color:#065f46;background:#ecfdf5;padding:4px;border-radius:4px;margin-top:4px"><i>Ekspektasi:</i> ' + esc(s.bahas) + '</div>';
-        item += '</div>';
-        repHtml.push(item);
+    const nama = L.nama ? L.nama() : 'Siswa', materi = (window.H.spin && window.H.spin.judul) || '-';
+    const WR = { gelap: '#064e3b', hijau: '#059669', hijauMuda: '#d1fae5', merah: '#e11d48', merahMuda: '#ffe4e6', amber: '#d97706', amberMuda: '#fffbeb', abu: '#64748b', garis: '#e2e8f0', latar: '#f8fafc', biruMuda: '#e0f2fe', biru: '#0369a1' };
+    const kosong = R.total - R.benar;
+    const totalKata = window.soal.reduce((a, s, i) => a + hitungKata(R.jawab[i]), 0);
+
+    const pdfLbl = t => ({ text: t, fontSize: 7.5, bold: true, color: '#ffffff', fillColor: WR.hijau, margin: [7, 5, 7, 5] });
+    const pdfVal = t => ({ text: String(t), bold: true, fontSize: 10, color: WR.gelap, fillColor: WR.latar, margin: [7, 7, 7, 7] });
+    const layoutKotak = { hLineWidth: () => 0.7, vLineWidth: () => 0.7, hLineColor: () => WR.hijau, vLineColor: () => '#ffffff', paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 };
+    const pdfJudul = t => ({ stack: [{ text: t, bold: true, fontSize: 12, color: WR.gelap }, { canvas: [{ type: 'line', x1: 0, y1: 3, x2: 523, y2: 3, lineWidth: 1.2, lineColor: WR.hijau }] }], margin: [0, 16, 0, 8] });
+    const pdfSel = (label, nilai, fill, warnaTeks, ukuran) => ({ fillColor: fill, margin: [7, 8, 7, 8], stack: [
+        { text: label, fontSize: 7.5, bold: true, color: warnaTeks, characterSpacing: 0.5 },
+        { text: String(nilai), fontSize: ukuran || 16, bold: true, color: warnaTeks, margin: [0, 2, 0, 0] }
+    ] });
+    const pdfTh = t => ({ text: t, bold: true, fontSize: 8.5, color: '#ffffff', fillColor: WR.gelap, margin: [7, 5, 7, 5] });
+    const layoutTipis = { hLineWidth: () => 0.6, vLineWidth: () => 0.6, hLineColor: () => WR.garis, vLineColor: () => WR.garis, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 };
+
+    const content = [];
+
+    // Banner Utama
+    content.push({
+        table: { widths: ['*'], body: [[{ stack: [
+            { text: 'LEMBAR HASIL LATIHAN', fontSize: 8.5, bold: true, color: '#a7f3d0', characterSpacing: 2 },
+            { text: 'Isi Argumentasi', fontSize: 22, bold: true, color: '#ffffff', margin: [0, 3, 0, 2] },
+            { text: 'Ruang Latihan Argumentasi', fontSize: 9.5, color: '#d1fae5' }
+        ], fillColor: WR.gelap, margin: [18, 16, 18, 16] }]] },
+        layout: 'noBorders'
     });
-    
-    repHtml.push('<div style="font-size:9px;color:#94a3b8;margin-top:10px;text-align:center">Dihasilkan otomatis oleh Platform Argumentasi · ' + new Date(R.selesai).toLocaleString('id-ID') + '</div></div>');
-    $('laporan').innerHTML = repHtml.join('');
+
+    // Identitas
+    content.push({ margin: [0, 12, 0, 0], table: { widths: ['*', '*', '*', '*'], body: [
+        [pdfLbl('NAMA SISWA'), pdfLbl('JENIS TUGAS'), pdfLbl('MATERI'), pdfLbl('TANGGAL')],
+        [pdfVal(nama), pdfVal('Isi Argumentasi'), pdfVal(materi), pdfVal(tglIndo(R.selesai || window.H.spin.ts))]
+    ] }, layout: layoutKotak });
+
+    // Skor & Statistik
+    content.push({ margin: [0, 8, 0, 0], table: { widths: ['*', '*', '*', '*', '*'], body: [[
+        pdfSel('STATUS', 'Selesai', WR.hijau, '#ffffff', 15),
+        pdfSel('DIJAWAB', R.benar + ' / ' + R.total, WR.hijauMuda, WR.gelap),
+        pdfSel('KOSONG', kosong, WR.merahMuda, WR.merah),
+        pdfSel('TOTAL KATA', totalKata, WR.biruMuda, WR.biru),
+        pdfSel('XP', '+' + (R.xp || (R.benar * 5)), WR.amberMuda, WR.amber)
+    ]] }, layout: layoutKotak });
+
+    content.push({ text: 'Durasi pengerjaan ' + L.fmt(R.durasi) + ' dari ' + L.fmt(R.batas) + (R.auto ? '  •  dikumpulkan otomatis (waktu habis)' : ''), fontSize: 8.5, color: WR.abu, margin: [0, 6, 0, 0] });
+
+    // Ringkasan per soal
+    content.push(pdfJudul('Ringkasan per Soal'));
+    content.push({ table: { widths: [30, 70, 60, '*'], body: [
+        [pdfTh('No'), pdfTh('Tingkat'), pdfTh('Jumlah kata'), pdfTh('Status')],
+        ...window.soal.map((s, i) => {
+            const ok = valid(R.jawab[i]);
+            return [
+                { text: String(i + 1), bold: true, alignment: 'center', margin: [0, 6, 0, 6] },
+                { text: (TKT[s.tingkat] ? TKT[s.tingkat][0] : s.tingkat) || 'Sedang', bold: true, color: (TKT_HEX && TKT_HEX[s.tingkat]) || '#0284c7', margin: [7, 6, 7, 6] },
+                { text: String(hitungKata(R.jawab[i])), margin: [7, 6, 7, 6] },
+                { text: ok ? 'Dijawab' : 'Kosong', bold: true, color: ok ? WR.hijau : WR.merah, margin: [7, 6, 7, 6] }
+            ];
+        })
+    ] }, layout: layoutTipis });
+
+    // Soal, jawaban, pembahasan
+    content.push(pdfJudul('Soal, Jawaban & Pembahasan'));
+    window.soal.forEach((s, i) => {
+        const u = R.jawab[i] || '', ok = valid(u), c = ok ? WR.hijau : WR.merah;
+        const rows = [
+            [{ fillColor: c, margin: [10, 6, 10, 6], columns: [
+                { text: 'SOAL ' + (i + 1) + '   |   ' + (TKT[s.tingkat] ? TKT[s.tingkat][0].toUpperCase() : 'ESAI'), bold: true, fontSize: 9, color: '#ffffff' },
+                { text: ok ? 'DIJAWAB' : 'KOSONG', bold: true, fontSize: 9, color: '#ffffff', alignment: 'right' }
+            ] }],
+            [{ text: String(s.p), bold: true, fontSize: 10.5, lineHeight: 1.35, color: '#0f172a', fillColor: WR.latar, margin: [10, 8, 10, 8] }],
+            [{ fillColor: WR.biruMuda, margin: [10, 7, 10, 8], stack: [
+                { columns: [{ text: 'JAWABAN SISWA', fontSize: 7.5, bold: true, color: WR.biru }, { text: hitungKata(u) + ' kata', fontSize: 7.5, color: WR.abu, alignment: 'right' }] },
+                { text: u.trim() ? u : 'Tidak dijawab', fontSize: 9.5, lineHeight: 1.4, color: u.trim() ? '#0f172a' : WR.abu, italics: !u.trim(), margin: [0, 3, 0, 0] }
+            ] }],
+            [{ fillColor: WR.amberMuda, margin: [10, 7, 10, 8], stack: [
+                { text: 'POIN PENTING / PEMBAHASAN', fontSize: 7.5, bold: true, color: WR.amber },
+                { text: s.bahas ? String(s.bahas) : 'Pembahasan belum tersedia untuk soal ini.', fontSize: 9.5, lineHeight: 1.35, color: s.bahas ? '#334155' : WR.abu, margin: [0, 3, 0, 0] }
+            ] }]
+        ];
+        content.push({
+            margin: [0, 0, 0, 12],
+            table: { dontBreakRows: true, widths: ['*'], body: rows },
+            layout: { hLineWidth: () => 0.8, vLineWidth: () => 0.8, hLineColor: () => c, vLineColor: () => c, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 }
+        });
+    });
+
+    content.push({ text: 'Dokumen ini dibuat otomatis oleh Argumentasi App pada ' + tglIndo(Date.now()) + '.', fontSize: 8, color: WR.abu, alignment: 'center', margin: [0, 8, 0, 0] });
+
+    return {
+        info: { title: 'Hasil Latihan Isi Argumentasi - ' + nama, author: 'Argumentasi App', subject: materi },
+        pageSize: 'A4',
+        pageMargins: [36, 36, 36, 46],
+        defaultStyle: { fontSize: 10, lineHeight: 1.2, color: '#334155' },
+        footer: (cur, total) => ({ columns: [
+            { text: 'Argumentasi App  •  ' + nama + '  •  Isi Argumentasi', fontSize: 8, color: WR.abu, margin: [36, 0, 0, 0] },
+            { text: 'Halaman ' + cur + ' dari ' + total, fontSize: 8, color: WR.abu, alignment: 'right', margin: [0, 0, 36, 0] }
+        ], margin: [0, 18, 0, 0] }),
+        content
+    };
 }
 
-window.unduhPdf = async () => {
-    const b = $('btnPdf'), isi = b.innerHTML; b.disabled = true; b.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1.5"></i>Membuat PDF…';
-    try { isiLaporan(); await L.pdf($('laporan'), 'Laporan-Isi-Argumentasi-' + new Date(window.H.spin.ts).toISOString().slice(0, 10) + '.pdf'); L.toast('PDF berhasil dibuat.'); }
-    catch (e) { console.error(e); L.toast('Gagal membuat PDF. Memakai cetak browser…', true); setTimeout(() => window.print(), 600); }
-    finally { b.disabled = false; b.innerHTML = isi; }
+window.unduhPdf = function() {
+    if (typeof pdfMake === 'undefined') { L.toast('Pustaka PDF belum termuat. Periksa koneksi lalu coba lagi.', true); return; }
+    const b = $('btnPdf');
+    if (b) { b.disabled = true; b.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1.5"></i>Membuat PDF…'; }
+    try {
+        const R = window.H.hasil.esai;
+        const d = new Date(R.selesai || (window.H.spin && window.H.spin.ts) || Date.now());
+        const tgl = d.getFullYear() + '-' + L.pad(d.getMonth() + 1) + '-' + L.pad(d.getDate());
+        const nama = ('Hasil-Isi-Argumentasi_' + (L.nama ? L.nama() : 'Siswa') + '_' + tgl + '.pdf').replace(/[^\w\-.]+/g, '_');
+        pdfMake.createPdf(buatDokumenPdf()).download(nama);
+        L.toast('PDF berhasil dibuat dan sedang diunduh…');
+    } catch (e) {
+        console.error(e);
+        L.toast('Gagal membuat PDF.', true);
+    } finally {
+        if (b) { b.disabled = false; b.innerHTML = '<i class="fas fa-file-pdf text-red-500 mr-1.5"></i>Unduh PDF'; }
+    }
 };
 
 init();
