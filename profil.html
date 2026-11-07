@@ -52,7 +52,7 @@
             transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
         }
         .card-interactive:active {
-            transform: scale(0.98);
+            transform: scale(0.985);
         }
     </style>
 </head>
@@ -90,7 +90,7 @@
             
             <!-- SECTION 1: KARTU IDENTITAS DIGITAL HD (card.png) -->
             <div class="relative">
-                <!-- Kartu Digital Interaktif -->
+                <!-- Kartu Digital Interaktif dengan Layout Pixel-Perfect Sesuai Template -->
                 <div id="studentIdCard" 
                      class="w-full relative aspect-[662/532] rounded-2xl overflow-hidden shadow-xl border border-slate-200/80 bg-slate-100 select-none cursor-pointer card-interactive"
                      onclick="onCardClick()" 
@@ -99,86 +99,83 @@
                     <!-- Latar Belakang Gambar Template Asli (card.png) -->
                     <img src="assets/identitas/card.png" alt="Kartu Identitas Siswa" class="absolute inset-0 w-full h-full object-cover pointer-events-none">
 
-                    <!-- OVERLAY FOTO SISWA (Sesuai Frame pada card.png) -->
-                    <!-- Posisi proporsional: left: 9.67%, top: 37.4%, width: 29.6%, height: 47.7% -->
-                    <div class="absolute" style="left: 9.67%; top: 37.4%; width: 29.6%; height: 47.7%;">
-                        <div class="w-full h-full rounded-lg sm:rounded-xl overflow-hidden shadow-inner border border-white/90 bg-slate-200 flex items-center justify-center relative group" onclick="event.stopPropagation(); bukaPreviewModal();">
+                    <!-- 1. BINGKAI FOTO SISWA PRESISI (x: 75..280 = 30.97%, y: 205..445 = 45.11%) -->
+                    <div class="absolute" style="left: 11.33%; top: 38.53%; width: 30.97%; height: 45.11%;">
+                        <div class="w-full h-full rounded-[14px] sm:rounded-[18px] overflow-hidden flex items-center justify-center relative group" onclick="event.stopPropagation(); bukaPreviewModal();">
                             <img id="cardUserPhoto" src="" alt="Foto Profil" class="w-full h-full object-cover hidden">
                             <!-- Placeholder jika foto belum ada -->
-                            <div id="cardPhotoPlaceholder" class="w-full h-full flex flex-col items-center justify-center text-slate-400 p-2 text-center bg-slate-100">
+                            <div id="cardPhotoPlaceholder" class="w-full h-full flex flex-col items-center justify-center text-slate-400 p-2 text-center bg-transparent">
                                 <i class="fas fa-camera text-base sm:text-2xl text-slate-400 mb-1 group-hover:text-brand-green transition-colors"></i>
                                 <span class="text-[8px] sm:text-[9.5px] font-semibold leading-tight text-slate-500">Unggah Foto</span>
                             </div>
-                            <!-- Badge ganti foto kecil -->
+                            <!-- Badge ganti foto kecil di sudut bawah -->
                             <div class="absolute bottom-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center text-[9px] shadow-sm">
                                 <i class="fas fa-pencil"></i>
                             </div>
                         </div>
                     </div>
 
-                    <!-- OVERLAY INFORMASI IDENTITAS DI SEBELAH KANAN -->
-                    <!-- Posisi proporsional: left: 43.8%, top: 36.5%, right: 4%, bottom: 5% -->
-                    <div class="absolute flex flex-col justify-between py-0.5" style="left: 43.8%; top: 36.5%; right: 4.5%; bottom: 5.5%;">
-                        
-                        <!-- Field 1: Nama Lengkap -->
-                        <div class="min-w-0">
-                            <span class="text-[7px] sm:text-[9px] font-extrabold text-emerald-800 uppercase tracking-wider block leading-none">
-                                NAMA LENGKAP SISWA
-                            </span>
-                            <h2 id="cardNamaText" class="text-[11px] sm:text-[14px] font-black text-slate-800 truncate leading-tight mt-0.5">
-                                Belum diisi
-                            </h2>
-                        </div>
+                    <!-- 2. FIELD NAMA LENGKAP SISWA -->
+                    <!-- Label Nama (di area putih tepat di atas Pill 1) -->
+                    <div class="absolute font-extrabold uppercase tracking-wider text-emerald-800 text-[6.5px] sm:text-[9px] leading-none pointer-events-none" 
+                         style="left: 48.49%; top: 37.0%;">
+                        NAMA LENGKAP SISWA
+                    </div>
+                    <!-- Nilai Nama (Tepat di dalam Pill 1: y=215..253) -->
+                    <div class="absolute flex items-center px-2.5 sm:px-3 text-slate-800 font-extrabold text-[10px] sm:text-[13.5px] truncate"
+                         style="left: 48.49%; top: 40.41%; width: 34.44%; height: 7.14%;">
+                        <span id="cardNamaText" class="truncate">Belum diisi</span>
+                    </div>
 
-                        <!-- Field 2: Asal Sekolah -->
-                        <div class="min-w-0">
-                            <span class="text-[6.5px] sm:text-[8.5px] font-bold text-slate-500 uppercase tracking-wider block leading-none">
-                                ASAL SEKOLAH
-                            </span>
-                            <p id="cardSekolahText" class="text-[9.5px] sm:text-[12px] font-bold text-slate-700 truncate leading-tight mt-0.5">
-                                Belum diatur
-                            </p>
-                        </div>
+                    <!-- 3. FIELD ASAL SEKOLAH -->
+                    <!-- Label Asal Sekolah (di atas Pill 2) -->
+                    <div class="absolute font-bold uppercase tracking-wider text-slate-500 text-[6.5px] sm:text-[8.5px] leading-none pointer-events-none" 
+                         style="left: 48.49%; top: 49.06%;">
+                        ASAL SEKOLAH
+                    </div>
+                    <!-- Nilai Asal Sekolah (Tepat di dalam Pill 2: y=279..317) -->
+                    <div class="absolute flex items-center px-2.5 sm:px-3 text-slate-700 font-bold text-[9px] sm:text-[12px] truncate"
+                         style="left: 48.49%; top: 52.44%; width: 43.96%; height: 7.14%;">
+                        <span id="cardSekolahText" class="truncate">Belum diatur</span>
+                    </div>
 
-                        <!-- Field 3: Rata-Rata Nilai & XP (Angka Murni & Persentase) -->
-                        <div class="min-w-0">
-                            <span class="text-[6.5px] sm:text-[8.5px] font-bold text-slate-500 uppercase tracking-wider block leading-none">
-                                CAPAIAN NILAI & XP
-                            </span>
-                            <div class="flex items-center gap-1 sm:gap-1.5 mt-0.5 flex-wrap">
-                                <!-- Badge Nilai -->
-                                <span class="text-[7.5px] sm:text-[9.5px] font-extrabold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-800 border border-orange-200 flex items-center gap-0.5">
-                                    <i class="fas fa-star text-[7px] text-orange-500"></i>
-                                    <span id="cardNilaiBadge">Nilai: 0 (0%)</span>
-                                </span>
-                                <!-- Badge XP -->
-                                <span class="text-[7.5px] sm:text-[9.5px] font-extrabold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200 flex items-center gap-0.5">
-                                    <i class="fas fa-bolt text-[7px] text-amber-500"></i>
-                                    <span id="cardXpBadge">0 XP (0%)</span>
-                                </span>
-                            </div>
-                        </div>
+                    <!-- 4. FIELD CAPAIAN NILAI & AKUMULASI XP -->
+                    <!-- Label Capaian Nilai & XP (di atas Pill 3) -->
+                    <div class="absolute font-bold uppercase tracking-wider text-slate-500 text-[6.5px] sm:text-[8.5px] leading-none pointer-events-none" 
+                         style="left: 48.49%; top: 61.09%;">
+                        CAPAIAN NILAI & AKUMULASI XP
+                    </div>
+                    <!-- Nilai & XP (Tepat di dalam Pill 3: y=343..381) -->
+                    <div class="absolute flex items-center gap-1.5 px-2 sm:px-3 text-[7.5px] sm:text-[10.5px] font-extrabold whitespace-nowrap"
+                         style="left: 48.49%; top: 64.47%; width: 32.93%; height: 7.14%;">
+                        <span id="cardNilaiBadge" class="text-orange-700">Nilai: 0 (0%)</span>
+                        <span class="text-slate-300">•</span>
+                        <span id="cardXpBadge" class="text-amber-800">0 XP (0%)</span>
+                    </div>
 
-                        <!-- Field 4: Status Verifikasi & Tanggal -->
-                        <div class="flex items-center justify-between border-t border-slate-200/60 pt-0.5">
-                            <div>
-                                <span class="text-[6px] sm:text-[8px] font-bold text-slate-400 uppercase tracking-wider block leading-none">
-                                    STATUS DIGITAL
-                                </span>
-                                <div id="cardStatusWrap" class="flex items-center gap-1 text-[8px] sm:text-[10px] font-extrabold text-amber-600 mt-0.5">
-                                    <i id="cardStatusIcon" class="fas fa-clock text-[8px]"></i>
-                                    <span id="cardStatusLabel">Belum Terverifikasi</span>
-                                </div>
-                            </div>
-                            <span id="cardUniqueId" class="text-[7px] sm:text-[9px] font-mono font-bold text-slate-400 bg-white/80 px-1 py-0.5 rounded border border-slate-200/50">
-                                ID: ARG-882
-                            </span>
-                        </div>
+                    <!-- 5. FIELD STATUS VERIFIKASI DIGITAL -->
+                    <!-- Label Verifikasi (di atas Pill 4) -->
+                    <div class="absolute font-bold uppercase tracking-wider text-slate-500 text-[6px] sm:text-[8px] leading-none pointer-events-none" 
+                         style="left: 48.49%; top: 73.12%;">
+                        STATUS VERIFIKASI DIGITAL
+                    </div>
+                    <!-- Nilai Status Verifikasi (Tepat di dalam Pill 4: y=407..443) -->
+                    <div class="absolute flex items-center px-2 sm:px-2.5 text-[8px] sm:text-[11px] font-extrabold whitespace-nowrap"
+                         style="left: 48.49%; top: 76.50%; width: 36.70%; height: 7.14%;">
+                        <span id="cardStatusLabel" class="text-emerald-700 flex items-center gap-1">
+                            <i id="cardStatusIcon" class="fas fa-circle-check text-emerald-500 text-[8px] sm:text-[9.5px]"></i>
+                            <span id="cardStatusLabelText">Belum Terverifikasi</span>
+                        </span>
+                    </div>
 
+                    <!-- 6. ID UNIK SISWA (Di area bawah Pill 4) -->
+                    <div class="absolute font-mono font-bold text-slate-400 text-[7px] sm:text-[9.5px] pointer-events-none"
+                         style="left: 48.49%; top: 85.34%;">
+                        <span id="cardUniqueId">ID: ARG-882</span>
                     </div>
 
                     <!-- Watermark Hint Klik/Tahan -->
-                    <div class="absolute top-2 right-2 bg-black/40 text-white text-[8px] sm:text-[9px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1 backdrop-blur-xs">
+                    <div class="absolute top-2 right-2 bg-black/40 text-white text-[7.5px] sm:text-[8.5px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1 backdrop-blur-xs">
                         <i class="fas fa-hand-pointer text-[7px]"></i>
                         <span>Ketuk / Tahan</span>
                     </div>
@@ -598,7 +595,7 @@
         let cropper = null;
         let cardLongPressTimer = null;
 
-        // INSIALISASI SAAT HALAMAN DIMUAT
+        // INISIALISASI SAAT HALAMAN DIMUAT
         document.addEventListener('DOMContentLoaded', () => {
             muatDataProfil();
             inisialisasiInteraksiKartu();
@@ -685,23 +682,23 @@
             }
 
             // Status Verifikasi Kartu
-            const statusLabel = document.getElementById('cardStatusLabel');
+            const statusLabelText = document.getElementById('cardStatusLabelText');
             const statusIcon = document.getElementById('cardStatusIcon');
-            const statusWrap = document.getElementById('cardStatusWrap');
+            const statusLabel = document.getElementById('cardStatusLabel');
             const badgeStatus = document.getElementById('badgeVerifiedStatus');
 
             if (isVerified) {
-                statusLabel.textContent = `Terverifikasi • ${tglVerif}`;
-                statusWrap.className = 'flex items-center gap-1 text-[8px] sm:text-[10px] font-extrabold text-emerald-700 mt-0.5';
-                statusIcon.className = 'fas fa-circle-check text-emerald-500 text-[8px] sm:text-[9px]';
+                statusLabelText.textContent = `Terverifikasi • ${tglVerif}`;
+                statusLabel.className = 'text-emerald-700 flex items-center gap-1';
+                statusIcon.className = 'fas fa-circle-check text-emerald-500 text-[8px] sm:text-[9.5px]';
                 if (badgeStatus) {
                     badgeStatus.textContent = 'Terverifikasi';
                     badgeStatus.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
                 }
             } else {
-                statusLabel.textContent = 'Menunggu Verifikasi';
-                statusWrap.className = 'flex items-center gap-1 text-[8px] sm:text-[10px] font-extrabold text-amber-600 mt-0.5';
-                statusIcon.className = 'fas fa-clock text-amber-500 text-[8px] sm:text-[9px]';
+                statusLabelText.textContent = 'Menunggu Verifikasi';
+                statusLabel.className = 'text-amber-700 flex items-center gap-1';
+                statusIcon.className = 'fas fa-clock text-amber-500 text-[8px] sm:text-[9.5px]';
                 if (badgeStatus) {
                     badgeStatus.textContent = 'Belum Verifikasi';
                     badgeStatus.className = 'text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200';
@@ -817,12 +814,12 @@
 
                 setTimeout(() => {
                     if (cropper) cropper.destroy();
-                    // Crop 3:4 atau 1:1 proporsional untuk kartu
+                    // Crop sesuai aspek rasio tepat bingkai foto kartu (205 x 240)
                     cropper = new Cropper(imageToCrop, {
-                        aspectRatio: 3 / 4,
+                        aspectRatio: 205 / 240,
                         viewMode: 1,
                         dragMode: 'move',
-                        autoCropArea: 0.9,
+                        autoCropArea: 0.95,
                         restore: false,
                         guides: true,
                         center: true,
@@ -838,15 +835,16 @@
         function simpanCropFoto() {
             if (!cropper) return;
 
-            // Ambil canvas hasil crop HD
+            // Ambil canvas hasil crop HD (205 x 240 proporsional)
             const canvas = cropper.getCroppedCanvas({
-                width: 400,
-                height: 533,
+                width: 410,
+                height: 480,
                 imageSmoothingEnabled: true,
                 imageSmoothingQuality: 'high'
             });
 
-            const base64Data = canvas.toDataURL('image/jpeg', 0.85);
+            // Gunakan PNG agar transparansi maskot/foto tetap terjaga dengan jernih
+            const base64Data = canvas.toDataURL('image/png');
             localStorage.setItem(keys.foto, base64Data);
 
             // Set Tanggal Verifikasi Resmi
@@ -975,7 +973,7 @@
             const cardImg = new Image();
             cardImg.crossOrigin = 'anonymous';
             cardImg.onload = function() {
-                // 1. Gambar Template card.png Asli
+                // 1. Gambar Template card.png Asli (662 x 532)
                 ctx.drawImage(cardImg, 0, 0, 662, 532);
 
                 const nama = localStorage.getItem(keys.nama) || 'Siswa Cendekia';
@@ -990,65 +988,80 @@
                 const rataNilai = hitungRataNilai();
 
                 function renderTeksDanBadge() {
+                    // 1. Label & Nama Siswa (Pill 1: y=215..253)
                     ctx.textBaseline = 'top';
-
-                    // 1. Label & Nama Siswa
                     ctx.fillStyle = '#064e3b';
-                    ctx.font = 'bold 11px Poppins, sans-serif';
-                    ctx.fillText('NAMA LENGKAP SISWA', 290, 202);
+                    ctx.font = 'bold 10px Poppins, sans-serif';
+                    ctx.fillText('NAMA LENGKAP SISWA', 325, 198);
 
+                    ctx.textBaseline = 'middle';
                     ctx.fillStyle = '#0f172a';
-                    ctx.font = 'bold 20px Poppins, sans-serif';
+                    ctx.font = 'bold 15px Poppins, sans-serif';
                     let dispNama = nama;
-                    if (ctx.measureText(dispNama).width > 340) {
-                        while (ctx.measureText(dispNama + '...').width > 340 && dispNama.length > 0) {
+                    if (ctx.measureText(dispNama).width > 205) {
+                        while (ctx.measureText(dispNama + '...').width > 205 && dispNama.length > 0) {
                             dispNama = dispNama.slice(0, -1);
                         }
                         dispNama += '...';
                     }
-                    ctx.fillText(dispNama, 290, 218);
+                    ctx.fillText(dispNama, 335, 234);
 
-                    // 2. Label & Asal Sekolah
+                    // 2. Label & Asal Sekolah (Pill 2: y=279..317)
+                    ctx.textBaseline = 'top';
                     ctx.fillStyle = '#64748b';
-                    ctx.font = 'bold 11px Poppins, sans-serif';
-                    ctx.fillText('ASAL SEKOLAH', 290, 268);
+                    ctx.font = 'bold 10px Poppins, sans-serif';
+                    ctx.fillText('ASAL SEKOLAH', 325, 262);
 
+                    ctx.textBaseline = 'middle';
                     ctx.fillStyle = '#1e293b';
-                    ctx.font = '600 16px Poppins, sans-serif';
+                    ctx.font = '600 13px Poppins, sans-serif';
                     let dispSekolah = sekolah;
-                    if (ctx.measureText(dispSekolah).width > 340) {
-                        while (ctx.measureText(dispSekolah + '...').width > 340 && dispSekolah.length > 0) {
+                    if (ctx.measureText(dispSekolah).width > 265) {
+                        while (ctx.measureText(dispSekolah + '...').width > 265 && dispSekolah.length > 0) {
                             dispSekolah = dispSekolah.slice(0, -1);
                         }
                         dispSekolah += '...';
                     }
-                    ctx.fillText(dispSekolah, 290, 284);
+                    ctx.fillText(dispSekolah, 335, 298);
 
-                    // 3. Capaian Nilai & XP (Pill Badges)
-                    ctx.fillStyle = '#64748b';
-                    ctx.font = 'bold 11px Poppins, sans-serif';
-                    ctx.fillText('CAPAIAN NILAI & AKUMULASI XP', 290, 334);
-
-                    // Pill Nilai
-                    gambarPill(ctx, 290, 352, 130, 28, '#ffedd5', '#ea580c', '#c2410c', `Nilai: ${rataNilai} (${rataNilai}%)`);
-                    // Pill XP
-                    gambarPill(ctx, 428, 352, 150, 28, '#fef3c7', '#d97706', '#92400e', `${totalXp} XP (${xpPercent}%)`);
-
-                    // 4. Status Verifikasi Digital
+                    // 3. Capaian Nilai & XP (Di dalam Pill 3: y=343..381)
+                    ctx.textBaseline = 'top';
                     ctx.fillStyle = '#64748b';
                     ctx.font = 'bold 10px Poppins, sans-serif';
-                    ctx.fillText('STATUS VERIFIKASI DIGITAL', 290, 404);
+                    ctx.fillText('CAPAIAN NILAI & AKUMULASI XP', 325, 326);
 
-                    ctx.fillStyle = isVerified ? '#047857' : '#d97706';
-                    ctx.font = 'bold 14px Poppins, sans-serif';
-                    const verifText = isVerified ? `✓ TERVERIFIKASI  •  ${tglVerif}` : `⏳ MENUNGGU VERIFIKASI`;
-                    ctx.fillText(verifText, 290, 420);
+                    ctx.textBaseline = 'middle';
+                    ctx.font = 'bold 12px Poppins, sans-serif';
+                    ctx.fillStyle = '#c2410c';
+                    const textNilai = `Nilai: ${rataNilai} (${rataNilai}%)`;
+                    ctx.fillText(textNilai, 335, 362);
+                    const wNilai = ctx.measureText(textNilai).width;
 
-                    // ID Unik Tag
-                    const idTag = dapatkanIdUnikSiswa();
                     ctx.fillStyle = '#94a3b8';
-                    ctx.font = 'bold 11px monospace';
-                    ctx.fillText(`ID: ${idTag}`, 290, 448);
+                    ctx.fillText(' • ', 335 + wNilai, 362);
+                    const wDot = ctx.measureText(' • ').width;
+
+                    ctx.fillStyle = '#b45309';
+                    ctx.fillText(`${totalXp} XP (${xpPercent}%)`, 335 + wNilai + wDot, 362);
+
+                    // 4. Status Verifikasi Digital (Di dalam Pill 4: y=407..443)
+                    ctx.textBaseline = 'top';
+                    ctx.fillStyle = '#64748b';
+                    ctx.font = 'bold 10px Poppins, sans-serif';
+                    ctx.fillText('STATUS VERIFIKASI DIGITAL', 325, 390);
+
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = isVerified ? '#047857' : '#d97706';
+                    ctx.font = 'bold 12.5px Poppins, sans-serif';
+                    const verifText = isVerified ? `✓ TERVERIFIKASI  •  ${tglVerif}` : `⏳ MENUNGGU VERIFIKASI`;
+                    ctx.fillText(verifText, 335, 425);
+
+                    // 5. ID Unik Tag (Di bawah Pill 4)
+                    const idTag = dapatkanIdUnikSiswa();
+                    ctx.textBaseline = 'top';
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = 'bold 10px monospace';
+                    ctx.fillText(`ID: ${idTag}`, 325, 454);
 
                     callback(canvas);
                 }
@@ -1058,18 +1071,10 @@
                     const userImg = new Image();
                     userImg.onload = function() {
                         ctx.save();
-                        // Rounded box klip di posisi frame: x:64, y:199, w:196, h:254
-                        pathRoundedRect(ctx, 64, 199, 196, 254, 14);
+                        // Presisi frame foto sesuai template: x:75, y:205, w:205, h:240, r:18
+                        pathRoundedRect(ctx, 75, 205, 205, 240, 18);
                         ctx.clip();
-                        ctx.drawImage(userImg, 64, 199, 196, 254);
-                        ctx.restore();
-
-                        // Border putih rapi
-                        ctx.save();
-                        ctx.lineWidth = 3;
-                        ctx.strokeStyle = '#ffffff';
-                        pathRoundedRect(ctx, 64, 199, 196, 254, 14);
-                        ctx.stroke();
+                        ctx.drawImage(userImg, 75, 205, 205, 240);
                         ctx.restore();
 
                         renderTeksDanBadge();
@@ -1095,24 +1100,6 @@
             ctx.lineTo(x, y + radius);
             ctx.quadraticCurveTo(x, y, x + radius, y);
             ctx.closePath();
-        }
-
-        // Helper Canvas Pill Badge
-        function gambarPill(ctx, x, y, w, h, bg, border, color, text) {
-            ctx.save();
-            ctx.fillStyle = bg;
-            ctx.strokeStyle = border;
-            ctx.lineWidth = 1.5;
-            pathRoundedRect(ctx, x, y, w, h, h / 2);
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.fillStyle = color;
-            ctx.font = 'bold 11px Poppins, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, x + w / 2, y + h / 2);
-            ctx.restore();
         }
 
         // 9. AKSI BAGIKAN KARTU KE WHATSAPP & UNDUH
