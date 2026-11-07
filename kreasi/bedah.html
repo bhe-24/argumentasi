@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="../assets/mascot/mascot.css">
+    <script src="../assets/mascot/mascot.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
@@ -228,9 +230,10 @@ window.periksa = () => {
         localStorage.setItem('hasilLatihanArg', JSON.stringify(latArg));
     } catch (e) {}
     render();
+    const maskotMini = window.getMascotMiniHtml ? window.getMascotMiniHtml(skor, { relPath: '../' }) : null;
     const w = b === t ? ['emerald', 'Sempurna! Kamu paham kerangka teks argumentasi.', 'fa-trophy'] : b / t >= .6 ? ['amber', 'Bagus! Tinggal teliti sedikit lagi.', 'fa-thumbs-up'] : ['rose', 'Tidak apa-apa, pelajari penjelasan di bawah.', 'fa-book-open'];
     $('boxHasil').classList.remove('hidden');
-    $('boxHasil').innerHTML = `<div class="item bg-white rounded-2xl border border-${w[0]}-200 p-4 mb-4 flex items-center gap-3 shadow-sm"><div class="w-14 h-14 rounded-2xl bg-${w[0]}-50 text-${w[0]}-500 flex items-center justify-center text-2xl shrink-0"><i class="fas ${w[2]}"></i></div><div class="flex-1 min-w-0"><p class="text-lg font-extrabold text-slate-800 leading-none">${b}/${t} <span class="text-xs font-semibold text-slate-400">benar</span></p><p class="text-[11px] text-slate-600 mt-1 leading-snug">${w[1]}</p>${xp ? `<span class="inline-block mt-1.5 text-[10px] font-bold text-brand-dark bg-brand-light px-2 py-0.5 rounded-full"><i class="fas fa-bolt text-amber-500 mr-1"></i>+${xp} XP</span>` : '<span class="inline-block mt-1.5 text-[10px] text-slate-400">XP latihan ini sudah kamu ambil hari ini.</span>'}</div></div>`;
+    $('boxHasil').innerHTML = `<div class="item bg-white rounded-2xl border border-${w[0]}-200 p-4 mb-4 flex items-center gap-3 shadow-sm">${maskotMini || `<div class="w-14 h-14 rounded-2xl bg-${w[0]}-50 text-${w[0]}-500 flex items-center justify-center text-2xl shrink-0"><i class="fas ${w[2]}"></i></div>`}<div class="flex-1 min-w-0"><p class="text-lg font-extrabold text-slate-800 leading-none">${b}/${t} <span class="text-xs font-semibold text-slate-400">benar</span></p><p class="text-[11px] text-slate-600 mt-1 leading-snug">${w[1]}</p>${xp ? `<span class="inline-block mt-1.5 text-[10px] font-bold text-brand-dark bg-brand-light px-2 py-0.5 rounded-full"><i class="fas fa-bolt text-amber-500 mr-1"></i>+${xp} XP</span>` : '<span class="inline-block mt-1.5 text-[10px] text-slate-400">XP latihan ini sudah kamu ambil hari ini.</span>'}</div></div>`;
     if (b === t) { K.beep('success'); window.confetti && confetti({ particleCount: 90, spread: 70, origin: { y: .4 }, zIndex: 100000 }); } else K.beep('error');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };

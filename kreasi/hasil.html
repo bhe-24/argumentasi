@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="../assets/mascot/mascot.css">
+    <script src="../assets/mascot/mascot.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
@@ -147,10 +149,11 @@
     <!-- HERO SKOR -->
     <section id="strip" class="bg-brand-green px-4 pb-5 pt-1 rounded-b-3xl">
         <div class="bg-white/15 border border-white/20 rounded-2xl p-4 backdrop-blur-sm">
-            <div class="flex items-center gap-4">
-                <div class="relative w-24 h-24 shrink-0">
-                    <svg viewBox="0 0 80 80" class="w-24 h-24 -rotate-90"><circle cx="40" cy="40" r="34" fill="none" stroke-width="7" class="ring-bg"/><circle id="ring" cx="40" cy="40" r="34" fill="none" stroke-width="7" stroke-linecap="round" class="ring-fg" stroke-dasharray="213.6" stroke-dashoffset="213.6"/></svg>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center text-white"><span id="skor" class="text-3xl font-extrabold leading-none">0</span><span class="text-[9px] font-semibold text-white/70">dari 100</span></div>
+            <div class="flex items-center gap-3">
+                <div id="maskotHero" class="shrink-0 -my-2 flex flex-col items-center"></div>
+                <div class="relative w-20 h-20 shrink-0">
+                    <svg viewBox="0 0 80 80" class="w-20 h-20 -rotate-90"><circle cx="40" cy="40" r="34" fill="none" stroke-width="7" class="ring-bg"/><circle id="ring" cx="40" cy="40" r="34" fill="none" stroke-width="7" stroke-linecap="round" class="ring-fg" stroke-dasharray="213.6" stroke-dashoffset="213.6"/></svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center text-white"><span id="skor" class="text-2xl font-extrabold leading-none">0</span><span class="text-[8px] font-semibold text-white/70">dari 100</span></div>
                 </div>
                 <div class="flex-1 min-w-0">
                     <p id="predikat" class="text-white font-extrabold text-base leading-tight"></p>
@@ -291,7 +294,11 @@ function main() {
     $('hSub').textContent = n.judul;
 
     /* ---------- hero ---------- */
-    const P = n.skor >= 80 ? ['Hebat!', 'Naskahmu sangat meyakinkan.'] : n.skor >= 60 ? ['Baik!', 'Tinggal diasah sedikit lagi.'] : ['Terus berlatih!', 'Setiap revisi membuatmu makin mahir.'];
+    const maskotData = window.getMascotData ? window.getMascotData(n.skor, { relPath: '../' }) : null;
+    if (maskotData && $('maskotHero')) {
+        $('maskotHero').innerHTML = `<div class="mascot-float relative inline-block select-none pointer-events-none"><img src="${maskotData.src}" alt="${maskotData.badge}" class="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.25)]" draggable="false"></div><div class="mascot-shadow" style="width:44px;height:6px"></div>`;
+    }
+    const P = maskotData ? [maskotData.judul, maskotData.ket] : (n.skor >= 80 ? ['Hebat!', 'Naskahmu sangat meyakinkan.'] : n.skor >= 60 ? ['Baik!', 'Tinggal diasah sedikit lagi.'] : ['Terus berlatih!', 'Setiap revisi membuatmu makin mahir.']);
     $('predikat').textContent = P[0]; $('predikatKet').textContent = P[1];
     let c = 0; const step = Math.max(1, Math.round(n.skor / 40)), t = setInterval(() => { c = Math.min(n.skor, c + step); $('skor').textContent = c; if (c >= n.skor) clearInterval(t); }, 25);
     setTimeout(() => $('ring').style.strokeDashoffset = 213.6 * (1 - n.skor / 100), 200);

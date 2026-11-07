@@ -9,6 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <link rel="stylesheet" href="../assets/mascot/mascot.css">
+    <script src="../assets/mascot/mascot.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }</script>
@@ -307,15 +309,15 @@ window.tampilHasil = function(baru) {
     const tk = {}; window.soal.forEach((s, i) => { const t = tk[s.tingkat] = tk[s.tingkat] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
     const urut = ['mudah', 'sedang', 'sulit', 'hots'].filter(t => tk[t]);
     const lemah = urut.slice().sort((a, b) => tk[a].b / tk[a].n - tk[b].b / tk[b].n)[0], kuat = urut.slice().sort((a, b) => tk[b].b / tk[b].n - tk[a].b / tk[a].n)[0];
-    const pesan = R.skor >= 80 ? ['Luar biasa!', 'Pemahamanmu sangat baik.'] : R.skor >= 60 ? ['Bagus!', 'Sedikit lagi menuju sempurna.'] : ['Tetap semangat!', 'Pelajari pembahasan lalu baca ulang materinya.'];
-    const anim = R.skor >= 80 ? '<div class="tos"><i class="fas fa-hand h hl"></i><i class="fas fa-hand h hr"></i><div class="boom"></div><i class="fas fa-star sp" style="top:8px;left:42%"></i><i class="fas fa-star sp" style="top:24px;left:58%"></i><i class="fas fa-sparkles sp" style="top:70px;left:36%"></i><i class="fas fa-star sp" style="top:78px;left:60%"></i></div>'
-        : R.skor >= 60 ? '<div class="tos"><i class="fas fa-thumbs-up goyang" style="font-size:66px;color:#fcd34d;filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i></div>' : '<div class="tos"><i class="fas fa-heart detak" style="font-size:60px;color:#fda4af;filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i></div>';
+    const maskot = window.getMascotData ? window.getMascotData(R.skor, { auto: R.auto, relPath: '../' }) : null;
+    const pesan = maskot ? [maskot.judul, maskot.ket] : (R.skor >= 80 ? ['Luar biasa!', 'Pemahamanmu sangat baik.'] : R.skor >= 60 ? ['Bagus!', 'Sedikit lagi menuju sempurna.'] : ['Tetap semangat!', 'Pelajari pembahasan lalu baca ulang materinya.']);
+    const anim = maskot ? maskot.html : (R.skor >= 80 ? '<div class="tos"><i class="fas fa-hand h hl"></i><i class="fas fa-hand h hr"></i><div class="boom"></div></div>' : '<div class="tos"><i class="fas fa-thumbs-up goyang" style="font-size:66px;color:#fcd34d"></i></div>');
     const rek = R.skor === 100 ? 'Semua jawabanmu benar. Pertahankan, dan coba jelaskan alasan tiap jawaban dengan kata-katamu sendiri.' : 'Kamu paling kuat pada soal <b>' + TKT[kuat][0] + '</b> (' + tk[kuat].b + '/' + tk[kuat].n + '). ' + (lemah !== kuat || tk[lemah].b < tk[lemah].n ? 'Perkuat soal <b>' + TKT[lemah][0] + '</b> (' + tk[lemah].b + '/' + tk[lemah].n + ') dengan membaca pembahasan di bawah.' : '');
     
     let html = [
         '<div class="up rounded-3xl p-5 text-center text-white shadow-lg" style="background:linear-gradient(135deg,#064e3b,#059669 60%,#34d399)">',
         anim,
-        '<p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold">Skor Akhir</p><div class="flex items-end justify-center gap-1"><span id="skorAngka" class="text-6xl font-extrabold leading-none">0</span><span class="text-xl font-bold text-white/70 mb-1">/100</span></div>',
+        '<p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold mt-1">Skor Akhir</p><div class="flex items-end justify-center gap-1"><span id="skorAngka" class="text-6xl font-extrabold leading-none">0</span><span class="text-xl font-bold text-white/70 mb-1">/100</span></div>',
         '<p class="font-extrabold text-base mt-2">' + pesan[0] + '</p><p class="text-[11px] text-white/80">' + pesan[1] + '</p>',
         '<span class="inline-block mt-3 bg-white/20 rounded-full px-3 py-1 text-[11px] font-bold"><i class="fas fa-star text-amber-300 mr-1"></i>+' + R.xp + ' XP</span>',
         R.auto ? '<p class="text-[10px] text-amber-200 mt-2"><i class="fas fa-clock mr-1"></i>Dikumpulkan otomatis karena waktu habis</p>' : '',

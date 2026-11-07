@@ -9,6 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <link rel="stylesheet" href="../assets/mascot/mascot.css">
+    <script src="../assets/mascot/mascot.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }</script>
@@ -659,9 +661,10 @@ window.tampilHasil = function(baru) {
 
     const tk = {}; window.soal.forEach((s, i) => { const t = tk[s.j] = tk[s.j] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
     const urut = URUT_LBL.filter(t => tk[t]);
-    const pesan = R.skor >= 80 ? ['Luar biasa!', 'Kamu sangat tajam membedakan struktur argumentasi.', 'fa-trophy']
+    const maskot = window.getMascotData ? window.getMascotData(R.skor, { auto: R.auto, relPath: '../' }) : null;
+    const pesan = maskot ? [maskot.judul, maskot.ket] : (R.skor >= 80 ? ['Luar biasa!', 'Kamu sangat tajam membedakan struktur argumentasi.', 'fa-trophy']
         : R.skor >= 60 ? ['Bagus!', 'Pemahaman strukturmu sudah cukup baik.', 'fa-thumbs-up']
-        : ['Tetap semangat!', 'Pelajari kembali perbedaan tesis, argumen, dan kesimpulan.', 'fa-heart'];
+        : ['Tetap semangat!', 'Pelajari kembali perbedaan tesis, argumen, dan kesimpulan.', 'fa-heart']);
 
     // Peta wacana: warna sesuai KUNCI, tanda silang untuk kalimat yang keliru
     let peta = '<p class="font-reading text-[12.5px] text-slate-700 leading-[2]">';
@@ -675,8 +678,8 @@ window.tampilHasil = function(baru) {
 
     $('main').innerHTML = [
         '<div class="rounded-3xl p-5 text-center text-white shadow-lg" style="background:linear-gradient(135deg,#064e3b,#059669 60%,#34d399)">',
-        '<i class="fas ' + pesan[2] + '" style="font-size:54px;color:' + (R.skor >= 60 ? '#fcd34d' : '#fda4af') + ';filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i>',
-        '<p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold mt-3">Skor Akhir</p>',
+        maskot ? maskot.html : '<i class="fas fa-trophy" style="font-size:54px;color:#fcd34d;filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i>',
+        '<p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold mt-1">Skor Akhir</p>',
         '<div class="flex items-end justify-center gap-1"><span class="text-6xl font-extrabold leading-none">' + R.skor + '</span><span class="text-xl font-bold text-white/70 mb-1">/100</span></div>',
         '<p class="font-extrabold text-base mt-2">' + pesan[0] + '</p><p class="text-[11px] text-white/80">' + pesan[1] + '</p>',
         '<span class="inline-block mt-3 bg-white/20 rounded-full px-3 py-1 text-[11px] font-bold"><i class="fas fa-star text-amber-300 mr-1"></i>+' + R.xp + ' XP</span>',

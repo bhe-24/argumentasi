@@ -9,6 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <link rel="stylesheet" href="../assets/mascot/mascot.css">
+    <script src="../assets/mascot/mascot.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }</script>
@@ -306,15 +308,16 @@ window.navLatihanHtml = function() {
 window.tampilHasil = function(baru) { 
     const R = window.H.hasil.esai; window.aktif = false; $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden'); 
     
-    const pesan = R.benar > 0 ? ['Luar biasa!', 'Kamu telah menyelesaikan latihan esai ini.'] : ['Tetap semangat!', 'Lain kali coba isi jawabanmu dengan lebih lengkap.']; 
-    const anim = R.benar > 0 ? '<div class="tos"><i class="fas fa-hand h hl"></i><i class="fas fa-hand h hr"></i><div class="boom"></div><i class="fas fa-star sp" style="top:8px;left:42%"></i><i class="fas fa-star sp" style="top:24px;left:58%"></i><i class="fas fa-sparkles sp" style="top:70px;left:36%"></i><i class="fas fa-star sp" style="top:78px;left:60%"></i></div>' 
-        : '<div class="tos"><i class="fas fa-heart detak" style="font-size:60px;color:#fda4af;filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i></div>'; 
- 
+    const skorEsai = R.benar > 0 ? (R.benar === R.total ? 100 : 75) : 30;
+    const maskot = window.getMascotData ? window.getMascotData(skorEsai, { auto: R.auto, relPath: '../' }) : null;
+    const pesan = maskot ? [maskot.judul, maskot.ket] : (R.benar > 0 ? ['Luar biasa!', 'Kamu telah menyelesaikan latihan esai ini.'] : ['Tetap semangat!', 'Lain kali coba isi jawabanmu dengan lebih lengkap.']);
+    const anim = maskot ? maskot.html : (R.benar > 0 ? '<div class="tos"><i class="fas fa-hand h hl"></i><i class="fas fa-hand h hr"></i><div class="boom"></div></div>' : '<div class="tos"><i class="fas fa-heart detak" style="font-size:60px;color:#fda4af"></i></div>');
+
     let html = [
         '<div class="up rounded-3xl p-5 text-center text-white shadow-lg" style="background:linear-gradient(135deg,#064e3b,#059669 60%,#34d399)">',
         anim,
-        '<p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold">Status Pengerjaan</p><div class="flex items-end justify-center gap-1"><span class="text-4xl font-extrabold leading-none mt-2">Selesai</span></div>',
-        '<p class="font-extrabold text-base mt-4">' + pesan[0] + '</p><p class="text-[11px] text-white/80">' + pesan[1] + '</p>',
+        '<p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold mt-1">Status Pengerjaan</p><div class="flex items-end justify-center gap-1"><span class="text-4xl font-extrabold leading-none mt-2">Selesai</span></div>',
+        '<p class="font-extrabold text-base mt-3">' + pesan[0] + '</p><p class="text-[11px] text-white/80">' + pesan[1] + '</p>',
         '<span class="inline-block mt-3 bg-white/20 rounded-full px-3 py-1 text-[11px] font-bold"><i class="fas fa-star text-amber-300 mr-1"></i>+' + R.xp + ' XP Partisipasi</span>',
         R.auto ? '<p class="text-[10px] text-amber-200 mt-2"><i class="fas fa-clock mr-1"></i>Dikumpulkan otomatis karena waktu habis</p>' : '',
         '</div>',

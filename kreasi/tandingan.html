@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="../assets/mascot/mascot.css">
+    <script src="../assets/mascot/mascot.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
@@ -243,12 +245,13 @@ window.periksa = async () => {
             latArg['kreasi_tandingan'] = r.skor;
             localStorage.setItem('hasilLatihanArg', JSON.stringify(latArg));
         } catch (e) {}
+        const maskotMini = window.getMascotMiniHtml ? window.getMascotMiniHtml(r.skor, { relPath: '../' }) : null;
         const w = r.skor >= 80 ? ['emerald', 'Bantahan yang meyakinkan!'] : r.skor >= 60 ? ['amber', 'Sudah baik, tinggal diasah'] : ['rose', 'Yuk perkuat sedikit lagi'];
         if (r.skor >= 80) { K.beep('success'); window.confetti && confetti({ particleCount: 80, spread: 65, origin: { y: .7 }, zIndex: 100000 }); }
         const bisaSimpan = adaDraf && !draf.result;
         $('fb').innerHTML = `<div class="item bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
-            <div class="flex items-center gap-3 mb-3.5"><div class="w-14 h-14 rounded-full bg-${w[0]}-50 text-${w[0]}-600 border-2 border-${w[0]}-200 flex items-center justify-center font-extrabold text-lg shrink-0">${r.skor}</div>
-            <div><p class="text-xs font-bold text-slate-800">${w[1]}</p>${xp ? `<span class="inline-block mt-1 text-[10px] font-bold text-brand-dark bg-brand-light px-2 py-0.5 rounded-full"><i class="fas fa-bolt text-amber-500 mr-1"></i>+${xp} XP</span>` : `<p class="text-[10px] text-slate-400 mt-0.5">${r.skor >= 60 ? 'XP latihan ini sudah kamu ambil hari ini.' : 'Capai skor 60 untuk mendapat XP.'}</p>`}</div></div>
+            <div class="flex items-center gap-3 mb-3.5">${maskotMini || `<div class="w-14 h-14 rounded-full bg-${w[0]}-50 text-${w[0]}-600 border-2 border-${w[0]}-200 flex items-center justify-center font-extrabold text-lg shrink-0">${r.skor}</div>`}
+            <div><p class="text-xs font-bold text-slate-800">${w[1]} <span class="text-slate-500 font-semibold">(Skor: ${r.skor}/100)</span></p>${xp ? `<span class="inline-block mt-1 text-[10px] font-bold text-brand-dark bg-brand-light px-2 py-0.5 rounded-full"><i class="fas fa-bolt text-amber-500 mr-1"></i>+${xp} XP</span>` : `<p class="text-[10px] text-slate-400 mt-0.5">${r.skor >= 60 ? 'XP latihan ini sudah kamu ambil hari ini.' : 'Capai skor 60 untuk mendapat XP.'}</p>`}</div></div>
             ${r.kuat.length ? `<p class="text-[10px] font-bold text-emerald-600 uppercase mb-1.5">Sudah bagus</p><ul class="space-y-1.5 mb-3.5">${li(r.kuat, 'fa-check', 'text-emerald-500')}</ul>` : ''}
             ${r.perbaiki.length ? `<p class="text-[10px] font-bold text-rose-500 uppercase mb-1.5">Bisa diperbaiki</p><ul class="space-y-1.5">${li(r.perbaiki, 'fa-arrow-right', 'text-rose-400')}</ul>` : ''}
             ${r.contoh ? `<div class="mt-3.5 bg-emerald-50 border border-emerald-100 rounded-xl p-3"><p class="text-[9px] font-bold text-emerald-700 uppercase tracking-wider mb-1">Contoh bantahan yang lebih kuat</p><p class="text-[11px] text-slate-700 italic leading-relaxed">${K.esc(r.contoh)}</p></div>` : ''}

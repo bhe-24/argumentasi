@@ -1,0 +1,36 @@
+/* Animasi Maskot Mengambang (Floating Naik-Turun) */
+@keyframes mascotFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes mascotShadow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.32;
+  }
+  50% {
+    transform: scale(0.8);
+    opacity: 0.16;
+  }
+}
+
+.mascot-float {
+  animation: mascotFloat 2.6s ease-in-out infinite;
+  display: inline-block;
+  will-change: transform;
+}
+
+.mascot-shadow {
+  width: 64px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 50%;
+  margin: -4px auto 4px auto;
+  filter: blur(3px);
+  animation: mascotShadow 2.6s ease-in-out infinite;
+}

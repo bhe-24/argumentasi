@@ -9,6 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <link rel="stylesheet" href="../assets/mascot/mascot.css">
+    <script src="../assets/mascot/mascot.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }</script>
@@ -501,15 +503,16 @@ window.tampilHasil = function(baru) {
     const kosong = window.soal.filter((s, i) => R.jawab[i] === undefined).length;
     const salah = R.total - R.benar - kosong;
 
-    const pesan = R.skor >= 80 ? ['Luar biasa!', 'Penalaran kritis dan logikamu sangat tajam.', 'fa-trophy', '#fcd34d']
-        : R.skor >= 60 ? ['Bagus!', 'Alur berpikir kritismu sudah cukup terarah.', 'fa-thumbs-up', '#fcd34d']
-        : ['Tetap semangat!', 'Cermati kembali pembahasan penalaran di bawah.', 'fa-heart', '#fda4af'];
+    const maskot = window.getMascotData ? window.getMascotData(R.skor, { auto: R.auto, relPath: '../' }) : null;
+    const pesan = maskot ? [maskot.judul, maskot.ket] : (R.skor >= 80 ? ['Luar biasa!', 'Penalaran kritis dan logikamu sangat tajam.']
+        : R.skor >= 60 ? ['Bagus!', 'Alur berpikir kritismu sudah cukup terarah.']
+        : ['Tetap semangat!', 'Cermati kembali pembahasan penalaran di bawah.']);
 
     const html = [
         // Kartu skor
         '<div class="rounded-3xl p-5 text-center text-white shadow-lg" style="background:linear-gradient(135deg,#064e3b,#059669 60%,#34d399)">',
-        '<i class="fas ' + pesan[2] + '" style="font-size:54px;color:' + pesan[3] + ';filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i>',
-        '<p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold mt-3">Skor Akhir</p>',
+        maskot ? maskot.html : '<i class="fas fa-trophy" style="font-size:54px;color:#fcd34d;filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i>',
+        '<p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold mt-1">Skor Akhir</p>',
         '<div class="flex items-end justify-center gap-1"><span class="text-6xl font-extrabold leading-none">' + R.skor + '</span><span class="text-xl font-bold text-white/70 mb-1">/100</span></div>',
         '<p class="font-extrabold text-base mt-2">' + pesan[0] + '</p><p class="text-[11px] text-white/80">' + pesan[1] + '</p>',
         '<span class="inline-block mt-3 bg-white/20 rounded-full px-3 py-1 text-[11px] font-bold"><i class="fas fa-star text-amber-300 mr-1"></i>+' + R.xp + ' XP</span>',

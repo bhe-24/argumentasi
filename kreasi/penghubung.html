@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="../assets/mascot/mascot.css">
+    <script src="../assets/mascot/mascot.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
@@ -228,10 +230,11 @@ function selesai() {
         localStorage.setItem('hasilLatihanArg', JSON.stringify(latArg));
     } catch (e) {}
     $('progBar').style.width = '100%'; $('prog').textContent = 'Selesai'; $('kuis').classList.add('hidden'); $('hasil').classList.remove('hidden');
+    const maskot = window.getMascotData ? window.getMascotData(skor, { relPath: '../' }) : null;
     const w = benar === t ? ['emerald', 'fa-trophy', 'Sempurna! Alur argumenmu makin runtut.'] : benar / t >= .6 ? ['amber', 'fa-thumbs-up', 'Bagus! Sedikit lagi sempurna.'] : ['rose', 'fa-book-open', 'Pelajari kamus kata penghubung di atas, lalu coba lagi.'];
     $('hasil').innerHTML = `<div class="item bg-white rounded-2xl border border-slate-200 shadow-sm p-5 text-center">
-        <div class="w-16 h-16 rounded-2xl bg-${w[0]}-50 text-${w[0]}-500 flex items-center justify-center text-3xl mx-auto"><i class="fas ${w[1]}"></i></div>
-        <p class="text-3xl font-extrabold text-slate-800 mt-3">${benar}<span class="text-base text-slate-400 font-semibold">/${t}</span></p><p class="text-xs text-slate-500 mt-1">${w[2]}</p>
+        ${maskot ? maskot.html : `<div class="w-16 h-16 rounded-2xl bg-${w[0]}-50 text-${w[0]}-500 flex items-center justify-center text-3xl mx-auto"><i class="fas ${w[1]}"></i></div>`}
+        <p class="text-3xl font-extrabold text-slate-800 mt-2">${benar}<span class="text-base text-slate-400 font-semibold">/${t}</span></p><p class="text-xs text-slate-500 mt-1">${maskot ? maskot.ket : w[2]}</p>
         ${xp ? `<span class="inline-block mt-3 text-[11px] font-bold text-brand-dark bg-brand-light px-3 py-1 rounded-full"><i class="fas fa-bolt text-amber-500 mr-1"></i>+${xp} XP</span>` : '<p class="text-[10px] text-slate-400 mt-3">XP latihan ini sudah kamu ambil hari ini.</p>'}
         <div class="grid grid-cols-2 gap-2 mt-5"><button onclick="mulai(lokal5())" class="bg-white border border-slate-200 text-slate-700 font-bold py-3 rounded-xl text-xs active:scale-95 transition"><i class="fas fa-rotate mr-1.5"></i>Main Lagi</button><a href="tulis.html" class="bg-brand-green text-white font-bold py-3 rounded-xl text-xs shadow-md active:scale-95 transition"><i class="fas fa-pen-nib mr-1.5"></i>Terapkan di Naskah</a></div></div>`;
     if (benar === t) { K.beep('success'); window.confetti && confetti({ particleCount: 90, spread: 70, origin: { y: .5 }, zIndex: 100000 }); }
