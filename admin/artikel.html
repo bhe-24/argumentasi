@@ -58,7 +58,7 @@
                 </a>
                 <div>
                     <h1 class="text-white font-bold text-sm tracking-wide leading-tight">Kelola Artikel</h1>
-                    <p class="text-white/70 text-[10px] leading-tight">Tampil di Beranda Siswa</p>
+                    <p class="text-white/70 text-[10px] leading-tight">Pusat Publikasi Konten Admin</p>
                 </div>
             </div>
             
@@ -70,10 +70,10 @@
         <!-- RUANG KOSONG UNTUK HEADER -->
         <div class="h-[60px] bg-blue-600 shrink-0"></div>
 
-        <!-- LINK CEPAT KE HALAMAN SISWA -->
-        <div class="bg-blue-50 border-b border-blue-100 px-4 py-2 flex items-center justify-between">
-            <span class="text-[10px] font-semibold text-blue-700"><i class="fas fa-info-circle mr-1"></i>Artikel terbit otomatis muncul di beranda siswa.</span>
-            <a href="../artikel.html" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1 shrink-0 ml-2">Lihat Siswa <i class="fas fa-arrow-up-right-from-square text-[9px]"></i></a>
+        <!-- SUBHEADER INFO ADMIN -->
+        <div class="bg-blue-50 border-b border-blue-100 px-4 py-2.5 flex items-center justify-between">
+            <span class="text-[10px] font-semibold text-blue-800"><i class="fas fa-newspaper mr-1 text-blue-600"></i>Pusat Data & Publikasi Artikel Admin</span>
+            <span class="text-[9px] font-bold text-blue-600 bg-white border border-blue-200 px-2 py-0.5 rounded-full">Admin Panel</span>
         </div>
 
         <!-- TABS NAVIGASI -->
@@ -153,7 +153,7 @@
                     <div class="flex-1 flex flex-col justify-between py-0.5 min-w-0">
                         <div>
                             <div class="flex justify-between items-start gap-1">
-                                <span class="text-[8px] font-bold bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded uppercase tracking-wider">Artikel Siswa</span>
+                                <span class="text-[8px] font-bold bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded uppercase tracking-wider">Artikel Admin</span>
                                 <span class="text-[9px] text-slate-400 shrink-0"><i class="far fa-calendar-alt mr-0.5"></i>${tgl}</span>
                             </div>
                             <h3 class="font-bold text-xs text-slate-800 line-clamp-2 mt-1 leading-snug">${data.judul || 'Tanpa Judul'}</h3>
@@ -161,8 +161,7 @@
                         <div class="flex items-center justify-between pt-2 border-t border-slate-50 mt-1">
                             <span class="text-[9px] text-slate-400"><i class="far fa-eye mr-0.5"></i>${data.views || 0} tayang</span>
                             <div class="flex items-center gap-1.5">
-                                <a href="../baca.html?id=${id}" target="_blank" class="text-[10px] font-bold text-slate-500 hover:text-slate-800 px-2 py-0.5 rounded bg-slate-100"><i class="fas fa-eye"></i> Baca</a>
-                                <a href="form_artikel.html?action=edit&id=${id}" class="text-[10px] font-bold text-blue-600 hover:text-blue-700 px-2 py-0.5 rounded bg-blue-50 border border-blue-100 active:scale-95"><i class="fas fa-pen"></i> Edit</a>
+                                <a href="form_artikel.html?action=edit&id=${id}" class="text-[10px] font-bold text-blue-600 hover:text-blue-700 px-3 py-1 rounded-lg bg-blue-50 border border-blue-200 active:scale-95"><i class="fas fa-pen mr-1"></i>Kelola / Edit</a>
                             </div>
                         </div>
                     </div>

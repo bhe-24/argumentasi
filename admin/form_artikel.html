@@ -60,7 +60,7 @@
                 </a>
                 <div>
                     <h1 class="text-white font-bold text-sm tracking-wide leading-tight" id="headerTitle">Tulis Artikel Baru</h1>
-                    <p class="text-white/70 text-[10px] leading-tight">Konten Beranda Siswa</p>
+                    <p class="text-white/70 text-[10px] leading-tight">Publikasi Konten Admin</p>
                 </div>
             </div>
             <!-- Tombol Hapus (Hidden Default) -->
@@ -151,7 +151,7 @@
                                 </div>
                                 <input type="url" id="inputYoutube" class="w-full border border-slate-200 rounded-xl pl-9 pr-4 py-3 focus:border-blue-500 outline-none text-xs font-medium text-slate-800 bg-slate-50" placeholder="https://www.youtube.com/watch?v=...">
                             </div>
-                            <p class="text-[9px] text-slate-400 mt-1">Video akan otomatis disematkan di halaman baca artikel siswa.</p>
+                            <p class="text-[9px] text-slate-400 mt-1">Video akan otomatis disematkan pada isi artikel.</p>
                         </div>
 
                         <!-- Editor Quill & AI Assistant -->
@@ -445,9 +445,6 @@
                     savedId = newDocRef.id;
                 }
                 
-                if (dataToSave.status === 'published') {
-                    window.open(`../baca.html?id=${savedId}`, '_blank');
-                }
                 window.location.replace("artikel.html");
 
             } catch (error) {
