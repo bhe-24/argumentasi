@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pilihan Ganda Kreasi - Ruang Kreasi Argumentasi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'], reading: ['Merriweather', 'serif'] },
+                    colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } }
+                }
+            }
+        }
+    </script>
+
+    <script>
+    /* ===== PUSTAKA LATIHAN KREASI (LocalStorage + IndexedDB) ===== */
+    (function () {
+        const LS = 'kreasi_lat_pilgan_v1', DBN = 'kreasi-pilgan-db';
+        let S = null, siapP = null;
+        const pad = n => String(n).padStart(2, '0');
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'k' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        const today = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+        const lsRead = () => { try { return JSON.parse(localStorage.getItem(LS)); } catch (e) { return null; } };
+        const idbOpen = () => new Promise((ok, no) => { const r = indexedDB.open(DBN, 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
+        const idbGet = async () => { try { const d = await idbOpen(); return await new Promise(ok => { const q = d.transaction('kv').objectStore('kv').get('state'); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); }); } catch (e) { return null; } };
+        const idbSet = async v => { try { const d = await idbOpen(); await new Promise(ok => { const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, 'state'); t.oncomplete = ok; t.onerror = ok; t.onabort = ok; }); } catch (e) {} };
+
+        const L = {
+            esc, today, pad,
+            siap() { return siapP || (siapP = (async () => {
+                const a = lsRead(), b = await idbGet();
+                S = [a, b].filter(x => x && x.hari).sort((x, y) => (y.u || 0) - (x.u || 0))[0] || { v: 1, id: uuid(), u: Date.now(), hari: {} };
+                L.simpan(true); try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+                return S; })()); },
+            state: () => S,
+            simpan(tetap) {
+                if (!tetap) S.u = Date.now();
+                const ks = Object.keys(S.hari).sort(); while (ks.length > 45) delete S.hari[ks.shift()];
+                try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {}
+                idbSet(JSON.parse(JSON.stringify(S)));
+            },
+            aktif() { const now = Date.now(); let best = null; for (const k in S.hari) { const h = S.hari[k]; if (h.spin && now < h.spin.ts + 864e5 && (!best || h.spin.ts > S.hari[best].spin.ts)) best = k; } return best; },
+            hari(kunci) { if (kunci === undefined || kunci === null) { const a = L.aktif(); return a ? S.hari[a] : null; } return S.hari[kunci] || null; },
+            cariHariDenganHasil() { let best = null; for (const k in S.hari) { const h = S.hari[k]; if (h.hasil && h.hasil.pilgan) { if (!best || (h.spin && S.hari[best] && h.spin.ts > (S.hari[best].spin ? S.hari[best].spin.ts : 0))) best = k; } } return best ? S.hari[best] : null; },
+            cariHariDenganSesi() { const now = Date.now(); let best = null; for (const k in S.hari) { const h = S.hari[k]; if (h.sesi && h.sesi.pilgan && now < h.sesi.pilgan.batas) { if (!best || h.sesi.pilgan.mulai > S.hari[best].sesi.pilgan.mulai) best = k; } } return best ? S.hari[best] : null; },
+            nama: () => localStorage.getItem('namaSiswaCendekia') || localStorage.getItem('studentName') || 'Siswa Penulis',
+            xp: () => parseInt(localStorage.getItem('kreasiPointsArg') || '0', 10),
+            tambahXp(n) {
+                const cur = parseInt(localStorage.getItem('kreasiPointsArg') || '0', 10);
+                const update = cur + n;
+                localStorage.setItem('kreasiPointsArg', String(update));
+                // Sync ke kreasi_profile jika ada
+                try {
+                    const p = JSON.parse(localStorage.getItem('kreasi_profile') || '{}');
+                    p.xp = update;
+                    localStorage.setItem('kreasi_profile', JSON.stringify(p));
+                } catch(e) {}
+            },
+            fmt(s) { s = Math.max(0, Math.round(s)); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); },
+            menit: s => Math.max(1, Math.round(s / 60)),
+            beep(t) {
+                try {
+                    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+                    const c = new AC(), seq = t === 'ok' ? [523, 659, 784] : [330, 262];
+                    seq.forEach((f, i) => { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.value = .07; o.connect(g); g.connect(c.destination); o.start(c.currentTime + i * .14); o.stop(c.currentTime + i * .14 + .12); });
+                    setTimeout(() => { try { c.close(); } catch (e) {} }, 900);
+                } catch (e) {}
+            },
+            toast(msg, err) {
+                let c = document.getElementById('lToast');
+                if (!c) { c = document.createElement('div'); c.id = 'lToast'; c.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none'; document.body.appendChild(c); }
+                const t = document.createElement('div'); t.className = (err ? 'bg-red-500' : 'bg-slate-800') + ' text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 transition-all';
+                t.innerHTML = '<i class="fas ' + (err ? 'fa-circle-exclamation' : 'fa-circle-check text-emerald-400') + '"></i><span class="flex-1">' + esc(msg) + '</span>'; c.appendChild(t); setTimeout(() => t.remove(), 3200);
+            }
+        };
+        window.L = L;
+    })();
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #e2e8f0; -webkit-tap-highlight-color: transparent; }
+        .kertas-head { background: #fffdf8; background-image: repeating-linear-gradient(transparent 0 27px, rgba(148,163,184,.2) 27px 28px); border-left: 3px solid #fca5a5; }
+        .q-card { background: #fff; border: 1px solid #e2e8f0; border-left: 5px solid var(--c, #059669); border-radius: 16px; box-shadow: 0 1px 3px rgba(15,23,42,.08); }
+        .q-no { width: 2rem; height: 2rem; border-radius: 9999px; background: var(--c, #059669); color: #fff; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .opsi { display: flex; gap: .7rem; align-items: flex-start; width: 100%; text-align: left; padding: .7rem .8rem; border: 2px solid #e2e8f0; border-radius: .9rem; background: #fff; transition: background-color .12s, border-color .12s; position: relative; }
+        .opsi:active { background: #f8fafc; }
+        .opsi .huruf { width: 1.7rem; height: 1.7rem; flex-shrink: 0; border-radius: 9999px; background: #f1f5f9; color: #64748b; font-weight: 800; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+        .opsi .cek { display: none; margin-left: auto; color: #059669; font-size: 14px; padding-top: 4px; }
+        .opsi.sel { border-color: #059669; background: #ecfdf5; }
+        .opsi.sel .huruf { background: #059669; color: #fff; }
+        .opsi.sel .cek { display: block; }
+        .opsi.benar { border-color: #10b981; background: #ecfdf5; } .opsi.benar .huruf { background: #10b981; color: #fff; }
+        .opsi.salah { border-color: #fb7185; background: #fff1f2; } .opsi.salah .huruf { background: #fb7185; color: #fff; }
+        .flag { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #94a3b8; padding: 4px 8px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; transition: all .15s; }
+        .flag.on { color: #f59e0b; border-color: #fcd34d; background: #fffbeb; }
+        .nav-n { width: 2.2rem; height: 2.2rem; border-radius: 10px; border: 1px solid #cbd5e1; font-weight: 800; font-size: 12px; color: #475569; background: #fff; display: flex; align-items: center; justify-content: center; position: relative; }
+        .nav-n.nav-a { background: #059669; color: #fff; border-color: #059669; }
+        .nav-n.nav-r { border-color: #f59e0b; color: #f59e0b; background: #fffbeb; }
+        .nav-n.nav-a.nav-r { background: #059669; color: #fff; }
+        .nav-n.nav-a.nav-r::after { content: ''; position: absolute; top: 2px; right: 2px; width: 6px; height: 6px; border-radius: 9999px; background: #f59e0b; border: 1px solid #fff; }
+        .waktu-kritis { animation: pulseBg 1s infinite; }
+        @keyframes pulseBg { 50% { background: #dc2626; color: #ffffff; } }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen">
+<div class="w-full max-w-md bg-slate-100 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-300">
+
+    <!-- HEADER STICKY -->
+    <header class="sticky top-0 z-50 bg-brand-green h-14 px-4 flex items-center gap-3 shadow-md">
+        <a id="btnBack" href="index.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
+        <div class="flex-1 min-w-0">
+            <h1 class="text-white font-bold text-sm leading-tight truncate">Pilihan Ganda Kreasi</h1>
+            <p id="hSub" class="text-white/70 text-[10px] leading-tight truncate">Teknik Penulisan Teks Argumentasi</p>
+        </div>
+        <span id="hTimer" class="hidden shrink-0 bg-white text-brand-green px-3 py-1 rounded-full text-xs font-extrabold tabular-nums"><i class="far fa-clock mr-1"></i><span id="hTimerTxt">00:00</span></span>
+    </header>
+    <div id="barWaktu" class="hidden sticky top-14 z-40 h-1.5 bg-slate-300"><div id="barWaktuIsi" class="h-full bg-brand-green transition-all duration-500" style="width:100%"></div></div>
+
+    <!-- MAIN CONTAINER -->
+    <main id="main" class="flex-grow px-3 py-4">
+        <div class="text-center py-16 text-slate-400"><i class="fas fa-circle-notch fa-spin text-2xl"></i></div>
+    </main>
+
+    <!-- ACTION BAR BAWAH -->
+    <div id="bar" class="hidden sticky bottom-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200 p-3 flex items-center gap-2">
+        <button onclick="bukaNav()" class="shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-3 rounded-xl text-xs flex items-center gap-1.5 transition active:scale-95">
+            <i class="fas fa-th-large"></i><span>Daftar Soal</span>
+            <span id="barRagu" class="hidden bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ml-0.5">0</span>
+        </button>
+        <div class="flex-1 min-w-0 px-1">
+            <p id="barInfo" class="text-[11px] font-semibold text-slate-600 truncate">0 dari 10 soal terjawab</p>
+            <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden mt-1.5"><div id="barJawab" class="h-full bg-brand-green rounded-full transition-all" style="width:0"></div></div>
+        </div>
+        <button onclick="mintaKumpul()" class="shrink-0 bg-brand-green text-white font-bold px-4 py-3 rounded-xl text-xs shadow-md active:scale-95 transition flex items-center gap-1.5">
+            <i class="fas fa-paper-plane"></i><span>Kumpulkan</span>
+        </button>
+    </div>
+</div>
+
+<!-- DRAWER BOTTOM SHEET DAFTAR SOAL -->
+<div id="sheet" class="fixed inset-0 bg-slate-900/60 z-[99998] hidden items-end justify-center" onclick="if(event.target===this) tutupNav()">
+    <div class="bg-white w-full max-w-md rounded-t-3xl p-5 shadow-2xl animate-in slide-in-from-bottom duration-200">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+                <h3 class="font-bold text-slate-800 text-sm">Navigasi Nomor Soal</h3>
+                <p class="text-[10px] text-slate-400">Ketuk nomor untuk langsung lompat ke soal</p>
+            </div>
+            <button onclick="tutupNav()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-sm active:scale-95"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="navGrid" class="grid grid-cols-5 gap-2.5 py-4 max-h-[50vh] overflow-y-auto"></div>
+        <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-medium">
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-emerald-600 inline-block"></span> Terjawab</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-amber-100 border border-amber-400 inline-block"></span> Ragu-ragu</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-white border border-slate-300 inline-block"></span> Belum dijawab</span>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL KONFIRMASI -->
+<div id="modal" class="fixed inset-0 bg-slate-900/60 z-[99999] hidden items-end sm:items-center justify-center">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl">
+        <div id="mIkon" class="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-xl mx-auto mb-3"></div>
+        <h3 id="mJudul" class="font-bold text-slate-800 text-center text-sm"></h3>
+        <p id="mKet" class="text-[11px] text-slate-500 text-center mt-1.5 leading-relaxed"></p>
+        <div class="grid grid-cols-2 gap-2 mt-5">
+            <button onclick="jawabModal(false)" id="mBatal" class="py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs active:scale-95 transition">Batal</button>
+            <button onclick="jawabModal(true)" id="mOk" class="py-3 rounded-xl bg-brand-green text-white font-bold text-xs active:scale-95 transition">Lanjutkan</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const HURUF = ['A', 'B', 'C', 'D'];
+const TKT = {
+    mudah: ['Mudah', 'emerald', 'fa-seedling'],
+    sedang: ['Sedang', 'sky', 'fa-feather'],
+    sulit: ['Sulit', 'amber', 'fa-fire'],
+    hots: ['HOTS', 'purple', 'fa-brain']
+};
+const TKT_HEX = { mudah: '#10b981', sedang: '#0ea5e9', sulit: '#f59e0b', hots: '#8b5cf6' };
+
+/* ===== BANK SOAL PILIHAN GANDA KREASI (10 BUTIR VALID & EDUKATIF) ===== */
+const BANK_SOAL_KREASI = [
+    {
+        p: "Dalam menyusun naskah argumentasi bertema lingkungan hidup, manakah di antara kalimat berikut yang paling tepat berperan sebagai kalimat tesis?",
+        opsi: [
+            "Pohon mangga di pekarangan rumah kami sudah berbuah lebat sejak bulan lalu.",
+            "Pemerintah kota sebaiknya mewajibkan pemilahan sampah dari tingkat rumah tangga guna menekan volume residu di TPA.",
+            "Sampah plastik membutuhkan waktu ratusan tahun untuk dapat terurai secara alami.",
+            "Banyak orang membuang sampah sembarangan ketika tidak ada petugas kebersihan yang berjaga."
+        ],
+        j: 1,
+        tingkat: "sedang",
+        waktu: 60,
+        bahas: "Kalimat opsi B menyatakan pendapat/sikap penulis yang memiliki muatan masalah dan solusi terukur (arguable), sehingga memenuhi kriteria tesis utama. Opsi A dan C adalah fakta deskriptif, sedangkan opsi D adalah observasi biasa."
+    },
+    {
+        p: "Cermati kutipan berikut:\n'Pendidikan vokasi membekali siswa dengan keterampilan terapan siap kerja. _____, lulusan SMK memiliki tingkat adaptasi teknis yang cepat di industri.'\nKonjungsi kausalitas yang paling logis untuk melengkapi bagian rumpang adalah...",
+        opsi: [
+            "Oleh karena itu",
+            "Meskipun demikian",
+            "Padahal",
+            "Sebaliknya"
+        ],
+        j: 0,
+        tingkat: "mudah",
+        waktu: 60,
+        bahas: "Kalimat kedua adalah akibat logis (simpulan) dari kalimat pertama (sebab). Konjungsi antarkalimat kausalitas yang tepat untuk menyatakan akibat/kesimpulan adalah 'Oleh karena itu'."
+    },
+    {
+        p: "Seorang penulis ingin mendukung tesis bahwa 'Kecanduan gawai menurunkan kualitas tidur remaja'. Argumen berbasis bukti (evidence-based) yang paling kokoh untuk disertakan adalah...",
+        opsi: [
+            "Saya merasa sangat mengantuk di kelas setelah semalam bermain gim ponsel hingga larut.",
+            "Penelitian IDAI (2023) mencatat 68% remaja yang menatap layar gawai sebelum tidur mengalami gangguan ritme sirkadian dan penurunan fase REM.",
+            "Banyak orang tua mengeluh anak-anak zaman sekarang sulit dibangunkan pagi hari.",
+            "Gawai memang memiliki cahaya biru yang menurut sebagian teman saya cukup menyilaukan mata."
+        ],
+        j: 1,
+        tingkat: "sedang",
+        waktu: 60,
+        bahas: "Argumen yang kokoh harus didukung data empiris atau hasil penelitian dari institusi kredibel. Opsi B menyajikan data riset kuantitatif IDAI yang relevan dan ilmiah, bukan sekadar pengalaman pribadi atau desas-desus."
+    },
+    {
+        p: "Bacalah kutipan sanggahan berikut:\n'Pendapat Anda tentang pentingnya kendaraan listrik tidak perlu didengar karena Anda sendiri belum memiliki mobil listrik.'\nKekeliruan bernalar (logical fallacy) yang terjadi pada kutipan tersebut adalah...",
+        opsi: [
+            "False Cause (salah menyimpulkan sebab-akibat)",
+            "Argumentum ad Hominem (menyerang pribadi penutur, bukan substansi argumen)",
+            "Slippery Slope (mengasumsikan rentetan akibat ekstrem)",
+            "Hasty Generalization (generalisasi terburu-buru tanpa sampel cukup)"
+        ],
+        j: 1,
+        tingkat: "hots",
+        waktu: 60,
+        bahas: "Kutipan tersebut menyerang kepemilikan pribadi lawan bicara (Ad Hominem) alih-alih membedah validitas atau data mengenai manfaat kendaraan listrik."
+    },
+    {
+        p: "Dalam teknik penulisan esai kritis, fungsi utama menyertakan argumen tandingan (counter-argument) yang diikuti bantahan (rebuttal) adalah untuk...",
+        opsi: [
+            "Membuat naskah menjadi lebih panjang agar memenuhi batas minimum kata.",
+            "Menunjukkan keraguan penulis terhadap pendapat yang sedang dipertahankan.",
+            "Mengantisipasi kritik pembaca dan membuktikan bahwa posisi penulis telah mempertimbangkan berbagai sudut pandang secara matang.",
+            "Menghibur pembaca dengan sudut pandang yang lucu dan kontroversial."
+        ],
+        j: 2,
+        tingkat: "sulit",
+        waktu: 60,
+        bahas: "Menyertakan argumen tandingan beserta bantahan ilmiah menunjukkan objektivitas dan kekuatan dialektika penulis, sehingga naskah lebih meyakinkan dan tahan uji terhadap sanggahan."
+    },
+    {
+        p: "Manakah kalimat berikut yang menggunakan verba mental evaluatif yang sesuai dengan kaidah kebahasaan teks argumentasi baku?",
+        opsi: [
+            "Pemerintah membangun jalan tol sepanjang puluhan kilometer di pulau tersebut.",
+            "Kami menduga bahwa angka kenaikan harga bahan pokok terjadi begitu saja.",
+            "Peneliti menyimpulkan bahwa kebiasaan sarapan bergizi berkorelasi positif dengan daya konsentrasi siswa.",
+            "Siswa berjalan kaki menuju perpustakaan daerah setiap hari Rabu sore."
+        ],
+        j: 2,
+        tingkat: "sedang",
+        waktu: 60,
+        bahas: "Kata 'menyimpulkan' merupakan verba mental yang menyatakan proses penafsiran/penalaran intelektual berdasarkan analisis, yang menjadi ciri khas penulisan ilmiah argumentatif."
+    },
+    {
+        p: "Cermati simpulan teks argumentasi berikut:\n'Berdasarkan bukti penurunan debit air tanah dan bahaya amblesan, pembatasan ekstraksi sumur dalam di kawasan pesisir mendesak direalisasikan.'\nKarakteristik simpulan yang baik pada kutipan di atas ditunjukkan oleh...",
+        opsi: [
+            "Menyajikan topik permasalahan baru yang sama sekali berbeda dari paragraf sebelumnya.",
+            "Merangkum inti premis utama dan menegaskan kembali urgensi tesis tanpa bertele-tele.",
+            "Mengajukan pertanyaan retoris tanpa memberikan solusi konkret.",
+            "Meminta maaf kepada pembaca jika data yang disajikan kurang lengkap."
+        ],
+        j: 1,
+        tingkat: "sulit",
+        waktu: 60,
+        bahas: "Simpulan argumentasi yang efektif merangkum premis kunci yang telah dibahas dan menegaskan kembali pendirian penulis (reiterasi tesis) secara ringkas dan solutif."
+    },
+    {
+        p: "Paragraf yang diawali dengan penyajian data kemacetan di beberapa titik kota, kerugian ekonomi triliunan rupiah per tahun, lalu diakhiri kesimpulan bahwa sistem transportasi massal berbasis rel harus dipercepat, menggunakan pola penalaran...",
+        opsi: [
+            "Deduktif (umum ke khusus)",
+            "Induktif (khusus berupa bukti-bukti menuju kesimpulan umum)",
+            "Naratif kronologis",
+            "Deskriptif spasial"
+        ],
+        j: 1,
+        tingkat: "hots",
+        waktu: 60,
+        bahas: "Paragraf yang menjabarkan rangkaian fakta/kasus khusus terlebih dahulu lalu ditarik simpulan umum di akhir adalah paragraf berpenalaran induktif."
+    },
+    {
+        p: "Manakah pasangan konjungsi antarkalimat yang paling tepat untuk menyajikan sudut pandang kontras (pertentangan) dalam menyusun sanggahan?",
+        opsi: [
+            "Bahkan dan Selain itu",
+            "Namun dan Sebaliknya",
+            "Karena dan Oleh sebab itu",
+            "Misalnya dan Seperti halnya"
+        ],
+        j: 1,
+        tingkat: "mudah",
+        waktu: 60,
+        bahas: "'Namun' dan 'Sebaliknya' adalah konjungsi antarkalimat yang menyatakan pertentangan atau kontradiksi, sangat vital dalam menyusun sanggahan atas argumen tandingan."
+    },
+    {
+        p: "Kalimat draf: 'Menurut opini pandangan saya pribadi sih, penggunaan gawai berlebihan itu dampaknya buruk sekali untuk mata kita.'\nPerbaikan kalimat di atas agar menjadi kalimat argumentatif yang lugas, baku, dan objektif adalah...",
+        opsi: [
+            "Saya rasa gawai itu membuat mata kita jadi sakit kalau dipakai kelamaan.",
+            "Penggunaan gawai berdurasi berlebih terbukti berdampak buruk terhadap kesehatan mata.",
+            "Opini pribadi saya menyatakan kalau gawai itu tidak ada baik-baiknya untuk mata.",
+            "Menurut pandangan pribadi, gawai sebaiknya jangan pernah dipakai sama sekali."
+        ],
+        j: 1,
+        tingkat: "hots",
+        waktu: 60,
+        bahas: "Opsi B membuang pleonasme ('menurut opini pandangan saya pribadi sih'), menghilangkan kata percakapan nonbaku, dan menyusun kalimat secara denotatif, objektif, dan bernalar lugas."
+    }
+];
+
+window.modal = (judul, ket, ok, batal, ikon) => new Promise(r => {
+    window.resolveM = r;
+    $('mJudul').textContent = judul;
+    $('mKet').textContent = ket;
+    $('mOk').textContent = ok || 'Lanjutkan';
+    $('mBatal').textContent = batal || 'Batal';
+    $('mIkon').innerHTML = '<i class="fas ' + (ikon || 'fa-triangle-exclamation') + '"></i>';
+    $('modal').classList.replace('hidden', 'flex');
+});
+window.jawabModal = v => {
+    $('modal').classList.replace('flex', 'hidden');
+    if (window.resolveM) { window.resolveM(v); window.resolveM = null; }
+};
+window.badge = t => {
+    const arr = TKT[t] || TKT.sedang;
+    return '<span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-' + arr[1] + '-100 text-' + arr[1] + '-700"><i class="fas ' + arr[2] + '"></i>' + arr[0] + '</span>';
+};
+
+/* ===== INISIALISASI LATIHAN ===== */
+async function initLatihan() {
+    await L.siap();
+
+    // 1. Cek apakah ada hasil tersimpan
+    const hDenganHasil = L.cariHariDenganHasil();
+    if (hDenganHasil) {
+        window.H = hDenganHasil;
+        window.soal = BANK_SOAL_KREASI;
+        window.totalWaktu = 600;
+        return window.tampilHasil();
+    }
+
+    // 2. Cek apakah ada sesi berjalan
+    const hDenganSesi = L.cariHariDenganSesi();
+    if (hDenganSesi) {
+        window.H = hDenganSesi;
+        window.soal = BANK_SOAL_KREASI;
+        window.totalWaktu = 600;
+        window.sesi = hDenganSesi.sesi.pilgan;
+        return Date.now() >= window.sesi.batas ? window.kumpulkan(true) : window.renderUjian();
+    }
+
+    // 3. Tampilkan Intro
+    let H = L.hari();
+    if (!H) {
+        const S = L.state();
+        const k = 'c' + Date.now();
+        S.hari[k] = { sesi: {}, hasil: {}, spin: { ts: Date.now(), judul: 'Teknik Penulisan Teks Argumentasi' } };
+        H = S.hari[k];
+        L.simpan(true);
+    }
+    window.H = H;
+    window.soal = BANK_SOAL_KREASI;
+    window.totalWaktu = 600; // 10 menit
+    window.tampilIntro();
+}
+
+/* ===== TAMPILKAN INTRO LEMBAR KERJA ===== */
+window.tampilIntro = function() {
+    const hit = {}; window.soal.forEach(s => hit[s.tingkat] = (hit[s.tingkat] || 0) + 1);
+    const tkBadge = ['mudah', 'sedang', 'sulit', 'hots'].filter(t => hit[t]).map(t => '<span class="flex items-center gap-1.5">' + badge(t) + '<b class="text-[11px] text-slate-600">×' + hit[t] + '</b></span>').join('');
+
+    $('main').innerHTML = [
+        '<div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mt-2">',
+        '<div class="px-5 py-6 text-center text-white" style="background:linear-gradient(135deg,#064e3b,#059669 65%,#34d399)">',
+        '<div class="w-16 h-16 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center text-3xl mx-auto"><i class="fas fa-circle-check"></i></div>',
+        '<p class="text-[10px] font-bold tracking-[.25em] text-white/70 mt-3">RUANG KREASI</p>',
+        '<h2 class="font-extrabold text-lg leading-tight mt-0.5">Pilihan Ganda Kreasi</h2>',
+        '<p class="text-[11px] text-white/80 mt-1.5 leading-relaxed">Materi: <b>Teknik Penulisan &amp; Kaidah Argumentasi</b></p>',
+        '</div>',
+        '<div class="p-5">',
+        '<div class="grid grid-cols-3 gap-2.5">',
+        '<div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-xl font-extrabold text-slate-800">' + window.soal.length + '</p><p class="text-[10px] text-slate-500 font-semibold">Butir Soal</p></div>',
+        '<div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-xl font-extrabold text-slate-800">' + L.menit(window.totalWaktu) + '</p><p class="text-[10px] text-slate-500 font-semibold">Menit</p></div>',
+        '<div class="bg-slate-50 rounded-xl p-3 text-center"><p class="text-xl font-extrabold text-amber-500">100</p><p class="text-[10px] text-slate-500 font-semibold">Skor Maks</p></div>',
+        '</div>',
+        '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-5 mb-2">Komposisi Tingkat Soal</p>',
+        '<div class="flex flex-wrap gap-2">' + tkBadge + '</div>',
+        '<ul class="mt-5 space-y-2.5 text-[11px] text-slate-600 leading-relaxed">',
+        '<li class="flex gap-2.5"><i class="fas fa-clock text-amber-500 mt-0.5 w-4 text-center"></i><span>Waktu pengerjaan total 10 menit untuk 10 butir soal.</span></li>',
+        '<li class="flex gap-2.5"><i class="fas fa-flag text-amber-500 mt-0.5 w-4 text-center"></i><span>Gunakan tombol <b>Ragu</b> jika belum yakin, lalu tinjau lewat <b>Daftar Soal</b>.</span></li>',
+        '<li class="flex gap-2.5"><i class="fas fa-lightbulb text-emerald-500 mt-0.5 w-4 text-center"></i><span>Setelah mengumpulkan, <b>pembahasan lengkap muncul seketika</b> dan dapat diunduh sebagai PDF resmi.</span></li>',
+        '<li class="flex gap-2.5"><i class="fas fa-bolt text-amber-500 mt-0.5 w-4 text-center"></i><span>Nilai yang diperoleh otomatis menyumbang <b>Poin XP</b> ke profil Ruang Kreasi Anda.</span></li>',
+        '</ul>',
+        '<button onclick="mulai()" class="mt-6 w-full bg-brand-green text-white font-bold py-3.5 rounded-xl shadow-md text-sm active:scale-95 transition flex items-center justify-center gap-2"><i class="fas fa-play text-xs"></i><span>Mulai Mengerjakan</span></button>',
+        '</div></div>'
+    ].join('');
+};
+
+window.mulai = async function() {
+    if (!(await modal('Mulai latihan sekarang?', 'Waktu akan langsung berjalan dan latihan ini dapat Anda ulangi kapan saja.', 'Mulai', 'Batal', 'fa-play'))) return;
+    const t = Date.now();
+    window.H.sesi.pilgan = window.sesi = { mulai: t, batas: t + window.totalWaktu * 1000, jawab: {}, ragu: {}, keluar: 0 };
+    L.simpan();
+    renderUjian();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+/* ===== LEMBAR KERJA UJIAN ===== */
+window.renderUjian = function() {
+    window.aktif = true;
+    window.sesi.ragu = window.sesi.ragu || {};
+    $('hTimer').classList.remove('hidden');
+    $('barWaktu').classList.remove('hidden');
+    $('bar').classList.remove('hidden');
+    $('btnBack').onclick = e => { e.preventDefault(); L.toast('Latihan sedang berjalan. Selesaikan dan kumpulkan jawabanmu terlebih dahulu.', true); };
+
+    const html = [
+        '<div class="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm">',
+        '<div class="px-4 py-3 text-white" style="background:linear-gradient(135deg,#064e3b,#059669)">',
+        '<p class="text-[9px] font-extrabold tracking-[.3em] text-white/70">LEMBAR KERJA SISWA</p>',
+        '<h2 class="font-reading font-bold text-base leading-tight mt-0.5">Pilihan Ganda Kreasi Argumentasi</h2></div>',
+        '<div class="kertas-head px-4 py-3 text-[11px] text-slate-600 space-y-1.5">',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Nama Siswa</b><span class="mr-1">:</span><span class="font-semibold text-slate-800 break-words min-w-0">' + L.esc(L.nama()) + '</span></p>',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Materi</b><span class="mr-1">:</span><span>Teknik Penulisan Teks Argumentasi</span></p>',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Jumlah Soal</b><span class="mr-1">:</span><span>' + window.soal.length + ' butir</span></p>',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Petunjuk</b><span class="mr-1">:</span><span>Pilihlah salah satu opsi A, B, C, atau D yang paling tepat.</span></p>',
+        '</div></div>',
+        '<div id="daftar" class="space-y-4 mt-4">'
+    ];
+
+    window.soal.forEach((s, i) => {
+        const ragu = window.sesi.ragu[i] ? ' on' : '';
+        html.push('<article id="q' + i + '" class="q-card scroll-mt-24 p-4" style="--c:' + TKT_HEX[s.tingkat] + '">');
+        html.push('<div class="flex items-center gap-2 mb-3"><span class="q-no">' + (i + 1) + '</span>' + badge(s.tingkat) + '<button class="flag ml-auto' + ragu + '" data-flag="' + i + '"><i class="fas fa-flag"></i><span>Ragu</span></button></div>');
+        html.push('<p class="font-reading text-[13.5px] text-slate-800 leading-[1.85] mb-3.5">' + L.esc(s.p) + '</p>');
+        html.push('<div class="space-y-2">');
+        s.opsi.forEach((o, k) => {
+            const sel = window.sesi.jawab[i] === k ? ' sel' : '';
+            html.push('<button class="opsi' + sel + '" data-i="' + i + '" data-k="' + k + '"><span class="huruf">' + HURUF[k] + '</span><span class="text-[12.5px] text-slate-700 leading-snug pt-0.5 flex-1">' + L.esc(o) + '</span><i class="fas fa-circle-check cek"></i></button>');
+        });
+        html.push('</div></article>');
+    });
+
+    html.push('</div><div class="h-6"></div>');
+    $('main').innerHTML = html.join('');
+
+    $('daftar').addEventListener('click', e => {
+        if (!window.aktif) return;
+        const fl = e.target.closest('.flag');
+        if (fl) {
+            const i = +fl.dataset.flag;
+            if (window.sesi.ragu[i]) delete window.sesi.ragu[i]; else window.sesi.ragu[i] = 1;
+            fl.classList.toggle('on', !!window.sesi.ragu[i]);
+            L.simpan(); hitungJawab();
+            return;
+        }
+        const b = e.target.closest('.opsi'); if (!b) return;
+        const i = +b.dataset.i, k = +b.dataset.k;
+        const sudah = b.classList.contains('sel');
+        b.parentElement.querySelectorAll('.opsi').forEach(x => x.classList.remove('sel'));
+        if (sudah) { delete window.sesi.jawab[i]; }
+        else { window.sesi.jawab[i] = k; b.classList.add('sel'); if (navigator.vibrate) navigator.vibrate(8); }
+        L.simpan();
+        hitungJawab();
+    });
+
+    $('navGrid').onclick = e => {
+        const b = e.target.closest('[data-go]'); if (!b) return;
+        tutupNav();
+        const el = $('q' + b.dataset.go);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    hitungJawab();
+    jalankanWaktu();
+};
+
+window.hitungJawab = function() {
+    const n = Object.keys(window.sesi.jawab).length;
+    $('barInfo').textContent = n + ' dari ' + window.soal.length + ' soal terjawab';
+    $('barJawab').style.width = (n / window.soal.length * 100) + '%';
+    const r = Object.keys(window.sesi.ragu || {}).length, br = $('barRagu');
+    br.textContent = r;
+    br.classList.toggle('hidden', r === 0);
+};
+
+window.bukaNav = function() {
+    let h = '';
+    window.soal.forEach((s, i) => {
+        const a = window.sesi.jawab[i] !== undefined, r = !!(window.sesi.ragu && window.sesi.ragu[i]);
+        h += '<button data-go="' + i + '" class="nav-n' + (a ? ' nav-a' : '') + (r ? ' nav-r' : '') + '">' + (i + 1) + (r ? '<i class="fas fa-flag text-[8px] ml-0.5"></i>' : '') + '</button>';
+    });
+    $('navGrid').innerHTML = h;
+    $('sheet').classList.replace('hidden', 'flex');
+};
+window.tutupNav = function() { $('sheet').classList.replace('flex', 'hidden'); };
+
+window.jalankanWaktu = function() {
+    const tot = window.sesi.batas - window.sesi.mulai;
+    clearInterval(window.timer);
+    const tik = () => {
+        const sisa = Math.ceil((window.sesi.batas - Date.now()) / 1000);
+        $('hTimerTxt').textContent = L.fmt(sisa);
+        $('barWaktuIsi').style.width = Math.max(0, (window.sesi.batas - Date.now()) / tot * 100) + '%';
+        const krit = sisa <= 60;
+        $('hTimer').classList.toggle('waktu-kritis', krit);
+        if (sisa <= 0) kumpulkan(true);
+    };
+    tik(); window.timer = setInterval(tik, 400);
+};
+
+window.mintaKumpul = async function() {
+    const sisa = window.soal.length - Object.keys(window.sesi.jawab).length;
+    const ragu = Object.keys(window.sesi.ragu || {}).length;
+    let ket = sisa ? 'Masih ada ' + sisa + ' soal belum dijawab. ' : 'Semua soal sudah dijawab. ';
+    if (ragu) ket += 'Ada ' + ragu + ' soal yang kamu tandai ragu-ragu. ';
+    ket += 'Setelah dikumpulkan, jawaban akan langsung dinilai.';
+    if (await modal('Kumpulkan jawaban?', ket, 'Kumpulkan', 'Periksa Lagi', 'fa-paper-plane')) kumpulkan(false);
+};
+
+window.kumpulkan = async function(auto) {
+    if (window.H.hasil && window.H.hasil.pilgan) return;
+    window.aktif = false;
+    clearInterval(window.timer);
+    tutupNav();
+
+    const jawab = window.sesi.jawab;
+    const benar = window.soal.filter((s, i) => jawab[i] === s.j).length;
+    const skor = Math.round(benar / window.soal.length * 100);
+    const xp = Math.round(skor / 3) + (skor >= 80 ? 15 : 0);
+    L.tambahXp(xp);
+    try {
+        const latArg = JSON.parse(localStorage.getItem('hasilLatihanArg') || '{}');
+        latArg['kreasi_pilgan'] = skor;
+        localStorage.setItem('hasilLatihanArg', JSON.stringify(latArg));
+    } catch (e) {}
+
+    window.H.hasil = window.H.hasil || {};
+    window.H.hasil.pilgan = {
+        skor: skor,
+        benar: benar,
+        total: window.soal.length,
+        jawab: jawab,
+        durasi: Math.round((Math.min(Date.now(), window.sesi.batas) - window.sesi.mulai) / 1000),
+        batas: window.totalWaktu,
+        selesai: Date.now(),
+        auto: !!auto,
+        xp: xp
+    };
+
+    delete window.H.sesi.pilgan;
+    L.simpan();
+
+    $('btnBack').onclick = null;
+    $('btnBack').href = 'index.html';
+
+    if (auto) L.toast('Waktu habis. Jawabanmu otomatis dikumpulkan.', true);
+    window.tampilHasil(true);
+};
+
+/* ===== TAMPILAN HASIL + PEMBAHASAN ===== */
+const tglIndo = t => new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+window.tampilHasil = function(baru) {
+    const R = window.H.hasil.pilgan;
+    window.aktif = false;
+    $('hTimer').classList.add('hidden');
+    $('barWaktu').classList.add('hidden');
+    $('bar').classList.add('hidden');
+    $('btnBack').onclick = null;
+    $('btnBack').href = 'index.html';
+
+    const tk = {}; window.soal.forEach((s, i) => { const t = tk[s.tingkat] = tk[s.tingkat] || { n: 0, b: 0 }; t.n++; if (R.jawab[i] === s.j) t.b++; });
+    const urut = ['mudah', 'sedang', 'sulit', 'hots'].filter(t => tk[t]);
+    const kosong = window.soal.filter((s, i) => R.jawab[i] === undefined).length;
+    const salah = R.total - R.benar - kosong;
+
+    const pesan = R.skor >= 80 ? ['Luar biasa!', 'Pemahaman teknik menulis argumentasimu sangat matang.', 'fa-trophy', '#fcd34d']
+        : R.skor >= 60 ? ['Bagus!', 'Kemampuan analisismu sudah baik, tinggal perkuat lagi.', 'fa-thumbs-up', '#fcd34d']
+        : ['Tetap semangat!', 'Pelajari pembahasan di bawah untuk memperbaiki pemahamanmu.', 'fa-book-open', '#fda4af'];
+
+    const html = [
+        // Kartu Skor Utama
+        '<div class="rounded-3xl p-5 text-center text-white shadow-lg" style="background:linear-gradient(135deg,#064e3b,#059669 60%,#34d399)">',
+        '<i class="fas ' + pesan[2] + '" style="font-size:52px;color:' + pesan[3] + ';filter:drop-shadow(0 4px 3px rgba(0,0,0,.3))"></i>',
+        '<p class="text-[10px] uppercase tracking-[.25em] text-white/70 font-semibold mt-3">SKOR AKHIR</p>',
+        '<div class="flex items-end justify-center gap-1"><span class="text-6xl font-extrabold leading-none">' + R.skor + '</span><span class="text-xl font-bold text-white/70 mb-1">/100</span></div>',
+        '<p class="font-extrabold text-base mt-2">' + pesan[0] + '</p>',
+        '<p class="text-[11px] text-white/80 mt-0.5">' + pesan[1] + '</p>',
+        '<span class="inline-block mt-3 bg-white/20 rounded-full px-3.5 py-1 text-[11px] font-bold"><i class="fas fa-bolt text-amber-300 mr-1"></i>+' + R.xp + ' XP Kreasi</span>',
+        R.auto ? '<p class="text-[10px] text-amber-200 mt-2"><i class="fas fa-clock mr-1"></i>Dikumpulkan otomatis karena batas waktu</p>' : '',
+        '</div>',
+
+        // 4 Statistik
+        '<div class="grid grid-cols-4 gap-2 mt-3">',
+        '<div class="bg-white rounded-xl p-2.5 text-center border border-slate-200"><p class="text-lg font-extrabold text-emerald-600">' + R.benar + '</p><p class="text-[9px] font-semibold text-slate-500">Benar</p></div>',
+        '<div class="bg-white rounded-xl p-2.5 text-center border border-slate-200"><p class="text-lg font-extrabold text-rose-500">' + salah + '</p><p class="text-[9px] font-semibold text-slate-500">Salah</p></div>',
+        '<div class="bg-white rounded-xl p-2.5 text-center border border-slate-200"><p class="text-lg font-extrabold text-slate-400">' + kosong + '</p><p class="text-[9px] font-semibold text-slate-500">Kosong</p></div>',
+        '<div class="bg-white rounded-xl p-2.5 text-center border border-slate-200"><p class="text-lg font-extrabold text-slate-700">' + L.fmt(R.durasi) + '</p><p class="text-[9px] font-semibold text-slate-500">Durasi</p></div>',
+        '</div>',
+
+        // Rapor Tugas & Unduh PDF
+        '<div class="bg-white rounded-2xl border border-slate-200 mt-3 overflow-hidden shadow-xs">',
+        '<div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200"><h3 class="font-bold text-slate-800 text-xs"><i class="fas fa-id-card text-brand-green mr-1.5"></i>Rapor Latihan Siswa</h3></div>',
+        '<div class="p-4 text-[11px] text-slate-600 space-y-1.5">',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Nama Siswa</b><span class="mr-1">:</span><span class="font-semibold text-slate-800 break-words min-w-0">' + L.esc(L.nama()) + '</span></p>',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Jenis Latihan</b><span class="mr-1">:</span><span>Pilihan Ganda Kreasi Argumentasi</span></p>',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Materi</b><span class="mr-1">:</span><span>Teknik Penulisan &amp; Kaidah Argumentasi</span></p>',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Tanggal Selesai</b><span class="mr-1">:</span><span>' + L.esc(tglIndo(R.selesai)) + '</span></p>',
+        '<p class="flex"><b class="w-24 shrink-0 text-slate-700">Waktu Tempuh</b><span class="mr-1">:</span><span>' + L.fmt(R.durasi) + ' dari ' + L.fmt(R.batas) + '</span></p>',
+        '</div>',
+        '<div class="px-4 pb-4"><button onclick="unduhPdf()" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 rounded-xl shadow-md text-xs active:scale-95 transition flex items-center justify-center gap-2"><i class="fas fa-file-pdf"></i><span>Unduh Hasil &amp; Pembahasan (PDF)</span></button></div>',
+        '</div>',
+
+        // Analisis per Tingkat Kesulitan
+        '<div class="bg-white rounded-2xl border border-slate-200 p-4 mt-3 shadow-xs">',
+        '<h3 class="font-bold text-slate-800 text-xs mb-3"><i class="fas fa-chart-simple text-blue-500 mr-1.5"></i>Analisis per Tingkat Kesulitan</h3>',
+        '<div class="space-y-3">',
+        urut.map(t => {
+            const p = Math.round(tk[t].b / tk[t].n * 100);
+            return '<div><div class="flex justify-between items-center mb-1">' + badge(t) + '<span class="text-[11px] font-bold text-slate-600">' + tk[t].b + '/' + tk[t].n + ' (' + p + '%)</span></div><div class="h-2.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full transition-all duration-700" style="width:' + p + '%;background:' + TKT_HEX[t] + '"></div></div></div>';
+        }).join(''),
+        '</div></div>',
+
+        // Pembahasan
+        '<div class="flex items-center justify-between mt-5 mb-3"><h3 class="font-bold text-slate-800 text-sm"><i class="fas fa-lightbulb text-amber-500 mr-1.5"></i>Pembahasan Soal</h3></div>',
+        '<div id="filter" class="flex gap-1.5 mb-3 flex-wrap"></div>',
+        '<div id="bahas" class="space-y-3"></div>',
+
+        // Tombol Aksi Lanjutan Ruang Kreasi
+        '<div class="bg-white rounded-2xl border border-slate-200 p-4 mt-4 shadow-xs">',
+        '<h3 class="font-bold text-slate-800 text-xs mb-3"><i class="fas fa-compass text-brand-green mr-1.5"></i>Langkah Kreasi Selanjutnya</h3>',
+        '<div class="grid grid-cols-2 gap-2">',
+        '<button onclick="ulangiLatihan()" class="p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs text-center active:scale-95 transition"><i class="fas fa-rotate mr-1"></i>Ulangi Latihan</button>',
+        '<a href="tulis.html" class="p-3 rounded-xl bg-brand-green hover:bg-emerald-700 text-white font-bold text-xs text-center shadow-xs active:scale-95 transition"><i class="fas fa-pen-nib mr-1"></i>Tulis Naskah</a>',
+        '<a href="ide.html" class="p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs text-center active:scale-95 transition"><i class="fas fa-lightbulb text-amber-500 mr-1"></i>Kreasi Ide</a>',
+        '<a href="index.html" class="p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs text-center active:scale-95 transition"><i class="fas fa-house text-emerald-600 mr-1"></i>Ruang Kreasi</a>',
+        '</div></div>'
+    ].join('');
+
+    $('main').innerHTML = html;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    filterBahas('semua');
+
+    if (baru) {
+        try {
+            if (R.skor >= 80) {
+                L.beep('ok');
+                setTimeout(() => window.confetti && confetti({ particleCount: 120, spread: 80, origin: { y: .4 }, zIndex: 100001 }), 300);
+            } else {
+                L.beep(R.skor >= 60 ? 'ok' : 'err');
+            }
+        } catch(e) {}
+    }
+};
+
+window.filterBahas = function(f) {
+    const R = window.H.hasil.pilgan;
+    const status = i => R.jawab[i] === undefined ? 'kosong' : (R.jawab[i] === window.soal[i].j ? 'benar' : 'salah');
+    const cnt = { semua: window.soal.length, salah: 0, benar: 0 };
+    window.soal.forEach((s, i) => { const st = status(i); if (st === 'benar') cnt.benar++; else cnt.salah++; });
+
+    $('filter').innerHTML = [['semua', 'Semua'], ['salah', 'Salah / Kosong'], ['benar', 'Benar']].map(x =>
+        '<button onclick="filterBahas(\'${x[0]}\')" class="px-3 py-1.5 rounded-full text-[10px] font-bold border transition ' + (f === x[0] ? 'bg-brand-green text-white border-brand-green' : 'bg-white text-slate-500 border-slate-200') + '">' + x[1] + ' (' + cnt[x[0]] + ')</button>').join('');
+
+    const arr = window.soal.map((s, i) => [s, i]).filter(x => {
+        const st = status(x[1]);
+        return f === 'semua' || (f === 'benar' ? st === 'benar' : st !== 'benar');
+    });
+
+    if (!arr.length) {
+        $('bahas').innerHTML = '<div class="bg-white rounded-2xl p-6 text-center text-xs text-emerald-600 font-semibold border border-emerald-100"><i class="fas fa-circle-check mr-1"></i> Tidak ada soal pada kategori ini.</div>';
+        return;
+    }
+
+    $('bahas').innerHTML = arr.map(([s, i]) => {
+        const st = status(i), u = R.jawab[i];
+        const c = st === 'benar' ? 'emerald' : 'rose';
+        const lbl = st === 'benar' ? 'BENAR' : st === 'kosong' ? 'TIDAK DIJAWAB' : 'SALAH';
+
+        const opsiHtml = s.opsi.map((o, k) => {
+            const kunci = k === s.j, pilih = k === u;
+            const bg = kunci ? 'bg-emerald-50 border-emerald-300' : (pilih ? 'bg-rose-50 border-rose-300' : 'bg-white border-slate-200');
+            const hBg = kunci ? 'bg-emerald-500 text-white' : (pilih ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-500');
+            let badgeText = '';
+            if (kunci && pilih) badgeText = '<span class="text-[9px] text-emerald-700 font-bold ml-auto"><i class="fas fa-check-double mr-1"></i>Jawaban Anda (Benar)</span>';
+            else if (kunci) badgeText = '<span class="text-[9px] text-emerald-700 font-bold ml-auto"><i class="fas fa-check mr-1"></i>Kunci Jawaban</span>';
+            else if (pilih) badgeText = '<span class="text-[9px] text-rose-600 font-bold ml-auto"><i class="fas fa-times mr-1"></i>Jawaban Anda</span>';
+
+            return '<div class="p-2.5 rounded-xl border ' + bg + ' flex items-start gap-2 text-[12px]"><span class="w-5 h-5 rounded-full ' + hBg + ' font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">' + HURUF[k] + '</span><span class="flex-1 text-slate-700 leading-snug">' + L.esc(o) + '</span>' + badgeText + '</div>';
+        }).join('');
+
+        return '<article class="bg-white rounded-2xl border-2 border-' + c + '-200 p-4 shadow-xs">' +
+            '<div class="flex items-center justify-between mb-2"><span class="text-[10px] font-extrabold text-' + c + '-700 uppercase tracking-wider">Soal ' + (i + 1) + ' · ' + TKT[s.tingkat][0] + '</span><span class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-' + c + '-100 text-' + c + '-700">' + lbl + '</span></div>' +
+            '<p class="font-reading text-[13px] text-slate-800 leading-relaxed mb-3">' + L.esc(s.p) + '</p>' +
+            '<div class="space-y-1.5 mb-3">' + opsiHtml + '</div>' +
+            '<div class="bg-amber-50 border border-amber-200/80 rounded-xl p-3 text-[11px] leading-relaxed text-amber-900"><p class="font-bold text-[10px] text-amber-800 uppercase tracking-wide mb-1"><i class="fas fa-lightbulb text-amber-500 mr-1"></i>Pembahasan:</p>' + L.esc(s.bahas) + '</div>' +
+            '</article>';
+    }).join('');
+};
+
+window.ulangiLatihan = async function() {
+    if (!(await modal('Ulangi latihan?', 'Hasil latihan sebelumnya akan direset dan Anda dapat mengerjakan ulang.', 'Ulangi', 'Batal', 'fa-rotate'))) return;
+    delete window.H.hasil.pilgan;
+    L.simpan();
+    initLatihan();
+};
+
+/* ===== GENERATOR PDF HASIL & PEMBAHASAN ===== */
+function buatDokumenPdf() {
+    const R = window.H.hasil.pilgan;
+    const nama = L.nama(), materi = 'Teknik Penulisan Teks Argumentasi';
+    const W = { gelap: '#064e3b', hijau: '#059669', hijauMuda: '#d1fae5', merah: '#e11d48', merahMuda: '#ffe4e6', amber: '#d97706', amberMuda: '#fffbeb', abu: '#64748b', garis: '#e2e8f0', latar: '#f8fafc', biruMuda: '#e0f2fe', biru: '#0369a1' };
+    const warnaSkor = R.skor >= 80 ? W.hijau : R.skor >= 60 ? '#f59e0b' : W.merah;
+    const status = i => R.jawab[i] === undefined ? 'kosong' : (R.jawab[i] === window.soal[i].j ? 'benar' : 'salah');
+    const kosong = window.soal.filter((s, i) => R.jawab[i] === undefined).length;
+    const salah = R.total - R.benar - kosong;
+
+    const lbl = t => ({ text: t, fontSize: 7.5, bold: true, color: '#ffffff', fillColor: W.hijau, margin: [7, 5, 7, 5] });
+    const val = t => ({ text: String(t), bold: true, fontSize: 10, color: W.gelap, fillColor: W.latar, margin: [7, 7, 7, 7] });
+    const layoutKotak = { hLineWidth: () => 0.7, vLineWidth: () => 0.7, hLineColor: () => W.hijau, vLineColor: () => '#ffffff', paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 };
+    const judulBagian = t => ({ stack: [{ text: t, bold: true, fontSize: 12, color: W.gelap }, { canvas: [{ type: 'line', x1: 0, y1: 3, x2: 523, y2: 3, lineWidth: 1.2, lineColor: W.hijau }] }], margin: [0, 16, 0, 8] });
+
+    const content = [];
+
+    // Header Banner
+    content.push({
+        table: { widths: ['*'], body: [[{ stack: [
+            { text: 'LEMBAR HASIL LATIHAN KREASI', fontSize: 8.5, bold: true, color: '#a7f3d0', characterSpacing: 2 },
+            { text: 'Pilihan Ganda Kreasi Argumentasi', fontSize: 20, bold: true, color: '#ffffff', margin: [0, 3, 0, 2] },
+            { text: 'Platform Pembelajaran Bahasa Indonesia', fontSize: 9.5, color: '#d1fae5' }
+        ], fillColor: W.gelap, margin: [18, 16, 18, 16] }]] },
+        layout: 'noBorders'
+    });
+
+    // Identitas
+    content.push({ margin: [0, 12, 0, 0], table: { widths: ['*', '*', '*', '*'], body: [
+        [lbl('NAMA SISWA'), lbl('JENIS TUGAS'), lbl('MATERI'), lbl('TANGGAL')],
+        [val(nama), val('Pilihan Ganda Kreasi'), val(materi), val(tglIndo(R.selesai))]
+    ] }, layout: layoutKotak });
+
+    // Skor Card
+    const sel = (label, nilai, fill, warnaTeks, ukuran) => ({ fillColor: fill, margin: [7, 8, 7, 8], stack: [
+        { text: label, fontSize: 7.5, bold: true, color: warnaTeks, characterSpacing: 0.5 },
+        { text: String(nilai), fontSize: ukuran || 16, bold: true, color: warnaTeks, margin: [0, 2, 0, 0] }
+    ] });
+    content.push({ margin: [0, 8, 0, 0], table: { widths: ['*', '*', '*', '*', '*'], body: [[
+        sel('SKOR AKHIR', R.skor + ' / 100', warnaSkor, '#ffffff', 18),
+        sel('BENAR', R.benar, W.hijauMuda, W.gelap),
+        sel('SALAH', salah, W.merahMuda, W.merah),
+        sel('KOSONG', kosong, W.latar, W.abu),
+        sel('XP KREASI', '+' + R.xp, W.amberMuda, W.amber)
+    ]] }, layout: layoutKotak });
+
+    content.push({ text: 'Durasi pengerjaan: ' + L.fmt(R.durasi) + ' dari ' + L.fmt(R.batas) + (R.auto ? '  •  dikumpulkan otomatis' : ''), fontSize: 8.5, color: W.abu, margin: [0, 6, 0, 0] });
+
+    // Soal & Pembahasan
+    content.push(judulBagian('Soal, Jawaban & Pembahasan Lengkap'));
+    window.soal.forEach((s, i) => {
+        const st = status(i), u = R.jawab[i];
+        const c = st === 'benar' ? W.hijau : W.merah;
+        const label = st === 'benar' ? 'BENAR' : st === 'kosong' ? 'TIDAK DIJAWAB' : 'SALAH';
+        const tanpaPadding = { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 };
+
+        const opsiRows = s.opsi.map((o, k) => {
+            const kunci = k === s.j, pilih = k === u;
+            const fill = kunci ? W.hijauMuda : (pilih ? W.merahMuda : '#ffffff');
+            const fillHuruf = kunci ? W.hijau : (pilih ? W.merah : W.garis);
+            const teks = [{ text: String(o), color: kunci ? W.gelap : '#334155', bold: kunci || pilih }];
+            if (kunci && pilih) teks.push({ text: '   [JAWABAN ANDA = BENAR]', fontSize: 7.5, bold: true, color: W.hijau });
+            else if (kunci) teks.push({ text: '   [KUNCI JAWABAN]', fontSize: 7.5, bold: true, color: W.hijau });
+            else if (pilih) teks.push({ text: '   [JAWABAN ANDA]', fontSize: 7.5, bold: true, color: W.merah });
+            return [
+                { text: HURUF[k], bold: true, alignment: 'center', color: (kunci || pilih) ? '#ffffff' : W.abu, fillColor: fillHuruf, margin: [0, 4, 0, 4] },
+                { text: teks, fillColor: fill, margin: [8, 4, 8, 4], fontSize: 9.5 }
+            ];
+        });
+
+        const teksJawab = u === undefined ? 'Tidak dijawab' : (HURUF[u] + '. ' + (s.opsi[u] ?? ''));
+        const teksKunci = HURUF[s.j] + '. ' + (s.opsi[s.j] ?? '');
+
+        content.push({
+            margin: [0, 0, 0, 12],
+            table: {
+                dontBreakRows: true, widths: ['*'],
+                body: [
+                    [{ fillColor: c, margin: [10, 6, 10, 6], columns: [
+                        { text: 'SOAL ' + (i + 1) + '   |   TINGKAT: ' + TKT[s.tingkat][0].toUpperCase(), bold: true, fontSize: 9, color: '#ffffff' },
+                        { text: label, bold: true, fontSize: 9, color: '#ffffff', alignment: 'right' }
+                    ] }],
+                    [{ text: String(s.p), bold: true, fontSize: 10, lineHeight: 1.35, color: '#0f172a', fillColor: W.latar, margin: [10, 8, 10, 8] }],
+                    [{ table: { widths: [20, '*'], body: opsiRows }, layout: tanpaPadding }],
+                    [{ table: { widths: ['*', '*'], body: [[
+                        { fillColor: W.biruMuda, margin: [10, 6, 10, 6], stack: [{ text: 'JAWABAN SISWA', fontSize: 7.5, bold: true, color: W.biru }, { text: teksJawab, fontSize: 9, bold: true, color: u === undefined ? W.abu : '#0f172a', margin: [0, 2, 0, 0] }] },
+                        { fillColor: W.hijauMuda, margin: [10, 6, 10, 6], stack: [{ text: 'KUNCI JAWABAN', fontSize: 7.5, bold: true, color: W.hijau }, { text: teksKunci, fontSize: 9, bold: true, color: W.gelap, margin: [0, 2, 0, 0] }] }
+                    ]] }, layout: tanpaPadding }],
+                    [{ fillColor: W.amberMuda, margin: [10, 7, 10, 8], stack: [
+                        { text: 'PENJELASAN / PEMBAHASAN', fontSize: 7.5, bold: true, color: W.amber },
+                        { text: String(s.bahas), fontSize: 9, lineHeight: 1.35, color: '#334155', margin: [0, 3, 0, 0] }
+                    ] }]
+                ]
+            },
+            layout: { hLineWidth: () => 0.8, vLineWidth: () => 0.8, hLineColor: () => c, vLineColor: () => c, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 }
+        });
+    });
+
+    content.push({ text: 'Dokumen ini dibuat otomatis oleh Ruang Kreasi Argumentasi pada ' + tglIndo(Date.now()) + '.', fontSize: 8, color: W.abu, alignment: 'center', margin: [0, 8, 0, 0] });
+
+    return {
+        info: { title: 'Hasil Pilihan Ganda Kreasi - ' + nama, author: 'Ruang Kreasi Argumentasi', subject: materi },
+        pageSize: 'A4',
+        pageMargins: [36, 36, 36, 46],
+        defaultStyle: { fontSize: 10, lineHeight: 1.2, color: '#334155' },
+        footer: (cur, total) => ({ columns: [
+            { text: 'Ruang Kreasi Argumentasi  •  ' + nama, fontSize: 8, color: W.abu, margin: [36, 0, 0, 0] },
+            { text: 'Halaman ' + cur + ' dari ' + total, fontSize: 8, color: W.abu, alignment: 'right', margin: [0, 0, 36, 0] }
+        ], margin: [0, 18, 0, 0] }),
+        content
+    };
+}
+
+window.unduhPdf = function() {
+    if (typeof pdfMake === 'undefined') { L.toast('Pustaka PDF belum termuat. Periksa koneksi internet Anda.', true); return; }
+    try {
+        const R = window.H.hasil.pilgan;
+        const d = new Date(R.selesai);
+        const tgl = d.getFullYear() + '-' + L.pad(d.getMonth() + 1) + '-' + L.pad(d.getDate());
+        const nama = ('Hasil-Pilgan-Kreasi_' + L.nama() + '_' + tgl + '.pdf').replace(/[^\w\-.]+/g, '_');
+        pdfMake.createPdf(buatDokumenPdf()).download(nama);
+        L.toast('PDF hasil latihan sedang diunduh…');
+    } catch (e) {
+        console.error(e);
+        L.toast('Gagal membuat PDF hasil latihan.', true);
+    }
+};
+
+initLatihan();
+</script>
+</body>
+</html>
