@@ -23,6 +23,22 @@
                 }
             }
         }
+
+        // Penyelaras Tautan Admin
+        document.addEventListener('click', function(e) {
+            const a = e.target.closest('a');
+            if (!a) return;
+            const href = a.getAttribute('href');
+            if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('http') || href.startsWith('mailto:')) return;
+            if (href.startsWith('admin/')) {
+                const p = (window.location && window.location.pathname) || '';
+                const proto = (window.location && window.location.protocol) || '';
+                if (p.includes('/admin/') || p.endsWith('/admin/index.html') || proto === 'file:') {
+                    e.preventDefault();
+                    window.location.href = href.replace(/^admin\//, '');
+                }
+            }
+        });
     </script>
 
     <style>
@@ -100,28 +116,28 @@
         <div class="flex-1 p-4 overflow-y-auto custom-scroll">
             <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-4 pl-2">Menu Kontrol</p>
             <nav class="space-y-2">
-                <a href="index.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition group">
+                <a href="admin/index.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition group">
                     <i class="fas fa-tachometer-alt w-5 text-center group-hover:text-amber-400 transition-colors"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="materi.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition group">
+                <a href="admin/materi.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition group">
                     <i class="fas fa-book-open w-5 text-center group-hover:text-emerald-400 transition-colors"></i>
                     <span>Kelola Materi</span>
                 </a>
-                <a href="handout.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition group">
+                <a href="admin/handout.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition group">
                     <i class="fas fa-file-pdf w-5 text-center group-hover:text-teal-400 transition-colors"></i>
                     <span>Kelola Handout</span>
                 </a>
-                <a href="artikel.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition group">
+                <a href="admin/artikel.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition group">
                     <i class="fas fa-newspaper w-5 text-center group-hover:text-blue-400 transition-colors"></i>
                     <span>Kelola Artikel</span>
                 </a>
-                <a href="kelola-flipbook.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition group">
+                <a href="admin/kelola-flipbook.html" class="flex items-center space-x-3 hover:bg-slate-800 hover:text-white px-4 py-3 rounded-xl font-medium transition group">
                     <i class="fas fa-book-journal-whills w-5 text-center group-hover:text-amber-400 transition-colors"></i>
                     <span>Kelola Flipbook</span>
                 </a>
                 <!-- PENGGUNGA ACTIVE -->
-                <a href="pengguna.html" class="flex items-center space-x-3 bg-purple-500/10 text-purple-400 border border-purple-500/20 px-4 py-3 rounded-xl font-semibold transition">
+                <a href="admin/pengguna.html" class="flex items-center space-x-3 bg-purple-500/10 text-purple-400 border border-purple-500/20 px-4 py-3 rounded-xl font-semibold transition">
                     <i class="fas fa-users w-5 text-center"></i>
                     <span>Data Pengguna</span>
                 </a>

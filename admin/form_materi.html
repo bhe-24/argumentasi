@@ -11,6 +11,22 @@
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
     <script>
         tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }
+
+        // Penyelaras Tautan Admin
+        document.addEventListener('click', function(e) {
+            const a = e.target.closest('a');
+            if (!a) return;
+            const href = a.getAttribute('href');
+            if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('http') || href.startsWith('mailto:')) return;
+            if (href.startsWith('admin/')) {
+                const p = (window.location && window.location.pathname) || '';
+                const proto = (window.location && window.location.protocol) || '';
+                if (p.includes('/admin/') || p.endsWith('/admin/index.html') || proto === 'file:') {
+                    e.preventDefault();
+                    window.location.href = href.replace(/^admin\//, '');
+                }
+            }
+        });
     </script>
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
@@ -63,7 +79,7 @@
 
         <header class="bg-emerald-600 fixed w-full max-w-md z-50 px-4 py-3 flex items-center justify-between shadow-md">
             <div class="flex items-center gap-3">
-                <a href="materi.html" class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors active:scale-95"><i class="fas fa-arrow-left text-sm"></i></a>
+                <a href="admin/materi.html" class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors active:scale-95"><i class="fas fa-arrow-left text-sm"></i></a>
                 <h1 class="text-white font-bold text-sm tracking-wide" id="headerTitle">Tulis Materi</h1>
             </div>
             <button id="btnHapus" onclick="hapusMateri()" class="hidden bg-red-500 hover:bg-red-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors items-center gap-1.5 shadow-sm active:scale-95"><i class="fas fa-trash-alt"></i> Hapus</button>

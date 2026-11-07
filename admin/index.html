@@ -30,6 +30,26 @@
                 }
             }
         }
+
+        // Penyelaras Tautan Admin: Memastikan tautan 'admin/...' bekerja sempurna
+        // baik saat dibuka dari root (/admin), dari dalam folder (/admin/index.html), maupun via protokol file
+        document.addEventListener('click', function(e) {
+            const a = e.target.closest('a');
+            if (!a) return;
+            const href = a.getAttribute('href');
+            if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('http') || href.startsWith('mailto:')) return;
+            
+            if (href.startsWith('admin/')) {
+                const p = (window.location && window.location.pathname) || '';
+                const proto = (window.location && window.location.protocol) || '';
+                // Bila browser sudah berada di dalam folder admin/ (misal /admin/index.html atau file:...)
+                if (p.includes('/admin/') || p.endsWith('/admin/index.html') || proto === 'file:') {
+                    e.preventDefault();
+                    const cleanTarget = href.replace(/^admin\//, '');
+                    window.location.href = cleanTarget;
+                }
+            }
+        });
     </script>
 
     <style>
@@ -69,7 +89,7 @@
         <!-- HEADER STICKY -->
         <header class="bg-brand-green fixed w-full max-w-md z-50 px-4 py-3 flex items-center justify-between shadow-md" id="topHeader">
             <div class="flex items-center gap-3">
-                <a href="index.html" class="shrink-0 bg-white/95 p-1 rounded-lg shadow-sm active:scale-95 transition-transform" title="Pusat Kendali Admin">
+                <a href="admin/index.html" class="shrink-0 bg-white/95 p-1 rounded-lg shadow-sm active:scale-95 transition-transform" title="Pusat Kendali Admin">
                     <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-6 object-contain" onerror="this.outerHTML='<i class=\'fas fa-shield-alt text-brand-green px-1\'></i>'">
                 </a>
                 <div>
@@ -162,7 +182,7 @@
             
             <!-- KARTU INFORMASI ADMIN -->
             <div class="px-4 -mt-11 relative z-20">
-                <a href="profil.html" class="block bg-white rounded-2xl shadow-md p-4 flex items-center justify-between active:scale-[0.98] transition-all group border border-slate-100 hover:border-brand-green">
+                <a href="admin/profil.html" class="block bg-white rounded-2xl shadow-md p-4 flex items-center justify-between active:scale-[0.98] transition-all group border border-slate-100 hover:border-brand-green">
                     <div class="flex items-center gap-3.5 min-w-0">
                         <div class="relative shrink-0">
                             <div class="w-14 h-14 bg-brand-light text-brand-green rounded-full flex items-center justify-center border-2 border-emerald-200 overflow-hidden shadow-sm relative">
@@ -231,7 +251,7 @@
                                 <h3 id="statHandout" class="text-lg font-extrabold text-slate-800 leading-none mt-1">0</h3>
                             </div>
                         </div>
-                        <a href="handout.html" class="text-[10px] font-bold text-teal-600 bg-teal-50 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition">Kelola <i class="fas fa-arrow-right ml-1"></i></a>
+                        <a href="admin/handout.html" class="text-[10px] font-bold text-teal-600 bg-teal-50 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition">Kelola <i class="fas fa-arrow-right ml-1"></i></a>
                     </div>
                 </div>
             </div>
@@ -368,7 +388,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     
                     <!-- 1. KELOLA MATERI -->
-                    <a href="materi.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-emerald-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95 relative overflow-hidden">
+                    <a href="admin/materi.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-emerald-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95 relative overflow-hidden">
                         <span class="absolute top-2 right-2 text-[8px] font-extrabold uppercase bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded-full border border-emerald-200">Admin</span>
                         <div class="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-emerald-100 transition-all"><i class="fas fa-book-open"></i></div>
                         <h3 class="text-xs font-bold text-slate-700">Kelola Materi</h3>
@@ -376,7 +396,7 @@
                     </a>
 
                     <!-- 2. KELOLA HANDOUT -->
-                    <a href="handout.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-teal-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95 relative overflow-hidden">
+                    <a href="admin/handout.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-teal-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95 relative overflow-hidden">
                         <span class="absolute top-2 right-2 text-[8px] font-extrabold uppercase bg-teal-50 text-teal-600 px-1.5 py-0.5 rounded-full border border-teal-200">PDF</span>
                         <div class="w-12 h-12 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-teal-100 transition-all"><i class="fas fa-file-pdf"></i></div>
                         <h3 class="text-xs font-bold text-slate-700">Kelola Handout</h3>
@@ -384,7 +404,7 @@
                     </a>
                     
                     <!-- 3. KELOLA ARTIKEL (PUBLIKASI KONTEN ADMIN) -->
-                    <a href="artikel.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-blue-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95 relative overflow-hidden">
+                    <a href="admin/artikel.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-blue-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95 relative overflow-hidden">
                         <span class="absolute top-2 right-2 text-[8px] font-extrabold uppercase bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full border border-blue-200">Admin</span>
                         <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-blue-100 transition-all"><i class="fas fa-newspaper"></i></div>
                         <h3 class="text-xs font-bold text-slate-700">Kelola Artikel</h3>
@@ -392,7 +412,7 @@
                     </a>
 
                     <!-- 4. KELOLA FLIPBOOK (PUSTAKA MODUL DIGITAL 3D) -->
-                    <a href="kelola-flipbook.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-amber-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95 relative overflow-hidden">
+                    <a href="admin/kelola-flipbook.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-amber-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95 relative overflow-hidden">
                         <span class="absolute top-2 right-2 text-[8px] font-extrabold uppercase bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded-full border border-amber-200">Admin</span>
                         <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-amber-100 transition-all"><i class="fas fa-book-journal-whills"></i></div>
                         <h3 class="text-xs font-bold text-slate-700">Kelola Flipbook</h3>
@@ -400,42 +420,42 @@
                     </a>
 
                     <!-- 5. UNGGAH FLIPBOOK BARU -->
-                    <a href="upload-flipbook.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-amber-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
+                    <a href="admin/upload-flipbook.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-amber-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
                         <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-amber-100 transition-all"><i class="fas fa-cloud-arrow-up"></i></div>
                         <h3 class="text-xs font-bold text-slate-700">Unggah Flipbook</h3>
                         <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Upload PDF Baru</p>
                     </a>
 
                     <!-- 6. TULIS ARTIKEL BARU -->
-                    <a href="form_artikel.html?action=create" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-blue-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
+                    <a href="admin/form_artikel.html?action=create" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-blue-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
                         <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-blue-100 transition-all"><i class="fas fa-pen-nib"></i></div>
                         <h3 class="text-xs font-bold text-slate-700">Tulis Artikel</h3>
                         <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Formulir Baru</p>
                     </a>
 
                     <!-- 7. MANAJEMEN PENGGUNA -->
-                    <a href="pengguna.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-indigo-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
+                    <a href="admin/pengguna.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-indigo-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
                         <div class="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-indigo-100 transition-all"><i class="fas fa-users"></i></div>
                         <h3 class="text-xs font-bold text-slate-700">Pengguna</h3>
                         <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Data Siswa & Guru</p>
                     </a>
 
                     <!-- 8. TIM DEVELOPER -->
-                    <a href="develop.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-purple-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
+                    <a href="admin/develop.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-purple-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
                         <div class="w-12 h-12 bg-purple-50 text-purple-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-purple-100 transition-all"><i class="fas fa-code"></i></div>
                         <h3 class="text-xs font-bold text-slate-700">Tim Developer</h3>
                         <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Kelola Pengembang</p>
                     </a>
 
                     <!-- 9. PROFIL ADMIN -->
-                    <a href="profil.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-rose-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
+                    <a href="admin/profil.html" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-rose-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
                         <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-rose-100 transition-all"><i class="fas fa-user-gear"></i></div>
                         <h3 class="text-xs font-bold text-slate-700">Profil Saya</h3>
                         <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Biodata Administrator</p>
                     </a>
 
                     <!-- 10. UNGGAH HANDOUT BARU -->
-                    <a href="form_handout.html?action=create" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-teal-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
+                    <a href="admin/form_handout.html?action=create" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-teal-400 hover:shadow-md transition-all group flex flex-col items-center text-center active:scale-95">
                         <div class="w-12 h-12 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 group-hover:bg-teal-100 transition-all"><i class="fas fa-file-circle-plus"></i></div>
                         <h3 class="text-xs font-bold text-slate-700">Unggah Handout</h3>
                         <p class="text-[9px] text-slate-400 mt-1 line-clamp-1">Upload Modul PDF</p>

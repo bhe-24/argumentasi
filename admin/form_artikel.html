@@ -24,6 +24,22 @@
                 }
             }
         }
+
+        // Penyelaras Tautan Admin
+        document.addEventListener('click', function(e) {
+            const a = e.target.closest('a');
+            if (!a) return;
+            const href = a.getAttribute('href');
+            if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('http') || href.startsWith('mailto:')) return;
+            if (href.startsWith('admin/')) {
+                const p = (window.location && window.location.pathname) || '';
+                const proto = (window.location && window.location.protocol) || '';
+                if (p.includes('/admin/') || p.endsWith('/admin/index.html') || proto === 'file:') {
+                    e.preventDefault();
+                    window.location.href = href.replace(/^admin\//, '');
+                }
+            }
+        });
     </script>
 
     <style>
@@ -55,7 +71,7 @@
         <!-- HEADER STICKY (Tema Blue/Indigo) -->
         <header class="bg-blue-600 fixed w-full max-w-md z-50 px-4 py-3 flex items-center justify-between shadow-md">
             <div class="flex items-center gap-3">
-                <a href="artikel.html" class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors active:scale-95">
+                <a href="admin/artikel.html" class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors active:scale-95">
                     <i class="fas fa-arrow-left text-sm"></i>
                 </a>
                 <div>
@@ -195,7 +211,7 @@
 
                     <!-- Footer / Tombol Aksi -->
                     <div class="p-4 border-t border-slate-100 bg-white flex gap-3 rounded-b-2xl sticky bottom-0">
-                        <button type="button" onclick="window.location.href='artikel.html'" class="flex-1 py-3 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition text-xs">
+                        <button type="button" onclick="redirectKeArtikel()" class="flex-1 py-3 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition text-xs">
                             Batal
                         </button>
                         <button type="submit" id="btnSave" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 text-xs">
@@ -385,6 +401,16 @@
             });
         }
 
+        // --- REDIRECT HELPER ---
+        window.redirectKeArtikel = function() {
+            const p = window.location.pathname || '';
+            if (p.includes('/admin/') || p.endsWith('/admin/index.html') || window.location.protocol === 'file:') {
+                window.location.replace("artikel.html");
+            } else {
+                window.location.replace("admin/artikel.html");
+            }
+        };
+
         // --- FUNGSI HAPUS ---
         window.hapusMateri = async function() {
             if (!editDocId) return;
@@ -393,7 +419,7 @@
                 document.getElementById('loadingText').innerText = "Menghapus Artikel...";
                 try {
                     await deleteDoc(doc(db, "materials", editDocId));
-                    window.location.replace("artikel.html");
+                    redirectKeArtikel();
                 } catch (e) {
                     alert("Gagal menghapus artikel: " + e.message);
                     document.getElementById('loadingOverlay').classList.add('hidden');
@@ -445,7 +471,7 @@
                     savedId = newDocRef.id;
                 }
                 
-                window.location.replace("artikel.html");
+                redirectKeArtikel();
 
             } catch (error) {
                 console.error(error); 

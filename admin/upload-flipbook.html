@@ -10,6 +10,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] } } } }
+
+        // Penyelaras Tautan Admin
+        document.addEventListener('click', function(e) {
+            const a = e.target.closest('a');
+            if (!a) return;
+            const href = a.getAttribute('href');
+            if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('http') || href.startsWith('mailto:')) return;
+            if (href.startsWith('admin/')) {
+                const p = (window.location && window.location.pathname) || '';
+                const proto = (window.location && window.location.protocol) || '';
+                if (p.includes('/admin/') || p.endsWith('/admin/index.html') || proto === 'file:') {
+                    e.preventDefault();
+                    window.location.href = href.replace(/^admin\//, '');
+                }
+            }
+        });
     </script>
     <style>
         body { font-family: 'Poppins', sans-serif; background: #f1f5f9; -webkit-tap-highlight-color: transparent; }
@@ -76,7 +92,7 @@
 <div id="app" class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200 hidden">
 
     <header class="sticky top-0 z-50 bg-amber-500 h-14 px-4 flex items-center gap-3 shadow-md">
-        <a href="kelola-flipbook.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 active:scale-95 transition"><i class="fas fa-arrow-left text-sm"></i></a>
+        <a href="admin/kelola-flipbook.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 active:scale-95 transition"><i class="fas fa-arrow-left text-sm"></i></a>
         <h1 id="page-title" class="flex-1 text-white font-bold text-sm tracking-wide truncate">Unggah Flipbook</h1>
         <button onclick="openDiag()" title="Cek penyimpanan" class="shrink-0 w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 active:scale-95 transition"><i class="fas fa-stethoscope text-sm"></i></button>
     </header>

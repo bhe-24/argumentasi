@@ -10,6 +10,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } } } } }
+
+        // Penyelaras Tautan Admin
+        document.addEventListener('click', function(e) {
+            const a = e.target.closest('a');
+            if (!a) return;
+            const href = a.getAttribute('href');
+            if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('http') || href.startsWith('mailto:')) return;
+            if (href.startsWith('admin/')) {
+                const p = (window.location && window.location.pathname) || '';
+                const proto = (window.location && window.location.protocol) || '';
+                if (p.includes('/admin/') || p.endsWith('/admin/index.html') || proto === 'file:') {
+                    e.preventDefault();
+                    window.location.href = href.replace(/^admin\//, '');
+                }
+            }
+        });
     </script>
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
@@ -40,7 +56,7 @@
 
         <header class="bg-brand-green sticky top-0 z-40 h-14 px-4 flex items-center justify-between shadow-md">
             <div class="flex items-center gap-3">
-                <a href="index.html" aria-label="Kembali" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
+                <a href="admin/index.html" aria-label="Kembali" class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-white/20 active:scale-95 transition"><i class="fas fa-chevron-left"></i></a>
                 <div><h1 class="text-white font-bold text-sm leading-tight">Profil Administrator</h1><p class="text-white/75 text-[10px] leading-tight">Kelola Foto & Biodata Diri</p></div>
             </div>
             <button id="btnPencilHeader" onclick="masukModeEdit()" class="hidden w-9 h-9 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white hover:text-brand-green transition active:scale-95 border border-white/30" title="Edit Biodata"><i class="fas fa-pen text-xs"></i></button>

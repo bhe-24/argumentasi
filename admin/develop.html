@@ -17,7 +17,7 @@
         // Auto-redirect jika masuk membawa parameter aksi form
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('action') === 'create' || urlParams.get('action') === 'edit') {
-            window.location.replace('form_develop.html' + window.location.search);
+            window.location.replace('admin/form_develop.html' + window.location.search);
         }
 
         tailwind.config = {
@@ -28,6 +28,22 @@
                 }
             }
         }
+
+        // Penyelaras Tautan Admin
+        document.addEventListener('click', function(e) {
+            const a = e.target.closest('a');
+            if (!a) return;
+            const href = a.getAttribute('href');
+            if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('http') || href.startsWith('mailto:')) return;
+            if (href.startsWith('admin/')) {
+                const p = (window.location && window.location.pathname) || '';
+                const proto = (window.location && window.location.protocol) || '';
+                if (p.includes('/admin/') || p.endsWith('/admin/index.html') || proto === 'file:') {
+                    e.preventDefault();
+                    window.location.href = href.replace(/^admin\//, '');
+                }
+            }
+        });
     </script>
 
     <style>
@@ -51,13 +67,13 @@
         <!-- HEADER STICKY (Tema Ungu) -->
         <header class="bg-purple-600 fixed w-full max-w-md z-50 px-4 py-3 flex items-center justify-between shadow-md">
             <div class="flex items-center gap-3">
-                <a href="index.html" class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors active:scale-95">
+                <a href="admin/index.html" class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors active:scale-95">
                     <i class="fas fa-arrow-left text-sm"></i>
                 </a>
                 <h1 class="text-white font-bold text-sm tracking-wide">Tim Pengembang</h1>
             </div>
             
-            <a href="form_develop.html?action=create" class="bg-white text-purple-600 hover:bg-purple-50 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors items-center gap-1.5 shadow-sm active:scale-95 flex">
+            <a href="admin/form_develop.html?action=create" class="bg-white text-purple-600 hover:bg-purple-50 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors items-center gap-1.5 shadow-sm active:scale-95 flex">
                 <i class="fas fa-plus"></i> Tambah
             </a>
         </header>
@@ -107,7 +123,7 @@
             else if (data.kategori === 'mahasiswa') badgeColor = "bg-amber-50 text-amber-600 border-amber-100";
 
             return `
-            <a href="form_develop.html?action=edit&id=${id}" class="flex gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-purple-400 transition-colors active:scale-[0.98]">
+            <a href="admin/form_develop.html?action=edit&id=${id}" class="flex gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-purple-400 transition-colors active:scale-[0.98]">
                 <img src="${img}" class="w-16 h-16 object-cover rounded-full border border-slate-100 shadow-sm bg-slate-50 shrink-0">
                 <div class="flex-1 flex flex-col justify-center min-w-0">
                     <div class="flex justify-between items-start mb-1">

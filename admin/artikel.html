@@ -17,7 +17,7 @@
         // Auto-redirect jika membawa parameter aksi form (dari dashboard)
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('action') === 'create' || urlParams.get('action') === 'edit') {
-            window.location.replace('form_artikel.html' + window.location.search);
+            window.location.replace('admin/form_artikel.html' + window.location.search);
         }
 
         tailwind.config = {
@@ -28,6 +28,22 @@
                 }
             }
         }
+
+        // Penyelaras Tautan Admin
+        document.addEventListener('click', function(e) {
+            const a = e.target.closest('a');
+            if (!a) return;
+            const href = a.getAttribute('href');
+            if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('http') || href.startsWith('mailto:')) return;
+            if (href.startsWith('admin/')) {
+                const p = (window.location && window.location.pathname) || '';
+                const proto = (window.location && window.location.protocol) || '';
+                if (p.includes('/admin/') || p.endsWith('/admin/index.html') || proto === 'file:') {
+                    e.preventDefault();
+                    window.location.href = href.replace(/^admin\//, '');
+                }
+            }
+        });
     </script>
 
     <style>
@@ -53,7 +69,7 @@
         <!-- HEADER STICKY (Tema Blue/Indigo) -->
         <header class="bg-blue-600 fixed w-full max-w-md z-50 px-4 py-3 flex items-center justify-between shadow-md">
             <div class="flex items-center gap-3">
-                <a href="index.html" class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors active:scale-95">
+                <a href="admin/index.html" class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors active:scale-95">
                     <i class="fas fa-arrow-left text-sm"></i>
                 </a>
                 <div>
@@ -62,7 +78,7 @@
                 </div>
             </div>
             
-            <a href="form_artikel.html?action=create" class="bg-white text-blue-600 hover:bg-blue-50 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors items-center gap-1.5 shadow-sm active:scale-95 flex">
+            <a href="admin/form_artikel.html?action=create" class="bg-white text-blue-600 hover:bg-blue-50 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors items-center gap-1.5 shadow-sm active:scale-95 flex">
                 <i class="fas fa-plus"></i> Tambah
             </a>
         </header>
@@ -161,7 +177,7 @@
                         <div class="flex items-center justify-between pt-2 border-t border-slate-50 mt-1">
                             <span class="text-[9px] text-slate-400"><i class="far fa-eye mr-0.5"></i>${data.views || 0} tayang</span>
                             <div class="flex items-center gap-1.5">
-                                <a href="form_artikel.html?action=edit&id=${id}" class="text-[10px] font-bold text-blue-600 hover:text-blue-700 px-3 py-1 rounded-lg bg-blue-50 border border-blue-200 active:scale-95"><i class="fas fa-pen mr-1"></i>Kelola / Edit</a>
+                                <a href="admin/form_artikel.html?action=edit&id=${id}" class="text-[10px] font-bold text-blue-600 hover:text-blue-700 px-3 py-1 rounded-lg bg-blue-50 border border-blue-200 active:scale-95"><i class="fas fa-pen mr-1"></i>Kelola / Edit</a>
                             </div>
                         </div>
                     </div>

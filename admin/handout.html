@@ -12,7 +12,23 @@
         tailwind.config = { theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] } } } }
         // Pintasan: ?action=create / ?action=edit langsung ke formulir
         const p = new URLSearchParams(location.search);
-        if (p.get('action') === 'create' || p.get('action') === 'edit') location.replace('form_handout.html' + location.search);
+        if (p.get('action') === 'create' || p.get('action') === 'edit') location.replace('admin/form_handout.html' + location.search);
+
+        // Penyelaras Tautan Admin
+        document.addEventListener('click', function(e) {
+            const a = e.target.closest('a');
+            if (!a) return;
+            const href = a.getAttribute('href');
+            if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('http') || href.startsWith('mailto:')) return;
+            if (href.startsWith('admin/')) {
+                const p = (window.location && window.location.pathname) || '';
+                const proto = (window.location && window.location.protocol) || '';
+                if (p.includes('/admin/') || p.endsWith('/admin/index.html') || proto === 'file:') {
+                    e.preventDefault();
+                    window.location.href = href.replace(/^admin\//, '');
+                }
+            }
+        });
     </script>
     <style>
         body { font-family: 'Poppins', sans-serif; background: #f1f5f9; -webkit-tap-highlight-color: transparent; }
@@ -28,10 +44,10 @@
 
     <div class="sticky top-0 z-50 shadow-md">
         <header class="bg-amber-500 h-14 px-4 flex items-center gap-3">
-            <a href="index.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 active:scale-95 transition"><i class="fas fa-arrow-left text-sm"></i></a>
+            <a href="admin/index.html" aria-label="Kembali" class="shrink-0 w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 active:scale-95 transition"><i class="fas fa-arrow-left text-sm"></i></a>
             <div class="flex-1 min-w-0"><h1 class="text-white font-bold text-sm leading-tight truncate">Kelola Handout</h1><p id="sub" class="text-white/80 text-[10px] leading-tight truncate">Memuat…</p></div>
             <button onclick="bukaTes()" title="Cek penyimpanan" aria-label="Cek penyimpanan" class="shrink-0 w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 active:scale-95 transition"><i class="fas fa-stethoscope text-sm"></i></button>
-            <a href="form_handout.html?action=create" class="shrink-0 bg-white text-amber-600 hover:bg-amber-50 text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm active:scale-95 transition flex items-center gap-1.5"><i class="fas fa-plus"></i> Unggah</a>
+            <a href="admin/form_handout.html?action=create" class="shrink-0 bg-white text-amber-600 hover:bg-amber-50 text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm active:scale-95 transition flex items-center gap-1.5"><i class="fas fa-plus"></i> Unggah</a>
         </header>
         <div class="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center gap-2">
             <div class="flex-1 flex items-center bg-slate-100 rounded-lg px-3 py-2"><i class="fas fa-search text-slate-400 text-xs mr-2"></i><input id="q" oninput="saring()" placeholder="Cari judul…" class="w-full bg-transparent outline-none text-xs text-slate-700"></div>
@@ -46,7 +62,7 @@
         <div id="sKosong" class="hidden flex-col items-center justify-center py-16 text-center">
             <div class="w-16 h-16 bg-white border border-slate-200 rounded-full flex items-center justify-center text-3xl mb-3 text-slate-300 shadow-sm"><i class="fas fa-folder-open"></i></div>
             <h3 id="kosongJ" class="font-bold text-slate-700 text-sm mb-1">Belum ada handout</h3><p id="kosongP" class="text-[11px] text-slate-500 max-w-[240px]">Unggah PDF pertamamu. Sampul dan ringkasan dibuat otomatis.</p>
-            <a id="kosongA" href="form_handout.html?action=create" class="mt-4 bg-amber-500 text-white text-xs font-bold px-5 py-2.5 rounded-full active:scale-95"><i class="fas fa-cloud-arrow-up mr-1.5"></i>Unggah PDF</a>
+            <a id="kosongA" href="admin/form_handout.html?action=create" class="mt-4 bg-amber-500 text-white text-xs font-bold px-5 py-2.5 rounded-full active:scale-95"><i class="fas fa-cloud-arrow-up mr-1.5"></i>Unggah PDF</a>
         </div>
         <div id="list" class="hidden flex-col gap-3"></div>
     </main>
