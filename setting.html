@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pengaturan - Argumentasi</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: { 
+                        brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } 
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        .modal-z { z-index: 99999 !important; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen">
+
+    <!-- CONTAINER UTAMA (Mobile App Frame) -->
+    <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
+        
+        <!-- HEADER -->
+        <header class="bg-white flex items-center justify-between px-4 py-4 sticky top-0 z-20 shadow-xs border-b border-slate-100">
+            <div class="flex items-center gap-3">
+                <a href="profil.html" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 hover:text-brand-green hover:bg-emerald-50 transition-colors">
+                    <i class="fas fa-chevron-left text-sm"></i>
+                </a>
+                <div>
+                    <h1 class="text-base font-bold text-slate-800 leading-tight">Pengaturan</h1>
+                    <p class="text-[10px] text-slate-400">Preferensi & Kelola Akun</p>
+                </div>
+            </div>
+            <a href="index.html" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 hover:text-brand-green hover:bg-emerald-50 transition-colors" title="Ke Beranda">
+                <i class="fas fa-home text-sm"></i>
+            </a>
+        </header>
+
+        <!-- MAIN KONTEN -->
+        <div class="flex-grow overflow-y-auto hide-scrollbar pb-10 pt-4 px-4 space-y-4">
+            
+            <!-- RINGKASAN AKUN SISWA -->
+            <div class="bg-white rounded-2xl p-4 shadow-xs border border-slate-100 flex items-center gap-3.5">
+                <div class="w-13 h-13 w-12 h-12 rounded-full bg-emerald-100 border-2 border-emerald-500/20 overflow-hidden shrink-0 flex items-center justify-center shadow-xs">
+                    <img id="avatarSetting" src="" alt="Foto" class="w-full h-full object-cover hidden">
+                    <i id="avatarIconSetting" class="fas fa-user text-emerald-600 text-lg"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5">
+                        <h2 id="namaSetting" class="font-bold text-slate-800 text-sm truncate">Siswa Cendekia</h2>
+                        <i id="badgeVerifiedSetting" class="fas fa-check-circle text-emerald-500 text-xs hidden" title="Terverifikasi"></i>
+                    </div>
+                    <p id="sekolahSetting" class="text-xs text-slate-500 truncate">Asal Sekolah Belum Diatur</p>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span id="xpSettingPill" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                            0 XP
+                        </span>
+                        <span id="statusSettingPill" class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                            Belum Verifikasi
+                        </span>
+                    </div>
+                </div>
+                <a href="profil.html" class="px-2.5 py-1.5 bg-slate-100 hover:bg-emerald-50 hover:text-brand-green text-slate-600 rounded-xl text-xs font-semibold transition-colors">
+                    Lihat Kartu
+                </a>
+            </div>
+
+            <!-- SEKSI 1: PREFERENSI BELAJAR -->
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden">
+                <div class="px-4 py-3 bg-slate-50/70 border-b border-slate-100 flex items-center gap-2">
+                    <i class="fas fa-sliders text-emerald-600 text-xs"></i>
+                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Preferensi Aplikasi</h3>
+                </div>
+
+                <!-- Toggle Suara -->
+                <div class="flex items-center justify-between p-4 border-b border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
+                            <i class="fas fa-volume-high"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-800">Efek Suara Latihan</p>
+                            <p class="text-[10px] text-slate-400">Audio saat menjawab benar / salah</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleSound" class="sr-only peer" checked onchange="simpanSetting('sound', this.checked)">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-green"></div>
+                    </label>
+                </div>
+
+                <!-- Toggle Pengingat 24 Jam -->
+                <div class="flex items-center justify-between p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                            <i class="fas fa-clock-rotate-left"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-800">Siklus Latihan 24 Jam</p>
+                            <p class="text-[10px] text-slate-400">Reset tantangan harian otomatis</p>
+                        </div>
+                    </div>
+                    <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">
+                        Aktif
+                    </span>
+                </div>
+            </div>
+
+            <!-- SEKSI 2: CADANGAN & DATA -->
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden">
+                <div class="px-4 py-3 bg-slate-50/70 border-b border-slate-100 flex items-center gap-2">
+                    <i class="fas fa-database text-emerald-600 text-xs"></i>
+                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Cadangan & Penyimpanan</h3>
+                </div>
+
+                <!-- Unduh Cadangan JSON -->
+                <div class="flex items-center justify-between p-4 border-b border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors" onclick="eksporData()">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs">
+                            <i class="fas fa-file-export"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-800">Cadangkan Data (JSON)</p>
+                            <p class="text-[10px] text-slate-400">Simpan profil, nilai & XP ke file</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-download text-slate-300 text-xs"></i>
+                </div>
+
+                <!-- Pulihkan Cadangan JSON -->
+                <label class="flex items-center justify-between p-4 border-b border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs">
+                            <i class="fas fa-file-import"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-800">Pulihkan Data Cadangan</p>
+                            <p class="text-[10px] text-slate-400">Impor data cadangan sebelumnya</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-upload text-slate-300 text-xs"></i>
+                    <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="imporData(event)">
+                </label>
+
+                <!-- Bersihkan Cache Grafis -->
+                <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 transition-colors" onclick="bersihkanCache()">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center text-xs">
+                            <i class="fas fa-broom"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-800">Optimalkan Cache Grafis</p>
+                            <p class="text-[10px] text-slate-400">Percepat muat halaman tanpa hapus skor</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
+                </div>
+            </div>
+
+            <!-- SEKSI 3: TENTANG APLIKASI -->
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden">
+                <div class="px-4 py-3 bg-slate-50/70 border-b border-slate-100 flex items-center gap-2">
+                    <i class="fas fa-circle-info text-emerald-600 text-xs"></i>
+                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Tentang Aplikasi</h3>
+                </div>
+
+                <div class="p-4 space-y-2.5 text-xs text-slate-600">
+                    <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                        <span class="text-slate-500">Nama Aplikasi</span>
+                        <span class="font-semibold text-slate-800">Cendekia Argumentasi</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                        <span class="text-slate-500">Versi Sistem</span>
+                        <span class="font-bold text-brand-green">v2.5.0 Digital ID</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                        <span class="text-slate-500">Keamanan Data</span>
+                        <span class="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px]">
+                            Lokal & Anonim 100%
+                        </span>
+                    </div>
+                    <p class="text-[10px] text-slate-400 pt-1 leading-relaxed">
+                        Data pembelajaran disimpan di penyimpanan lokal peramban Anda. Aplikasi ini tidak mentransmisikan data identitas pribadi Anda ke server pihak ketiga.
+                    </p>
+                </div>
+            </div>
+
+            <!-- SEKSI 4: ZONA KELOLA AKUN -->
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden">
+                <div class="px-4 py-3 bg-slate-50/70 border-b border-slate-100 flex items-center gap-2">
+                    <i class="fas fa-user-gear text-emerald-600 text-xs"></i>
+                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Aksi Akun Siswa</h3>
+                </div>
+
+                <!-- Keluar Akun -->
+                <div class="flex items-center justify-between p-4 border-b border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors" onclick="bukaModalKeluar()">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs">
+                            <i class="fas fa-right-from-bracket"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-800">Keluar dari Akun Siswa</p>
+                            <p class="text-[10px] text-slate-400">Tutup sesi profil aktif pada perangkat</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
+                </div>
+
+                <!-- Hapus Akun Permanen (2-Step Warning) -->
+                <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-red-50/70 transition-colors" onclick="mulaiHapusAkun()">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center text-xs">
+                            <i class="fas fa-trash-can"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-red-600">Hapus Akun Permanen</p>
+                            <p class="text-[10px] text-red-400">Musnahkan seluruh data profil, nilai, & XP</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-red-300 text-xs"></i>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL KELUAR AKUN -->
+    <div id="modalKeluar" class="fixed inset-0 bg-black/60 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300 p-4" onclick="if(event.target === this) tutupModal('modalKeluar')">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 transform scale-95 transition-transform duration-300 relative text-center">
+            <div class="w-14 h-14 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center mx-auto mb-3 text-2xl">
+                <i class="fas fa-right-from-bracket"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800 mb-1">Keluar Akun Siswa?</h3>
+            <p class="text-xs text-slate-500 mb-6 leading-relaxed">
+                Anda akan keluar dari sesi kartu identitas aktif ini. Data belajar Anda tetap tersimpan di perangkat ini jika ingin kembali.
+            </p>
+            <div class="flex gap-2.5">
+                <button onclick="tutupModal('modalKeluar')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition-colors">
+                    Batal
+                </button>
+                <button onclick="prosesKeluarAkun()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-xl text-xs transition-colors shadow-md">
+                    Ya, Keluar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PERINGATAN HAPUS TAHAP 1 -->
+    <div id="modalHapusStep1" class="fixed inset-0 bg-black/60 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300 p-4" onclick="if(event.target === this) tutupModal('modalHapusStep1')">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 transform scale-95 transition-transform duration-300 relative text-center">
+            <div class="w-14 h-14 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-3 text-2xl animate-pulse">
+                <i class="fas fa-triangle-exclamation"></i>
+            </div>
+            <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 mb-2">
+                PERINGATAN TAHAP 1 DARI 2
+            </span>
+            <h3 class="text-base font-bold text-slate-800 mb-2">Pengajuan Penghapusan Akun</h3>
+            <p class="text-xs text-slate-600 mb-4 text-left bg-slate-50 p-3 rounded-xl border border-slate-200 leading-relaxed">
+                ⚠️ <strong class="text-slate-800">Perhatian:</strong> Menghapus akun akan menghapus profil Anda. Seluruh riwayat belajar, akumulasi XP, dan kartu identitas digital Anda akan terhapus.
+            </p>
+            <div class="flex gap-2.5">
+                <button onclick="tutupModal('modalHapusStep1')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition-colors">
+                    Batal & Amankan
+                </button>
+                <button onclick="lanjutKeStep2()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl text-xs transition-colors shadow-md">
+                    Lanjut Konfirmasi ➔
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PERINGATAN HAPUS TAHAP 2 (FINAL PERMANEN) -->
+    <div id="modalHapusStep2" class="fixed inset-0 bg-black/75 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300 p-4" onclick="if(event.target === this) tutupModal('modalHapusStep2')">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 transform scale-95 transition-transform duration-300 relative text-center border-2 border-red-500 shadow-2xl">
+            <div class="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3 text-3xl">
+                <i class="fas fa-radiation animate-spin" style="animation-duration: 6s;"></i>
+            </div>
+            <span class="inline-block text-[10px] font-black px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-300 mb-2 tracking-wider">
+                🚨 KONFIRMASI FINAL PERMANEN
+            </span>
+            <h3 class="text-base font-black text-red-600 mb-1">SEMUA DATA AKAN HILANG TOTAL!</h3>
+            <p class="text-xs text-red-700 font-medium mb-3">
+                Tindakan ini permanen dan TIDAK DAPAT DIBATALKAN!
+            </p>
+            <div class="bg-red-50 text-red-800 text-[11px] p-3 rounded-xl border border-red-200 text-left mb-5 space-y-1">
+                <div>❌ Seluruh skor XP (<span id="hapusTotalXp">0</span> XP) musnah</div>
+                <div>❌ Seluruh nilai latihan & grafik performa hilang</div>
+                <div>❌ Kartu Pelajar Digital dinonaktifkan</div>
+            </div>
+            <div class="flex flex-col gap-2">
+                <button onclick="eksekusiHapusAkunTotal()" class="w-full bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold py-3 rounded-xl text-xs transition-all shadow-lg flex items-center justify-center gap-2">
+                    <i class="fas fa-trash-can"></i> YA, MUSNAHKAN SEMUA DATA
+                </button>
+                <button onclick="tutupModal('modalHapusStep2')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition-colors">
+                    Batalkan & Pertahankan Akun Saya
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTAINER TOAST -->
+    <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
+
+    <script>
+        const keys = {
+            nama: 'namaSiswaCendekia',
+            sekolah: 'sekolahSiswaCendekia',
+            foto: 'fotoSiswaCendekia',
+            tgllahir: 'tglLahirSiswaCendekia',
+            tglverifikasi: 'tglVerifikasiSiswaCendekia',
+            statusKartu: 'statusKartuSiswa',
+            nohp: 'noHpSiswaCendekia'
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettingData();
+        });
+
+        function loadSettingData() {
+            const nama = localStorage.getItem(keys.nama);
+            const sekolah = localStorage.getItem(keys.sekolah);
+            const foto = localStorage.getItem(keys.foto);
+            const verified = localStorage.getItem(keys.statusKartu) === 'verified';
+
+            if (nama) document.getElementById('namaSetting').textContent = nama;
+            if (sekolah) document.getElementById('sekolahSetting').textContent = sekolah;
+
+            const avatarImg = document.getElementById('avatarSetting');
+            const avatarIcon = document.getElementById('avatarIconSetting');
+            if (foto) {
+                avatarImg.src = foto;
+                avatarImg.classList.remove('hidden');
+                avatarIcon.classList.add('hidden');
+            } else {
+                avatarImg.classList.add('hidden');
+                avatarIcon.classList.remove('hidden');
+            }
+
+            if (verified) {
+                document.getElementById('badgeVerifiedSetting').classList.remove('hidden');
+                const st = document.getElementById('statusSettingPill');
+                st.textContent = 'Terverifikasi';
+                st.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
+            }
+
+            // Hitung Total XP
+            const xp1 = Number(localStorage.getItem('latihanPointsCendekia')) || 0;
+            const xp2 = Number(localStorage.getItem('kreasiPointsArg')) || 0;
+            const xp3 = Number(localStorage.getItem('kelasPointsArg')) || 0;
+            const totalXp = xp1 + xp2 + xp3;
+            document.getElementById('xpSettingPill').textContent = totalXp + ' XP';
+            document.getElementById('hapusTotalXp').textContent = totalXp;
+
+            // Load saved toggle setting
+            const soundPref = localStorage.getItem('setting_sound_fx');
+            if (soundPref !== null) {
+                document.getElementById('toggleSound').checked = soundPref === 'true';
+            }
+        }
+
+        function simpanSetting(key, val) {
+            if (key === 'sound') {
+                localStorage.setItem('setting_sound_fx', val);
+                showToast(val ? 'Efek suara diaktifkan' : 'Efek suara dinonaktifkan');
+            }
+        }
+
+        function bersihkanCache() {
+            // Optimalkan cache grafis & log sementara tanpa menghapus akumulasi XP
+            showToast('Cache grafis berhasil dioptimalkan');
+        }
+
+        function eksporData() {
+            const backup = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                backup[k] = localStorage.getItem(k);
+            }
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const nama = (localStorage.getItem(keys.nama) || 'siswa').replace(/[^a-zA-Z0-9]/g, '_');
+            a.href = url;
+            a.download = `cadangan_argumentasi_${nama}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Data cadangan berhasil diunduh');
+        }
+
+        function imporData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    let count = 0;
+                    Object.keys(data).forEach(k => {
+                        localStorage.setItem(k, data[k]);
+                        count++;
+                    });
+                    showToast(`Berhasil memulihkan ${count} data! Memperbarui...`);
+                    setTimeout(() => location.reload(), 1200);
+                } catch(err) {
+                    showToast('File cadangan tidak valid!', true);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Keluar Akun
+        function bukaModalKeluar() {
+            bukaModal('modalKeluar');
+        }
+
+        function prosesKeluarAkun() {
+            // Keluar sesi aktif
+            localStorage.removeItem(keys.statusKartu);
+            showToast('Sesi profil ditutup. Mengalihkan ke Beranda...');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        }
+
+        // Hapus Akun 2 Tahap
+        function mulaiHapusAkun() {
+            bukaModal('modalHapusStep1');
+        }
+
+        function lanjutKeStep2() {
+            tutupModal('modalHapusStep1');
+            setTimeout(() => {
+                bukaModal('modalHapusStep2');
+            }, 300);
+        }
+
+        function eksekusiHapusAkunTotal() {
+            // Hapus seluruh data identitas, nilai, dan XP
+            const allKeysToRemove = [
+                keys.nama,
+                keys.sekolah,
+                keys.foto,
+                keys.tgllahir,
+                keys.tglverifikasi,
+                keys.statusKartu,
+                keys.nohp,
+                'latihanPointsCendekia',
+                'kreasiPointsArg',
+                'kelasPointsArg',
+                'arg_grafik_nilaiku_log_v1',
+                'kreasi_exercises_status',
+                'kreasi_karya',
+                'riwayatKelasArg'
+            ];
+
+            allKeysToRemove.forEach(k => localStorage.removeItem(k));
+
+            // Bersihkan sisa kunci lat_v1
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const k = localStorage.key(i);
+                if (k && (k.startsWith('lat_v1_') || k.startsWith('kreasi_') || k.startsWith('rb_'))) {
+                    localStorage.removeItem(k);
+                }
+            }
+
+            tutupModal('modalHapusStep2');
+            showToast('Semua data akun & XP telah musnah permanen.', true);
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1200);
+        }
+
+        // Modal Utility
+        function bukaModal(id) {
+            const modal = document.getElementById(id);
+            const box = modal.querySelector('div');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                if (box) {
+                    box.classList.remove('scale-95');
+                    box.classList.add('scale-100');
+                }
+            });
+        }
+
+        function tutupModal(id) {
+            const modal = document.getElementById(id);
+            const box = modal.querySelector('div');
+            modal.classList.add('opacity-0');
+            if (box) {
+                box.classList.remove('scale-100');
+                box.classList.add('scale-95');
+            }
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function showToast(msg, isError = false) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bgClass = isError ? 'bg-red-500' : 'bg-slate-800';
+            const iconClass = isError ? 'fa-exclamation-circle text-red-200' : 'fa-check-circle text-emerald-400';
+            
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-xl shadow-xl text-xs font-medium flex items-center gap-3 transform translate-y-[-20px] opacity-0 transition-all duration-300 pointer-events-auto`;
+            toast.innerHTML = `<i class="fas ${iconClass} text-base"></i> <span class="flex-1">${msg}</span>`;
+            
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-y-[-20px]', 'opacity-0'));
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-20px]', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

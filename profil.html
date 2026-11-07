@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Profil Saya - Argumentasi</title>
+    <title>Kartu Identitas Siswa - Argumentasi</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,10 +11,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <!-- Cropper.js CSS (Untuk fitur Crop Foto) -->
+    <!-- Cropper.js CSS (Crop Foto Siswa) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <!-- Canvas Confetti untuk Efek 'Boom!' -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -32,12 +34,26 @@
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
         .modal-z { z-index: 99999 !important; }
-        
-        /* Hilangkan scrollbar */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Efek Kilau Kartu saat 'Boom' Berhasil Diverifikasi */
+        @keyframes shineGlow {
+            0% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.7); transform: scale(1); }
+            50% { box-shadow: 0 0 35px 10px rgba(16, 185, 129, 0.5); transform: scale(1.02); }
+            100% { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); transform: scale(1); }
+        }
+        .card-boom-animation {
+            animation: shineGlow 1.2s ease-out;
+        }
 
-        .list-item-active:active { background-color: #f8fafc; }
+        /* Tombol & Card Touch States */
+        .card-interactive {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+        }
+        .card-interactive:active {
+            transform: scale(0.98);
+        }
     </style>
 </head>
 <body class="flex justify-center min-h-screen">
@@ -45,123 +61,349 @@
     <!-- CONTAINER UTAMA (Mobile App Frame) -->
     <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
         
-        <!-- HEADER -->
-        <header class="bg-white flex items-center px-4 py-4 sticky top-0 z-20 shadow-sm">
-            <a href="index.html" class="text-slate-800 text-xl px-2 py-1 hover:text-brand-green transition-colors">
-                <i class="fas fa-chevron-left"></i>
-            </a>
-            <h1 class="text-lg font-bold text-slate-800 ml-4">Profil Siswa</h1>
+        <!-- HEADER KOKOH -->
+        <header class="bg-white flex items-center justify-between px-4 py-4 sticky top-0 z-30 shadow-xs border-b border-slate-100">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 hover:text-brand-green hover:bg-emerald-50 transition-colors" title="Kembali ke Beranda">
+                    <i class="fas fa-chevron-left text-sm"></i>
+                </a>
+                <div>
+                    <h1 class="text-base font-bold text-slate-800 leading-tight">Profil & Identitas</h1>
+                    <p class="text-[10px] text-slate-400 font-medium">Kartu Pelajar Digital Siswa</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-1.5">
+                <!-- Tombol Bagikan Cepat -->
+                <button onclick="bukaModalShare()" class="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 transition-colors shadow-xs" title="Pamerkan Kartu">
+                    <i class="fas fa-share-nodes text-xs"></i>
+                </button>
+                <!-- Tombol Ke Pengaturan -->
+                <a href="setting.html" class="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-200 hover:text-slate-800 transition-colors" title="Pengaturan">
+                    <i class="fas fa-gear text-xs"></i>
+                </a>
+            </div>
         </header>
 
         <!-- MAIN KONTEN -->
-        <div class="flex-grow overflow-y-auto hide-scrollbar pb-10 pt-4 px-4">
+        <div class="flex-grow overflow-y-auto hide-scrollbar pb-12 pt-4 px-4 space-y-5">
             
-            <!-- KARTU 1: DATA DIRI -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-6">
-                
-                <!-- Foto (Base64) - DIUBAH KLIKNYA KE PREVIEW -->
-                <div class="flex justify-between items-center p-4 border-b border-slate-100 cursor-pointer list-item-active transition-colors" onclick="bukaPreviewModal()">
-                    <span class="text-[14px] text-slate-700">Foto</span>
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
-                            <img id="profilImage" src="" alt="Foto" class="w-full h-full object-cover hidden">
-                            <i id="profilIcon" class="fas fa-user text-slate-400 text-sm"></i>
+            <!-- SECTION 1: KARTU IDENTITAS DIGITAL HD (card.png) -->
+            <div class="relative">
+                <!-- Kartu Digital Interaktif -->
+                <div id="studentIdCard" 
+                     class="w-full relative aspect-[662/532] rounded-2xl overflow-hidden shadow-xl border border-slate-200/80 bg-slate-100 select-none cursor-pointer card-interactive"
+                     onclick="onCardClick()" 
+                     title="Ketuk atau tahan untuk membagikan kartu ke WhatsApp!">
+                    
+                    <!-- Latar Belakang Gambar Template Asli (card.png) -->
+                    <img src="assets/identitas/card.png" alt="Kartu Identitas Siswa" class="absolute inset-0 w-full h-full object-cover pointer-events-none">
+
+                    <!-- OVERLAY FOTO SISWA (Sesuai Frame pada card.png) -->
+                    <!-- Posisi proporsional: left: 9.67%, top: 37.4%, width: 29.6%, height: 47.7% -->
+                    <div class="absolute" style="left: 9.67%; top: 37.4%; width: 29.6%; height: 47.7%;">
+                        <div class="w-full h-full rounded-lg sm:rounded-xl overflow-hidden shadow-inner border border-white/90 bg-slate-200 flex items-center justify-center relative group" onclick="event.stopPropagation(); bukaPreviewModal();">
+                            <img id="cardUserPhoto" src="" alt="Foto Profil" class="w-full h-full object-cover hidden">
+                            <!-- Placeholder jika foto belum ada -->
+                            <div id="cardPhotoPlaceholder" class="w-full h-full flex flex-col items-center justify-center text-slate-400 p-2 text-center bg-slate-100">
+                                <i class="fas fa-camera text-base sm:text-2xl text-slate-400 mb-1 group-hover:text-brand-green transition-colors"></i>
+                                <span class="text-[8px] sm:text-[9.5px] font-semibold leading-tight text-slate-500">Unggah Foto</span>
+                            </div>
+                            <!-- Badge ganti foto kecil -->
+                            <div class="absolute bottom-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center text-[9px] shadow-sm">
+                                <i class="fas fa-pencil"></i>
+                            </div>
                         </div>
-                        <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
+                    </div>
+
+                    <!-- OVERLAY INFORMASI IDENTITAS DI SEBELAH KANAN -->
+                    <!-- Posisi proporsional: left: 43.8%, top: 36.5%, right: 4%, bottom: 5% -->
+                    <div class="absolute flex flex-col justify-between py-0.5" style="left: 43.8%; top: 36.5%; right: 4.5%; bottom: 5.5%;">
+                        
+                        <!-- Field 1: Nama Lengkap -->
+                        <div class="min-w-0">
+                            <span class="text-[7px] sm:text-[9px] font-extrabold text-emerald-800 uppercase tracking-wider block leading-none">
+                                NAMA LENGKAP SISWA
+                            </span>
+                            <h2 id="cardNamaText" class="text-[11px] sm:text-[14px] font-black text-slate-800 truncate leading-tight mt-0.5">
+                                Belum diisi
+                            </h2>
+                        </div>
+
+                        <!-- Field 2: Asal Sekolah -->
+                        <div class="min-w-0">
+                            <span class="text-[6.5px] sm:text-[8.5px] font-bold text-slate-500 uppercase tracking-wider block leading-none">
+                                ASAL SEKOLAH
+                            </span>
+                            <p id="cardSekolahText" class="text-[9.5px] sm:text-[12px] font-bold text-slate-700 truncate leading-tight mt-0.5">
+                                Belum diatur
+                            </p>
+                        </div>
+
+                        <!-- Field 3: Rata-Rata Nilai & XP (Angka Murni & Persentase) -->
+                        <div class="min-w-0">
+                            <span class="text-[6.5px] sm:text-[8.5px] font-bold text-slate-500 uppercase tracking-wider block leading-none">
+                                CAPAIAN NILAI & XP
+                            </span>
+                            <div class="flex items-center gap-1 sm:gap-1.5 mt-0.5 flex-wrap">
+                                <!-- Badge Nilai -->
+                                <span class="text-[7.5px] sm:text-[9.5px] font-extrabold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-800 border border-orange-200 flex items-center gap-0.5">
+                                    <i class="fas fa-star text-[7px] text-orange-500"></i>
+                                    <span id="cardNilaiBadge">Nilai: 0 (0%)</span>
+                                </span>
+                                <!-- Badge XP -->
+                                <span class="text-[7.5px] sm:text-[9.5px] font-extrabold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200 flex items-center gap-0.5">
+                                    <i class="fas fa-bolt text-[7px] text-amber-500"></i>
+                                    <span id="cardXpBadge">0 XP (0%)</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Field 4: Status Verifikasi & Tanggal -->
+                        <div class="flex items-center justify-between border-t border-slate-200/60 pt-0.5">
+                            <div>
+                                <span class="text-[6px] sm:text-[8px] font-bold text-slate-400 uppercase tracking-wider block leading-none">
+                                    STATUS DIGITAL
+                                </span>
+                                <div id="cardStatusWrap" class="flex items-center gap-1 text-[8px] sm:text-[10px] font-extrabold text-amber-600 mt-0.5">
+                                    <i id="cardStatusIcon" class="fas fa-clock text-[8px]"></i>
+                                    <span id="cardStatusLabel">Belum Terverifikasi</span>
+                                </div>
+                            </div>
+                            <span id="cardUniqueId" class="text-[7px] sm:text-[9px] font-mono font-bold text-slate-400 bg-white/80 px-1 py-0.5 rounded border border-slate-200/50">
+                                ID: ARG-882
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <!-- Watermark Hint Klik/Tahan -->
+                    <div class="absolute top-2 right-2 bg-black/40 text-white text-[8px] sm:text-[9px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1 backdrop-blur-xs">
+                        <i class="fas fa-hand-pointer text-[7px]"></i>
+                        <span>Ketuk / Tahan</span>
                     </div>
                 </div>
-                <!-- Hidden File Input untuk Base64 -->
-                <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="prosesFoto(event)">
 
-                <!-- Nama Lengkap -->
-                <div class="flex justify-between items-center p-4 border-b border-slate-100 cursor-pointer list-item-active transition-colors" onclick="bukaEditModal('nama')">
-                    <span class="text-[14px] text-slate-700">Nama Lengkap</span>
-                    <div class="flex items-center gap-3">
-                        <span id="textNama" class="text-[13px] text-slate-500 font-medium">Belum diatur</span>
-                        <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
-                    </div>
-                </div>
-
-                <!-- No Handphone -->
-                <div class="flex justify-between items-center p-4 border-b border-slate-100 cursor-pointer list-item-active transition-colors" onclick="bukaEditModal('nohp')">
-                    <span class="text-[14px] text-slate-700">No. Handphone</span>
-                    <div class="flex items-center gap-3">
-                        <span id="textNohp" class="text-[13px] text-slate-500 font-medium">Belum diatur</span>
-                        <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
-                    </div>
-                </div>
-
-                <!-- Tanggal Lahir -->
-                <div class="flex justify-between items-center p-4 cursor-pointer list-item-active transition-colors" onclick="bukaEditModal('tgllahir')">
-                    <span class="text-[14px] text-slate-700">Tanggal Lahir</span>
-                    <div class="flex items-center gap-3">
-                        <span id="textTglLahir" class="text-[13px] text-slate-500 font-medium">Belum diatur</span>
-                        <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
-                    </div>
+                <!-- TOMBOL CEPAT AKSI KARTU -->
+                <div class="grid grid-cols-2 gap-2.5 mt-3">
+                    <button onclick="bukaModalShare()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95">
+                        <i class="fab fa-whatsapp text-sm text-emerald-200"></i>
+                        <span>Pamerkan Kartu</span>
+                    </button>
+                    <button onclick="unduhKartuHd()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95">
+                        <i class="fas fa-download text-xs text-slate-300"></i>
+                        <span>Unduh HD (PNG)</span>
+                    </button>
                 </div>
             </div>
 
-            <!-- KARTU 2: AKSI BAHAYA -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-red-50 transition-colors" onclick="konfirmasiHapusAkun()">
-                    <span class="text-[14px] text-red-500 font-medium">Ajukan Penghapusan Akun</span>
+            <!-- SECTION 2: FORMULIR VERIFIKASI AWAL (Tampil jika Siswa Baru / Belum Verifikasi) -->
+            <div id="sectionFormAwal" class="bg-white rounded-2xl p-5 shadow-xs border border-slate-100 hidden">
+                <div class="flex items-center gap-2.5 mb-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-50 text-brand-green flex items-center justify-center font-bold text-sm">
+                        <i class="fas fa-id-card"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-bold text-slate-800">Lengkapi Data Identitas</h3>
+                        <p class="text-[10px] text-slate-400">Terbitkan Kartu Digital Resmi Anda</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3.5 mb-4">
+                    <!-- Item 1: Nama Lengkap -->
+                    <div class="flex items-center gap-3 p-2.5 rounded-xl border border-slate-100 bg-slate-50/70 focus-within:border-brand-green focus-within:bg-white transition-all">
+                        <div class="w-9 h-9 rounded-lg overflow-hidden bg-white shrink-0 border border-slate-200/60 flex items-center justify-center p-1">
+                            <img src="assets/identitas/icon_nama.png" alt="Nama" class="w-full h-full object-contain">
+                        </div>
+                        <div class="flex-1">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Nama Lengkap Siswa</label>
+                            <input type="text" id="inputAwalNama" placeholder="Ketik nama lengkap Anda..." class="w-full bg-transparent text-xs font-bold text-slate-800 focus:outline-none placeholder:text-slate-300">
+                        </div>
+                    </div>
+
+                    <!-- Item 2: Asal Sekolah -->
+                    <div class="flex items-center gap-3 p-2.5 rounded-xl border border-slate-100 bg-slate-50/70 focus-within:border-brand-green focus-within:bg-white transition-all">
+                        <div class="w-9 h-9 rounded-lg overflow-hidden bg-white shrink-0 border border-slate-200/60 flex items-center justify-center p-1">
+                            <img src="assets/identitas/icon_sekolah.png" alt="Sekolah" class="w-full h-full object-contain">
+                        </div>
+                        <div class="flex-1">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Asal Sekolah</label>
+                            <input type="text" id="inputAwalSekolah" placeholder="Contoh: SMPN 1 / SMAN 2..." class="w-full bg-transparent text-xs font-bold text-slate-800 focus:outline-none placeholder:text-slate-300">
+                        </div>
+                    </div>
+
+                    <!-- Item 3: Tanggal Lahir -->
+                    <div class="flex items-center gap-3 p-2.5 rounded-xl border border-slate-100 bg-slate-50/70 focus-within:border-brand-green focus-within:bg-white transition-all">
+                        <div class="w-9 h-9 rounded-lg overflow-hidden bg-white shrink-0 border border-slate-200/60 flex items-center justify-center p-1">
+                            <img src="assets/identitas/icon_tgl.png" alt="Tanggal" class="w-full h-full object-contain">
+                        </div>
+                        <div class="flex-1">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Tanggal Lahir</label>
+                            <input type="date" id="inputAwalTglLahir" class="w-full bg-transparent text-xs font-bold text-slate-800 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Lanjut Verifikasi & Foto -->
+                <button onclick="mulaiVerifikasiAwal()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all">
+                    <i class="fas fa-camera text-sm"></i>
+                    <span>Lanjut Verifikasi & Unggah Foto</span>
+                </button>
+            </div>
+
+            <!-- SECTION 3: MENU KELOLA IDENTITAS SISWA (Item-Item Berbasis item.png) -->
+            <div id="sectionMenuIdentitas" class="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden divide-y divide-slate-100">
+                <div class="px-4 py-3 bg-slate-50/60 flex items-center justify-between">
+                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Kelola Data & Akun Siswa</h3>
+                    <span id="badgeVerifiedStatus" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Terverifikasi
+                    </span>
+                </div>
+
+                <!-- ITEM 1: NAMA LENGKAP -->
+                <div class="flex items-center justify-between p-3.5 hover:bg-slate-50/80 cursor-pointer transition-colors" onclick="bukaEditModal('nama')">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-9 h-9 rounded-lg bg-emerald-50 overflow-hidden border border-slate-100 shrink-0 flex items-center justify-center p-0.5 shadow-2xs">
+                            <img src="assets/identitas/icon_nama.png" alt="Nama" class="w-full h-full object-contain">
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[11px] font-semibold text-slate-500">Nama Lengkap</p>
+                            <p id="listTextNama" class="text-xs font-bold text-slate-800 truncate">Belum diatur</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 text-slate-300 text-xs">
+                        <span class="text-[10px] font-semibold text-brand-green">Ubah</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+
+                <!-- ITEM 2: ASAL SEKOLAH -->
+                <div class="flex items-center justify-between p-3.5 hover:bg-slate-50/80 cursor-pointer transition-colors" onclick="bukaEditModal('sekolah')">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-9 h-9 rounded-lg bg-emerald-50 overflow-hidden border border-slate-100 shrink-0 flex items-center justify-center p-0.5 shadow-2xs">
+                            <img src="assets/identitas/icon_sekolah.png" alt="Sekolah" class="w-full h-full object-contain">
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[11px] font-semibold text-slate-500">Asal Sekolah</p>
+                            <p id="listTextSekolah" class="text-xs font-bold text-slate-800 truncate">Belum diatur</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 text-slate-300 text-xs">
+                        <span class="text-[10px] font-semibold text-brand-green">Ubah</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+
+                <!-- ITEM 3: TANGGAL LAHIR -->
+                <div class="flex items-center justify-between p-3.5 hover:bg-slate-50/80 cursor-pointer transition-colors" onclick="bukaEditModal('tgllahir')">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-9 h-9 rounded-lg bg-emerald-50 overflow-hidden border border-slate-100 shrink-0 flex items-center justify-center p-0.5 shadow-2xs">
+                            <img src="assets/identitas/icon_tgl.png" alt="Tgl Lahir" class="w-full h-full object-contain">
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[11px] font-semibold text-slate-500">Tanggal Lahir</p>
+                            <p id="listTextTglLahir" class="text-xs font-bold text-slate-800 truncate">Belum diatur</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 text-slate-300 text-xs">
+                        <span class="text-[10px] font-semibold text-brand-green">Ubah</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+
+                <!-- ITEM 4: PENGATURAN APLIKASI (setting.html) -->
+                <a href="setting.html" class="flex items-center justify-between p-3.5 hover:bg-slate-50/80 cursor-pointer transition-colors">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-9 h-9 rounded-lg bg-emerald-50 overflow-hidden border border-slate-100 shrink-0 flex items-center justify-center p-0.5 shadow-2xs">
+                            <img src="assets/identitas/icon_setting.png" alt="Setting" class="w-full h-full object-contain">
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-slate-800">Pengaturan Aplikasi</p>
+                            <p class="text-[10px] text-slate-400">Preferensi audio, cadangan data & info versi</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
+                </a>
+
+                <!-- ITEM 5: KELUAR AKUN -->
+                <div class="flex items-center justify-between p-3.5 hover:bg-slate-50/80 cursor-pointer transition-colors" onclick="bukaModalKeluar()">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-9 h-9 rounded-lg bg-slate-100 overflow-hidden border border-slate-200 shrink-0 flex items-center justify-center p-0.5 shadow-2xs">
+                            <img src="assets/identitas/icon_keluar.png" alt="Keluar" class="w-full h-full object-contain">
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-slate-800">Keluar Akun</p>
+                            <p class="text-[10px] text-slate-400">Tutup sesi kartu pada perangkat ini</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
+                </div>
+
+                <!-- ITEM 6: HAPUS AKUN PERMANEN (PERINGATAN 2 TAHAP) -->
+                <div class="flex items-center justify-between p-3.5 hover:bg-red-50/70 cursor-pointer transition-colors" onclick="mulaiHapusAkun2Tahap()">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-9 h-9 rounded-lg bg-red-50 overflow-hidden border border-red-100 shrink-0 flex items-center justify-center p-0.5 shadow-2xs">
+                            <img src="assets/identitas/icon_hapus.png" alt="Hapus" class="w-full h-full object-contain">
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-red-600">Hapus Akun Permanen</p>
+                            <p class="text-[10px] text-red-400">Musnahkan seluruh data profil, nilai, & XP</p>
+                        </div>
+                    </div>
                     <i class="fas fa-chevron-right text-red-300 text-xs"></i>
                 </div>
             </div>
 
-            <p class="text-center text-[10px] text-slate-400 mt-6 px-4">
-                Data profil siswa disimpan secara aman di perangkat lokal Anda dan tidak dikirim ke server publik.
+            <!-- FOOTER INFO KEAMANAN LOKAL -->
+            <p class="text-center text-[10px] text-slate-400 px-4 leading-relaxed">
+                Kartu identitas dan seluruh akumulasi skor Anda tersimpan aman di penyimpanan lokal peramban Anda secara offline & anonim.
             </p>
 
         </div>
     </div>
 
-    <!-- MODAL EDIT DATA (Teks) -->
-    <div id="modalEdit" class="fixed inset-0 bg-black/60 hidden modal-z flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300 pb-0 sm:pb-10" onclick="if(event.target === this) tutupModal('modalEdit')">
-        <div class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 transform translate-y-full sm:translate-y-10 transition-transform duration-300 relative">
-            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-5 sm:hidden"></div>
+    <!-- HIDDEN FILE INPUT UNTUK UPLOAD FOTO SISWA -->
+    <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="prosesPilihFoto(event)">
+
+    <!-- MODAL EDIT DATA (NAMA, SEKOLAH, TGL LAHIR) -->
+    <div id="modalEdit" class="fixed inset-0 bg-black/60 hidden modal-z flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300 p-0 sm:p-4" onclick="if(event.target === this) tutupModal('modalEdit')">
+        <div class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 transform translate-y-full sm:translate-y-0 sm:scale-95 transition-all duration-300 relative">
+            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-4 sm:hidden"></div>
             
-            <h3 id="modalTitle" class="text-lg font-bold text-slate-800 mb-4">Edit Data</h3>
+            <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-brand-green flex items-center justify-center text-xs font-bold">
+                    <i class="fas fa-pen-to-square"></i>
+                </div>
+                <h3 id="modalEditTitle" class="text-base font-bold text-slate-800">Edit Data Diri</h3>
+            </div>
             
-            <div id="inputContainer">
-                <input type="text" id="editInput" class="w-full border-b-2 border-brand-green py-2 px-1 focus:outline-none text-slate-700 font-medium mb-6" placeholder="Ketik di sini...">
+            <div id="inputEditContainer" class="mb-5">
+                <input type="text" id="editTextInput" class="w-full border-b-2 border-brand-green py-2 px-1 focus:outline-none text-slate-800 font-bold text-sm" placeholder="Ketik di sini...">
             </div>
 
-            <div class="flex gap-3">
-                <button onclick="tutupModal('modalEdit')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition-all text-sm">Batal</button>
-                <button onclick="simpanEdit()" class="flex-1 bg-brand-green hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-95 text-sm">Simpan</button>
+            <div class="flex gap-2.5">
+                <button onclick="tutupModal('modalEdit')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition-colors">
+                    Batal
+                </button>
+                <button onclick="simpanEditData()" class="flex-1 bg-brand-green hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition-colors active:scale-95">
+                    Simpan Perubahan
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL PREVIEW FOTO UTUH -->
-    <div id="modalPreviewFoto" class="fixed inset-0 bg-black/80 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300" onclick="if(event.target === this) tutupModal('modalPreviewFoto')">
-        <div class="w-full max-w-sm flex flex-col items-center transform scale-95 transition-transform duration-300 relative p-4">
-            
-            <button onclick="tutupModal('modalPreviewFoto')" class="absolute -top-12 right-4 text-white text-3xl opacity-80 hover:opacity-100">
-                <i class="fas fa-times"></i>
-            </button>
-
-            <!-- Tampilan Foto Utuh -->
-            <div class="w-64 h-64 sm:w-72 sm:h-72 rounded-full bg-slate-200 border-4 border-white overflow-hidden shadow-2xl flex items-center justify-center mb-8 relative">
-                <img id="previewLargeImage" src="" class="w-full h-full object-cover hidden">
-                <i id="previewLargeIcon" class="fas fa-user text-slate-400 text-7xl"></i>
-            </div>
-            
-            <button onclick="document.getElementById('fileInput').click()" class="bg-white text-slate-800 font-bold py-3.5 px-8 rounded-full shadow-lg hover:bg-slate-100 transition-colors active:scale-95 flex items-center gap-3 text-sm">
-                <i class="fas fa-camera text-brand-green"></i> Ganti Foto Profil
-            </button>
-        </div>
-    </div>
-
-    <!-- MODAL CROP FOTO -->
-    <div id="modalCrop" class="fixed inset-0 bg-black/95 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300">
+    <!-- MODAL CROP FOTO SISWA (Cropper.js) -->
+    <div id="modalCrop" class="fixed inset-0 bg-black/95 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300 p-0 sm:p-4">
         <div class="w-full h-full sm:max-w-md sm:h-[85vh] sm:rounded-2xl bg-slate-900 flex flex-col transform scale-95 transition-transform duration-300 overflow-hidden">
-            
             <!-- Header Crop -->
-            <div class="flex justify-between items-center px-4 py-4 bg-slate-800 text-white shrink-0">
-                <h3 class="font-bold">Sesuaikan Foto</h3>
-                <button onclick="tutupModalCrop()" class="text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            <div class="flex justify-between items-center px-4 py-3 bg-slate-800 text-white shrink-0">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-crop-simple text-brand-green"></i>
+                    <h3 class="font-bold text-xs">Pangkas & Sesuaikan Foto</h3>
+                </div>
+                <button onclick="tutupModalCrop()" class="text-slate-400 hover:text-white p-1">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
             </div>
 
             <!-- Area Cropper -->
@@ -170,153 +412,455 @@
             </div>
 
             <!-- Footer Crop -->
-            <div class="p-4 bg-slate-800 shrink-0 flex gap-3">
-                <button onclick="tutupModalCrop()" class="flex-1 bg-slate-700 text-white font-bold py-3.5 rounded-xl hover:bg-slate-600 transition-colors active:scale-95 text-sm">Batal</button>
-                <button onclick="simpanCrop()" class="flex-1 bg-brand-green text-white font-bold py-3.5 rounded-xl hover:bg-emerald-600 transition-colors active:scale-95 text-sm">Simpan</button>
+            <div class="p-3 bg-slate-800 shrink-0 flex gap-2.5">
+                <button onclick="tutupModalCrop()" class="flex-1 bg-slate-700 text-white font-bold py-2.5 rounded-xl hover:bg-slate-600 text-xs transition-colors">
+                    Batal
+                </button>
+                <button onclick="simpanCropFoto()" class="flex-1 bg-brand-green text-white font-bold py-2.5 rounded-xl hover:bg-emerald-600 text-xs shadow-lg transition-colors active:scale-95 flex items-center justify-center gap-1.5">
+                    <i class="fas fa-check"></i>
+                    <span>Terapkan & Verifikasi</span>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Container Toast -->
+    <!-- MODAL PREVIEW FOTO LENGKAP -->
+    <div id="modalPreviewFoto" class="fixed inset-0 bg-black/85 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300 p-4" onclick="if(event.target === this) tutupModal('modalPreviewFoto')">
+        <div class="w-full max-w-xs flex flex-col items-center transform scale-95 transition-transform duration-300 relative text-center">
+            <button onclick="tutupModal('modalPreviewFoto')" class="absolute -top-12 right-0 text-white text-2xl opacity-80 hover:opacity-100 p-2">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="w-60 h-60 rounded-2xl bg-slate-800 border-4 border-white/90 overflow-hidden shadow-2xl flex items-center justify-center mb-5 relative">
+                <img id="previewLargeImage" src="" class="w-full h-full object-cover hidden">
+                <i id="previewLargeIcon" class="fas fa-user text-slate-500 text-6xl"></i>
+            </div>
+
+            <button onclick="document.getElementById('fileInput').click()" class="bg-white text-slate-800 font-bold py-3 px-6 rounded-full shadow-xl hover:bg-emerald-50 hover:text-brand-green transition-colors active:scale-95 flex items-center gap-2 text-xs">
+                <i class="fas fa-camera text-brand-green"></i>
+                <span>Ganti Foto Profil</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL PAMERKAN / BAGIKAN KARTU KE WHATSAPP & UNDUH HD -->
+    <div id="modalShareKartu" class="fixed inset-0 bg-black/75 hidden modal-z flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300 p-0 sm:p-4" onclick="if(event.target === this) tutupModal('modalShareKartu')">
+        <div class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 transform translate-y-full sm:translate-y-0 sm:scale-95 transition-all duration-300 relative">
+            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-4 sm:hidden"></div>
+            
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-100 text-brand-green flex items-center justify-center text-base">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Pamerkan Kartu Identitas</h3>
+                        <p class="text-[10px] text-slate-400">Bagikan pencapaian Anda ke media sosial</p>
+                    </div>
+                </div>
+                <button onclick="tutupModal('modalShareKartu')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center text-xs">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Ringkasan Mini Kartu untuk preview -->
+            <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3 mb-4 flex items-center gap-3">
+                <div class="w-12 h-12 rounded-lg bg-slate-200 border border-slate-300 overflow-hidden shrink-0 flex items-center justify-center">
+                    <img id="shareThumbPhoto" src="" class="w-full h-full object-cover hidden">
+                    <i id="shareThumbIcon" class="fas fa-user text-slate-400 text-base"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <h4 id="shareThumbNama" class="text-xs font-bold text-slate-800 truncate">Siswa Cendekia</h4>
+                    <p id="shareThumbSekolah" class="text-[10px] text-slate-500 truncate">Asal Sekolah</p>
+                    <div class="flex items-center gap-2 mt-0.5 text-[9px] font-bold text-emerald-700">
+                        <span id="shareThumbNilai">Nilai: 0</span> • <span id="shareThumbXp">0 XP</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Opsi Berbagi -->
+            <div class="space-y-2.5">
+                <!-- 1. Bagikan ke WhatsApp -->
+                <button onclick="bagikanKeWhatsApp()" class="w-full bg-[#25D366] hover:bg-[#20ba59] text-white font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-95">
+                    <i class="fab fa-whatsapp text-lg"></i>
+                    <span>Bagikan Kartu ke WhatsApp</span>
+                </button>
+
+                <!-- 2. Unduh Gambar Kartu HD (PNG) -->
+                <button onclick="unduhKartuHd()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2.5 shadow-sm transition-all active:scale-95">
+                    <i class="fas fa-file-image text-emerald-400"></i>
+                    <span>Unduh Gambar Kartu HD (PNG)</span>
+                </button>
+
+                <!-- 3. Salin Ringkasan Teks -->
+                <button onclick="salinTeksIdentitas()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
+                    <i class="fas fa-copy text-slate-500"></i>
+                    <span>Salin Ringkasan Identitas</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL KELUAR AKUN -->
+    <div id="modalKeluar" class="fixed inset-0 bg-black/60 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300 p-4" onclick="if(event.target === this) tutupModal('modalKeluar')">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 transform scale-95 transition-transform duration-300 relative text-center">
+            <div class="w-14 h-14 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center mx-auto mb-3 text-2xl">
+                <i class="fas fa-right-from-bracket"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800 mb-1">Keluar Akun Siswa?</h3>
+            <p class="text-xs text-slate-500 mb-5 leading-relaxed">
+                Anda akan keluar dari sesi kartu identitas aktif ini. Data belajar Anda tetap tersimpan di perangkat ini jika ingin kembali.
+            </p>
+            <div class="flex gap-2.5">
+                <button onclick="tutupModal('modalKeluar')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition-colors">
+                    Batal
+                </button>
+                <button onclick="prosesKeluarAkun()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-xl text-xs transition-colors shadow-md">
+                    Ya, Keluar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PERINGATAN HAPUS TAHAP 1 DARI 2 -->
+    <div id="modalHapusTahap1" class="fixed inset-0 bg-black/65 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300 p-4" onclick="if(event.target === this) tutupModal('modalHapusTahap1')">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 transform scale-95 transition-transform duration-300 relative text-center">
+            <div class="w-14 h-14 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-3 text-2xl animate-pulse">
+                <i class="fas fa-triangle-exclamation"></i>
+            </div>
+            <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 mb-2">
+                PERINGATAN TAHAP 1 DARI 2
+            </span>
+            <h3 class="text-base font-bold text-slate-800 mb-2">Pengajuan Hapus Akun</h3>
+            <div class="text-xs text-slate-600 mb-4 text-left bg-slate-50 p-3.5 rounded-xl border border-slate-200 leading-relaxed space-y-1">
+                <p>⚠️ <strong>Ini Tindakan Berbahaya!</strong></p>
+                <p>Menghapus akun akan mengakibatkan hilangnya profil Anda. Semua poin skor XP, riwayat latihan, dan kartu digital akan dihapus dari peramban.</p>
+            </div>
+            <div class="flex gap-2.5">
+                <button onclick="tutupModal('modalHapusTahap1')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition-colors">
+                    Batal & Amankan
+                </button>
+                <button onclick="lanjutKeHapusTahap2()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl text-xs transition-colors shadow-md">
+                    Lanjut Konfirmasi ➔
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PERINGATAN HAPUS TAHAP 2 DARI 2 (FINAL PERMANEN) -->
+    <div id="modalHapusTahap2" class="fixed inset-0 bg-black/80 hidden modal-z flex items-center justify-center opacity-0 transition-opacity duration-300 p-4" onclick="if(event.target === this) tutupModal('modalHapusTahap2')">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 transform scale-95 transition-transform duration-300 relative text-center border-2 border-red-500 shadow-2xl">
+            <div class="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3 text-3xl">
+                <i class="fas fa-skull-crossbones animate-bounce"></i>
+            </div>
+            <span class="inline-block text-[10px] font-black px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-300 mb-2 tracking-wider">
+                🚨 PERINGATAN FINAL & PERMANEN
+            </span>
+            <h3 class="text-base font-black text-red-600 mb-1">SEMUA DATA AKAN HILANG TOTAL!</h3>
+            <p class="text-xs text-red-700 font-medium mb-3">
+                Tindakan ini permanen dan TIDAK DAPAT DIBATALKAN!
+            </p>
+            <div class="bg-red-50 text-red-800 text-[11px] p-3.5 rounded-xl border border-red-200 text-left mb-5 space-y-1.5 font-medium">
+                <div>❌ Seluruh akumulasi XP (<span id="hapusFinalXpVal" class="font-bold">0</span> XP) musnah</div>
+                <div>❌ Riwayat nilai latihan & statistik grafik hilang</div>
+                <div>❌ Kartu Identitas Digital dinonaktifkan</div>
+            </div>
+            <div class="flex flex-col gap-2">
+                <button onclick="eksekusiHapusAkunFinal()" class="w-full bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold py-3 rounded-xl text-xs transition-all shadow-lg flex items-center justify-center gap-2">
+                    <i class="fas fa-trash-can"></i> YA, HAPUS PERMANEN SEMUA DATA
+                </button>
+                <button onclick="tutupModal('modalHapusTahap2')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition-colors">
+                    Batalkan & Pertahankan Akun Saya
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTAINER TOAST NOTIFIKASI -->
     <div id="toastContainer" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100000] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
 
     <!-- Cropper.js JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
     <script>
-        // Variabel global
-        let currentEditField = '';
-        let cropper = null; // Menyimpan instansi Cropper.js
-
-        // --- SISTEM PENYIMPANAN LOKAL (ANONIM) ---
+        // --- KUNCI PENYIMPANAN LOCALSTORAGE ---
         const keys = {
             nama: 'namaSiswaCendekia',
+            sekolah: 'sekolahSiswaCendekia',
             foto: 'fotoSiswaCendekia',
-            nohp: 'noHpSiswaCendekia',
-            tgllahir: 'tglLahirSiswaCendekia'
+            tgllahir: 'tglLahirSiswaCendekia',
+            tglverifikasi: 'tglVerifikasiSiswaCendekia',
+            statusKartu: 'statusKartuSiswa',
+            nohp: 'noHpSiswaCendekia'
         };
 
-        // Memuat Data saat halaman dibuka
-        document.addEventListener('DOMContentLoaded', loadProfileData);
+        let currentEditField = '';
+        let cropper = null;
+        let cardLongPressTimer = null;
 
-        function loadProfileData() {
-            // Load Nama
-            const nama = localStorage.getItem(keys.nama);
-            if(nama) document.getElementById('textNama').innerText = nama;
+        // INSIALISASI SAAT HALAMAN DIMUAT
+        document.addEventListener('DOMContentLoaded', () => {
+            muatDataProfil();
+            inisialisasiInteraksiKartu();
+        });
 
-            // Load No HP
-            const nohp = localStorage.getItem(keys.nohp);
-            if(nohp) document.getElementById('textNohp').innerText = nohp;
-
-            // Load Tgl Lahir
-            const tgl = localStorage.getItem(keys.tgllahir);
-            if(tgl) document.getElementById('textTglLahir').innerText = tgl;
-
-            // Load Foto Base64
-            const foto = localStorage.getItem(keys.foto);
-            if(foto) {
-                const img = document.getElementById('profilImage');
-                img.src = foto;
-                img.classList.remove('hidden');
-                document.getElementById('profilIcon').classList.add('hidden');
-            }
+        // 1. HITUNG STATS: NILAI & XP
+        function hitungTotalXp() {
+            const xp1 = Number(localStorage.getItem('latihanPointsCendekia')) || 0;
+            const xp2 = Number(localStorage.getItem('kreasiPointsArg')) || 0;
+            const xp3 = Number(localStorage.getItem('kelasPointsArg')) || 0;
+            return xp1 + xp2 + xp3;
         }
 
-        // --- SISTEM PREVIEW & CROP FOTO ---
-        
-        // 1. Tampilkan modal preview sebelum ganti foto
-        function bukaPreviewModal() {
-            const foto = localStorage.getItem(keys.foto);
-            const imgEl = document.getElementById('previewLargeImage');
-            const iconEl = document.getElementById('previewLargeIcon');
-
-            if(foto) {
-                imgEl.src = foto;
-                imgEl.classList.remove('hidden');
-                iconEl.classList.add('hidden');
-            } else {
-                imgEl.classList.add('hidden');
-                iconEl.classList.remove('hidden');
-            }
-            
-            bukaModal('modalPreviewFoto');
-        }
-
-        // 2. Saat file foto dipilih
-        function prosesFoto(event) {
-            const file = event.target.files[0];
-            if(file) {
-                // Batasi max 5MB (diperbesar karena proses crop biasanya mengecilkan ukuran)
-                if(file.size > 5 * 1024 * 1024) {
-                    showToast("Ukuran foto terlalu besar. Maksimal 5MB.", true);
-                    return;
+        function hitungRataNilai() {
+            try {
+                const log = JSON.parse(localStorage.getItem('arg_grafik_nilaiku_log_v1') || '{}');
+                if (log.dailyLog) {
+                    let totalNilai = 0;
+                    let count = 0;
+                    Object.values(log.dailyLog).forEach(d => {
+                        if (d.countNilai > 0) {
+                            totalNilai += d.totalNilai;
+                            count += d.countNilai;
+                        } else if (d.maxNilai > 0) {
+                            totalNilai += d.maxNilai;
+                            count++;
+                        }
+                    });
+                    if (count > 0) return Math.round(totalNilai / count);
                 }
+            } catch(e) {}
+            return 85; // Default nilai latihan aktif jika belum ada riwayat
+        }
 
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // Tutup modal preview dengan cepat secara paksa
-                    document.getElementById('modalPreviewFoto').classList.add('opacity-0');
-                    setTimeout(() => document.getElementById('modalPreviewFoto').classList.add('hidden'), 100);
+        function formatTanggalIndo(dateObj) {
+            const bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            const d = dateObj.getDate().toString().padStart(2, '0');
+            const m = bulan[dateObj.getMonth()];
+            const y = dateObj.getFullYear();
+            return `${d} ${m} ${y}`;
+        }
 
-                    // Siapkan gambar untuk di crop
-                    const imageToCrop = document.getElementById('imageToCrop');
-                    imageToCrop.src = e.target.result;
+        function dapatkanIdUnikSiswa() {
+            let id = localStorage.getItem('arg_unique_student_id');
+            if (!id) {
+                const rand = Math.floor(100 + Math.random() * 900);
+                id = `ARG-${rand}`;
+                localStorage.setItem('arg_unique_student_id', id);
+            }
+            return id;
+        }
 
-                    // Buka modal crop
-                    bukaModal('modalCrop');
+        // 2. MUAT DATA PROFIL & PERBARUI UI
+        function muatDataProfil() {
+            const nama = localStorage.getItem(keys.nama);
+            const sekolah = localStorage.getItem(keys.sekolah);
+            const tgllahir = localStorage.getItem(keys.tgllahir);
+            const foto = localStorage.getItem(keys.foto);
+            const statusKartu = localStorage.getItem(keys.statusKartu);
+            const isVerified = statusKartu === 'verified';
+            const tglVerif = localStorage.getItem(keys.tglverifikasi) || formatTanggalIndo(new Date());
 
-                    // Inisialisasi Cropper setelah modal dirender
-                    setTimeout(() => {
-                        if (cropper) cropper.destroy(); // Hapus sisa cropper lama jika ada
-                        
-                        cropper = new Cropper(imageToCrop, {
-                            aspectRatio: 1, // Memaksa kotak crop 1:1 (Persegi)
-                            viewMode: 1,    // Membatasi crop box agar tidak keluar dari gambar
-                            dragMode: 'move', // Menggeser gambar
-                            autoCropArea: 0.9,
-                            restore: false,
-                            guides: true,
-                            center: true,
-                            highlight: false,
-                            cropBoxMovable: true,
-                            cropBoxResizable: true,
-                            toggleDragModeOnDblclick: false,
-                        });
-                    }, 300);
-                };
-                reader.readAsDataURL(file);
+            const totalXp = hitungTotalXp();
+            const xpTarget = 2000;
+            const xpPercent = Math.min(100, Math.round((totalXp / xpTarget) * 100));
+            const rataNilai = hitungRataNilai();
+
+            // Set Data di Kartu Digital (card.png)
+            document.getElementById('cardNamaText').textContent = nama || 'Belum diisi';
+            document.getElementById('cardSekolahText').textContent = sekolah || 'Belum diatur';
+            document.getElementById('cardNilaiBadge').textContent = `Nilai: ${rataNilai} (${rataNilai}%)`;
+            document.getElementById('cardXpBadge').textContent = `${totalXp} XP (${xpPercent}%)`;
+            document.getElementById('cardUniqueId').textContent = `ID: ${dapatkanIdUnikSiswa()}`;
+
+            const cardPhoto = document.getElementById('cardUserPhoto');
+            const photoPlaceholder = document.getElementById('cardPhotoPlaceholder');
+            if (foto) {
+                cardPhoto.src = foto;
+                cardPhoto.classList.remove('hidden');
+                photoPlaceholder.classList.add('hidden');
+            } else {
+                cardPhoto.classList.add('hidden');
+                photoPlaceholder.classList.remove('hidden');
+            }
+
+            // Status Verifikasi Kartu
+            const statusLabel = document.getElementById('cardStatusLabel');
+            const statusIcon = document.getElementById('cardStatusIcon');
+            const statusWrap = document.getElementById('cardStatusWrap');
+            const badgeStatus = document.getElementById('badgeVerifiedStatus');
+
+            if (isVerified) {
+                statusLabel.textContent = `Terverifikasi • ${tglVerif}`;
+                statusWrap.className = 'flex items-center gap-1 text-[8px] sm:text-[10px] font-extrabold text-emerald-700 mt-0.5';
+                statusIcon.className = 'fas fa-circle-check text-emerald-500 text-[8px] sm:text-[9px]';
+                if (badgeStatus) {
+                    badgeStatus.textContent = 'Terverifikasi';
+                    badgeStatus.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
+                }
+            } else {
+                statusLabel.textContent = 'Menunggu Verifikasi';
+                statusWrap.className = 'flex items-center gap-1 text-[8px] sm:text-[10px] font-extrabold text-amber-600 mt-0.5';
+                statusIcon.className = 'fas fa-clock text-amber-500 text-[8px] sm:text-[9px]';
+                if (badgeStatus) {
+                    badgeStatus.textContent = 'Belum Verifikasi';
+                    badgeStatus.className = 'text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200';
+                }
+            }
+
+            // Tampilkan / Sembunyikan Formulir Awal vs Menu Identitas
+            const sectionFormAwal = document.getElementById('sectionFormAwal');
+            const sectionMenuIdentitas = document.getElementById('sectionMenuIdentitas');
+            if (!nama || !sekolah || !isVerified) {
+                // User Baru / Belum Lengkap Verifikasi
+                sectionFormAwal.classList.remove('hidden');
+                if (nama) document.getElementById('inputAwalNama').value = nama;
+                if (sekolah) document.getElementById('inputAwalSekolah').value = sekolah;
+                if (tgllahir) document.getElementById('inputAwalTglLahir').value = tgllahir;
+            } else {
+                sectionFormAwal.classList.add('hidden');
+            }
+
+            // Data di Menu Pengaturan / List
+            document.getElementById('listTextNama').textContent = nama || 'Belum diatur';
+            document.getElementById('listTextSekolah').textContent = sekolah || 'Belum diatur';
+            document.getElementById('listTextTglLahir').textContent = tgllahir || 'Belum diatur';
+
+            // Data di Modal Share Thumbnail
+            document.getElementById('shareThumbNama').textContent = nama || 'Siswa Cendekia';
+            document.getElementById('shareThumbSekolah').textContent = sekolah || 'Asal Sekolah Belum Diatur';
+            document.getElementById('shareThumbNilai').textContent = `Nilai: ${rataNilai} (${rataNilai}%)`;
+            document.getElementById('shareThumbXp').textContent = `${totalXp} XP (${xpPercent}%)`;
+
+            const sharePhoto = document.getElementById('shareThumbPhoto');
+            const shareIcon = document.getElementById('shareThumbIcon');
+            if (foto) {
+                sharePhoto.src = foto;
+                sharePhoto.classList.remove('hidden');
+                shareIcon.classList.add('hidden');
+            } else {
+                sharePhoto.classList.add('hidden');
+                shareIcon.classList.remove('hidden');
             }
         }
 
-        // 3. Saat klik Simpan di modal crop
-        function simpanCrop() {
+        // 3. INTERAKSI KARTU: LONG PRESS & KLIK UNTUK BAGIKAN
+        function inisialisasiInteraksiKartu() {
+            const cardEl = document.getElementById('studentIdCard');
+            
+            // Touch Long Press
+            cardEl.addEventListener('touchstart', (e) => {
+                cardLongPressTimer = setTimeout(() => {
+                    if ('vibrate' in navigator) navigator.vibrate(50);
+                    bukaModalShare();
+                }, 500);
+            }, { passive: true });
+
+            cardEl.addEventListener('touchend', () => clearTimeout(cardLongPressTimer));
+            cardEl.addEventListener('touchmove', () => clearTimeout(cardLongPressTimer));
+        }
+
+        function onCardClick() {
+            // Jika diklik sekali biasa, buka pop up bagikan
+            bukaModalShare();
+        }
+
+        // 4. ALUR REGISTRASI / VERIFIKASI AWAL PENGGUNA BARU
+        function mulaiVerifikasiAwal() {
+            const nama = document.getElementById('inputAwalNama').value.trim();
+            const sekolah = document.getElementById('inputAwalSekolah').value.trim();
+            const tgllahir = document.getElementById('inputAwalTglLahir').value;
+
+            if (!nama) {
+                showToast("Silakan masukkan Nama Lengkap Anda.", true);
+                document.getElementById('inputAwalNama').focus();
+                return;
+            }
+            if (!sekolah) {
+                showToast("Silakan masukkan Asal Sekolah Anda.", true);
+                document.getElementById('inputAwalSekolah').focus();
+                return;
+            }
+
+            // Simpan data teks sementara
+            localStorage.setItem(keys.nama, nama);
+            localStorage.setItem(keys.sekolah, sekolah);
+            if (tgllahir) localStorage.setItem(keys.tgllahir, tgllahir);
+
+            muatDataProfil();
+
+            // Lanjut minta upload foto profil
+            showToast("Bagus! Sekarang pilih foto profil untuk kartu Anda.");
+            setTimeout(() => {
+                document.getElementById('fileInput').click();
+            }, 600);
+        }
+
+        // 5. SISTEM UNGGAH & CROP FOTO
+        function prosesPilihFoto(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                showToast("Ukuran foto maksimal 5MB.", true);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tutupModal('modalPreviewFoto');
+                
+                const imageToCrop = document.getElementById('imageToCrop');
+                imageToCrop.src = e.target.result;
+
+                bukaModal('modalCrop');
+
+                setTimeout(() => {
+                    if (cropper) cropper.destroy();
+                    // Crop 3:4 atau 1:1 proporsional untuk kartu
+                    cropper = new Cropper(imageToCrop, {
+                        aspectRatio: 3 / 4,
+                        viewMode: 1,
+                        dragMode: 'move',
+                        autoCropArea: 0.9,
+                        restore: false,
+                        guides: true,
+                        center: true,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: true,
+                    });
+                }, 300);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function simpanCropFoto() {
             if (!cropper) return;
 
-            // Dapatkan hasil gambar yang ter-crop dengan ukuran wajar agar performa tetap baik
+            // Ambil canvas hasil crop HD
             const canvas = cropper.getCroppedCanvas({
-                width: 500,
-                height: 500,
+                width: 400,
+                height: 533,
                 imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high',
+                imageSmoothingQuality: 'high'
             });
 
-            // Ubah menjadi Base64 (Format JPEG, kualitas 80% untuk menghemat storage lokal)
-            const base64Data = canvas.toDataURL('image/jpeg', 0.8);
-            
-            // Simpan ke local storage
+            const base64Data = canvas.toDataURL('image/jpeg', 0.85);
             localStorage.setItem(keys.foto, base64Data);
-            
-            // Update UI di list profil utama
-            const img = document.getElementById('profilImage');
-            img.src = base64Data;
-            img.classList.remove('hidden');
-            document.getElementById('profilIcon').classList.add('hidden');
-            
-            showToast("Foto profil berhasil diperbarui.");
+
+            // Set Tanggal Verifikasi Resmi
+            const todayStr = formatTanggalIndo(new Date());
+            localStorage.setItem(keys.tglverifikasi, todayStr);
+            localStorage.setItem(keys.statusKartu, 'verified');
+
             tutupModalCrop();
+            muatDataProfil();
+
+            // CELEBRATION BOOM! EFEK KARTU BERKILAU & KONFETI
+            jalankanEfekBoomKartu();
         }
 
-        // Khusus untuk menutup modal crop dan menghancurkan memory cropper
         function tutupModalCrop() {
             tutupModal('modalCrop');
             setTimeout(() => {
@@ -324,91 +868,393 @@
                     cropper.destroy();
                     cropper = null;
                 }
-                document.getElementById('fileInput').value = ''; // Reset file input
+                document.getElementById('fileInput').value = '';
             }, 300);
         }
 
-        // --- SISTEM EDIT MODAL TEKS ---
+        function bukaPreviewModal() {
+            const foto = localStorage.getItem(keys.foto);
+            const img = document.getElementById('previewLargeImage');
+            const icon = document.getElementById('previewLargeIcon');
+
+            if (foto) {
+                img.src = foto;
+                img.classList.remove('hidden');
+                icon.classList.add('hidden');
+            } else {
+                img.classList.add('hidden');
+                icon.classList.remove('hidden');
+            }
+            bukaModal('modalPreviewFoto');
+        }
+
+        // 6. EFEK BOOM! PERAYAAN KARTU TERBIT
+        function jalankanEfekBoomKartu() {
+            const card = document.getElementById('studentIdCard');
+            card.classList.remove('card-boom-animation');
+            void card.offsetWidth; // trigger reflow
+            card.classList.add('card-boom-animation');
+
+            // Luncurkan konfeti
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+                setTimeout(() => {
+                    confetti({
+                        particleCount: 50,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 }
+                    });
+                    confetti({
+                        particleCount: 50,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 }
+                    });
+                }, 250);
+            }
+
+            showToast("🎉 BOOM! Kartu Identitas Siswa Digital Anda Siap Dipamerkan!");
+        }
+
+        // 7. SISTEM EDIT MODAL TEKS
         function bukaEditModal(field) {
             currentEditField = field;
-            const input = document.getElementById('editInput');
-            const title = document.getElementById('modalTitle');
-            
-            if(field === 'nama') {
-                title.innerText = "Ubah Nama Lengkap";
+            const input = document.getElementById('editTextInput');
+            const title = document.getElementById('modalEditTitle');
+
+            if (field === 'nama') {
+                title.textContent = "Ubah Nama Lengkap";
                 input.type = "text";
                 input.placeholder = "Nama Lengkap Anda";
                 input.value = localStorage.getItem(keys.nama) || '';
-            } else if(field === 'nohp') {
-                title.innerText = "Ubah No. Handphone";
-                input.type = "tel";
-                input.placeholder = "08xxxxxxxxxx";
-                input.value = localStorage.getItem(keys.nohp) || '';
-            } else if(field === 'tgllahir') {
-                title.innerText = "Ubah Tanggal Lahir";
+            } else if (field === 'sekolah') {
+                title.textContent = "Ubah Asal Sekolah";
+                input.type = "text";
+                input.placeholder = "Nama Sekolah Anda";
+                input.value = localStorage.getItem(keys.sekolah) || '';
+            } else if (field === 'tgllahir') {
+                title.textContent = "Ubah Tanggal Lahir";
                 input.type = "date";
                 input.value = localStorage.getItem(keys.tgllahir) || '';
             }
 
             bukaModal('modalEdit');
-            setTimeout(() => input.focus(), 100);
+            setTimeout(() => input.focus(), 150);
         }
 
-        function simpanEdit() {
-            const val = document.getElementById('editInput').value.trim();
-            
-            if(currentEditField === 'nama') {
-                if(val === '') { showToast("Nama tidak boleh kosong", true); return; }
+        function simpanEditData() {
+            const val = document.getElementById('editTextInput').value.trim();
+
+            if (currentEditField === 'nama') {
+                if (!val) { showToast("Nama tidak boleh kosong", true); return; }
                 localStorage.setItem(keys.nama, val);
-                document.getElementById('textNama').innerText = val;
-            } 
-            else if(currentEditField === 'nohp') {
-                localStorage.setItem(keys.nohp, val);
-                document.getElementById('textNohp').innerText = val || 'Belum diatur';
-            } 
-            else if(currentEditField === 'tgllahir') {
+            } else if (currentEditField === 'sekolah') {
+                if (!val) { showToast("Sekolah tidak boleh kosong", true); return; }
+                localStorage.setItem(keys.sekolah, val);
+            } else if (currentEditField === 'tgllahir') {
                 localStorage.setItem(keys.tgllahir, val);
-                document.getElementById('textTglLahir').innerText = val || 'Belum diatur';
             }
 
-            showToast("Data berhasil disimpan.");
+            muatDataProfil();
+            showToast("Data profil berhasil diperbarui.");
             tutupModal('modalEdit');
         }
 
-        // --- SISTEM HAPUS AKUN ANONIM ---
-        function konfirmasiHapusAkun() {
-            const konfirmasi = confirm("PERINGATAN!\n\nApakah Anda yakin ingin menghapus akun? Semua data profil, skor XP, dan riwayat belajar di perangkat ini akan dihapus permanen.");
-            
-            if(konfirmasi) {
-                localStorage.removeItem(keys.nama);
-                localStorage.removeItem(keys.foto);
-                localStorage.removeItem(keys.nohp);
-                localStorage.removeItem(keys.tgllahir);
-                localStorage.removeItem('latihanPointsCendekia');
-                localStorage.removeItem('kreasiPointsArg'); 
-                localStorage.removeItem('kelasPointsArg');
+        // 8. GENERATE HD CANVAS UNTUK UNDUH & BAGIKAN (662 x 532)
+        function buatKartuHdCanvas(callback) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 662;
+            canvas.height = 532;
+            const ctx = canvas.getContext('2d');
 
-                showToast("Akun berhasil dihapus. Mengalihkan...");
-                setTimeout(() => {
-                    window.location.href = "index.html";
-                }, 1000);
-            }
+            const cardImg = new Image();
+            cardImg.crossOrigin = 'anonymous';
+            cardImg.onload = function() {
+                // 1. Gambar Template card.png Asli
+                ctx.drawImage(cardImg, 0, 0, 662, 532);
+
+                const nama = localStorage.getItem(keys.nama) || 'Siswa Cendekia';
+                const sekolah = localStorage.getItem(keys.sekolah) || 'Asal Sekolah Belum Diatur';
+                const tglVerif = localStorage.getItem(keys.tglverifikasi) || formatTanggalIndo(new Date());
+                const isVerified = localStorage.getItem(keys.statusKartu) === 'verified';
+                const fotoData = localStorage.getItem(keys.foto);
+
+                const totalXp = hitungTotalXp();
+                const xpTarget = 2000;
+                const xpPercent = Math.min(100, Math.round((totalXp / xpTarget) * 100));
+                const rataNilai = hitungRataNilai();
+
+                function renderTeksDanBadge() {
+                    ctx.textBaseline = 'top';
+
+                    // 1. Label & Nama Siswa
+                    ctx.fillStyle = '#064e3b';
+                    ctx.font = 'bold 11px Poppins, sans-serif';
+                    ctx.fillText('NAMA LENGKAP SISWA', 290, 202);
+
+                    ctx.fillStyle = '#0f172a';
+                    ctx.font = 'bold 20px Poppins, sans-serif';
+                    let dispNama = nama;
+                    if (ctx.measureText(dispNama).width > 340) {
+                        while (ctx.measureText(dispNama + '...').width > 340 && dispNama.length > 0) {
+                            dispNama = dispNama.slice(0, -1);
+                        }
+                        dispNama += '...';
+                    }
+                    ctx.fillText(dispNama, 290, 218);
+
+                    // 2. Label & Asal Sekolah
+                    ctx.fillStyle = '#64748b';
+                    ctx.font = 'bold 11px Poppins, sans-serif';
+                    ctx.fillText('ASAL SEKOLAH', 290, 268);
+
+                    ctx.fillStyle = '#1e293b';
+                    ctx.font = '600 16px Poppins, sans-serif';
+                    let dispSekolah = sekolah;
+                    if (ctx.measureText(dispSekolah).width > 340) {
+                        while (ctx.measureText(dispSekolah + '...').width > 340 && dispSekolah.length > 0) {
+                            dispSekolah = dispSekolah.slice(0, -1);
+                        }
+                        dispSekolah += '...';
+                    }
+                    ctx.fillText(dispSekolah, 290, 284);
+
+                    // 3. Capaian Nilai & XP (Pill Badges)
+                    ctx.fillStyle = '#64748b';
+                    ctx.font = 'bold 11px Poppins, sans-serif';
+                    ctx.fillText('CAPAIAN NILAI & AKUMULASI XP', 290, 334);
+
+                    // Pill Nilai
+                    gambarPill(ctx, 290, 352, 130, 28, '#ffedd5', '#ea580c', '#c2410c', `Nilai: ${rataNilai} (${rataNilai}%)`);
+                    // Pill XP
+                    gambarPill(ctx, 428, 352, 150, 28, '#fef3c7', '#d97706', '#92400e', `${totalXp} XP (${xpPercent}%)`);
+
+                    // 4. Status Verifikasi Digital
+                    ctx.fillStyle = '#64748b';
+                    ctx.font = 'bold 10px Poppins, sans-serif';
+                    ctx.fillText('STATUS VERIFIKASI DIGITAL', 290, 404);
+
+                    ctx.fillStyle = isVerified ? '#047857' : '#d97706';
+                    ctx.font = 'bold 14px Poppins, sans-serif';
+                    const verifText = isVerified ? `✓ TERVERIFIKASI  •  ${tglVerif}` : `⏳ MENUNGGU VERIFIKASI`;
+                    ctx.fillText(verifText, 290, 420);
+
+                    // ID Unik Tag
+                    const idTag = dapatkanIdUnikSiswa();
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = 'bold 11px monospace';
+                    ctx.fillText(`ID: ${idTag}`, 290, 448);
+
+                    callback(canvas);
+                }
+
+                // 2. Gambar Foto jika ada
+                if (fotoData) {
+                    const userImg = new Image();
+                    userImg.onload = function() {
+                        ctx.save();
+                        // Rounded box klip di posisi frame: x:64, y:199, w:196, h:254
+                        pathRoundedRect(ctx, 64, 199, 196, 254, 14);
+                        ctx.clip();
+                        ctx.drawImage(userImg, 64, 199, 196, 254);
+                        ctx.restore();
+
+                        // Border putih rapi
+                        ctx.save();
+                        ctx.lineWidth = 3;
+                        ctx.strokeStyle = '#ffffff';
+                        pathRoundedRect(ctx, 64, 199, 196, 254, 14);
+                        ctx.stroke();
+                        ctx.restore();
+
+                        renderTeksDanBadge();
+                    };
+                    userImg.src = fotoData;
+                } else {
+                    renderTeksDanBadge();
+                }
+            };
+            cardImg.src = 'assets/identitas/card.png';
         }
 
-        // --- UTILITY MODAL & TOAST ---
+        // Helper Canvas Rounded Rect
+        function pathRoundedRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        // Helper Canvas Pill Badge
+        function gambarPill(ctx, x, y, w, h, bg, border, color, text) {
+            ctx.save();
+            ctx.fillStyle = bg;
+            ctx.strokeStyle = border;
+            ctx.lineWidth = 1.5;
+            pathRoundedRect(ctx, x, y, w, h, h / 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = color;
+            ctx.font = 'bold 11px Poppins, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, x + w / 2, y + h / 2);
+            ctx.restore();
+        }
+
+        // 9. AKSI BAGIKAN KARTU KE WHATSAPP & UNDUH
+        function bukaModalShare() {
+            bukaModal('modalShareKartu');
+        }
+
+        function bagikanKeWhatsApp() {
+            const nama = localStorage.getItem(keys.nama) || 'Siswa Cendekia';
+            const sekolah = localStorage.getItem(keys.sekolah) || 'Asal Sekolah';
+            const totalXp = hitungTotalXp();
+            const rataNilai = hitungRataNilai();
+            const xpPercent = Math.min(100, Math.round((totalXp / 2000) * 100));
+            const tglVerif = localStorage.getItem(keys.tglverifikasi) || formatTanggalIndo(new Date());
+
+            const pesan = 
+`🎓 *KARTU IDENTITAS SISWA DIGITAL* 🎓
+_Platform Pembelajaran Cendekia Argumentasi_
+
+👤 *Nama:* ${nama}
+🏫 *Sekolah:* ${sekolah}
+📊 *Rata-rata Nilai:* ${rataNilai} (${rataNilai}%)
+⭐ *Total Akumulasi XP:* ${totalXp} XP (${xpPercent}%)
+✅ *Status Kartu:* Terverifikasi (${tglVerif})
+
+Ayo uji kemampuan bernalar kritis dan asah keterampilan berargumentasi Anda di aplikasi Cendekia Argumentasi!`;
+
+            const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(pesan)}`;
+            window.open(waUrl, '_blank');
+            tutupModal('modalShareKartu');
+        }
+
+        function unduhKartuHd() {
+            showToast("Menyiapkan Kartu HD...");
+            buatKartuHdCanvas(function(canvas) {
+                const dataUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                const nama = (localStorage.getItem(keys.nama) || 'siswa').replace(/[^a-zA-Z0-9]/g, '_');
+                link.download = `Kartu_Identitas_${nama}.png`;
+                link.href = dataUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast("Kartu identitas HD berhasil diunduh!");
+                tutupModal('modalShareKartu');
+            });
+        }
+
+        function salinTeksIdentitas() {
+            const nama = localStorage.getItem(keys.nama) || 'Siswa Cendekia';
+            const sekolah = localStorage.getItem(keys.sekolah) || 'Asal Sekolah';
+            const totalXp = hitungTotalXp();
+            const rataNilai = hitungRataNilai();
+
+            const ringkasan = `Kartu Pelajar Digital: ${nama} (${sekolah}) | Nilai: ${rataNilai} | XP: ${totalXp}`;
+            navigator.clipboard.writeText(ringkasan).then(() => {
+                showToast("Ringkasan identitas berhasil disalin!");
+                tutupModal('modalShareKartu');
+            }).catch(() => {
+                showToast("Gagal menyalin ringkasan", true);
+            });
+        }
+
+        // 10. KELUAR AKUN
+        function bukaModalKeluar() {
+            bukaModal('modalKeluar');
+        }
+
+        function prosesKeluarAkun() {
+            localStorage.removeItem(keys.statusKartu);
+            showToast('Sesi profil ditutup. Mengalihkan ke Beranda...');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        }
+
+        // 11. SISTEM HAPUS AKUN 2 TAHAP
+        function mulaiHapusAkun2Tahap() {
+            bukaModal('modalHapusTahap1');
+        }
+
+        function lanjutKeHapusTahap2() {
+            tutupModal('modalHapusTahap1');
+            const totalXp = hitungTotalXp();
+            document.getElementById('hapusFinalXpVal').textContent = totalXp;
+            setTimeout(() => {
+                bukaModal('modalHapusTahap2');
+            }, 300);
+        }
+
+        function eksekusiHapusAkunFinal() {
+            // Musnahkan seluruh data identitas, foto, nilai, dan XP secara permanen
+            const allKeysToRemove = [
+                keys.nama,
+                keys.sekolah,
+                keys.foto,
+                keys.tgllahir,
+                keys.tglverifikasi,
+                keys.statusKartu,
+                keys.nohp,
+                'arg_unique_student_id',
+                'latihanPointsCendekia',
+                'kreasiPointsArg',
+                'kelasPointsArg',
+                'arg_grafik_nilaiku_log_v1',
+                'kreasi_exercises_status',
+                'kreasi_karya',
+                'riwayatKelasArg'
+            ];
+
+            allKeysToRemove.forEach(k => localStorage.removeItem(k));
+
+            // Bersihkan sisa kunci latihan
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const k = localStorage.key(i);
+                if (k && (k.startsWith('lat_v1_') || k.startsWith('kreasi_') || k.startsWith('rb_'))) {
+                    localStorage.removeItem(k);
+                }
+            }
+
+            tutupModal('modalHapusTahap2');
+            showToast('Seluruh data akun dan XP berhasil dimusnahkan.', true);
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1200);
+        }
+
+        // 12. UTILITY MODAL & TOAST
         function bukaModal(id) {
             const modal = document.getElementById(id);
             const box = modal.querySelector('div');
             modal.classList.remove('hidden');
             requestAnimationFrame(() => {
                 modal.classList.remove('opacity-0');
-                // Support animasi dari bawah (modalEdit) dan animasi skala (modalCrop/modalPreviewFoto)
-                if (box.classList.contains('translate-y-full')) {
-                    box.classList.remove('translate-y-full', 'sm:translate-y-10');
-                    box.classList.add('translate-y-0');
-                } else if (box.classList.contains('scale-95')) {
-                    box.classList.remove('scale-95');
-                    box.classList.add('scale-100');
+                if (box) {
+                    if (box.classList.contains('translate-y-full')) {
+                        box.classList.remove('translate-y-full');
+                        box.classList.add('translate-y-0');
+                    } else if (box.classList.contains('scale-95')) {
+                        box.classList.remove('scale-95');
+                        box.classList.add('scale-100');
+                    }
                 }
             });
         }
@@ -417,33 +1263,33 @@
             const modal = document.getElementById(id);
             const box = modal.querySelector('div');
             modal.classList.add('opacity-0');
-            
-            if (box.classList.contains('translate-y-0')) {
-                box.classList.remove('translate-y-0');
-                box.classList.add('translate-y-full', 'sm:translate-y-10');
-            } else if (box.classList.contains('scale-100')) {
-                box.classList.remove('scale-100');
-                box.classList.add('scale-95');
+            if (box) {
+                if (box.classList.contains('translate-y-0')) {
+                    box.classList.remove('translate-y-0');
+                    box.classList.add('translate-y-full');
+                } else if (box.classList.contains('scale-100')) {
+                    box.classList.remove('scale-100');
+                    box.classList.add('scale-95');
+                }
             }
-            
             setTimeout(() => modal.classList.add('hidden'), 300);
         }
 
         function showToast(msg, isError = false) {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            const bgClass = isError ? 'bg-red-500' : 'bg-slate-800';
-            const iconClass = isError ? 'fa-exclamation-circle' : 'fa-check-circle text-emerald-400';
+            const bgClass = isError ? 'bg-red-600' : 'bg-slate-900';
+            const iconClass = isError ? 'fa-exclamation-circle text-red-200' : 'fa-check-circle text-emerald-400';
             
-            toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-lg text-sm font-medium flex items-center gap-3 transform translate-y-[-20px] opacity-0 transition-all duration-300`;
-            toast.innerHTML = `<i class="fas ${iconClass} text-lg"></i> <span>${msg}</span>`;
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold flex items-center gap-3 transform translate-y-[-20px] opacity-0 transition-all duration-300 pointer-events-auto`;
+            toast.innerHTML = `<i class="fas ${iconClass} text-base shrink-0"></i> <span class="flex-1">${msg}</span>`;
             
             container.appendChild(toast);
             requestAnimationFrame(() => toast.classList.remove('translate-y-[-20px]', 'opacity-0'));
             setTimeout(() => {
                 toast.classList.add('translate-y-[-20px]', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            }, 3200);
         }
     </script>
 </body>
