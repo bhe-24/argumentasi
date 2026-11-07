@@ -2,14 +2,54 @@
   "cleanUrls": true,
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
+
+    { "source": "/kreasi/kreasi/(.*)", "destination": "/kreasi/$1" },
+
     { "source": "/kreasi", "destination": "/kreasi/index.html" },
     { "source": "/kreasi/", "destination": "/kreasi/index.html" },
+    { "source": "/kreasi/index", "destination": "/kreasi/index.html" },
+    { "source": "/kreasi/index.html", "destination": "/kreasi/index.html" },
+
+    { "source": "/kreasi/pilgan", "destination": "/kreasi/pilgan.html" },
+    { "source": "/kreasi/pilgan.html", "destination": "/kreasi/pilgan.html" },
+    { "source": "/pilgan", "destination": "/kreasi/pilgan.html" },
+    { "source": "/pilgan.html", "destination": "/kreasi/pilgan.html" },
+
+    { "source": "/kreasi/ide", "destination": "/kreasi/ide.html" },
+    { "source": "/kreasi/ide.html", "destination": "/kreasi/ide.html" },
     { "source": "/kreasi-ide", "destination": "/kreasi/ide.html" },
+    { "source": "/ide", "destination": "/kreasi/ide.html" },
+    { "source": "/ide.html", "destination": "/kreasi/ide.html" },
+
+    { "source": "/kreasi/tulis", "destination": "/kreasi/tulis.html" },
+    { "source": "/kreasi/tulis.html", "destination": "/kreasi/tulis.html" },
     { "source": "/kreasi-tulis", "destination": "/kreasi/tulis.html" },
+    { "source": "/tulis", "destination": "/kreasi/tulis.html" },
+    { "source": "/tulis.html", "destination": "/kreasi/tulis.html" },
+
+    { "source": "/kreasi/hasil", "destination": "/kreasi/hasil.html" },
+    { "source": "/kreasi/hasil.html", "destination": "/kreasi/hasil.html" },
     { "source": "/kreasi-hasil", "destination": "/kreasi/hasil.html" },
+    { "source": "/hasil", "destination": "/kreasi/hasil.html" },
+    { "source": "/hasil.html", "destination": "/kreasi/hasil.html" },
+
+    { "source": "/kreasi/bedah", "destination": "/kreasi/bedah.html" },
+    { "source": "/kreasi/bedah.html", "destination": "/kreasi/bedah.html" },
     { "source": "/kreasi-bedah", "destination": "/kreasi/bedah.html" },
+    { "source": "/bedah", "destination": "/kreasi/bedah.html" },
+    { "source": "/bedah.html", "destination": "/kreasi/bedah.html" },
+
+    { "source": "/kreasi/penghubung", "destination": "/kreasi/penghubung.html" },
+    { "source": "/kreasi/penghubung.html", "destination": "/kreasi/penghubung.html" },
     { "source": "/kreasi-penghubung", "destination": "/kreasi/penghubung.html" },
-    { "source": "/kreasi-tandingan", "destination": "/kreasi/tandingan.html" }
+    { "source": "/penghubung", "destination": "/kreasi/penghubung.html" },
+    { "source": "/penghubung.html", "destination": "/kreasi/penghubung.html" },
+
+    { "source": "/kreasi/tandingan", "destination": "/kreasi/tandingan.html" },
+    { "source": "/kreasi/tandingan.html", "destination": "/kreasi/tandingan.html" },
+    { "source": "/kreasi-tandingan", "destination": "/kreasi/tandingan.html" },
+    { "source": "/tandingan", "destination": "/kreasi/tandingan.html" },
+    { "source": "/tandingan.html", "destination": "/kreasi/tandingan.html" }
   ],
   "headers": [
     {
