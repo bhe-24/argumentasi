@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Formulir Artikel - Argumentasi Admin</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Quill Editor CSS (Rich Text) -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: { brand: { green: '#059669', light: '#d1fae5', dark: '#064e3b' } }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Quill Customization */
+        #editor-container { height: 320px; font-family: 'Poppins', sans-serif; font-size: 14px; border-radius: 0 0 12px 12px; background: white;}
+        .ql-toolbar.ql-snow { border-radius: 12px 12px 0 0; background: #f8fafc; border-color: #e2e8f0; padding: 12px; }
+        .ql-container.ql-snow { border-color: #e2e8f0; }
+        .ql-editor { padding: 16px; font-size: 13px; line-height: 1.6; }
+
+        /* AI Gradient */
+        .bg-ai-gradient { background: linear-gradient(135deg, #4f46e5, #06b6d4, #10b981); color: white; border: none; }
+    </style>
+</head>
+<body class="flex justify-center min-h-screen">
+
+    <!-- OVERLAY LOADING SISTEM -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex flex-col items-center justify-center hidden">
+        <div class="w-14 h-14 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-3"></div>
+        <h2 class="text-sm font-bold text-white tracking-wide" id="loadingText">Menyimpan Artikel...</h2>
+    </div>
+
+    <!-- CONTAINER UTAMA -->
+    <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
+        
+        <!-- HEADER STICKY (Tema Blue/Indigo) -->
+        <header class="bg-blue-600 fixed w-full max-w-md z-50 px-4 py-3 flex items-center justify-between shadow-md">
+            <div class="flex items-center gap-3">
+                <a href="artikel.html" class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors active:scale-95">
+                    <i class="fas fa-arrow-left text-sm"></i>
+                </a>
+                <div>
+                    <h1 class="text-white font-bold text-sm tracking-wide leading-tight" id="headerTitle">Tulis Artikel Baru</h1>
+                    <p class="text-white/70 text-[10px] leading-tight">Konten Beranda Siswa</p>
+                </div>
+            </div>
+            <!-- Tombol Hapus (Hidden Default) -->
+            <button id="btnHapus" onclick="hapusMateri()" class="hidden bg-red-500 hover:bg-red-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors items-center gap-1.5 shadow-sm active:scale-95">
+                <i class="fas fa-trash-alt"></i> Hapus
+            </button>
+        </header>
+
+        <div class="h-[60px] bg-blue-600 shrink-0"></div>
+
+        <!-- AREA FORM -->
+        <main class="flex-grow overflow-y-auto hide-scrollbar p-4 relative z-20">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                
+                <form id="materiForm" onsubmit="handleSave(event)">
+                    
+                    <!-- Pilihan Status -->
+                    <div class="bg-slate-50 border-b border-slate-100 p-4 flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-globe text-blue-600 text-sm"></i>
+                            <span class="font-bold text-slate-700 text-xs">Status Publikasi</span>
+                        </div>
+                        <select id="inputStatus" class="text-xs font-bold border border-slate-200 text-slate-700 bg-white rounded-lg shadow-sm px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400">
+                            <option value="draft">📁 Simpan Draft</option>
+                            <option value="published">🚀 Terbitkan Publik</option>
+                        </select>
+                    </div>
+
+                    <div class="p-5 space-y-5">
+                        
+                        <!-- AI JUDUL REKOMENDASI -->
+                        <div>
+                            <div class="flex justify-between items-end mb-1.5">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">Judul Artikel <span class="text-red-500">*</span></label>
+                                <button type="button" onclick="aiTitleRecommendation()" class="bg-ai-gradient px-3 py-1 rounded-md text-[9px] font-bold shadow-sm active:scale-95 flex items-center gap-1">
+                                    <i class="fas fa-magic"></i> AI Title
+                                </button>
+                            </div>
+                            <input type="text" id="inputJudul" required class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm font-semibold text-slate-800 bg-slate-50" placeholder="Ketik judul artikel di sini...">
+                            
+                            <!-- Box Hasil Rekomendasi Judul AI -->
+                            <div id="aiTitleBox" class="hidden mt-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                                <div class="flex justify-between items-center mb-2">
+                                    <p class="text-[9px] font-bold text-blue-700 uppercase tracking-wider"><i class="fas fa-robot mr-1"></i> Rekomendasi AI:</p>
+                                    <button type="button" onclick="tutupAITitle()" class="text-blue-400 hover:text-blue-700"><i class="fas fa-times text-xs"></i></button>
+                                </div>
+                                <div id="aiTitleList" class="space-y-1.5">
+                                    <div class="text-[10px] text-blue-600 animate-pulse">Sedang meracik alternatif judul...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tagar / Kategori Label -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Tagar / Topik (Pisahkan Koma)</label>
+                            <input type="text" id="inputTags" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:border-blue-500 outline-none text-xs font-medium text-slate-800 bg-slate-50" placeholder="Edukasi, Literasi, Sains, Tips...">
+                        </div>
+
+                        <!-- Foto Cover & Sumber -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Foto Sampul (Cover Image)</label>
+                            <div class="border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:bg-blue-50/40 hover:border-blue-400 transition cursor-pointer relative group mb-2 bg-slate-50" id="dropArea">
+                                <input type="file" id="inputCoverImage" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onchange="previewImage(this)">
+                                
+                                <div id="previewContainer" class="hidden flex flex-col items-center">
+                                    <img id="imgPreview" src="" class="h-32 object-contain rounded-lg shadow-sm mb-2 max-w-full">
+                                    <span class="text-[10px] font-bold text-slate-600 bg-white border border-slate-200 px-3 py-1 rounded-full">Ganti Gambar</span>
+                                </div>
+                                
+                                <div id="uploadPlaceholder" class="flex flex-col items-center">
+                                    <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                                        <i class="fas fa-cloud-arrow-up"></i>
+                                    </div>
+                                    <p class="text-xs font-bold text-slate-700">Pilih atau Seret Foto ke Sini</p>
+                                    <p class="text-[10px] text-slate-400 mt-0.5">JPG / PNG otomatis dikompres</p>
+                                </div>
+                            </div>
+                            <input type="hidden" id="base64Image">
+                            <input type="text" id="inputSumberGambar" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:border-blue-500 outline-none text-[11px] font-medium text-slate-700 bg-slate-50" placeholder="Kredit sumber gambar (contoh: Dokumentasi Sekolah, Freepik, dsb)...">
+                        </div>
+
+                        <!-- Tautan YouTube -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Tautan Video YouTube (Opsional)</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fab fa-youtube text-red-500"></i>
+                                </div>
+                                <input type="url" id="inputYoutube" class="w-full border border-slate-200 rounded-xl pl-9 pr-4 py-3 focus:border-blue-500 outline-none text-xs font-medium text-slate-800 bg-slate-50" placeholder="https://www.youtube.com/watch?v=...">
+                            </div>
+                            <p class="text-[9px] text-slate-400 mt-1">Video akan otomatis disematkan di halaman baca artikel siswa.</p>
+                        </div>
+
+                        <!-- Editor Quill & AI Assistant -->
+                        <div>
+                            <div class="flex justify-between items-end mb-1.5">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">Konten / Isi Artikel <span class="text-red-500">*</span></label>
+                                <button type="button" onclick="undoEditor()" class="text-[9px] text-slate-600 hover:text-slate-900 bg-slate-100 px-2 py-1 rounded border border-slate-200">
+                                    <i class="fas fa-undo"></i> Batal (Undo)
+                                </button>
+                            </div>
+                            <div id="editor-container" class="shadow-sm"></div>
+
+                            <!-- AI Paraphrase Box -->
+                            <div class="mt-2.5 p-3 bg-indigo-50 border border-indigo-100 rounded-xl shadow-inner flex flex-col gap-2">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-[10px] font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
+                                        <i class="fas fa-wand-magic-sparkles text-indigo-500"></i> Asisten Parafrasa AI
+                                    </p>
+                                    <span class="text-[9px] text-indigo-400 font-medium">Sorot/blok teks di editor</span>
+                                </div>
+                                
+                                <div class="flex gap-2">
+                                    <button type="button" onclick="aiParaphrase('smp')" class="flex-1 bg-white border border-indigo-200 text-indigo-700 text-[10px] font-bold py-1.5 rounded-lg shadow-sm hover:bg-indigo-100 active:scale-95 transition-all">
+                                        Bahasa Remaja (SMP)
+                                    </button>
+                                    <button type="button" onclick="aiParaphrase('sma')" class="flex-1 bg-white border border-indigo-200 text-indigo-700 text-[10px] font-bold py-1.5 rounded-lg shadow-sm hover:bg-indigo-100 active:scale-95 transition-all">
+                                        Akademik (SMA)
+                                    </button>
+                                </div>
+
+                                <div id="aiMsgBox" class="hidden text-[10px] text-indigo-600 font-medium animate-pulse text-center">Sedang memproses gaya bahasa...</div>
+                            </div>
+                        </div>
+
+                        <!-- Daftar Pustaka / Referensi -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Daftar Pustaka / Referensi</label>
+                            <textarea id="inputReferensi" rows="3" class="w-full border border-slate-200 rounded-xl px-4 py-3 focus:border-blue-500 outline-none text-[11px] font-medium text-slate-700 bg-slate-50 leading-relaxed" placeholder="Tuliskan tautan atau rujukan referensi di sini..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Footer / Tombol Aksi -->
+                    <div class="p-4 border-t border-slate-100 bg-white flex gap-3 rounded-b-2xl sticky bottom-0">
+                        <button type="button" onclick="window.location.href='artikel.html'" class="flex-1 py-3 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition text-xs">
+                            Batal
+                        </button>
+                        <button type="submit" id="btnSave" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 text-xs">
+                            <i class="fas fa-save"></i> Simpan Artikel
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- SCRIPT LIBRARY QUILL -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+    <!-- FIREBASE & LOGIKA APLIKASI -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyDpUWUIzPXIZN6rrNtsIqcL6VfOE2RLVl0", projectId: "mading-cf676" };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- INISIALISASI QUILL ---
+        var quill = new Quill('#editor-container', {
+            theme: 'snow',
+            placeholder: 'Tulis isi artikel, informasi, panduan, atau berita di sini...',
+            modules: {
+                history: { delay: 1000, maxStack: 50, userOnly: true }, 
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['link', 'image']
+                ]
+            }
+        });
+
+        window.undoEditor = function() { quill.history.undo(); };
+
+        // --- AI ASSISTANT: TITLE ---
+        window.aiTitleRecommendation = async function() {
+            const ideJudul = document.getElementById('inputJudul').value.trim();
+            const titleList = document.getElementById('aiTitleList');
+            if (!ideJudul || ideJudul.length < 3) return alert("Ketikkan minimal 3 karakter untuk ide judul artikel.");
+
+            document.getElementById('aiTitleBox').classList.remove('hidden');
+            titleList.innerHTML = `<div class="text-[10px] text-blue-600 animate-pulse">Sedang meracik alternatif judul...</div>`;
+
+            try {
+                const response = await fetch('/api/form', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: "title", teksUtama: ideJudul, isiMateri: quill.getText() }),
+                    signal: AbortSignal.timeout(15000)
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error("Gagal saran judul.");
+
+                const titles = Array.isArray(data.result) ? data.result : [data.result];
+                titleList.innerHTML = titles.map(t => `<button type="button" onclick="terapkanJudulAI('${t.replace(/'/g, "\\'")}')" class="w-full text-left bg-white border border-blue-100 p-2.5 rounded-lg text-[11px] text-slate-700 font-medium hover:bg-blue-50 hover:border-blue-300 transition-colors shadow-sm mb-1.5 flex justify-between items-center group"><span>${t}</span><i class="fas fa-check-circle text-blue-500 opacity-0 group-hover:opacity-100"></i></button>`).join('');
+            } catch (error) {
+                // Fallback alternatif judul jika API offline
+                const fallbackTitles = [
+                    `${ideJudul}: Wawasan Lengkap & Inspiratif`,
+                    `Mengenal Lebih Dalam Seputar ${ideJudul}`,
+                    `Fakta Menarik dan Penting Tentang ${ideJudul}`
+                ];
+                titleList.innerHTML = fallbackTitles.map(t => `<button type="button" onclick="terapkanJudulAI('${t.replace(/'/g, "\\'")}')" class="w-full text-left bg-white border border-blue-100 p-2.5 rounded-lg text-[11px] text-slate-700 font-medium hover:bg-blue-50 hover:border-blue-300 transition-colors shadow-sm mb-1.5 flex justify-between items-center group"><span>${t}</span><i class="fas fa-check-circle text-blue-500 opacity-0 group-hover:opacity-100"></i></button>`).join('');
+            }
+        };
+
+        window.terapkanJudulAI = function(judulBaru) { 
+            document.getElementById('inputJudul').value = judulBaru; 
+            tutupAITitle(); 
+        };
+
+        window.tutupAITitle = function() { 
+            document.getElementById('aiTitleBox').classList.add('hidden'); 
+        };
+
+        // --- AI ASSISTANT: PARAPHRASE ---
+        window.aiParaphrase = async function(targetGaya) {
+            const range = quill.getSelection();
+            if (!range || range.length === 0) return alert("Silakan blok (sorot) sebagian teks di editor yang ingin diparafrasa.");
+            const textTerpilih = quill.getText(range.index, range.length);
+            if (textTerpilih.trim().length < 10) return alert("Teks yang diblok terlalu pendek (minimal 10 huruf).");
+
+            const msgBox = document.getElementById('aiMsgBox');
+            msgBox.classList.remove('hidden');
+            msgBox.innerText = `Memproses ke gaya bahasa ${targetGaya.toUpperCase()}...`;
+
+            try {
+                const response = await fetch('/api/form', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: "paraphrase", targetLevel: targetGaya, teksUtama: textTerpilih }),
+                    signal: AbortSignal.timeout(20000)
+                });
+                const data = await response.json();
+                if (!response.ok || !data.result) throw new Error("Gagal parafrasa.");
+
+                quill.deleteText(range.index, range.length, 'user');
+                quill.insertText(range.index, data.result, 'user');
+                quill.setSelection(range.index, data.result.length);
+                msgBox.innerText = "Selesai! Tekan 'Batal (Undo)' jika ingin kembali.";
+                setTimeout(() => msgBox.classList.add('hidden'), 3500);
+            } catch (error) {
+                msgBox.innerText = "Layanan AI sedang sibuk. Silakan coba kembali sesaat lagi.";
+                msgBox.className = "text-[10px] text-amber-600 font-medium text-center";
+                setTimeout(() => { 
+                    msgBox.classList.add('hidden'); 
+                    msgBox.className = "text-[10px] text-indigo-600 font-medium animate-pulse text-center";
+                }, 3500);
+            }
+        };
+
+        // --- IMAGE PREVIEW & COMPRESSION ---
+        window.previewImage = function(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image(); 
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas'); 
+                        const ctx = canvas.getContext('2d');
+                        const maxWidth = 800; 
+                        let width = img.width; 
+                        let height = img.height;
+                        if (width > maxWidth) { 
+                            height = Math.round(height * (maxWidth / width)); 
+                            width = maxWidth; 
+                        }
+                        canvas.width = width; 
+                        canvas.height = height; 
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.72);
+                        document.getElementById('imgPreview').src = compressedDataUrl;
+                        document.getElementById('previewContainer').classList.remove('hidden');
+                        document.getElementById('uploadPlaceholder').classList.add('hidden');
+                        document.getElementById('base64Image').value = compressedDataUrl;
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // --- INIT DATA / EDIT MODE ---
+        let editDocId = null;
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get('action');
+        const id = urlParams.get('id');
+
+        if (action === 'edit' && id) {
+            editDocId = id;
+            document.getElementById('headerTitle').innerText = "Edit Artikel";
+            document.getElementById('btnHapus').classList.remove('hidden');
+            document.getElementById('btnHapus').classList.add('flex');
+            
+            getDoc(doc(db, "materials", id)).then((docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('inputJudul').value = data.judul || "";
+                    document.getElementById('inputStatus').value = data.status || "draft";
+                    document.getElementById('inputSumberGambar').value = data.sumberGambar || "";
+                    document.getElementById('inputReferensi').value = data.daftarPustaka || "";
+                    document.getElementById('inputYoutube').value = data.youtubeLink || "";
+                    
+                    if (data.tags && Array.isArray(data.tags)) {
+                        document.getElementById('inputTags').value = data.tags.join(', ');
+                    }
+
+                    if (data.coverImage) {
+                        document.getElementById('imgPreview').src = data.coverImage;
+                        document.getElementById('previewContainer').classList.remove('hidden');
+                        document.getElementById('uploadPlaceholder').classList.add('hidden');
+                        document.getElementById('base64Image').value = data.coverImage;
+                    }
+                    quill.root.innerHTML = data.isi || data.konten || "";
+                }
+            }).catch(err => {
+                console.error("Gagal memuat artikel:", err);
+                alert("Gagal memuat data artikel yang dipilih.");
+            });
+        }
+
+        // --- FUNGSI HAPUS ---
+        window.hapusMateri = async function() {
+            if (!editDocId) return;
+            if (confirm("Apakah Anda yakin ingin menghapus artikel ini? Data yang terhapus tidak dapat dipulihkan.")) {
+                document.getElementById('loadingOverlay').classList.remove('hidden');
+                document.getElementById('loadingText').innerText = "Menghapus Artikel...";
+                try {
+                    await deleteDoc(doc(db, "materials", editDocId));
+                    window.location.replace("artikel.html");
+                } catch (e) {
+                    alert("Gagal menghapus artikel: " + e.message);
+                    document.getElementById('loadingOverlay').classList.add('hidden');
+                }
+            }
+        };
+
+        // --- FUNGSI SIMPAN ---
+        window.handleSave = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSave');
+            const overlay = document.getElementById('loadingOverlay');
+            btn.disabled = true; 
+            overlay.classList.remove('hidden');
+            document.getElementById('loadingText').innerText = "Menyimpan Artikel...";
+
+            const judul = document.getElementById('inputJudul').value.trim();
+            if (!judul) {
+                btn.disabled = false;
+                overlay.classList.add('hidden');
+                return alert("Judul artikel wajib diisi!");
+            }
+
+            const tagsRaw = document.getElementById('inputTags').value;
+            let tagsArray = tagsRaw.split(',').map(t => t.trim()).filter(t => t !== "");
+
+            const dataToSave = {
+                judul: judul,
+                kategori: "artikel", 
+                status: document.getElementById('inputStatus').value,
+                tags: tagsArray,
+                sumberGambar: document.getElementById('inputSumberGambar').value.trim(),
+                daftarPustaka: document.getElementById('inputReferensi').value.trim(),
+                youtubeLink: document.getElementById('inputYoutube').value.trim(),
+                coverImage: document.getElementById('base64Image').value || "",
+                isi: quill.root.innerHTML,
+                updatedAt: serverTimestamp()
+            };
+
+            try {
+                let savedId = editDocId;
+                if (editDocId) {
+                    await updateDoc(doc(db, "materials", editDocId), dataToSave);
+                } else {
+                    dataToSave.createdAt = serverTimestamp();
+                    dataToSave.views = 0; 
+                    dataToSave.penulis = "Administrator";
+                    const newDocRef = await addDoc(collection(db, "materials"), dataToSave);
+                    savedId = newDocRef.id;
+                }
+                
+                if (dataToSave.status === 'published') {
+                    window.open(`../baca.html?id=${savedId}`, '_blank');
+                }
+                window.location.replace("artikel.html");
+
+            } catch (error) {
+                console.error(error); 
+                alert("Terjadi masalah saat menyimpan data: " + error.message);
+                btn.disabled = false; 
+                overlay.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

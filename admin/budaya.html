@@ -14,10 +14,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <script>
+        // Redirect otomatis ke Kelola Artikel
+        window.location.replace('artikel.html' + window.location.search);
+    </script>
+    <script>
         // Auto-redirect jika masuk membawa parameter aksi form (dari dashboard)
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('action') === 'create' || urlParams.get('action') === 'edit') {
-            window.location.replace('form_budaya.html' + window.location.search);
+            window.location.replace('form_artikel.html' + window.location.search);
         }
 
         tailwind.config = {
