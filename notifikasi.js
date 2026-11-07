@@ -128,10 +128,19 @@ const NotifikasiApp = (function() {
         }, 3800);
     }
 
-    // MODAL PANDUAN AKTIFKAN / BUKA BLOKIR IZIN NOTIFIKASI PONSEL
+    // Deteksi apakah aplikasi berjalan dalam mode PWA Standalone (Layar Utama HP)
+    function isAplikasiStandalone() {
+        return window.matchMedia('(display-mode: standalone)').matches ||
+               window.navigator.standalone === true ||
+               document.referrer.includes('android-app://');
+    }
+
+    // MODAL PANDUAN AKTIFKAN / BUKA BLOKIR IZIN NOTIFIKASI PONSEL (Khusus PWA & Browser)
     function pastikanModalPanduanIzinAda() {
         let modal = document.getElementById('modalPanduanIzinPonsel');
         if (modal) return modal;
+
+        const isPWA = isAplikasiStandalone();
 
         modal = document.createElement('div');
         modal.id = 'modalPanduanIzinPonsel';
@@ -144,8 +153,8 @@ const NotifikasiApp = (function() {
                         <i class="fas fa-bell"></i>
                     </div>
                     <div>
-                        <h3 class="text-sm font-extrabold text-slate-800 leading-tight">Izin Notifikasi Ponsel</h3>
-                        <p class="text-[10px] text-slate-400">Pengaturan akses sistem perangkat</p>
+                        <h3 class="text-sm font-extrabold text-slate-800 leading-tight">Izin Notifikasi HP</h3>
+                        <p class="text-[10px] text-slate-400">${isPWA ? 'Aplikasi Layar Utama (PWA)' : 'Setelan Akses Peramban'}</p>
                     </div>
                 </div>
                 <button type="button" onclick="NotifikasiApp.tutupModalPanduanIzin()" class="w-7 h-7 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center text-xs">
@@ -156,36 +165,59 @@ const NotifikasiApp = (function() {
             <div class="space-y-3.5 mb-5">
                 <div class="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-amber-900 text-xs">
                     <p class="font-bold flex items-center gap-1.5 text-amber-800 mb-1">
-                        <i class="fas fa-lock text-xs"></i> Izin Belum Aktif di Ponsel
+                        <i class="fas fa-shield-halved text-xs"></i> Akses Perizinan Ponsel
                     </p>
                     <p class="text-[11px] leading-relaxed text-amber-700">
-                        Peramban ponsel Anda memerlukan izin resmi untuk menampilkan notifikasi latihan dan info sistem di bilah status layar HP.
+                        ${isPWA 
+                            ? 'Karena aplikasi terpasang di Layar Utama HP, buka setelan izin aplikasi langsung dari ponsel Anda.'
+                            : 'Peramban ponsel memblokir pop-up izin otomatis. Buka setelan izin situs untuk mengaktifkan notifikasi.'}
                     </p>
                 </div>
 
                 <div class="space-y-2">
-                    <p class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Langkah Mudah Mengaktifkan di HP:</p>
+                    <p class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">
+                        ${isPWA ? 'Langkah Mengaktifkan di Layar Utama HP:' : 'Langkah Mengaktifkan di Peramban HP:'}
+                    </p>
                     
+                    ${isPWA ? `
+                    <div class="flex items-start gap-3 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-extrabold shrink-0 mt-0.5">1</span>
+                        <div class="text-[11px] text-slate-700 leading-snug">
+                            Buka Layar Utama HP, lalu <strong>Tekan & Tahan (Long Press)</strong> ikon aplikasi <strong>Argumentasi</strong>.
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-extrabold shrink-0 mt-0.5">2</span>
+                        <div class="text-[11px] text-slate-700 leading-snug">
+                            Pilih ikon <strong>Info Aplikasi (ℹ️)</strong> &rarr; ketuk menu <strong>Notifikasi</strong>.
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-extrabold shrink-0 mt-0.5">3</span>
+                        <div class="text-[11px] text-slate-700 leading-snug">
+                            Ubah menjadi <strong>Izinkan Notifikasi (Aktif)</strong>, lalu kembali ke aplikasi ini.
+                        </div>
+                    </div>
+                    ` : `
                     <div class="flex items-start gap-3 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
                         <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-extrabold shrink-0 mt-0.5">1</span>
                         <div class="text-[11px] text-slate-700">
                             Ketuk ikon <strong>Gembok (🔒)</strong> atau <strong>Setelan Situs</strong> di bilah alamat atas peramban HP Anda.
                         </div>
                     </div>
-
                     <div class="flex items-start gap-3 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
                         <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-extrabold shrink-0 mt-0.5">2</span>
                         <div class="text-[11px] text-slate-700">
                             Pilih menu <strong>Izin (Permissions)</strong> &rarr; pilih <strong>Notifikasi</strong>.
                         </div>
                     </div>
-
                     <div class="flex items-start gap-3 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
                         <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-extrabold shrink-0 mt-0.5">3</span>
                         <div class="text-[11px] text-slate-700">
                             Ubah menjadi <strong>Izinkan (Allow)</strong>, lalu kembali ke halaman ini.
                         </div>
                     </div>
+                    `}
                 </div>
             </div>
 
@@ -223,53 +255,51 @@ const NotifikasiApp = (function() {
         setTimeout(() => modal.classList.add('hidden'), 300);
     }
 
-    // Tanya izin ke browser dengan fallback Promise & Callback universal
-    function tanyaIzinPeramban() {
-        return new Promise((resolve) => {
-            if (!('Notification' in window)) return resolve('unsupported');
-            let resolved = false;
-            try {
-                const res = Notification.requestPermission(function(perm) {
-                    if (!resolved) {
-                        resolved = true;
-                        resolve(perm);
-                    }
-                });
-                if (res && typeof res.then === 'function') {
-                    res.then(function(perm) {
-                        if (!resolved) {
-                            resolved = true;
-                            resolve(perm);
-                        }
-                    }).catch(function() {
-                        if (!resolved) {
-                            resolved = true;
-                            resolve(Notification.permission || 'denied');
-                        }
-                    });
-                }
-            } catch(e) {
-                if (!resolved) {
-                    resolved = true;
-                    resolve(Notification.permission || 'denied');
-                }
-            }
-        });
-    }
-
-    // MINTA IZIN NOTIFIKASI PONSEL (Dengan respon getar haptic & panduan lengkap)
-    async function requestPermission(triggerBtn = null) {
-        // 1. Respon haptic instan di ponsel saat tombol disentuh
+    // MINTA IZIN NOTIFIKASI PONSEL SECARA LANGSUNG PADA CLICK GESTURE PERTAMA (TANPA AWAIT SEBELUMNYA)
+    function requestPermission(triggerBtn = null) {
+        // Respon getar haptic instan di ponsel
         if ('vibrate' in navigator) {
             try { navigator.vibrate([40, 30, 40]); } catch(e){}
         }
 
-        // Simpan teks tombol jika ada
+        if (!('Notification' in window)) {
+            tampilkanToast('Peramban ponsel ini belum mendukung Web Notification API', true);
+            bukaModalPanduanIzin();
+            return Promise.resolve(false);
+        }
+
+        const statusSaatIni = Notification.permission;
+
+        // KASUS A: SUDAH DISETUJUI SEBELUMNYA
+        if (statusSaatIni === 'granted') {
+            tampilkanToast('🎉 Izin notifikasi ponsel Anda sudah aktif!');
+            updatePermissionBannerUI();
+            
+            // Tembakkan notifikasi uji coba ke status bar HP
+            kirimNotifikasiKePonsel({
+                id: 'notif_pwa_ready_' + Date.now(),
+                title: '🎉 Notifikasi Ponsel Terhubung!',
+                body: 'Sistem notifikasi ponsel Argumentasi berfungsi sempurna di perangkat Anda.',
+                category: 'sistem',
+                url: 'index.html',
+                forceAlert: true
+            });
+            return Promise.resolve(true);
+        }
+
+        // KASUS B: STATUS DIBLOKIR / DENIED
+        if (statusSaatIni === 'denied') {
+            tampilkanToast('Izin notifikasi diblokir di setelan HP. Silakan buka izin aplikasi.', true);
+            bukaModalPanduanIzin();
+            return Promise.resolve(false);
+        }
+
+        // KASUS C: STATUS DEFAULT - WAJIB PANGGIL SINKRON LANGSUNG TANPA AWAIT AGAR POP-UP ASLI HP MUNCUL!
         let originalBtnHtml = '';
         if (triggerBtn && triggerBtn.innerHTML) {
             originalBtnHtml = triggerBtn.innerHTML;
             triggerBtn.disabled = true;
-            triggerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menghubungkan HP...';
+            triggerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Meminta Izin...';
         }
 
         const pulihkanTombol = () => {
@@ -279,89 +309,48 @@ const NotifikasiApp = (function() {
             }
         };
 
-        // 2. Periksa dukungan peramban
-        if (!('Notification' in window)) {
-            pulihkanTombol();
-            tampilkanToast('Peramban ponsel ini belum mendukung Web Notification API', true);
-            bukaModalPanduanIzin();
-            return false;
-        }
+        return new Promise((resolve) => {
+            const handlePermResult = async (hasil) => {
+                pulihkanTombol();
+                if (hasil === 'granted') {
+                    tampilkanToast('🎉 Selamat! Notifikasi ponsel berhasil diaktifkan.');
+                    updatePermissionBannerUI();
 
-        // 3. Pastikan Service Worker terdaftar dan aktif
-        if ('serviceWorker' in navigator) {
+                    putarNadaNotifikasi();
+                    if ('vibrate' in navigator) {
+                        try { navigator.vibrate([100, 50, 150]); } catch(e){}
+                    }
+
+                    await kirimNotifikasiKePonsel({
+                        id: 'notif_welcome_granted_' + Date.now(),
+                        title: '🎉 Notifikasi Ponsel Aktif!',
+                        body: 'Ponsel Anda kini terhubung resmi. Pembaruan latihan 24 jam dan info penting akan masuk ke sini.',
+                        category: 'sistem',
+                        url: 'index.html',
+                        forceAlert: true
+                    });
+                    resolve(true);
+                } else {
+                    updatePermissionBannerUI();
+                    tampilkanToast('Izin notifikasi belum diaktifkan.', true);
+                    bukaModalPanduanIzin();
+                    resolve(false);
+                }
+            };
+
+            // Panggilan langsung sinkron murni (Single call stack gesture)
             try {
-                let reg = await navigator.serviceWorker.getRegistration();
-                if (!reg) {
-                    reg = await navigator.serviceWorker.register('./sw.js');
-                }
-            } catch(swErr) {
-                console.log('SW register check err:', swErr);
-            }
-        }
-
-        const statusSaatIni = Notification.permission;
-
-        // KASUS A: SUDAH DISETUJUI SEBELUMNYA
-        if (statusSaatIni === 'granted') {
-            pulihkanTombol();
-            tampilkanToast('🎉 Izin notifikasi ponsel Anda sudah aktif!');
-            updatePermissionBannerUI();
-            
-            // Tembakkan notifikasi uji coba langsung ke status bar HP
-            await kirimNotifikasiKePonsel({
-                id: 'notif_pwa_ready_' + Date.now(),
-                title: '🎉 Notifikasi Ponsel Terhubung!',
-                body: 'Sistem notifikasi ponsel Argumentasi berfungsi sempurna di perangkat Anda.',
-                category: 'sistem',
-                url: 'index.html'
-            });
-            return true;
-        }
-
-        // KASUS B: STATUS DIBLOKIR / DENIED (Browser HP tidak akan memunculkan dialog lagi secara otomatis)
-        if (statusSaatIni === 'denied') {
-            pulihkanTombol();
-            tampilkanToast('Izin notifikasi diblokir oleh peramban HP. Buka gembok 🔒 di atas untuk mengizinkan.', true);
-            bukaModalPanduanIzin();
-            return false;
-        }
-
-        // KASUS C: STATUS DEFAULT (Minta izin ke peramban HP)
-        try {
-            tampilkanToast('Silakan pilih "Izinkan" / "Allow" pada pop-up layar HP Anda...');
-            const hasil = await tanyaIzinPeramban();
-            pulihkanTombol();
-
-            if (hasil === 'granted') {
-                tampilkanToast('🎉 Selamat! Notifikasi ponsel berhasil diaktifkan.');
-                updatePermissionBannerUI();
-
-                // Putar suara dering & tembakkan notifikasi ke status bar HP
-                putarNadaNotifikasi();
-                if ('vibrate' in navigator) {
-                    try { navigator.vibrate([100, 50, 150]); } catch(e){}
-                }
-
-                await kirimNotifikasiKePonsel({
-                    id: 'notif_welcome_granted_' + Date.now(),
-                    title: '🎉 Notifikasi Ponsel Aktif!',
-                    body: 'Ponsel Anda kini terhubung resmi. Pembaruan latihan 24 jam dan info penting akan masuk ke sini.',
-                    category: 'sistem',
-                    url: 'index.html'
+                let res;
+                res = Notification.requestPermission(function(perm) {
+                    handlePermResult(perm);
                 });
-                return true;
-            } else {
-                updatePermissionBannerUI();
-                tampilkanToast('Izin notifikasi belum diaktifkan.', true);
-                bukaModalPanduanIzin();
-                return false;
+                if (res && typeof res.then === 'function') {
+                    res.then(handlePermResult).catch(() => handlePermResult(Notification.permission));
+                }
+            } catch(e) {
+                handlePermResult(Notification.permission || 'denied');
             }
-        } catch(err) {
-            pulihkanTombol();
-            console.error('Error requestPermission:', err);
-            bukaModalPanduanIzin();
-            return false;
-        }
+        });
     }
 
     // FUNGSI CEK ULANG DARI MODAL PANDUAN
@@ -387,46 +376,41 @@ const NotifikasiApp = (function() {
                 title: '🔔 Notifikasi Ponsel Aktif!',
                 body: 'Luar biasa! Sistem kini dapat mengirimkan pemberitahuan latihan dan materi ke ponsel Anda.',
                 category: 'sistem',
-                url: 'index.html'
+                url: 'index.html',
+                forceAlert: true
             });
         } else {
-            // Coba minta izin sekali lagi jika status belum granted
-            const hasil = await tanyaIzinPeramban();
-            if (hasil === 'granted') {
-                tutupModalPanduanIzin();
-                tampilkanToast('🎉 Izin berhasil diaktifkan!');
-                updatePermissionBannerUI();
-                kirimNotifikasiKePonsel({
-                    id: 'notif_granted_retry_' + Date.now(),
-                    title: '🎉 Notifikasi Ponsel Aktif!',
-                    body: 'Perangkat Anda telah tersambung sempurna.',
-                    category: 'sistem',
-                    url: 'index.html'
-                });
-            } else {
-                tampilkanToast('Peramban masih memblokir notifikasi. Pastikan Anda sudah mengubah setelan di ikon gembok 🔒 di atas.', true);
+            // Jika masih belum granted, coba panggil kembali
+            const hasil = await requestPermission();
+            if (!hasil) {
+                tampilkanToast('Izin masih belum aktif di setelan HP. Silakan ikuti panduan langkah di atas.', true);
             }
         }
     }
 
-    // KIRIM NOTIFIKASI KE STATUS BAR / LOCK SCREEN PONSEL
+    // KIRIM NOTIFIKASI KE STATUS BAR / LOCK SCREEN PONSEL (ANTI-SPAM: CUKUP SEKALI SAJA)
     function kirimNotifikasiKePonsel(options) {
         const settings = getSettings();
         if (!settings.enabled) return Promise.resolve();
 
-        const { id, title, body, category = 'pengumuman', url = 'index.html', icon = 'icon-192.png' } = options;
+        const { id, title, body, category = 'pengumuman', url = 'index.html', icon = 'icon-192.png', forceAlert = false } = options;
+        const notifId = id || ('notif_' + Date.now());
+
+        // Cek apakah notifikasi dengan ID ini SUDAH PERNAH DIKIRIM ke layar HP
+        const deliveredMap = getDeliveredIds();
+        const alreadyDelivered = !!deliveredMap[notifId];
 
         // 1. Simpan ke daftar Pusat Notifikasi In-App
         const list = getNotifications();
-        const existingIdx = list.findIndex(n => n.id === id);
+        const existingIdx = list.findIndex(n => n.id === notifId);
         const notifItem = {
-            id: id || ('notif_' + Date.now()),
+            id: notifId,
             title,
             body,
             category,
             url,
-            read: false,
-            createdAt: new Date().toISOString()
+            read: existingIdx >= 0 ? list[existingIdx].read : false,
+            createdAt: existingIdx >= 0 ? list[existingIdx].createdAt : new Date().toISOString()
         };
 
         if (existingIdx >= 0) {
@@ -437,7 +421,16 @@ const NotifikasiApp = (function() {
         if (list.length > 50) list.pop(); // Batasi 50 riwayat
         saveNotifications(list);
 
-        // 2. Mainkan getar dan audio sintetis
+        // ATURAN ANTI-SPAM: JIKA SUDAH PERNAH TERKIRIM DAN BUKAN UJI COBA MANUAL, CUKUP SEKALI SAJA!
+        // Jangan bunyikan nada chime, jangan getarkan HP, dan jangan tampilkan pop-up ganda saat berpindah halaman!
+        if (alreadyDelivered && !forceAlert) {
+            return Promise.resolve();
+        }
+
+        // Tandai bahwa notifikasi ID ini SUDAH pernah ditampilkan ke HP
+        markDelivered(notifId);
+
+        // 2. Mainkan getar dan audio sintetis HANYA SEKALI saat notifikasi pertama kali masuk
         if (settings.vibrate && 'vibrate' in navigator) {
             try { navigator.vibrate([100, 60, 100]); } catch(e){}
         }
@@ -445,7 +438,7 @@ const NotifikasiApp = (function() {
             putarNadaNotifikasi();
         }
 
-        // 3. Tampilkan ke Bilah Status / Layar Kunci Ponsel jika diizinkan
+        // 3. Tampilkan ke Bilah Status / Layar Kunci Ponsel jika diizinkan HANYA SEKALI
         if ('Notification' in window && Notification.permission === 'granted') {
             const notifOpts = {
                 body,
