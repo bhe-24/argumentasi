@@ -59,30 +59,27 @@
         <!-- MAIN KONTEN -->
         <div class="flex-grow overflow-y-auto hide-scrollbar pb-10 pt-4 px-4 space-y-4">
             
-            <!-- RINGKASAN AKUN SISWA -->
+            <!-- RINGKASAN AKUN SISWA (Rapi, Elegan & Tanpa Tombol Redundan) -->
             <div class="bg-white rounded-2xl p-4 shadow-xs border border-slate-100 flex items-center gap-3.5">
-                <div class="w-13 h-13 w-12 h-12 rounded-full bg-emerald-100 border-2 border-emerald-500/20 overflow-hidden shrink-0 flex items-center justify-center shadow-xs">
+                <div class="w-12 h-12 rounded-full bg-emerald-50 border-2 border-emerald-500/25 overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
                     <img id="avatarSetting" src="" alt="Foto" class="w-full h-full object-cover hidden">
                     <i id="avatarIconSetting" class="fas fa-user text-emerald-600 text-lg"></i>
                 </div>
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-1.5">
-                        <h2 id="namaSetting" class="font-bold text-slate-800 text-sm truncate">Siswa Cendekia</h2>
-                        <i id="badgeVerifiedSetting" class="fas fa-check-circle text-emerald-500 text-xs hidden" title="Terverifikasi"></i>
+                        <h2 id="namaSetting" class="font-bold text-slate-800 text-sm truncate">Siswa Argumentasi</h2>
+                        <i id="badgeVerifiedSetting" class="fas fa-circle-check text-emerald-500 text-xs hidden" title="Terverifikasi"></i>
                     </div>
                     <p id="sekolahSetting" class="text-xs text-slate-500 truncate">Asal Sekolah Belum Diatur</p>
                     <div class="flex items-center gap-2 mt-1">
-                        <span id="xpSettingPill" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                        <span id="xpSettingPill" class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
                             0 XP
                         </span>
-                        <span id="statusSettingPill" class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                        <span id="statusSettingPill" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
                             Belum Verifikasi
                         </span>
                     </div>
                 </div>
-                <a href="profil.html" class="px-2.5 py-1.5 bg-slate-100 hover:bg-emerald-50 hover:text-brand-green text-slate-600 rounded-xl text-xs font-semibold transition-colors">
-                    Lihat Kartu
-                </a>
             </div>
 
             <!-- SEKSI 1: PREFERENSI BELAJAR -->
@@ -260,7 +257,123 @@
                 </div>
             </div>
 
-            <!-- SEKSI 3: TENTANG APLIKASI -->
+            <!-- SEKSI 3: ALUR KEAMANAN DATA SISWA (FLOW MIND MAPPING) -->
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden">
+                <div class="px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100/80 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-shield-halved text-emerald-600 text-xs"></i>
+                        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Keamanan & Alur Data Siswa</h3>
+                    </div>
+                    <span class="text-[9.5px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        ✓ Terverifikasi Aman
+                    </span>
+                </div>
+
+                <!-- Pengantar & Mind Mapping Header -->
+                <div class="p-4 pb-2">
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800">Arsitektur Alur Akun Siswa (Flow Mind Map)</h4>
+                        <p class="text-[10px] text-slate-500 mt-0.5">Transparansi 100%: Tanpa Jebakan, Tanpa Tracker, Kendali Penuh di Tangan Anda</p>
+                    </div>
+                </div>
+
+                <!-- DIAGRAM VISUAL FLOW MIND MAPPING (KARTU-KARTU TERHUBUNG DENGAN ALUR ELEGAN) -->
+                <div class="px-4 pb-4 space-y-3">
+                    
+                    <!-- NODE 1: DARI MANA? -->
+                    <div class="relative pl-6 pb-2 border-l-2 border-blue-400">
+                        <div class="absolute -left-[11px] top-0 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[9px] shadow-sm font-bold">
+                            1
+                        </div>
+                        <div class="bg-blue-50/60 rounded-xl p-3 border border-blue-100/80 hover:bg-blue-50 transition-colors">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-[11px] font-bold text-blue-900 flex items-center gap-1.5">
+                                    <i class="fas fa-user-pen text-blue-600 text-xs"></i> DARI MANA? (Sumber Data)
+                                </span>
+                                <span class="text-[9px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">Input Mandiri</span>
+                            </div>
+                            <p class="text-[10.5px] text-slate-600 leading-relaxed">
+                                Nama, sekolah, foto profil, dan jawaban latihan diinput sendiri oleh siswa. <strong>Tanpa nomor HP wajib, tanpa kata sandi rawan bocor, dan tanpa jebakan biaya/langganan.</strong>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- NODE 2: KE MANA? -->
+                    <div class="relative pl-6 pb-2 border-l-2 border-purple-400">
+                        <div class="absolute -left-[11px] top-0 w-5 h-5 rounded-full bg-purple-500 text-white flex items-center justify-center text-[9px] shadow-sm font-bold">
+                            2
+                        </div>
+                        <div class="bg-purple-50/60 rounded-xl p-3 border border-purple-100/80 hover:bg-purple-50 transition-colors">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-[11px] font-bold text-purple-900 flex items-center gap-1.5">
+                                    <i class="fas fa-gears text-purple-600 text-xs"></i> KE MANA? (Alur Pemrosesan)
+                                </span>
+                                <span class="text-[9px] font-bold text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded">Client-Side Engine</span>
+                            </div>
+                            <p class="text-[10.5px] text-slate-600 leading-relaxed">
+                                Data langsung diolah oleh mesin logika lokal di peramban HP Anda. <strong>Tidak dikirim dan tidak dijual ke server pengiklan atau pihak ketiga manapun.</strong>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- NODE 3: BUAT APA? -->
+                    <div class="relative pl-6 pb-2 border-l-2 border-amber-400">
+                        <div class="absolute -left-[11px] top-0 w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] shadow-sm font-bold">
+                            3
+                        </div>
+                        <div class="bg-amber-50/60 rounded-xl p-3 border border-amber-100/80 hover:bg-amber-50 transition-colors">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-[11px] font-bold text-amber-900 flex items-center gap-1.5">
+                                    <i class="fas fa-bullseye text-amber-600 text-xs"></i> BUAT APA? (Tujuan & Fungsi)
+                                </span>
+                                <span class="text-[9px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">Edukasi & Digital ID</span>
+                            </div>
+                            <p class="text-[10.5px] text-slate-600 leading-relaxed">
+                                Menghitung perolehan skor XP penalaran, rata-rata grafik nilai belajar harian, serta merender Kartu Pelajar Digital beresolusi HD untuk bukti capaian prestasi.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- NODE 4: TERSIMPAN DI MANA? -->
+                    <div class="relative pl-6 pb-2 border-l-2 border-emerald-400">
+                        <div class="absolute -left-[11px] top-0 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] shadow-sm font-bold">
+                            4
+                        </div>
+                        <div class="bg-emerald-50/60 rounded-xl p-3 border border-emerald-100/80 hover:bg-emerald-50 transition-colors">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-[11px] font-bold text-emerald-900 flex items-center gap-1.5">
+                                    <i class="fas fa-hard-drive text-emerald-600 text-xs"></i> TERSIMPAN DI MANA?
+                                </span>
+                                <span class="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">Penyimpanan Lokal HP</span>
+                            </div>
+                            <p class="text-[10.5px] text-slate-600 leading-relaxed">
+                                100% tersimpan di <code>LocalStorage</code> dan <code>Cache PWA</code> di memori HP Anda. <strong>Aplikasi berjalan mandiri secara offline tanpa butuh kuota internet terus-menerus.</strong>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- NODE 5: KONTROL PENUH SISWA -->
+                    <div class="relative pl-6">
+                        <div class="absolute -left-[11px] top-0 w-5 h-5 rounded-full bg-slate-700 text-white flex items-center justify-center text-[9px] shadow-sm font-bold">
+                            5
+                        </div>
+                        <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 hover:bg-slate-100/80 transition-colors">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-[11px] font-bold text-slate-900 flex items-center gap-1.5">
+                                    <i class="fas fa-lock-open text-slate-600 text-xs"></i> KONTROL PENUH & ZERO-TRACE
+                                </span>
+                                <span class="text-[9px] font-bold text-slate-700 bg-slate-200 px-1.5 py-0.5 rounded">Hak Mutlak Siswa</span>
+                            </div>
+                            <p class="text-[10.5px] text-slate-600 leading-relaxed">
+                                Siswa bebas mengekspor cadangan ke file JSON, memindahkan ke perangkat baru, atau menghapus permanen semua skor dan data identitas secara zero-trace kapan pun dikehendaki.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SEKSI 4: TENTANG APLIKASI -->
             <div class="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden">
                 <div class="px-4 py-3 bg-slate-50/70 border-b border-slate-100 flex items-center gap-2">
                     <i class="fas fa-circle-info text-emerald-600 text-xs"></i>
@@ -270,25 +383,27 @@
                 <div class="p-4 space-y-2.5 text-xs text-slate-600">
                     <div class="flex justify-between items-center py-1 border-b border-slate-100">
                         <span class="text-slate-500">Nama Aplikasi</span>
-                        <span class="font-semibold text-slate-800">Cendekia Argumentasi</span>
+                        <span class="font-bold text-slate-800 text-sm">Argumentasi APP</span>
                     </div>
                     <div class="flex justify-between items-center py-1 border-b border-slate-100">
-                        <span class="text-slate-500">Versi Sistem</span>
-                        <span class="font-bold text-brand-green">v2.5.0 Digital ID</span>
+                        <span class="text-slate-500">Versi Sistem Dinamis</span>
+                        <span id="versiSistemVal" class="font-extrabold text-brand-green bg-emerald-50 px-2 py-0.5 rounded-full text-[11px] border border-emerald-200">
+                            v2.0.1 Arg-Engine
+                        </span>
                     </div>
                     <div class="flex justify-between items-center py-1 border-b border-slate-100">
-                        <span class="text-slate-500">Keamanan Data</span>
-                        <span class="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px]">
-                            Lokal & Anonim 100%
+                        <span class="text-slate-500">Status Keamanan</span>
+                        <span class="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px]">
+                            Lokal & Bebas Jebakan 100%
                         </span>
                     </div>
                     <p class="text-[10px] text-slate-400 pt-1 leading-relaxed">
-                        Data pembelajaran disimpan di penyimpanan lokal peramban Anda. Aplikasi ini tidak mentransmisikan data identitas pribadi Anda ke server pihak ketiga.
+                        Versi sistem ini bergerak dinamis mengikuti setiap rekaman latihan baru: berawal dari <code class="text-slate-600">v2.0.1</code>, bertambah secara presisi setiap 9 kali latihan, dan digit minor di depannya naik berkala secara otomatis.
                     </p>
                 </div>
             </div>
 
-            <!-- SEKSI 4: ZONA KELOLA AKUN -->
+            <!-- SEKSI 5: ZONA KELOLA AKUN -->
             <div class="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden">
                 <div class="px-4 py-3 bg-slate-50/70 border-b border-slate-100 flex items-center gap-2">
                     <i class="fas fa-user-gear text-emerald-600 text-xs"></i>
@@ -415,6 +530,39 @@
             nohp: 'noHpSiswaCendekia'
         };
 
+        // LOGIKA SISTEM VERSI DINAMIS BERBASIS DATA LATIHAN (v2.0.1 -> bertambah per 9 rekaman)
+        function hitungVersiSistemDinamis() {
+            let count = 0;
+            try {
+                const log = JSON.parse(localStorage.getItem('arg_grafik_nilaiku_log_v1') || '{}');
+                if (log.dailyLog) {
+                    Object.values(log.dailyLog).forEach(d => {
+                        count += (d.countNilai || (d.maxNilai ? 1 : 0));
+                    });
+                }
+            } catch(e) {}
+
+            if (Number(localStorage.getItem('latihanPointsCendekia')) > 0) count++;
+            if (Number(localStorage.getItem('kreasiPointsArg')) > 0) count++;
+            if (Number(localStorage.getItem('kelasPointsArg')) > 0) count++;
+            if (localStorage.getItem(keys.statusKartu) === 'verified') count++;
+
+            // Hitung materi latihan / kunci latihan lokal
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && (k.startsWith('lat_v1_') || k.startsWith('kreasi_') || k.startsWith('rb_'))) {
+                    count++;
+                }
+            }
+
+            // Sistem Versi: Basis awal v2.0.1
+            // Setiap menyentuh angka 9 di belakang, minor bertambah 1 dan patch me-refresh ke 0
+            const totalStep = 1 + count;
+            const minor = Math.floor(totalStep / 10);
+            const patch = totalStep % 10;
+            return `v2.${minor}.${patch}`;
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             loadSettingData();
         });
@@ -453,6 +601,12 @@
             const totalXp = xp1 + xp2 + xp3;
             document.getElementById('xpSettingPill').textContent = totalXp + ' XP';
             document.getElementById('hapusTotalXp').textContent = totalXp;
+
+            // Perbarui Versi Sistem Dinamis
+            const versiElem = document.getElementById('versiSistemVal');
+            if (versiElem) {
+                versiElem.textContent = `${hitungVersiSistemDinamis()} Arg-Engine`;
+            }
 
             // Load saved toggle setting
             const soundPref = localStorage.getItem('setting_sound_fx');
