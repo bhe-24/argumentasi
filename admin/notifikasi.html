@@ -290,13 +290,14 @@
                     console.log('Firestore save fallback to local:', fErr);
                 }
 
-                // C. Tembakkan notifikasi lokal ke admin yang sedang mengirim juga
-                if ('Notification' in window && Notification.permission === 'granted') {
-                    new Notification(judul, {
+                // C. Tembakkan notifikasi lokal ke admin yang sedang mengirim juga (Aman dari illegal constructor)
+                try {
+                    await tampilkanNotifikasiPonselLokal(judul, {
                         body: pesan,
-                        icon: './icon-192.png',
-                        data: { url: targetUrl }
+                        url: targetUrl
                     });
+                } catch(previewErr) {
+                    console.log('Preview notifikasi lokal dilewati:', previewErr);
                 }
 
                 showToast("🎉 Notifikasi berhasil disiarkan ke ponsel seluruh siswa!");
@@ -312,6 +313,44 @@
             }
         };
 
+        // HELPER NOTIFIKASI NATIVE PONSEL (MENCEGAH ERROR ILLEGAL CONSTRUCTOR DI ANDROID/CHROME)
+        async function tampilkanNotifikasiPonselLokal(title, options = {}) {
+            if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+            const notifOpts = {
+                body: options.body || '',
+                icon: options.icon || '/icon-192.png',
+                badge: options.badge || '/icon-192.png',
+                vibrate: [100, 50, 100],
+                data: { url: options.url || './index.html' },
+                tag: 'admin-broadcast-' + Date.now(),
+                renotify: true
+            };
+
+            // 1. Utamakan Service Worker (Wajib untuk Chrome Mobile / PWA Android)
+            if ('serviceWorker' in navigator) {
+                try {
+                    let reg = await navigator.serviceWorker.getRegistration();
+                    if (!reg) {
+                        reg = await navigator.serviceWorker.ready;
+                    }
+                    if (reg && reg.showNotification) {
+                        await reg.showNotification(title, notifOpts);
+                        return;
+                    }
+                } catch(swErr) {
+                    console.log('SW showNotification info:', swErr);
+                }
+            }
+
+            // 2. Fallback untuk Desktop browser yang mendukung new Notification
+            try {
+                new Notification(title, notifOpts);
+            } catch(e) {
+                console.log('Notification constructor fallback ignored:', e);
+            }
+        }
+
         // 2. TES NOTIFIKASI DI PONSEL SAAT INI
         window.ujiNotifikasiLokal = async function() {
             if (!('Notification' in window)) {
@@ -322,7 +361,8 @@
             if (Notification.permission !== 'granted') {
                 const res = await Notification.requestPermission();
                 if (res !== 'granted') {
-                    showToast('Izin notifikasi ditolak oleh peramban.', true);
+                    showToast('Izin notifikasi belum diizinkan oleh peramban.', true);
+                    periksaIzin();
                     return;
                 }
             }
@@ -330,27 +370,19 @@
             const judul = document.getElementById('notifJudul').value.trim() || '🔔 Uji Notifikasi Ponsel Admin';
             const pesan = document.getElementById('notifPesan').value.trim() || 'Ini adalah contoh tampilan notifikasi di status bar ponsel siswa.';
 
-            if ('vibrate' in navigator) navigator.vibrate([100, 50, 100]);
-
-            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.ready.then(reg => {
-                    reg.showNotification(judul, {
-                        body: pesan,
-                        icon: './icon-192.png',
-                        badge: './icon-192.png',
-                        vibrate: [100, 50, 100],
-                        data: { url: './index.html' }
-                    });
-                });
-            } else {
-                new Notification(judul, {
-                    body: pesan,
-                    icon: './icon-192.png',
-                    data: { url: './index.html' }
-                });
+            if ('vibrate' in navigator) {
+                try { navigator.vibrate([100, 50, 100]); } catch(e){}
             }
 
-            showToast('Notifikasi tes berhasil ditembakkan ke ponsel Anda!');
+            try {
+                await tampilkanNotifikasiPonselLokal(judul, {
+                    body: pesan,
+                    url: './index.html'
+                });
+                showToast('Notifikasi tes berhasil ditembakkan ke ponsel Anda!');
+            } catch(err) {
+                console.log('Uji notifikasi lokal error:', err);
+            }
             periksaIzin();
         };
 
