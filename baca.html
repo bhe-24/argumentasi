@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Membaca Materi - Argumentasi</title>
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <meta property="og:site_name" content="Argumentasi">
     <meta property="og:type" content="article">
     <meta property="og:title" content="Membaca Materi - Argumentasi">
@@ -175,7 +177,10 @@
             </main>
 
             <!-- Footer hanya muncul setelah konten dimuat -->
-            <footer id="siteFooter" class="hidden border-t border-slate-200 bg-slate-50 px-5 py-5 text-center shrink-0"><p class="text-[10px] text-slate-400 font-medium tracking-wide">&copy; 2026 Argumentasi</p></footer>
+            <footer id="siteFooter" class="hidden bg-white border-t border-slate-200 py-4 text-center shrink-0">
+                <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
+                <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
+            </footer>
         </div>
     </div>
 
@@ -331,8 +336,35 @@
                 document.getElementById('tagsContainer').innerHTML = tags.map(t => tagChip(t, false)).join('');
                 if (tags.length) document.getElementById('tagsBawah').innerHTML = tags.map(t => tagChip(t, true)).join('');
 
-                document.getElementById('coverMateri').src = data.coverImage || data.gambarBase64 || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600";
+                // Cari gambar materi terbaik: coverImage, gambarBase64, atau gambar pertama di dalam isi teks
+                const htmlIsi = data.isi || data.konten || '';
+                let imgFromContent = '';
+                const mImg = htmlIsi.match(/<img[^>]+src=["']([^"']+)["']/i);
+                if (mImg && mImg[1]) imgFromContent = mImg[1].trim();
+
+                const isRealHttp = s => typeof s === 'string' && /^https?:\/\//i.test(s) && !s.includes('images.unsplash.com/photo-1456513080510-7bf3a84b82f8');
+                const isB64 = s => typeof s === 'string' && (s.startsWith('data:image/') || s.length > 300);
+
+                const finalImg = isRealHttp(data.coverImage) ? data.coverImage
+                    : isRealHttp(imgFromContent) ? imgFromContent
+                    : isB64(data.coverImage) ? data.coverImage
+                    : isB64(data.gambarBase64) ? data.gambarBase64
+                    : isB64(imgFromContent) ? imgFromContent
+                    : data.coverImage || "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600";
+
+                document.getElementById('coverMateri').src = finalImg;
                 document.getElementById('sumberGambar').innerText = "Sumber Foto: " + ((data.sumberGambar || '').trim() || '-');
+
+                // Sinkronisasi meta tag Open Graph & Twitter Card dinamis
+                try {
+                    const ogImgUrl = finalImg.startsWith('data:') ? `${window.location.origin}/api/share?id=${encodeURIComponent(materiId)}&img=1` : finalImg;
+                    let metaOg = document.querySelector('meta[property="og:image"]');
+                    if (!metaOg) { metaOg = document.createElement('meta'); metaOg.setAttribute('property', 'og:image'); document.head.appendChild(metaOg); }
+                    metaOg.setAttribute('content', ogImgUrl);
+                    let metaTw = document.querySelector('meta[name="twitter:image"]');
+                    if (!metaTw) { metaTw = document.createElement('meta'); metaTw.setAttribute('name', 'twitter:image'); document.head.appendChild(metaTw); }
+                    metaTw.setAttribute('content', ogImgUrl);
+                } catch (e) {}
 
                 if (data.youtubeLink) {
                     const u = formatYoutubeEmbed(data.youtubeLink);

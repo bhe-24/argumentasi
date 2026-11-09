@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Beranda - Argumentasi</title>
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
     
     <!-- PWA Manifest & Theme -->
     <link rel="manifest" href="manifest.json">
@@ -745,8 +747,7 @@
 
         // Menampilkan Modal Bagikan Materi
         window.showShareModal = function(id, judul) {
-            const urlPath = window.location.pathname.replace('index.html', '') + 'baca.html?id=' + id;
-            const fullUrl = window.location.origin + urlPath;
+            const fullUrl = `${window.location.origin}/api/share?id=${encodeURIComponent(id)}`;
             const textToShare = `Yuk belajar materi menarik "${judul}" di Aplikasi Argumentasi! Baca selengkapnya di sini: ${fullUrl}`;
             
             document.getElementById('shareJudul').innerText = judul;
