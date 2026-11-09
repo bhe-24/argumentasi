@@ -321,6 +321,30 @@ window.kumpulkan = async function(auto) {
     delete window.H.sesi.struktur;
     L.simpan(); 
     
+    // Sinkronisasi instan ke Grafik Nilaiku di beranda
+    try {
+        const LOG_KEY = 'arg_grafik_nilaiku_log_v1';
+        const log = JSON.parse(localStorage.getItem(LOG_KEY) || '{"dailyLog":{},"recordedIds":{}}');
+        if (!log.dailyLog) log.dailyLog = {};
+        if (!log.recordedIds) log.recordedIds = {};
+        const dNow = new Date();
+        const dateStr = dNow.toISOString().split('T')[0];
+        const hourNum = dNow.getHours();
+        const uId = `lat_utama_${(window.H?.spin?.hid) || 'materi'}_struktur_s${skor}_x${xp}`;
+        if (!log.recordedIds[uId]) {
+            log.recordedIds[uId] = { xp, nilai: skor, date: dateStr, hour: hourNum, timestamp: Date.now() };
+            if (!log.dailyLog[dateStr]) log.dailyLog[dateStr] = { xp: 0, totalNilai: 0, countNilai: 0, maxNilai: 0, hours: {} };
+            const day = log.dailyLog[dateStr];
+            day.xp += xp;
+            if (skor > 0) { day.totalNilai += skor; day.countNilai += 1; day.maxNilai = Math.max(day.maxNilai, skor); }
+            const hKey = String(hourNum);
+            if (!day.hours[hKey]) day.hours[hKey] = { xp: 0, nilai: 0, count: 0 };
+            day.hours[hKey].xp += xp;
+            if (skor > 0) { day.hours[hKey].nilai = Math.max(day.hours[hKey].nilai, skor); day.hours[hKey].count += 1; }
+            localStorage.setItem(LOG_KEY, JSON.stringify(log));
+        }
+    } catch (e) {}
+
     $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden'); $('btnBack').onclick = null; $('btnBack').href = '../latihan.html'; 
     if (auto) window.L.toast('Waktu habis. Jawabanmu otomatis dikumpulkan.', true); 
     window.tampilHasil(true); 
@@ -401,7 +425,7 @@ window.filterBahas = function(f) {
     }
 }
 
-const tglIndo = t => new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+const tglIndo = t => { if (!t) return '-'; const d = new Date(t); return isNaN(d) ? '-' : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }); };
 const LBL_HEX = { tesis: '#d97706', argumen: '#0284c7', kesimpulan: '#7c3aed' };
 const LBL_MUDA = { tesis: '#fef3c7', argumen: '#e0f2fe', kesimpulan: '#f3e8ff' };
 const LBL_GELAP = { tesis: '#92400e', argumen: '#075985', kesimpulan: '#5b21b6' };
@@ -409,7 +433,7 @@ const LBL_GELAP = { tesis: '#92400e', argumen: '#075985', kesimpulan: '#5b21b6' 
 /* ===== UNDUH PDF (pdfMake, teks asli, layout resmi kelas/struktur) ===== */
 function buatDokumenPdf() {
     const R = window.H.hasil.struktur;
-    const nama = L.nama ? L.nama() : 'Siswa', materi = (window.H.spin && window.H.spin.judul) || '-';
+    const nama = (L.nama ? L.nama() : '') || 'Siswa', materi = (window.H.spin && window.H.spin.judul) || '-';
     const WR = { gelap: '#064e3b', hijau: '#059669', hijauMuda: '#d1fae5', merah: '#e11d48', merahMuda: '#ffe4e6', amber: '#d97706', amberMuda: '#fffbeb', abu: '#64748b', garis: '#e2e8f0', latar: '#f8fafc', biruMuda: '#e0f2fe', biru: '#0369a1' };
     const status = i => R.jawab[i] === undefined ? 'kosong' : (R.jawab[i] === window.soal[i].j ? 'benar' : 'salah');
     const kosong = window.soal.filter((s, i) => status(i) === 'kosong').length;
@@ -465,9 +489,9 @@ function buatDokumenPdf() {
         ...URUT_LBL.filter(t => tk[t]).map(t => {
             const p = Math.round(tk[t].b / tk[t].n * 100);
             return [
-                { text: LBL[t][0], bold: true, color: LBL_GELAP[t], fillColor: LBL_MUDA[t], margin: [7, 6, 7, 6] },
+                { text: (LBL[t] && LBL[t][0]) || t, bold: true, color: LBL_GELAP[t] || '#075985', fillColor: LBL_MUDA[t] || '#e0f2fe', margin: [7, 6, 7, 6] },
                 { text: tk[t].b + ' / ' + tk[t].n, margin: [7, 6, 7, 6] },
-                { margin: [7, 6, 7, 6], columns: [pdfBar(p, LBL_HEX[t]), { text: p + '%', bold: true, margin: [6, 1, 0, 0] }] }
+                { margin: [7, 6, 7, 6], columns: [pdfBar(p, LBL_HEX[t] || '#0284c7'), { text: p + '%', bold: true, margin: [6, 1, 0, 0] }] }
             ];
         })
     ] }, layout: layoutTipis });
@@ -476,10 +500,10 @@ function buatDokumenPdf() {
     content.push(pdfJudul('Peta Wacana (sesuai kunci)'));
     content.push({ table: { widths: ['*'], body: [[{ fillColor: WR.latar, margin: [10, 9, 10, 9], lineHeight: 1.5, text: window.soal.map((s, i) => ({
         text: '[' + (i + 1) + '] ' + s.k + (status(i) === 'benar' ? '' : '  (x)') + '  ',
-        color: LBL_GELAP[s.j], background: LBL_MUDA[s.j]
+        color: LBL_GELAP[s.j] || '#075985', background: LBL_MUDA[s.j] || '#e0f2fe'
     })) }]] }, layout: layoutTipis });
     const ket = [{ text: 'Keterangan:  ', bold: true, fontSize: 8.5 }];
-    URUT_LBL.forEach(k => { ket.push({ text: ' ' + LBL[k][0] + ' ', bold: true, fontSize: 8.5, color: LBL_GELAP[k], background: LBL_MUDA[k] }); ket.push({ text: '   ', fontSize: 8.5 }); });
+    URUT_LBL.forEach(k => { if (LBL[k]) { ket.push({ text: ' ' + LBL[k][0] + ' ', bold: true, fontSize: 8.5, color: LBL_GELAP[k] || '#075985', background: LBL_MUDA[k] || '#e0f2fe' }); ket.push({ text: '   ', fontSize: 8.5 }); } });
     ket.push({ text: '(x) = pilihanmu keliru atau kosong', fontSize: 8.5, color: WR.abu });
     content.push({ margin: [0, 5, 0, 0], text: ket });
 
@@ -490,13 +514,13 @@ function buatDokumenPdf() {
         const label = st === 'benar' ? 'TEPAT' : st === 'kosong' ? 'TIDAK DILABELI' : 'KELIRU';
         const rows = [
             [{ fillColor: c, margin: [10, 6, 10, 6], columns: [
-                { text: 'KALIMAT ' + (i + 1) + '   |   KUNCI: ' + LBL[s.j][0].toUpperCase(), bold: true, fontSize: 9, color: '#ffffff' },
+                { text: 'KALIMAT ' + (i + 1) + '   |   KUNCI: ' + ((LBL[s.j] && LBL[s.j][0]) ? LBL[s.j][0].toUpperCase() : String(s.j || '-').toUpperCase()), bold: true, fontSize: 9, color: '#ffffff' },
                 { text: label, bold: true, fontSize: 9, color: '#ffffff', alignment: 'right' }
             ] }],
             [{ text: String(s.k), bold: true, fontSize: 10.5, lineHeight: 1.35, color: '#0f172a', fillColor: WR.latar, margin: [10, 8, 10, 8] }],
             [{ table: { widths: ['*', '*'], body: [[
-                { fillColor: WR.biruMuda, margin: [10, 6, 10, 6], stack: [{ text: 'PILIHAN SISWA', fontSize: 7.5, bold: true, color: WR.biru }, { text: u ? LBL[u][0] : 'Tidak dilabeli', fontSize: 10, bold: true, color: u ? '#0f172a' : WR.abu, margin: [0, 2, 0, 0] }] },
-                { fillColor: WR.hijauMuda, margin: [10, 6, 10, 6], stack: [{ text: 'KUNCI JAWABAN', fontSize: 7.5, bold: true, color: WR.hijau }, { text: LBL[s.j][0], fontSize: 10, bold: true, color: WR.gelap, margin: [0, 2, 0, 0] }] }
+                { fillColor: WR.biruMuda, margin: [10, 6, 10, 6], stack: [{ text: 'PILIHAN SISWA', fontSize: 7.5, bold: true, color: WR.biru }, { text: (u && LBL[u]) ? LBL[u][0] : (u ? String(u) : 'Tidak dilabeli'), fontSize: 10, bold: true, color: u ? '#0f172a' : WR.abu, margin: [0, 2, 0, 0] }] },
+                { fillColor: WR.hijauMuda, margin: [10, 6, 10, 6], stack: [{ text: 'KUNCI JAWABAN', fontSize: 7.5, bold: true, color: WR.hijau }, { text: (LBL[s.j] && LBL[s.j][0]) ? LBL[s.j][0] : String(s.j || '-'), fontSize: 10, bold: true, color: WR.gelap, margin: [0, 2, 0, 0] }] }
             ]] }, layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 } }],
             [{ fillColor: WR.amberMuda, margin: [10, 7, 10, 8], stack: [
                 { text: 'PENJELASAN / PEMBAHASAN', fontSize: 7.5, bold: true, color: WR.amber },

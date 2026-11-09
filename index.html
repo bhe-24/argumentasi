@@ -887,7 +887,31 @@
             const todayStr = new Date().toISOString().split('T')[0];
             const currentHour = new Date().getHours();
 
-            // 1. Pindai Ruang Belajar Siswa (lat_v1_*)
+            // 1a. Pindai Latihan Utama Mandiri (lat_v1)
+            try {
+                const latUtama = JSON.parse(localStorage.getItem('lat_v1') || '{}');
+                if (latUtama && latUtama.hari) {
+                    for (const hariKey in latUtama.hari) {
+                        const hObj = latUtama.hari[hariKey];
+                        const hasil = hObj?.hasil || {};
+                        for (const jenis in hasil) {
+                            const item = hasil[jenis];
+                            if (!item) continue;
+                            const skor = Number(item.skor) || 0;
+                            const xp = Number(item.xp) || 0;
+                            const ts = item.selesai || (hObj.spin && hObj.spin.ts) || Date.now();
+                            const d = new Date(ts);
+                            const entryDate = !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : todayStr;
+                            const entryHour = !isNaN(d.getTime()) ? d.getHours() : currentHour;
+                            const uniqueId = `lat_utama_${hariKey}_${jenis}_s${skor}_x${xp}`;
+
+                            catatKeLog(log, uniqueId, entryDate, entryHour, xp, skor);
+                        }
+                    }
+                }
+            } catch (e) {}
+
+            // 1b. Pindai Ruang Belajar Siswa (lat_v1_*)
             for (let i = 0; i < localStorage.length; i++) {
                 const k = localStorage.key(i);
                 if (k && k.startsWith('lat_v1_')) {
