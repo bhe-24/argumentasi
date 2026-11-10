@@ -1,6 +1,14 @@
 {
   "cleanUrls": true,
   "rewrites": [
+    { "source": "/api/all-kreasi", "destination": "/api/central" },
+    { "source": "/api/all-search", "destination": "/api/central" },
+    { "source": "/api/evaluate", "destination": "/api/central" },
+    { "source": "/api/form", "destination": "/api/central" },
+    { "source": "/api/handout-ai", "destination": "/api/central" },
+    { "source": "/api/latihan", "destination": "/api/central" },
+    { "source": "/api/modul", "destination": "/api/central" },
+    { "source": "/api/summarize", "destination": "/api/central" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
 
     { "source": "/admin/admin/(.*)", "destination": "/admin/$1" },
