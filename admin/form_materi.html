@@ -65,17 +65,19 @@
         .fld:focus { border-color: #10b981; }
     </style>
 </head>
-<body class="flex justify-center min-h-screen">
+<body class="flex flex-col items-center justify-center min-h-screen">
 
-<footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto">
-    <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
-    <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
-</footer>
+
 
     <div id="loadingOverlay" class="fixed inset-0 bg-white/90 backdrop-blur-sm z-[100] flex flex-col items-center justify-center hidden">
         <div class="w-14 h-14 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-3"></div>
         <h2 class="text-sm font-bold text-slate-800 tracking-wide" id="loadingText">Menyimpan Data...</h2>
-    </div>
+    
+        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto">
+            <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
+            <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
+        </footer>
+</div>
 
     <!-- MODAL UMUM (gambar / video / tabel) -->
     <div id="modal" class="fixed inset-0 bg-black/50 z-[90] hidden items-end sm:items-center justify-center" onclick="if(event.target===this) tutupModal()">

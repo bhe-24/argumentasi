@@ -28,7 +28,7 @@
         @keyframes bump { 0%, 80%, 100% { transform: scale(.6); opacity: .4; } 40% { transform: scale(1); opacity: 1; } }
     </style>
 </head>
-<body class="flex justify-center min-h-screen">
+<body class="flex flex-col items-center justify-center min-h-screen">
 
     <div class="w-full max-w-md bg-slate-100 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
 
@@ -101,12 +101,14 @@
                 </button>
             </div>
         </div>
-    </div>
+    
+        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto">
+            <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
+            <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
+        </footer>
+</div>
 
-    <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto">
-    <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
-    <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
-</footer>
+    
 
     <script>
         const API_URL = '/api/all-search';

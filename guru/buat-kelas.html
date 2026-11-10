@@ -47,7 +47,7 @@
         .materi-area:focus { outline: none; border-color: #8b5cf6; background-color: #fff; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1); }
     </style>
 </head>
-<body class="flex justify-center h-screen h-[100dvh] overflow-hidden bg-slate-100">
+<body class="flex flex-col items-center justify-center h-screen h-[100dvh] overflow-hidden bg-slate-100">
 
 <div class="w-full max-w-md bg-slate-50 relative h-full shadow-2xl flex flex-col sm:border-x border-slate-200 overflow-hidden">
 
@@ -268,12 +268,14 @@
     <!-- WADAH TOAST -->
     <div id="toastContainer" class="absolute left-1/2 -translate-x-1/2 w-[90%] z-[100] flex flex-col gap-2 pointer-events-none" style="bottom:calc(1.25rem + env(safe-area-inset-bottom,0px))"></div>
 
+
+        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto">
+            <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
+            <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
+        </footer>
 </div>
 
-<footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto">
-    <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
-    <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
-</footer>
+
 
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";

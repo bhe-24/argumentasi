@@ -58,7 +58,7 @@
         }
     </style>
 </head>
-<body class="flex justify-center min-h-screen">
+<body class="flex flex-col items-center justify-center min-h-screen">
 
     <!-- CONTAINER UTAMA (Mobile App Frame) -->
     <div class="w-full max-w-md bg-slate-50 relative min-h-screen shadow-2xl flex flex-col sm:border-x border-slate-200">
@@ -336,15 +336,17 @@
             </p>
 
         </div>
-    </div>
+    
+        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto">
+            <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
+            <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
+        </footer>
+</div>
 
     <!-- HIDDEN FILE INPUT UNTUK UPLOAD FOTO SISWA -->
     <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="prosesPilihFoto(event)">
 
-<footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto">
-    <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
-    <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
-</footer>
+
 
     <!-- MODAL EDIT DATA (NAMA, SEKOLAH, TGL LAHIR) -->
     <div id="modalEdit" class="fixed inset-0 bg-black/60 hidden modal-z flex items-end sm:items-center justify-center opacity-0 transition-opacity duration-300 p-0 sm:p-4" onclick="if(event.target === this) tutupModal('modalEdit')">
