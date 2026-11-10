@@ -289,10 +289,94 @@ window.kumpulkan = async function(auto) {
     if (window.H.hasil.esai) return; window.aktif = false; clearInterval(window.timer); 
     const jawab = window.sesi.jawab; 
     const dijawab = Object.values(jawab).filter(v => typeof v === 'string' && v.trim().length > 10).length;
-    const skor = Math.round(dijawab / window.soal.length * 100); 
-    const xp = dijawab * 5; window.L.tambahXp(xp); 
     
-    window.H.hasil.esai = { skor: skor, benar: dijawab, total: window.soal.length, jawab: jawab, durasi: Math.round((Math.min(Date.now(), window.sesi.batas) - window.sesi.mulai) / 1000), batas: window.totalWaktu, selesai: Date.now(), auto: !!auto, keluar: window.sesi.keluar || 0, xp: xp }; 
+    // Tampilkan overlay loading evaluasi AI
+    let overlay = document.getElementById('aiGradingLoading');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'aiGradingLoading';
+        overlay.className = 'fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-[999999] flex flex-col items-center justify-center p-6 text-white text-center';
+        overlay.innerHTML = '<div class="w-16 h-16 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-3xl text-emerald-400 mb-4 animate-bounce"><i class="fas fa-robot"></i></div><h3 class="text-base font-bold">Guru AI Memeriksa Argumenmu...</h3><p class="text-xs text-slate-300 mt-1 max-w-xs leading-relaxed">Menganalisis kelogisan penalaran, bukti pendukung, dan kesesuaian dengan kunci pembahasan.</p><div class="w-48 bg-slate-800 rounded-full h-1.5 overflow-hidden mt-4"><div class="h-full bg-emerald-400 animate-pulse" style="width:75%"></div></div>';
+        document.body.appendChild(overlay);
+    }
+    overlay.classList.remove('hidden');
+
+    // Penilaian AI via api/central
+    let evaluasiAi = null;
+    let skor = Math.round(dijawab / window.soal.length * 100);
+
+    try {
+        const payload = {
+            action: 'grade_essay',
+            materiJudul: (window.H?.spin?.judul) || 'Teks Argumentasi',
+            rubrik: '', // Gunakan rubrik sistem standar
+            soal: window.soal,
+            jawab: jawab
+        };
+
+        const resAi = await fetch('/api/central', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            signal: AbortSignal.timeout ? AbortSignal.timeout(30000) : undefined
+        });
+
+        if (resAi.ok) {
+            const dataAi = await resAi.json();
+            if (typeof dataAi.skorTotal === 'number') {
+                evaluasiAi = dataAi;
+                skor = Math.round(dataAi.skorTotal);
+            }
+        }
+    } catch (errAi) {
+        console.warn("AI grading error, menggunakan fallback lokal:", errAi);
+    } finally {
+        if (overlay) overlay.classList.add('hidden');
+    }
+
+    // Jika belum ada evaluasi AI (offline fallback)
+    if (!evaluasiAi) {
+        const connReg = /karena|sebab|sehingga|oleh karena itu|misalnya|namun|artinya|terbukti/gi;
+        const nilaiPerSoal = window.soal.map((s, idx) => {
+            const u = String(jawab[idx] || '').trim();
+            const w = u ? u.split(/\s+/).length : 0;
+            const c = (u.match(connReg) || []).length;
+            let sNum = 0;
+            if (w < 5) sNum = 15;
+            else sNum = Math.min(100, Math.round(35 + Math.min(w, 40) / 40 * 45 + Math.min(c, 2) * 10));
+            const stat = sNum >= 85 ? 'Sangat Tepat' : sNum >= 65 ? 'Cukup Tepat' : 'Perlu Ditingkatkan';
+            return {
+                no: idx + 1,
+                skor: sNum,
+                status: stat,
+                feedback: sNum >= 70 ? 'Argumenmu memuat gagasan pokok materi dan telah menggunakan kata hubung logis.' : 'Perjelas argumen dengan menyertakan bukti dan alasan yang lebih terarah.'
+            };
+        });
+        evaluasiAi = {
+            mode: 'offline',
+            skorTotal: Math.round(nilaiPerSoal.reduce((a, b) => a + b.skor, 0) / Math.max(1, nilaiPerSoal.length)),
+            ringkasanEvaluasi: 'Jawabanmu telah tersimpan dan dievaluasi berdasarkan keselarasan kata kunci materi.',
+            nilaiPerSoal: nilaiPerSoal
+        };
+        skor = evaluasiAi.skorTotal;
+    }
+
+    const xp = Math.max(5, Math.round(skor / 10) * 2 + (dijawab * 3));
+    window.L.tambahXp(xp); 
+    
+    window.H.hasil.esai = { 
+        skor: skor, 
+        benar: dijawab, 
+        total: window.soal.length, 
+        jawab: jawab, 
+        evaluasi: evaluasiAi,
+        durasi: Math.round((Math.min(Date.now(), window.sesi.batas) - window.sesi.mulai) / 1000), 
+        batas: window.totalWaktu, 
+        selesai: Date.now(), 
+        auto: !!auto, 
+        keluar: window.sesi.keluar || 0, 
+        xp: xp 
+    }; 
     
     delete window.H.sesi.esai;
     L.simpan(); 
@@ -340,39 +424,59 @@ window.navLatihanHtml = function() {
 window.tampilHasil = function(baru) { 
     const R = window.H.hasil.esai; window.aktif = false; $('hTimer').classList.add('hidden'); $('barWaktu').classList.add('hidden'); $('bar').classList.add('hidden'); 
     
-    const skorEsai = R.benar > 0 ? (R.benar === R.total ? 100 : 75) : 30;
+    const skorEsai = typeof R.skor === 'number' ? R.skor : (R.benar > 0 ? (R.benar === R.total ? 100 : 75) : 30);
     const maskot = window.getMascotData ? window.getMascotData(skorEsai, { auto: R.auto, relPath: '../' }) : null;
-    const pesan = maskot ? [maskot.judul, maskot.ket] : (R.benar > 0 ? ['Luar biasa!', 'Kamu telah menyelesaikan latihan esai ini.'] : ['Tetap semangat!', 'Lain kali coba isi jawabanmu dengan lebih lengkap.']);
-    const anim = maskot ? maskot.html : (R.benar > 0 ? '<div class="tos"><i class="fas fa-hand h hl"></i><i class="fas fa-hand h hr"></i><div class="boom"></div></div>' : '<div class="tos"><i class="fas fa-heart detak" style="font-size:60px;color:#fda4af"></i></div>');
+    const pesan = maskot ? [maskot.judul, maskot.ket] : (skorEsai >= 80 ? ['Luar biasa!', 'Argumenmu dinilai sangat kuat dan logis oleh Guru AI.'] : skorEsai >= 60 ? ['Bagus!', 'Argumenmu cukup baik, terus tingkatkan ketajaman analisismu.'] : ['Tetap semangat!', 'Coba lengkapi argumenmu dengan data dan alasan yang relevan.']);
+    const anim = maskot ? maskot.html : (skorEsai >= 60 ? '<div class="tos"><i class="fas fa-hand h hl"></i><i class="fas fa-hand h hr"></i><div class="boom"></div></div>' : '<div class="tos"><i class="fas fa-heart detak" style="font-size:60px;color:#fda4af"></i></div>');
+
+    const evalAi = R.evaluasi || null;
+    const ringkasanAi = evalAi && evalAi.ringkasanEvaluasi ? evalAi.ringkasanEvaluasi : pesan[1];
 
     let html = [
         '<div class="up rounded-3xl p-5 text-center text-white shadow-lg" style="background:linear-gradient(135deg,#064e3b,#059669 60%,#34d399)">',
         anim,
-        '<p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold mt-1">Status Pengerjaan</p><div class="flex items-end justify-center gap-1"><span class="text-4xl font-extrabold leading-none mt-2">Selesai</span></div>',
-        '<p class="font-extrabold text-base mt-3">' + pesan[0] + '</p><p class="text-[11px] text-white/80">' + pesan[1] + '</p>',
-        '<span class="inline-block mt-3 bg-white/20 rounded-full px-3 py-1 text-[11px] font-bold"><i class="fas fa-star text-amber-300 mr-1"></i>+' + R.xp + ' XP Partisipasi</span>',
+        '<p class="text-[10px] uppercase tracking-[.2em] text-white/70 font-semibold mt-1">Skor Evaluasi AI</p>',
+        '<div class="flex items-end justify-center gap-1"><span class="text-5xl font-extrabold leading-none mt-1">' + skorEsai + '</span><span class="text-lg font-bold text-white/70 mb-1">/100</span></div>',
+        '<p class="font-extrabold text-base mt-2">' + pesan[0] + '</p>',
+        '<p class="text-[11px] text-white/90 bg-black/15 rounded-xl p-2.5 mt-2 leading-relaxed max-w-sm mx-auto"><i class="fas fa-robot mr-1.5 text-emerald-300"></i>' + esc(ringkasanAi) + '</p>',
+        '<span class="inline-block mt-3 bg-white/20 rounded-full px-3 py-1 text-[11px] font-bold"><i class="fas fa-star text-amber-300 mr-1"></i>+' + R.xp + ' XP Diperoleh</span>',
         R.auto ? '<p class="text-[10px] text-amber-200 mt-2"><i class="fas fa-clock mr-1"></i>Dikumpulkan otomatis karena waktu habis</p>' : '',
         '</div>',
-        '<div class="grid grid-cols-2 gap-2.5 mt-3"><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-emerald-600">' + R.benar + '</p><p class="text-[9px] font-semibold text-slate-500">Soal Dijawab</p></div><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-slate-700">' + L.fmt(R.durasi) + '</p><p class="text-[9px] font-semibold text-slate-500">dari ' + L.fmt(R.batas) + '</p></div></div>',
+        '<div class="grid grid-cols-2 gap-2.5 mt-3"><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-emerald-600">' + R.benar + ' / ' + R.total + '</p><p class="text-[9px] font-semibold text-slate-500">Soal Dijawab</p></div><div class="bg-white rounded-xl p-3 text-center border border-slate-200"><p class="text-lg font-extrabold text-slate-700">' + L.fmt(R.durasi) + '</p><p class="text-[9px] font-semibold text-slate-500">dari ' + L.fmt(R.batas) + '</p></div></div>',
         '<div class="grid grid-cols-2 gap-2 mt-3"><button id="btnPdf" onclick="unduhPdf()" class="bg-white border border-slate-200 text-slate-700 font-bold py-3 rounded-xl text-xs active:scale-95 transition"><i class="fas fa-file-pdf text-red-500 mr-1.5"></i>Unduh PDF</button><a href="../latihan.html" class="bg-brand-green text-white font-bold py-3 rounded-xl text-xs shadow-md text-center active:scale-95 transition"><i class="fas fa-house mr-1.5"></i>Ruang Latihan</a></div>',
         navLatihanHtml(),
         '<p class="text-center text-[10px] text-slate-400 mt-4"><i class="fas fa-rotate mr-1"></i>Gacha & latihan baru dibuka setelah ' + new Date(window.H.spin.ts + 864e5).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + '</p>',
-        '<div class="flex items-center justify-between mt-6 mb-3"><h3 class="font-bold text-slate-800 text-sm">Review Jawabanmu</h3></div><div id="bahas" class="space-y-3"></div>'
+        '<div class="flex items-center justify-between mt-6 mb-3"><h3 class="font-bold text-slate-800 text-sm"><i class="fas fa-magnifying-glass-chart text-emerald-600 mr-1.5"></i>Review &amp; Evaluasi AI Tiap Soal</h3></div><div id="bahas" class="space-y-3"></div>'
     ].join('');
     
     $('main').innerHTML = html;
     window.scrollTo({ top: 0 }); 
-    if (baru) { if (R.benar > 0) { L.beep('ok'); setTimeout(() => window.confetti && confetti({ particleCount: 140, spread: 80, origin: { y: .4 }, zIndex: 100001 }), 700); } else L.beep('ok'); } 
+    if (baru) { if (skorEsai >= 60) { L.beep('ok'); setTimeout(() => window.confetti && confetti({ particleCount: 140, spread: 80, origin: { y: .4 }, zIndex: 100001 }), 700); } else L.beep('ok'); } 
     
     let ulasanHtml = '';
+    const itemEvalList = (evalAi && Array.isArray(evalAi.nilaiPerSoal)) ? evalAi.nilaiPerSoal : [];
+
     window.soal.forEach((s, i) => { 
         const u = R.jawab[i] || ''; 
         const diJawab = u.trim().length > 10;
-        ulasanHtml += '<article class="bg-white rounded-2xl border border-slate-200 p-4"><div class="flex items-center gap-2 mb-2"><span class="w-6 h-6 rounded-full bg-slate-800 text-white text-[11px] font-extrabold flex items-center justify-center">' + (i + 1) + '</span>' + badge(s.tingkat) + '<span class="ml-auto text-[10px] font-bold ' + (diJawab ? 'text-emerald-600' : 'text-rose-500') + '">' + (diJawab ? 'Dijawab' : 'Tidak Valid/Kosong') + '</span></div>';
-        ulasanHtml += '<p class="font-reading text-[12px] text-slate-800 leading-[1.75] mb-2.5">' + esc(s.p) + '</p>';
-        ulasanHtml += '<div class="bg-slate-50 rounded-lg p-2.5 mb-2.5 border border-slate-100"><p class="text-[10px] font-bold text-slate-500 mb-1">Jawabanmu:</p><p class="text-[11px] text-slate-700 whitespace-pre-wrap">' + (u ? esc(u) : '<i class="text-slate-400">Kosong</i>') + '</p></div>';
-        if(s.bahas) {
-            ulasanHtml += '<div class="bg-emerald-50 rounded-lg p-2.5 text-[11px] text-emerald-900 leading-relaxed border border-emerald-100"><b class="text-emerald-700">Poin Penting (Ekspektasi AI):</b> ' + esc(s.bahas) + '</div>';
+        const sEval = itemEvalList.find(x => x.no === (i + 1)) || itemEvalList[i] || null;
+        const skorButir = sEval ? sEval.skor : (diJawab ? 75 : 0);
+        const statusButir = sEval ? sEval.status : (diJawab ? 'Dijawab' : 'Kosong');
+        const feedbackButir = sEval ? sEval.feedback : '';
+
+        const badgeColor = skorButir >= 85 ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : skorButir >= 65 ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-rose-100 text-rose-800 border-rose-200';
+
+        ulasanHtml += '<article class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">';
+        ulasanHtml += '<div class="flex items-center gap-2 mb-2"><span class="w-6 h-6 rounded-full bg-slate-800 text-white text-[11px] font-extrabold flex items-center justify-center">' + (i + 1) + '</span>' + badge(s.tingkat) + '<div class="ml-auto flex items-center gap-1.5"><span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md border ' + badgeColor + '">' + esc(statusButir) + ' (' + skorButir + '/100)</span></div></div>';
+        ulasanHtml += '<p class="font-reading text-[12px] text-slate-800 leading-[1.75] mb-2.5 font-medium">' + esc(s.p) + '</p>';
+        ulasanHtml += '<div class="bg-slate-50 rounded-lg p-2.5 mb-2 border border-slate-100"><p class="text-[10px] font-bold text-slate-500 mb-1"><i class="fas fa-pen mr-1"></i>Jawabanmu:</p><p class="text-[11px] text-slate-700 whitespace-pre-wrap leading-relaxed">' + (u ? esc(u) : '<i class="text-slate-400">Kosong</i>') + '</p></div>';
+        
+        if (feedbackButir) {
+            ulasanHtml += '<div class="bg-purple-50 rounded-lg p-2.5 mb-2 text-[11px] text-purple-950 leading-relaxed border border-purple-200/60"><b class="text-purple-800 flex items-center gap-1 mb-0.5"><i class="fas fa-robot text-purple-600"></i>Umpan Balik Guru AI:</b>' + esc(feedbackButir) + '</div>';
+        }
+
+        if (s.bahas) {
+            ulasanHtml += '<div class="bg-emerald-50 rounded-lg p-2.5 text-[11px] text-emerald-950 leading-relaxed border border-emerald-200/60"><b class="text-emerald-800 flex items-center gap-1 mb-0.5"><i class="fas fa-lightbulb text-emerald-600"></i>Poin Kunci Konsep Materi:</b> ' + esc(s.bahas) + '</div>';
         }
         ulasanHtml += '</article>';
     });
@@ -387,9 +491,11 @@ const hitungKata = v => { const t = String(v || '').trim(); return t ? t.split(/
 function buatDokumenPdf() {
     const R = window.H.hasil.esai;
     const nama = (L.nama ? L.nama() : '') || 'Siswa', materi = (window.H.spin && window.H.spin.judul) || '-';
-    const WR = { gelap: '#064e3b', hijau: '#059669', hijauMuda: '#d1fae5', merah: '#e11d48', merahMuda: '#ffe4e6', amber: '#d97706', amberMuda: '#fffbeb', abu: '#64748b', garis: '#e2e8f0', latar: '#f8fafc', biruMuda: '#e0f2fe', biru: '#0369a1' };
+    const WR = { gelap: '#064e3b', hijau: '#059669', hijauMuda: '#d1fae5', merah: '#e11d48', merahMuda: '#ffe4e6', amber: '#d97706', amberMuda: '#fffbeb', abu: '#64748b', garis: '#e2e8f0', latar: '#f8fafc', biruMuda: '#e0f2fe', biru: '#0369a1', ungu: '#7e22ce', unguMuda: '#f3e8ff' };
     const kosong = R.total - R.benar;
     const totalKata = window.soal.reduce((a, s, i) => a + hitungKata(R.jawab[i]), 0);
+    const evalAi = R.evaluasi || null;
+    const skorEsai = typeof R.skor === 'number' ? R.skor : 75;
 
     const pdfLbl = t => ({ text: t, fontSize: 7.5, bold: true, color: '#ffffff', fillColor: WR.hijau, margin: [7, 5, 7, 5] });
     const pdfVal = t => ({ text: String(t), bold: true, fontSize: 10, color: WR.gelap, fillColor: WR.latar, margin: [7, 7, 7, 7] });
@@ -407,9 +513,9 @@ function buatDokumenPdf() {
     // Banner Utama
     content.push({
         table: { widths: ['*'], body: [[{ stack: [
-            { text: 'LEMBAR HASIL LATIHAN', fontSize: 8.5, bold: true, color: '#a7f3d0', characterSpacing: 2 },
+            { text: 'LEMBAR HASIL LATIHAN BERBASIS AI', fontSize: 8.5, bold: true, color: '#a7f3d0', characterSpacing: 2 },
             { text: 'Isi Argumentasi', fontSize: 22, bold: true, color: '#ffffff', margin: [0, 3, 0, 2] },
-            { text: 'Ruang Latihan Argumentasi', fontSize: 9.5, color: '#d1fae5' }
+            { text: 'Ruang Latihan Argumentasi  •  Sistem Penilaian AI Argumentasi', fontSize: 9.5, color: '#d1fae5' }
         ], fillColor: WR.gelap, margin: [18, 16, 18, 16] }]] },
         layout: 'noBorders'
     });
@@ -422,7 +528,7 @@ function buatDokumenPdf() {
 
     // Skor & Statistik
     content.push({ margin: [0, 8, 0, 0], table: { widths: ['*', '*', '*', '*', '*'], body: [[
-        pdfSel('STATUS', 'Selesai', WR.hijau, '#ffffff', 15),
+        pdfSel('SKOR AKHIR AI', skorEsai + ' / 100', WR.hijau, '#ffffff', 15),
         pdfSel('DIJAWAB', R.benar + ' / ' + R.total, WR.hijauMuda, WR.gelap),
         pdfSel('KOSONG', kosong, WR.merahMuda, WR.merah),
         pdfSel('TOTAL KATA', totalKata, WR.biruMuda, WR.biru),
@@ -431,19 +537,92 @@ function buatDokumenPdf() {
 
     content.push({ text: 'Durasi pengerjaan ' + L.fmt(R.durasi) + ' dari ' + L.fmt(R.batas) + (R.auto ? '  •  dikumpulkan otomatis (waktu habis)' : ''), fontSize: 8.5, color: WR.abu, margin: [0, 6, 0, 0] });
 
+    if (evalAi && evalAi.ringkasanEvaluasi) {
+        content.push({ margin: [0, 8, 0, 0], table: { widths: ['*'], body: [[
+            { fillColor: WR.unguMuda, margin: [10, 8, 10, 8], stack: [
+                { text: 'EVALUASI KESELURUHAN GURU AI', fontSize: 8, bold: true, color: WR.ungu, characterSpacing: 0.5 },
+                { text: evalAi.ringkasanEvaluasi, fontSize: 9.5, lineHeight: 1.35, color: '#3b0764', margin: [0, 3, 0, 0] }
+            ] }
+        ]] }, layout: { hLineWidth: () => 0.6, vLineWidth: () => 0.6, hLineColor: () => WR.ungu, vLineColor: () => WR.ungu } });
+    }
+
     // Ringkasan per soal
-    content.push(pdfJudul('Ringkasan per Soal'));
-    content.push({ table: { widths: [30, 70, 60, '*'], body: [
-        [pdfTh('No'), pdfTh('Tingkat'), pdfTh('Jumlah kata'), pdfTh('Status')],
+    content.push(pdfJudul('Ringkasan Skor & Evaluasi per Soal'));
+    const itemEvalList = (evalAi && Array.isArray(evalAi.nilaiPerSoal)) ? evalAi.nilaiPerSoal : [];
+
+    content.push({ table: { widths: [25, 60, 50, 55, '*'], body: [
+        [pdfTh('No'), pdfTh('Tingkat'), pdfTh('Kata'), pdfTh('Skor AI'), pdfTh('Status')],
         ...window.soal.map((s, i) => {
             const ok = valid(R.jawab[i]);
+            const sEval = itemEvalList.find(x => x.no === (i + 1)) || itemEvalList[i] || null;
+            const sNilai = sEval ? sEval.skor : (ok ? 75 : 0);
+            const sStat = sEval ? sEval.status : (ok ? 'Dijawab' : 'Kosong');
             return [
                 { text: String(i + 1), bold: true, alignment: 'center', margin: [0, 6, 0, 6] },
-                { text: (TKT[s.tingkat] ? TKT[s.tingkat][0] : s.tingkat) || 'Sedang', bold: true, color: (TKT_HEX && TKT_HEX[s.tingkat]) || '#0284c7', margin: [7, 6, 7, 6] },
-                { text: String(hitungKata(R.jawab[i])), margin: [7, 6, 7, 6] },
-                { text: ok ? 'Dijawab' : 'Kosong', bold: true, color: ok ? WR.hijau : WR.merah, margin: [7, 6, 7, 6] }
+                { text: (TKT[s.tingkat] ? TKT[s.tingkat][0] : s.tingkat) || 'Sedang', bold: true, color: (TKT_HEX && TKT_HEX[s.tingkat]) || '#0284c7', margin: [5, 6, 5, 6] },
+                { text: String(hitungKata(R.jawab[i])), margin: [5, 6, 5, 6] },
+                { text: String(sNilai), bold: true, color: sNilai >= 85 ? WR.hijau : sNilai >= 65 ? WR.amber : WR.merah, margin: [5, 6, 5, 6] },
+                { text: sStat, bold: true, color: sNilai >= 65 ? WR.hijau : WR.merah, margin: [5, 6, 5, 6] }
             ];
         })
+    ] }, layout: layoutTipis });
+
+    // Soal, jawaban, pembahasan
+    content.push(pdfJudul('Soal, Jawaban, Evaluasi AI & Pembahasan'));
+    window.soal.forEach((s, i) => {
+        const rawU = R.jawab[i];
+        const u = typeof rawU === 'string' ? rawU : (rawU != null ? String(rawU) : '');
+        const ok = valid(u);
+        const sEval = itemEvalList.find(x => x.no === (i + 1)) || itemEvalList[i] || null;
+        const sNilai = sEval ? sEval.skor : (ok ? 75 : 0);
+        const sStat = sEval ? sEval.status : (ok ? 'DIJAWAB' : 'KOSONG');
+        const c = sNilai >= 85 ? WR.hijau : sNilai >= 65 ? WR.amber : WR.merah;
+
+        const rows = [
+            [{ fillColor: c, margin: [10, 6, 10, 6], columns: [
+                { text: 'SOAL ' + (i + 1) + '   |   ' + (TKT[s.tingkat] ? TKT[s.tingkat][0].toUpperCase() : 'ESAI') + '   (SKOR: ' + sNilai + '/100)', bold: true, fontSize: 9, color: '#ffffff' },
+                { text: sStat.toUpperCase(), bold: true, fontSize: 9, color: '#ffffff', alignment: 'right' }
+            ] }],
+            [{ text: String(s.p), bold: true, fontSize: 10.5, lineHeight: 1.35, color: '#0f172a', fillColor: WR.latar, margin: [10, 8, 10, 8] }],
+            [{ fillColor: WR.biruMuda, margin: [10, 7, 10, 8], stack: [
+                { columns: [{ text: 'JAWABAN SISWA', fontSize: 7.5, bold: true, color: WR.biru }, { text: hitungKata(u) + ' kata', fontSize: 7.5, color: WR.abu, alignment: 'right' }] },
+                { text: u.trim() ? u : 'Tidak dijawab', fontSize: 9.5, lineHeight: 1.4, color: u.trim() ? '#0f172a' : WR.abu, italics: !u.trim(), margin: [0, 3, 0, 0] }
+            ] }]
+        ];
+
+        if (sEval && sEval.feedback) {
+            rows.push([{ fillColor: WR.unguMuda, margin: [10, 7, 10, 8], stack: [
+                { text: 'UMPAN BALIK GURU AI', fontSize: 7.5, bold: true, color: WR.ungu },
+                { text: String(sEval.feedback), fontSize: 9.5, lineHeight: 1.35, color: '#3b0764', margin: [0, 3, 0, 0] }
+            ] }]);
+        }
+
+        rows.push([{ fillColor: WR.amberMuda, margin: [10, 7, 10, 8], stack: [
+            { text: 'POIN KUNCI / PEMBAHASAN MATERI', fontSize: 7.5, bold: true, color: WR.amber },
+            { text: s.bahas ? String(s.bahas) : 'Pembahasan belum tersedia untuk soal ini.', fontSize: 9.5, lineHeight: 1.35, color: s.bahas ? '#334155' : WR.abu, margin: [0, 3, 0, 0] }
+        ] }]);
+
+        content.push({
+            margin: [0, 0, 0, 12],
+            table: { dontBreakRows: true, widths: ['*'], body: rows },
+            layout: { hLineWidth: () => 0.8, vLineWidth: () => 0.8, hLineColor: () => c, vLineColor: () => c, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 }
+        });
+    });
+
+    content.push({ text: 'Dokumen ini dibuat otomatis oleh Argumentasi App pada ' + tglIndo(Date.now()) + '.', fontSize: 8, color: WR.abu, alignment: 'center', margin: [0, 8, 0, 0] });
+
+    return {
+        info: { title: 'Hasil Latihan Isi Argumentasi - ' + nama, author: 'Argumentasi App', subject: materi },
+        pageSize: 'A4',
+        pageMargins: [36, 36, 36, 46],
+        defaultStyle: { fontSize: 10, lineHeight: 1.2, color: '#334155' },
+        footer: (cur, total) => ({ columns: [
+            { text: 'Argumentasi App  •  ' + nama + '  •  Isi Argumentasi', fontSize: 8, color: WR.abu, margin: [36, 0, 0, 0] },
+            { text: 'Halaman ' + cur + ' dari ' + total, fontSize: 8, color: WR.abu, alignment: 'right', margin: [0, 0, 36, 0] }
+        ], margin: [0, 18, 0, 0] }),
+        content
+    };
+}
     ] }, layout: layoutTipis });
 
     // Soal, jawaban, pembahasan

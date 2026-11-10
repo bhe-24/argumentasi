@@ -443,7 +443,7 @@
             document.getElementById('resumeLoading').classList.remove('hidden');
             try {
                 const rawText = document.getElementById('readingContent').innerText || '';
-                const res = await fetch('/api/summarize', {
+                const res = await fetch('/api/central', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ materiId: art.id || 'unknown', teksJudul: art.judul || '', teksIsi: rawText.trim().slice(0, 5000), action: "summarize" }),
                     signal: AbortSignal.timeout(30000)

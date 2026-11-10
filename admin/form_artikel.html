@@ -270,7 +270,7 @@
             titleList.innerHTML = `<div class="text-[10px] text-blue-600 animate-pulse">Sedang meracik alternatif judul...</div>`;
 
             try {
-                const response = await fetch('/api/form', {
+                const response = await fetch('/api/central', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: "title", teksUtama: ideJudul, isiMateri: quill.getText() }),
@@ -313,7 +313,7 @@
             msgBox.innerText = `Memproses ke gaya bahasa ${targetGaya.toUpperCase()}...`;
 
             try {
-                const response = await fetch('/api/form', {
+                const response = await fetch('/api/central', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: "paraphrase", targetLevel: targetGaya, teksUtama: textTerpilih }),

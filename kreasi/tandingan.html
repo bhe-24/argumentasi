@@ -73,7 +73,7 @@
         words: t => String(t || '').trim().split(/\s+/).filter(Boolean).length,
 
         async api(action, payload = {}) {
-            const res = await fetch('/api/all-kreasi', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            const res = await fetch('/api/central', { method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action, level: K.profile().level, ...payload }), signal: AbortSignal.timeout(30000) });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.detail_error || 'Server error');

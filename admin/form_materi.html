@@ -347,7 +347,7 @@
             titleBox.classList.remove('hidden');
             list.innerHTML = `<div class="text-[10px] text-indigo-500 animate-pulse"><i class="fas fa-circle-notch fa-spin mr-1"></i> Sedang meracik judul yang menarik...</div>`;
             try {
-                const res = await fetch('/api/form', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "title", teksUtama: ide, isiMateri: quill.getText().slice(0, 4000) }), signal: AbortSignal.timeout(15000) });
+                const res = await fetch('/api/central', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "title", teksUtama: ide, isiMateri: quill.getText().slice(0, 4000) }), signal: AbortSignal.timeout(15000) });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail_error || "Gagal mendapatkan saran judul.");
                 const titles = Array.isArray(data.result) ? data.result : [data.result];
@@ -365,7 +365,7 @@
             if (teks.trim().length < 10) return alert("Teks yang diblok terlalu pendek. Minimal blok 1 kalimat.");
             msg.classList.remove('hidden'); msg.innerText = `Menyesuaikan gaya bahasa ke anak ${gaya.toUpperCase()}...`;
             try {
-                const res = await fetch('/api/form', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "paraphrase", targetLevel: gaya, teksUtama: teks }), signal: AbortSignal.timeout(20000) });
+                const res = await fetch('/api/central', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "paraphrase", targetLevel: gaya, teksUtama: teks }), signal: AbortSignal.timeout(20000) });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail_error || "Gagal memparafrase kalimat.");
                 quill.deleteText(range.index, range.length, 'user');

@@ -152,9 +152,17 @@
                             <label for="inputCP" class="block text-slate-800 text-xs font-bold mb-1">Capaian Pembelajaran (CP)</label>
                             <textarea id="inputCP" rows="3" class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 transition-all text-xs font-medium text-slate-700 bg-white resize-none" placeholder="Cth: Peserta didik mampu menyusun argumen logis..." oninput="checkInputs()"></textarea>
                         </div>
-                        <div class="mb-2 bg-slate-50 p-4 rounded-xl border border-slate-100 shrink-0">
+                        <div class="mb-3 bg-slate-50 p-4 rounded-xl border border-slate-100 shrink-0">
                             <label for="inputTP" class="block text-slate-800 text-xs font-bold mb-1">Tujuan Pembelajaran (TP)</label>
                             <textarea id="inputTP" rows="3" class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 transition-all text-xs font-medium text-slate-700 bg-white resize-none" placeholder="1. Mampu mengidentifikasi tesis...&#10;2. Mampu merumuskan fakta pendukung..." oninput="checkInputs()"></textarea>
+                        </div>
+                        <div class="mb-2 bg-emerald-50/70 p-4 rounded-xl border border-emerald-200/80 shrink-0">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label for="inputRubrikEsai" class="block text-slate-800 text-xs font-bold">Rubrik Penilaian Esai Guru <span class="text-[10px] text-emerald-600 font-semibold">(Opsional)</span></label>
+                                <span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full"><i class="fas fa-robot mr-1"></i>AI Grading</span>
+                            </div>
+                            <textarea id="inputRubrikEsai" rows="3" class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all text-xs font-medium text-slate-700 bg-white resize-none" placeholder="Tuliskan kriteria khusus penilaian esai dari Anda (misal: 'Sertakan contoh data nyata, minimal 2 argumen logis, gunakan kata hubung sebab-akibat').&#10;Jika dikosongkan, AI akan otomatis menggunakan rubrik sistem standar."></textarea>
+                            <p class="text-[9.5px] text-slate-500 mt-1.5 leading-relaxed"><i class="fas fa-circle-info text-emerald-600 mr-1"></i>Rubrik ini akan dijadikan tolok ukur AI saat mengoreksi esai siswa di kelas ini.</p>
                         </div>
                     </div>
 
@@ -428,10 +436,10 @@
 
             $('ekstrakTeksProses').textContent = "Gemini sedang membedah dokumen...";
             const token = await auth.currentUser.getIdToken();
-            const rApi = await fetch('/api/modul', {
+            const rApi = await fetch('/api/central', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-                body: JSON.stringify({ action: 'extract', url: urlPdfModul })
+                body: JSON.stringify({ action: 'modul', type: 'extract', url: urlPdfModul })
             });
             const dApi = await rApi.json();
             if (!rApi.ok) throw new Error(dApi.detail_error || "Gagal ekstraksi teks dari PDF.");
@@ -485,10 +493,10 @@
             pBar.style.width = '60%';
             
             const token = await auth.currentUser.getIdToken();
-            const rApi = await fetch('/api/modul', {
+            const rApi = await fetch('/api/central', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-                body: JSON.stringify({ action: 'buat', materi: payloadMateri })
+                body: JSON.stringify({ action: 'modul', type: 'buat', materi: payloadMateri })
             });
             const dApi = await rApi.json();
             if (!rApi.ok) throw new Error(dApi.detail_error || "Gagal membangun paket latihan.");
@@ -521,6 +529,7 @@
                         jenjang: document.querySelector('input[name="jenjang"]:checked').value,
                         cp: payloadMateri.cp,
                         tp: payloadMateri.tp,
+                        rubrikEsai: $('inputRubrikEsai') ? $('inputRubrikEsai').value.trim() : '',
                         guruId: currentGuru.uid,
                         namaGuru: currentGuru.nama,
                         status: 'active', jumlahSiswa: 0, handoutId: handoutId,

@@ -236,8 +236,8 @@ window.analisisAI = async function (manual) {
     $('aiHasil').classList.remove('hidden'); $('aiHasil').innerHTML = '<div class="bg-violet-50 border border-violet-100 rounded-xl p-3"><div class="sk h-3 w-1/2 rounded mb-2"></div><div class="sk h-3 w-full rounded mb-1.5"></div><div class="sk h-3 w-4/5 rounded"></div><p class="text-[10px] text-violet-500 mt-2.5"><i class="fas fa-circle-notch fa-spin mr-1"></i>Gemini sedang membaca sampul…</p></div>';
     try {
         const token = await S.user.getIdToken();
-        const r = await fetch('/api/handout-ai', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-            body: JSON.stringify({ action: 'analisis', gambar: S.aiImg, teks: S.teks, namaFile: S.file ? S.file.name : '' }), signal: AbortSignal.timeout(40000) });
+        const r = await fetch('/api/central', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ action: 'handout_ai', gambar: S.aiImg, teks: S.teks, namaFile: S.file ? S.file.name : '' }), signal: AbortSignal.timeout(40000) });
         const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.detail_error || 'Server error');
         S.ai = d; S.aiAda = true;
         if (manual || !S.sentuh.judul) { if (d.judul) { $('inJudul').value = d.judul; S.sentuh.judul = false; $('tagJudul').classList.remove('hidden'); } }
