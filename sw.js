@@ -1,8 +1,7 @@
-const CACHE_NAME = 'arg-pwa-otomatis-v4';
+const CACHE_NAME = 'arg-pwa-otomatis-v5';
 
 const urlsToCache = [
     './',
-    './index.html',
     './manifest.json',
     './animasi-menarik.gif',
     './icon-192.png',
@@ -15,7 +14,17 @@ self.addEventListener('install', (e) => {
     self.skipWaiting();
     e.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(urlsToCache);
+            return Promise.all(
+                urlsToCache.map((u) =>
+                    fetch(new Request(u, { cache: 'no-cache' }))
+                        .then((res) => {
+                            if (res && res.status === 200 && !res.redirected) {
+                                return cache.put(u, res);
+                            }
+                        })
+                        .catch(() => {})
+                )
+            );
         })
     );
 });
@@ -36,31 +45,57 @@ self.addEventListener('activate', (e) => {
 });
 
 // 3. Strategi "Network First, fallback to Cache" (Internet Dulu, Baru Memori)
+// PENTING: Gunakan fetch(e.request) langsung agar request navigasi (redirect: 'manual')
+// tidak pernah mengembalikan response dengan redirected === true pada Vercel cleanUrls (308),
+// yang menyebabkan Chrome menggagalkan navigasi dengan ERR_FAILED.
 self.addEventListener('fetch', (e) => {
-    // Jangan cache request non-GET, API serverless, firebase, atau folder admin (admin selalu live network)
-    if (e.request.method !== 'GET' || e.request.url.includes('/api/') || e.request.url.includes('firestore.googleapis.com') || e.request.url.includes('/admin/')) {
+    if (e.request.method !== 'GET') return;
+
+    const url = new URL(e.request.url);
+    if (
+        (url.protocol !== 'http:' && url.protocol !== 'https:') ||
+        url.pathname.startsWith('/api/') ||
+        url.hostname.includes('firestore.googleapis.com') ||
+        url.pathname === '/admin' ||
+        url.pathname.startsWith('/admin/')
+    ) {
         return;
     }
 
-    const url = new URL(e.request.url);
-    const isHtmlRequest = url.origin === self.location.origin && (e.request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html'));
-    const fetchPromise = isHtmlRequest
-        ? fetch(e.request.url, { cache: 'no-cache', credentials: 'same-origin' })
-        : fetch(e.request);
-
     e.respondWith(
-        fetchPromise
+        fetch(e.request)
             .then((response) => {
-                if (response && response.status === 200) {
+                if (response && response.status === 200 && !response.redirected) {
                     const resClone = response.clone();
                     caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(e.request, resClone);
-                    });
+                        return cache.put(e.request, resClone);
+                    }).catch(() => {});
                 }
                 return response;
             })
-            .catch(() => {
-                return caches.match(e.request);
+            .catch(async () => {
+                const cached = await caches.match(e.request);
+                if (cached && !cached.redirected) {
+                    return cached;
+                }
+
+                if (e.request.mode === 'navigate' && url.origin === self.location.origin) {
+                    if (url.pathname === '/index.html' || url.pathname.endsWith('/index.html')) {
+                        const rootUrl = new URL('./', self.location.href);
+                        const rootCached = await caches.match(rootUrl.href);
+                        if (rootCached && !rootCached.redirected) return rootCached;
+                    } else if (url.pathname.endsWith('.html')) {
+                        const cleanUrl = new URL(url.href);
+                        cleanUrl.pathname = cleanUrl.pathname.slice(0, -5);
+                        const cleanCached = await caches.match(cleanUrl.href);
+                        if (cleanCached && !cleanCached.redirected) return cleanCached;
+                    }
+
+                    const fallbackHome = await caches.match(new URL('./', self.location.href).href);
+                    if (fallbackHome && !fallbackHome.redirected) return fallbackHome;
+                }
+
+                return (cached && !cached.redirected) ? cached : Response.error();
             })
     );
 });
@@ -68,10 +103,10 @@ self.addEventListener('fetch', (e) => {
 // 4. Penanganan Notifikasi Ponsel (PWA Push & Click Handler)
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    const targetUrl = (event.notification.data && event.notification.data.url) 
-        ? event.notification.data.url 
-        : './index.html';
-    
+    const targetUrl = (event.notification.data && event.notification.data.url)
+        ? event.notification.data.url
+        : './';
+
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
             for (const client of clientList) {
