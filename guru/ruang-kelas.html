@@ -44,7 +44,7 @@
         @keyframes skeleton-loading { 0% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center h-screen h-[100dvh] overflow-hidden bg-slate-100">
+<body class="flex justify-center h-screen h-[100dvh] overflow-hidden bg-slate-100">
 
     <!-- CONTAINER UTAMA -->
     <div class="w-full max-w-md bg-slate-50 relative h-full shadow-2xl flex flex-col sm:border-x border-slate-200 overflow-hidden">
@@ -126,19 +126,12 @@
 
             </div>
         </main>
-    
-        <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto">
-            <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
-            <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
-        </footer>
-</div>
+    </div>
 
     <!-- Notifikasi Toast -->
     <div id="toastContainer" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-3 pointer-events-none w-[90%] max-w-sm"></div>
 
     <!-- SCRIPT LOGIC (Multi-Page Navigation & Firebase) -->
-    
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";

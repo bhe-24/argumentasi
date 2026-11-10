@@ -1,4 +1,4 @@
-const CACHE_NAME = 'arg-pwa-otomatis-v3';
+const CACHE_NAME = 'arg-pwa-otomatis-v4';
 
 const urlsToCache = [
     './',
@@ -37,15 +37,21 @@ self.addEventListener('activate', (e) => {
 
 // 3. Strategi "Network First, fallback to Cache" (Internet Dulu, Baru Memori)
 self.addEventListener('fetch', (e) => {
-    // Jangan cache request API serverless, firebase, atau folder admin (admin selalu live network)
-    if (e.request.url.includes('/api/') || e.request.url.includes('firestore.googleapis.com') || e.request.url.includes('/admin/')) {
+    // Jangan cache request non-GET, API serverless, firebase, atau folder admin (admin selalu live network)
+    if (e.request.method !== 'GET' || e.request.url.includes('/api/') || e.request.url.includes('firestore.googleapis.com') || e.request.url.includes('/admin/')) {
         return;
     }
 
+    const url = new URL(e.request.url);
+    const isHtmlRequest = url.origin === self.location.origin && (e.request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html'));
+    const fetchPromise = isHtmlRequest
+        ? fetch(e.request.url, { cache: 'no-cache', credentials: 'same-origin' })
+        : fetch(e.request);
+
     e.respondWith(
-        fetch(e.request)
+        fetchPromise
             .then((response) => {
-                if (response && response.status === 200 && e.request.method === 'GET') {
+                if (response && response.status === 200) {
                     const resClone = response.clone();
                     caches.open(CACHE_NAME).then((cache) => {
                         cache.put(e.request, resClone);

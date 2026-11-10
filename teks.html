@@ -82,7 +82,6 @@
             flex-shrink: 0;
             height: 100%;
             overflow-y: auto;
-            overflow-x: hidden;
             scroll-snap-align: start;
             scroll-snap-stop: always;
             box-sizing: border-box;
@@ -106,7 +105,7 @@
         }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen bg-slate-50 sm:bg-slate-200">
+<body class="flex justify-center min-h-screen bg-slate-50 sm:bg-slate-200">
 
     <!-- CONTAINER UTAMA (Mobile App Frame) -->
     <div class="w-full max-w-md bg-slate-50 relative shadow-2xl flex flex-col sm:border-x border-slate-300 overflow-hidden" style="height:100vh;height:100dvh;">
@@ -166,7 +165,7 @@
             <div id="swipeContainer" class="swipe-container hide-scrollbar">
 
                 <!-- PANEL 1: TERBARU -->
-                <div id="panelTerbaru" class="swipe-panel px-4 py-3.5 hide-scrollbar flex flex-col">
+                <div id="panelTerbaru" class="swipe-panel px-4 py-3.5 hide-scrollbar">
                     <!-- Skeleton Shimmer -->
                     <div id="skelTerbaru" class="space-y-3">
                         <div class="flex gap-3 bg-white p-3 rounded-2xl shadow-xs border border-slate-100">
@@ -221,16 +220,11 @@
                     </div>
 
                     <!-- List Konten -->
-                    <div id="listTerbaru" class="space-y-3 pb-4"></div>
-                    <!-- Footer Konten Utama Platform Argumentasi -->
-                    <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto -mx-4 px-4">
-                        <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
-                        <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
-                    </footer>
+                    <div id="listTerbaru" class="space-y-3 pb-8"></div>
                 </div>
 
                 <!-- PANEL 2: POPULER -->
-                <div id="panelPopuler" class="swipe-panel px-4 py-3.5 hide-scrollbar flex flex-col">
+                <div id="panelPopuler" class="swipe-panel px-4 py-3.5 hide-scrollbar">
                     <!-- Skeleton Shimmer -->
                     <div id="skelPopuler" class="space-y-3">
                         <div class="flex gap-3 bg-white p-3 rounded-2xl shadow-xs border border-slate-100">
@@ -265,16 +259,11 @@
                     </div>
 
                     <!-- List Konten -->
-                    <div id="listPopuler" class="space-y-3 pb-4"></div>
-                    <!-- Footer Konten Utama Platform Argumentasi -->
-                    <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto -mx-4 px-4">
-                        <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
-                        <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
-                    </footer>
+                    <div id="listPopuler" class="space-y-3 pb-8"></div>
                 </div>
 
                 <!-- PANEL 3: TERBAIK -->
-                <div id="panelTerbaik" class="swipe-panel px-4 py-3.5 hide-scrollbar flex flex-col">
+                <div id="panelTerbaik" class="swipe-panel px-4 py-3.5 hide-scrollbar">
                     <!-- Skeleton Shimmer -->
                     <div id="skelTerbaik" class="space-y-3">
                         <div class="flex gap-3 bg-white p-3 rounded-2xl shadow-xs border border-slate-100">
@@ -309,23 +298,15 @@
                     </div>
 
                     <!-- List Konten -->
-                    <div id="listTerbaik" class="space-y-3 pb-4"></div>
-                    <!-- Footer Konten Utama Platform Argumentasi -->
-                    <footer class="bg-white border-t border-slate-200 py-4 text-center shrink-0 mt-auto -mx-4 px-4">
-                        <img src="https://i.imgur.com/a9S8h2Z.png" alt="Logo" class="h-4 object-contain mx-auto mb-2 grayscale opacity-50">
-                        <p class="text-[9px] text-slate-400 font-medium">&copy; 2026 Platform Argumentasi.</p>
-                    </footer>
+                    <div id="listTerbaik" class="space-y-3 pb-8"></div>
                 </div>
 
             </div>
         </div>
 
-    
-</div>
+    </div>
 
     <!-- LOGIKA SINKRONISASI SWIPE & SEARCH -->
-    
-
     <script>
         const TAB_KEYS = ['terbaru', 'populer', 'terbaik'];
         let activeTab = 'terbaru';
