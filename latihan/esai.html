@@ -25,15 +25,31 @@
         const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'x' + Math.random().toString(36).slice(2) + Date.now().toString(36);
         const today = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
         const lsRead = () => { try { return JSON.parse(localStorage.getItem(LS)); } catch (e) { return null; } };
-        const idbOpen = () => new Promise((ok, no) => { const r = indexedDB.open(DBN, 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
+        const idbOpen = () => new Promise((ok, no) => { const r = indexedDB.open(DBN, 1); r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains('kv')) r.result.createObjectStore('kv'); }; r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
         const idbGet = async () => { try { const d = await idbOpen(); return await new Promise(ok => { const q = d.transaction('kv').objectStore('kv').get('state'); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); }); } catch (e) { return null; } };
-        const idbSet = async v => { try { const d = await idbOpen(); await new Promise(ok => { const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, 'state'); t.oncomplete = ok; t.onerror = ok; t.onabort = ok; }); } catch (e) {} };
+        const mergeHari = (target, other) => {
+            if (!other || !other.hari) return target;
+            target.hari = target.hari || {};
+            for (const k in other.hari) {
+                const oh = other.hari[k]; if (!oh) continue;
+                if (!target.hari[k]) target.hari[k] = JSON.parse(JSON.stringify(oh));
+                else {
+                    if (oh.pack) target.hari[k].pack = Object.assign({}, oh.pack, target.hari[k].pack || {});
+                    if (oh.sesi) target.hari[k].sesi = Object.assign({}, oh.sesi, target.hari[k].sesi || {});
+                    if (oh.hasil) target.hari[k].hasil = Object.assign({}, oh.hasil, target.hari[k].hasil || {});
+                }
+            }
+            return target;
+        };
+        const idbSet = async v => { try { const d = await idbOpen(); let merged = v; await new Promise(ok => { const t = d.transaction('kv', 'readwrite'); const st = t.objectStore('kv'); const g = st.get('state'); g.onsuccess = () => { if (g.result && g.result.hari) mergeHari(v, g.result); merged = v; st.put(v, 'state'); }; t.oncomplete = ok; t.onerror = ok; t.onabort = ok; }); try { localStorage.setItem(LS, JSON.stringify(merged)); } catch (e) {} if (S && merged && S.hari) mergeHari(S, merged); } catch (e) {} };
 
         const L = {
             esc, today, pad,
             siap() { return siapP || (siapP = (async () => {
                 const a = lsRead(), b = await idbGet();
-                S = [a, b].filter(x => x && x.hari).sort((x, y) => (y.u || 0) - (x.u || 0))[0] || { v: 1, id: uuid(), u: Date.now(), hari: {} };
+                const list = [a, b].filter(x => x && x.hari).sort((x, y) => (y.u || 0) - (x.u || 0));
+                S = list[0] ? JSON.parse(JSON.stringify(list[0])) : { v: 1, id: uuid(), u: Date.now(), hari: {} };
+                if (list[1]) mergeHari(S, list[1]);
                 L.simpan(true); try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
                 return S; })()); },
             state: () => S,
@@ -604,50 +620,6 @@ function buatDokumenPdf() {
             { text: s.bahas ? String(s.bahas) : 'Pembahasan belum tersedia untuk soal ini.', fontSize: 9.5, lineHeight: 1.35, color: s.bahas ? '#334155' : WR.abu, margin: [0, 3, 0, 0] }
         ] }]);
 
-        content.push({
-            margin: [0, 0, 0, 12],
-            table: { dontBreakRows: true, widths: ['*'], body: rows },
-            layout: { hLineWidth: () => 0.8, vLineWidth: () => 0.8, hLineColor: () => c, vLineColor: () => c, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 }
-        });
-    });
-
-    content.push({ text: 'Dokumen ini dibuat otomatis oleh Argumentasi App pada ' + tglIndo(Date.now()) + '.', fontSize: 8, color: WR.abu, alignment: 'center', margin: [0, 8, 0, 0] });
-
-    return {
-        info: { title: 'Hasil Latihan Isi Argumentasi - ' + nama, author: 'Argumentasi App', subject: materi },
-        pageSize: 'A4',
-        pageMargins: [36, 36, 36, 46],
-        defaultStyle: { fontSize: 10, lineHeight: 1.2, color: '#334155' },
-        footer: (cur, total) => ({ columns: [
-            { text: 'Argumentasi App  •  ' + nama + '  •  Isi Argumentasi', fontSize: 8, color: WR.abu, margin: [36, 0, 0, 0] },
-            { text: 'Halaman ' + cur + ' dari ' + total, fontSize: 8, color: WR.abu, alignment: 'right', margin: [0, 0, 36, 0] }
-        ], margin: [0, 18, 0, 0] }),
-        content
-    };
-}
-    ] }, layout: layoutTipis });
-
-    // Soal, jawaban, pembahasan
-    content.push(pdfJudul('Soal, Jawaban & Pembahasan'));
-    window.soal.forEach((s, i) => {
-        const rawU = R.jawab[i];
-        const u = typeof rawU === 'string' ? rawU : (rawU != null ? String(rawU) : '');
-        const ok = valid(u), c = ok ? WR.hijau : WR.merah;
-        const rows = [
-            [{ fillColor: c, margin: [10, 6, 10, 6], columns: [
-                { text: 'SOAL ' + (i + 1) + '   |   ' + (TKT[s.tingkat] ? TKT[s.tingkat][0].toUpperCase() : 'ESAI'), bold: true, fontSize: 9, color: '#ffffff' },
-                { text: ok ? 'DIJAWAB' : 'KOSONG', bold: true, fontSize: 9, color: '#ffffff', alignment: 'right' }
-            ] }],
-            [{ text: String(s.p), bold: true, fontSize: 10.5, lineHeight: 1.35, color: '#0f172a', fillColor: WR.latar, margin: [10, 8, 10, 8] }],
-            [{ fillColor: WR.biruMuda, margin: [10, 7, 10, 8], stack: [
-                { columns: [{ text: 'JAWABAN SISWA', fontSize: 7.5, bold: true, color: WR.biru }, { text: hitungKata(u) + ' kata', fontSize: 7.5, color: WR.abu, alignment: 'right' }] },
-                { text: u.trim() ? u : 'Tidak dijawab', fontSize: 9.5, lineHeight: 1.4, color: u.trim() ? '#0f172a' : WR.abu, italics: !u.trim(), margin: [0, 3, 0, 0] }
-            ] }],
-            [{ fillColor: WR.amberMuda, margin: [10, 7, 10, 8], stack: [
-                { text: 'POIN PENTING / PEMBAHASAN', fontSize: 7.5, bold: true, color: WR.amber },
-                { text: s.bahas ? String(s.bahas) : 'Pembahasan belum tersedia untuk soal ini.', fontSize: 9.5, lineHeight: 1.35, color: s.bahas ? '#334155' : WR.abu, margin: [0, 3, 0, 0] }
-            ] }]
-        ];
         content.push({
             margin: [0, 0, 0, 12],
             table: { dontBreakRows: true, widths: ['*'], body: rows },

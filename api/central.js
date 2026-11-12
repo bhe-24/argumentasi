@@ -16,7 +16,7 @@ let Groq;
 try {
     Groq = require('groq-sdk');
 } catch (err) {
-    console.warn('Groq SDK belum dimuat:', err.message);
+    console.warn('Groq SDK opsional (menggunakan fetch langsung):', err.message);
 }
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mading-cf676';
@@ -24,27 +24,88 @@ const WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyDpUWUIzPXIZN6rrNt
 const ALLOWED_ROLES = ['admin', 'teacher'];
 const MAKS_PDF = 14 * 1024 * 1024;
 
+// Model aktif Groq & Gemini terverifikasi + dukungan rotasi anti-rate-limit
 const MODELS_GROQ = [...new Set([
     process.env.GROQ_MODEL,
-    'openai/gpt-oss-120b',
     'openai/gpt-oss-20b',
     'qwen/qwen3.8-27b',
-    'qwen-2.5-32b'
+    'openai/gpt-oss-120b',
+    'llama-3.1-8b-instant',
+    'meta-llama/llama-4-scout-17b-16e-instruct'
 ].filter(Boolean))];
 
 const MODELS_GROQ_FAST = [...new Set([
     'openai/gpt-oss-20b',
+    'llama-3.1-8b-instant',
     process.env.GROQ_MODEL,
-    'openai/gpt-oss-120b',
-    'qwen/qwen3.8-27b'
+    'qwen/qwen3.8-27b',
+    'openai/gpt-oss-120b'
 ].filter(Boolean))];
 
 const MODELS_GEMINI = [...new Set([
     process.env.GEMINI_MODEL,
+    'gemini-3.8-flash',
+    'gemini-2.5-flash-lite',
+    'gemini-3.1-flash-lite',
+    'gemini-3.7-flash',
+    'gemini-3-flash-preview',
     'gemini-2.5-flash',
-    'gemini-2.0-flash',
     'gemini-2.5-pro'
 ].filter(Boolean))];
+
+// State global container hangat (cooldown model, cache PDF, bank soal, semaphore)
+const AI_RUNTIME = globalThis.__argAiRuntime || (globalThis.__argAiRuntime = {
+    cooldown: new Map(),     // key: `${provider}:${model}:${keyIdx}` -> timestamp bebas
+    groqModelsCache: null,   // { ts, ids: Set<string> }
+    activeCalls: 0,
+    last429At: 0,
+    waiters: []
+});
+
+const getEnvKeys = (prefix) => {
+    const keys = [process.env[prefix], process.env[`${prefix}_2`], process.env[`${prefix}_3`], process.env[`${prefix}_BACKUP`]]
+        .map(k => String(k || '').trim())
+        .filter(Boolean);
+    return [...new Set(keys)];
+};
+
+const sleepMs = ms => new Promise(r => setTimeout(r, ms));
+const setModelCooldown = (tag, ms) => {
+    const until = Date.now() + Math.max(1000, ms);
+    const prev = AI_RUNTIME.cooldown.get(tag) || 0;
+    if (until > prev) AI_RUNTIME.cooldown.set(tag, until);
+};
+const isModelCooled = tag => (AI_RUNTIME.cooldown.get(tag) || 0) > Date.now();
+
+async function withAiSlot(fn, maxConcurrent = 5, maxWaitMs = 14000) {
+    if (AI_RUNTIME.activeCalls >= maxConcurrent) {
+        await new Promise((resolve, reject) => {
+            let done = false;
+            const t = setTimeout(() => {
+                if (done) return;
+                done = true;
+                const idx = AI_RUNTIME.waiters.indexOf(wake);
+                if (idx >= 0) AI_RUNTIME.waiters.splice(idx, 1);
+                reject(galat('Antrean server penuh sementara.', 429));
+            }, maxWaitMs);
+            const wake = () => {
+                if (done) return;
+                done = true;
+                clearTimeout(t);
+                resolve();
+            };
+            AI_RUNTIME.waiters.push(wake);
+        });
+    }
+    AI_RUNTIME.activeCalls++;
+    try {
+        return await fn();
+    } finally {
+        AI_RUNTIME.activeCalls = Math.max(0, AI_RUNTIME.activeCalls - 1);
+        const next = AI_RUNTIME.waiters.shift();
+        if (next) next();
+    }
+}
 
 /* ---------- FUNGSI BANTU UMUM ---------- */
 const galat = (pesan, status = 500, errorTitle = '') => {
@@ -70,20 +131,76 @@ const acak = a => {
 const words = t => String(t || '').trim().split(/\s+/).filter(Boolean).length;
 const CONN = /karena|sebab|oleh karena itu|oleh sebab itu|misalnya|contohnya|sehingga|dengan demikian|selain itu|namun|tetapi|artinya|terbukti|faktanya/gi;
 
+function recoverPartialJson(clean) {
+    // Pulihkan objek JSON berarray jika terpotong di tengah oleh batas token
+    const mKey = clean.match(/"(soal|pilgan|teks|esai|kritis)"\s*:\s*\[/);
+    if (!mKey) return null;
+    const key = mKey[1];
+    const arrStart = clean.indexOf('[', mKey.index);
+    const items = [];
+    let depth = 0, inStr = false, esc = false, itemStart = -1;
+    for (let i = arrStart + 1; i < clean.length; i++) {
+        const ch = clean[i];
+        if (esc) { esc = false; continue; }
+        if (ch === '\\') { esc = true; continue; }
+        if (ch === '"') { inStr = !inStr; continue; }
+        if (inStr) continue;
+        if (ch === '{') {
+            if (depth === 0) itemStart = i;
+            depth++;
+        } else if (ch === '}') {
+            depth--;
+            if (depth === 0 && itemStart !== -1) {
+                try {
+                    items.push(JSON.parse(clean.slice(itemStart, i + 1)));
+                } catch (e) {}
+                itemStart = -1;
+            }
+        }
+    }
+    if (!items.length) return null;
+    if (key === 'teks') {
+        const jm = clean.match(/"judul"\s*:\s*"([^"]{2,150})"/);
+        return { judul: jm ? jm[1] : 'Teks Argumentasi', teks: items };
+    }
+    return { [key]: items, soal: items };
+}
+
 function extractJSON(text) {
     if (!text) throw new Error('Output AI kosong');
-    const clean = String(text).replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    let clean = String(text)
+        .replace(/<think>[\s\S]*?<\/think>/gi, '')
+        .replace(/<think>[\s\S]*$/i, '')
+        .replace(/```(?:json)?\s*/gi, '')
+        .replace(/```/g, '')
+        .trim();
+
+    const tryParse = s => {
+        try { return JSON.parse(s); } catch (e) {}
+        const fixed = s.replace(/,\s*([}\]])/g, '$1');
+        return JSON.parse(fixed);
+    };
+
     const start = clean.indexOf('{');
     const end = clean.lastIndexOf('}');
-    if (start === -1 || end === -1 || end < start) {
-        const sArr = clean.indexOf('[');
-        const eArr = clean.lastIndexOf(']');
-        if (sArr !== -1 && eArr !== -1 && eArr > sArr) {
-            return JSON.parse(clean.slice(sArr, eArr + 1));
+    if (start !== -1 && end !== -1 && end > start) {
+        try {
+            return tryParse(clean.slice(start, end + 1));
+        } catch (err) {
+            const recovered = recoverPartialJson(clean.slice(start));
+            if (recovered) return recovered;
         }
-        throw new Error('Respons AI bukan JSON valid');
     }
-    return JSON.parse(clean.slice(start, end + 1));
+    const sArr = clean.indexOf('[');
+    const eArr = clean.lastIndexOf(']');
+    if (sArr !== -1 && eArr !== -1 && eArr > sArr) {
+        try {
+            return tryParse(clean.slice(sArr, eArr + 1));
+        } catch (err) {}
+    }
+    const recovered = recoverPartialJson(clean);
+    if (recovered) return recovered;
+    throw new Error('Respons AI bukan JSON valid');
 }
 
 async function periksaPengguna(token) {
@@ -106,43 +223,138 @@ async function periksaPengguna(token) {
     return { uid, role };
 }
 
-/* ---------- CALL GROQ MULTI-MODEL ---------- */
-async function callGroqWithMeta({ systemPrompt, userPrompt, temperature = 0.3, maxTokens = 1500, jsonMode = true, models = MODELS_GROQ, timeoutMs = 45000 }) {
-    const groqKey = process.env.GROQ_API_KEY;
-    if (!groqKey) throw new Error('GROQ_API_KEY tidak ditemukan di environment variables.');
-    if (!Groq) throw new Error('groq-sdk tidak terpasang.');
+async function getGroqAvailableModelSet(apiKey) {
+    const cache = AI_RUNTIME.groqModelsCache;
+    if (cache && Date.now() - cache.ts < 600000) return cache.ids;
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), 2500);
+    try {
+        const r = await fetch('https://api.groq.com/openai/v1/models', {
+            headers: { Authorization: 'Bearer ' + apiKey },
+            signal: ac.signal
+        });
+        if (!r.ok) return null;
+        const j = await r.json().catch(() => ({}));
+        const ids = new Set((j.data || []).map(m => m && m.id).filter(Boolean));
+        if (ids.size) AI_RUNTIME.groqModelsCache = { ts: Date.now(), ids };
+        return ids;
+    } catch (e) {
+        return null;
+    } finally {
+        clearTimeout(timer);
+    }
+}
 
-    const groq = new Groq({ apiKey: groqKey });
+/* ---------- CALL GROQ MULTI-MODEL (Direct REST + Cooldown + Retry-After) ---------- */
+async function callGroqWithMeta({ systemPrompt, userPrompt, temperature = 0.3, maxTokens = 1500, jsonMode = true, models = MODELS_GROQ, timeoutMs = 18000, rotateSeed = -1 }) {
+    const keys = getEnvKeys('GROQ_API_KEY');
+    if (!keys.length) throw galat('GROQ_API_KEY tidak ditemukan di environment variables.', 500);
+
+    const activeSet = await getGroqAvailableModelSet(keys[0]);
+    let ordered = models.filter(m => !activeSet || activeSet.has(m));
+    if (!ordered.length) ordered = models.slice();
+    if (rotateSeed >= 0 && ordered.length > 1) {
+        const shift = rotateSeed % ordered.length;
+        ordered = ordered.slice(shift).concat(ordered.slice(0, shift));
+    }
+
     const errors = [];
+    let sawRateLimit = false;
+    let maxRetryAfterMs = 0;
 
-    for (const model of models) {
-        const ac = new AbortController();
-        const timer = setTimeout(() => ac.abort(), timeoutMs);
-        try {
-            const params = {
-                model,
-                temperature,
-                max_completion_tokens: maxTokens,
-                messages: [
-                    ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
-                    { role: 'user', content: userPrompt }
-                ]
-            };
-            if (jsonMode) params.response_format = { type: 'json_object' };
-            if (model.startsWith('openai/')) params.reasoning_effort = 'low';
+    for (let kIdx = 0; kIdx < keys.length; kIdx++) {
+        const apiKey = keys[kIdx];
+        for (const model of ordered) {
+            const tag = `groq:${model}:${kIdx}`;
+            if (isModelCooled(tag)) {
+                errors.push(`${model}(cooled)`);
+                continue;
+            }
 
-            const completion = await groq.chat.completions.create(params, { signal: ac.signal });
-            const content = completion.choices[0]?.message?.content || '';
-            const data = jsonMode ? extractJSON(content) : content;
-            return { data, model: `groq/${model}` };
-        } catch (err) {
-            console.warn(`Groq [${model}] error:`, err.message);
-            errors.push(`${model}: ${err.message}`);
-        } finally {
-            clearTimeout(timer);
+            let allowReasoning = model.startsWith('openai/');
+            let allowJsonFmt = !!jsonMode;
+
+            for (let subTry = 0; subTry < 2; subTry++) {
+                const ac = new AbortController();
+                const timer = setTimeout(() => ac.abort(), timeoutMs);
+                try {
+                    const body = {
+                        model,
+                        temperature,
+                        max_completion_tokens: maxTokens,
+                        messages: [
+                            ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+                            { role: 'user', content: userPrompt }
+                        ]
+                    };
+                    if (allowJsonFmt) body.response_format = { type: 'json_object' };
+                    if (allowReasoning) body.reasoning_effort = 'low';
+
+                    const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        signal: ac.signal,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: 'Bearer ' + apiKey
+                        },
+                        body: JSON.stringify(body)
+                    });
+
+                    const payload = await resp.json().catch(() => ({}));
+                    if (!resp.ok) {
+                        const errMsg = (payload.error && payload.error.message) || ('HTTP ' + resp.status);
+                        const errCode = (payload.error && payload.error.code) || '';
+
+                        if (resp.status === 429) {
+                            sawRateLimit = true;
+                            AI_RUNTIME.last429At = Date.now();
+                            const ra = parseFloat(resp.headers.get('retry-after') || '0');
+                            const coolMs = Math.min(45000, Math.max(8000, (Number.isFinite(ra) && ra > 0 ? ra * 1000 : 14000)));
+                            maxRetryAfterMs = Math.max(maxRetryAfterMs, coolMs);
+                            setModelCooldown(tag, coolMs);
+                            throw Object.assign(new Error(errMsg), { status: 429 });
+                        }
+                        if (/decommissioned|not_found|does not exist|unsupported model/i.test(errMsg + ' ' + errCode) || resp.status === 404) {
+                            setModelCooldown(tag, 30 * 60 * 1000);
+                            throw Object.assign(new Error(errMsg), { status: resp.status });
+                        }
+                        if (resp.status === 413 || /too large|tokens per minute|request too large/i.test(errMsg)) {
+                            setModelCooldown(tag, 12000);
+                            throw Object.assign(new Error(errMsg), { status: 413 });
+                        }
+                        if (resp.status === 400 && subTry === 0 && (/reasoning_effort|response_format/i.test(errMsg))) {
+                            if (/reasoning_effort/i.test(errMsg)) allowReasoning = false;
+                            if (/response_format/i.test(errMsg)) allowJsonFmt = false;
+                            continue;
+                        }
+                        if (resp.status >= 500) {
+                            setModelCooldown(tag, 10000);
+                        }
+                        throw Object.assign(new Error(errMsg), { status: resp.status });
+                    }
+
+                    const content = (payload.choices && payload.choices[0] && payload.choices[0].message && payload.choices[0].message.content) || '';
+                    const data = jsonMode ? extractJSON(content) : content;
+                    return { data, model: `groq/${model}` };
+                } catch (err) {
+                    const m = err.name === 'AbortError' ? `Timeout ${timeoutMs}ms` : err.message;
+                    console.warn(`Groq [${model}] error:`, m);
+                    errors.push(`${model}: ${m}`);
+                    if (err.name === 'AbortError') setModelCooldown(tag, 9000);
+                    break;
+                } finally {
+                    clearTimeout(timer);
+                }
+            }
         }
     }
-    throw new Error('Semua model Groq gagal: ' + errors.join(' | '));
+
+    const outErr = new Error('Semua model Groq gagal: ' + errors.join(' | '));
+    if (sawRateLimit) {
+        outErr.status = 429;
+        outErr.retryAfterMs = maxRetryAfterMs || 10000;
+    }
+    throw outErr;
 }
 
 async function callGroq(opts) {
@@ -150,49 +362,140 @@ async function callGroq(opts) {
     return data;
 }
 
-/* ---------- CALL GEMINI API (Text / Multimodal) ---------- */
-async function callGeminiWithMeta({ prompt, base64Data = null, mimeType = 'application/pdf', temperature = 0.2, maxTokens = 4096, timeoutMs = 40000 }) {
-    const geminiKey = process.env.GEMINI_API_KEY;
-    if (!geminiKey) throw new Error('GEMINI_API_KEY tidak ditemukan di environment variables.');
+/* ---------- CALL GEMINI API (Text / Multimodal + Cooldown) ---------- */
+async function callGeminiWithMeta({ prompt, base64Data = null, mimeType = 'application/pdf', temperature = 0.2, maxTokens = 4096, timeoutMs = 24000, models = MODELS_GEMINI, rotateSeed = -1 }) {
+    const keys = getEnvKeys('GEMINI_API_KEY');
+    if (!keys.length) throw galat('GEMINI_API_KEY tidak ditemukan di environment variables.', 500);
+
+    let ordered = models.slice();
+    if (rotateSeed >= 0 && ordered.length > 1) {
+        const shift = rotateSeed % ordered.length;
+        ordered = ordered.slice(shift).concat(ordered.slice(0, shift));
+    }
 
     const errors = [];
-    for (const model of MODELS_GEMINI) {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-            const parts = [{ text: prompt }];
-            if (base64Data) {
-                parts.push({ inlineData: { mimeType, data: base64Data } });
+    let sawRateLimit = false;
+    let maxRetryAfterMs = 0;
+
+    for (let kIdx = 0; kIdx < keys.length; kIdx++) {
+        const geminiKey = keys[kIdx];
+        for (const model of ordered) {
+            const tag = `gemini:${model}:${kIdx}`;
+            if (isModelCooled(tag)) {
+                errors.push(`${model}(cooled)`);
+                continue;
             }
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                const parts = [{ text: prompt }];
+                if (base64Data) {
+                    parts.push({ inlineData: { mimeType, data: base64Data } });
+                }
 
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-                method: 'POST',
-                signal: controller.signal,
-                headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
-                body: JSON.stringify({
-                    contents: [{ role: 'user', parts }],
-                    generationConfig: { responseMimeType: 'application/json', temperature, maxOutputTokens: maxTokens }
-                })
-            });
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+                    method: 'POST',
+                    signal: controller.signal,
+                    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
+                    body: JSON.stringify({
+                        contents: [{ role: 'user', parts }],
+                        generationConfig: { responseMimeType: 'application/json', temperature, maxOutputTokens: maxTokens }
+                    })
+                });
 
-            const data = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error((data.error && data.error.message) || 'HTTP ' + response.status);
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    const msg = (data.error && data.error.message) || ('HTTP ' + response.status);
+                    if (response.status === 429 || /quota|resource_exhausted|rate/i.test(msg)) {
+                        sawRateLimit = true;
+                        AI_RUNTIME.last429At = Date.now();
+                        const ra = parseFloat(response.headers.get('retry-after') || '0');
+                        const coolMs = Math.min(45000, Math.max(8000, (Number.isFinite(ra) && ra > 0 ? ra * 1000 : 15000)));
+                        maxRetryAfterMs = Math.max(maxRetryAfterMs, coolMs);
+                        setModelCooldown(tag, coolMs);
+                    } else if (response.status === 404 || /not found|no longer available|deprecated|shut down/i.test(msg)) {
+                        setModelCooldown(tag, 30 * 60 * 1000);
+                    } else if (response.status >= 500) {
+                        setModelCooldown(tag, 10000);
+                    }
+                    throw Object.assign(new Error(msg), { status: response.status });
+                }
 
-            const text = ((data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || []).map(p => p.text || '').join('');
-            return { data: extractJSON(text), model };
-        } catch (err) {
-            console.warn(`Gemini [${model}] error:`, err.message);
-            errors.push(`${model}: ${err.message}`);
-        } finally {
-            clearTimeout(timer);
+                const text = ((data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || []).map(p => p.text || '').join('');
+                return { data: extractJSON(text), model: `gemini/${model}` };
+            } catch (err) {
+                const m = err.name === 'AbortError' ? `Timeout ${timeoutMs}ms` : err.message;
+                console.warn(`Gemini [${model}] error:`, m);
+                errors.push(`${model}: ${m}`);
+                if (err.name === 'AbortError') setModelCooldown(tag, 9000);
+            } finally {
+                clearTimeout(timer);
+            }
         }
     }
-    throw new Error('Semua model Gemini gagal: ' + errors.join(' | '));
+
+    const outErr = new Error('Semua model Gemini gagal: ' + errors.join(' | '));
+    if (sawRateLimit) {
+        outErr.status = 429;
+        outErr.retryAfterMs = maxRetryAfterMs || 12000;
+    }
+    throw outErr;
 }
 
 async function callGemini(opts) {
     const { data } = await callGeminiWithMeta(opts);
     return data;
+}
+
+/* ---------- ROUTER CERDAS MULTI-PROVIDER (Groq <-> Gemini + Load Spreading) ---------- */
+async function callAIJsonSmart({ systemPrompt, userPrompt, temperature = 0.4, maxTokens = 2000, timeoutMs = 15000, provider = 'auto', seed = -1 }) {
+    const rotate = seed >= 0 ? seed : Math.floor(Math.random() * 6);
+    const hasGroq = getEnvKeys('GROQ_API_KEY').length > 0;
+    const hasGemini = getEnvKeys('GEMINI_API_KEY').length > 0;
+    const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${userPrompt}` : userPrompt;
+
+    return await withAiSlot(async () => {
+        const tryGroqFirst = provider === 'groq' || (provider === 'auto' && (!hasGemini || (hasGroq && rotate % 3 !== 2)));
+        const order = provider === 'gemini' ? ['gemini'] : provider === 'groq' ? ['groq'] : (tryGroqFirst ? ['groq', 'gemini'] : ['gemini', 'groq']);
+
+        const errs = [];
+        let saw429 = false;
+        let retryMs = 0;
+
+        for (const p of order) {
+            if (p === 'groq' && !hasGroq) continue;
+            if (p === 'gemini' && !hasGemini) continue;
+            try {
+                if (p === 'groq') {
+                    return await callGroqWithMeta({
+                        systemPrompt,
+                        userPrompt,
+                        temperature,
+                        maxTokens,
+                        jsonMode: true,
+                        models: maxTokens <= 2400 ? MODELS_GROQ_FAST : MODELS_GROQ,
+                        timeoutMs,
+                        rotateSeed: rotate
+                    });
+                }
+                return await callGeminiWithMeta({
+                    prompt: fullPrompt,
+                    temperature,
+                    maxTokens: Math.max(maxTokens, 2048),
+                    timeoutMs: Math.max(timeoutMs, 18000),
+                    rotateSeed: rotate
+                });
+            } catch (e) {
+                errs.push(e.message);
+                if (e.status === 429) saw429 = true;
+                if (e.retryAfterMs) retryMs = Math.max(retryMs, e.retryAfterMs);
+            }
+        }
+
+        const finalErr = galat(errs.join(' | ') || 'Provider AI tidak tersedia.', saw429 ? 429 : 502);
+        if (retryMs) finalErr.retryAfterMs = retryMs;
+        throw finalErr;
+    });
 }
 
 /* =========================================================================
@@ -628,10 +931,29 @@ Teks polos tanpa markdown. Keluaran HANYA JSON: {"judul":"","kategori":"","deskr
 }
 
 /* =========================================================================
-   7. HANDLER: PAKET LATIHAN HARIAN DARI PDF HANDOUT (ex api/latihan.js)
+   7. HANDLER: PAKET LATIHAN HARIAN DARI PDF HANDOUT (Pacu Jalur Per Bagian)
    ========================================================================= */
 const TINGKAT_LAT = ['mudah', 'sedang', 'sulit', 'hots'];
 const RENTANG_LAT = { mudah: [30, 60], sedang: [45, 90], sulit: [60, 120], hots: [90, 180] };
+
+const LATIHAN_CACHE = globalThis.__argLatihanCache || (globalThis.__argLatihanCache = {
+    prep: new Map(),         // handoutId -> { ts, data }
+    inFlightPrep: new Map(), // handoutId -> Promise
+    bank: new Map()          // handoutId -> { ts, pilgan: [], struktur: [], esai: [], kritis: [] }
+});
+
+function getBank(handoutId) {
+    let b = LATIHAN_CACHE.bank.get(handoutId);
+    if (!b || Date.now() - b.ts > 6 * 3600 * 1000) {
+        b = { ts: Date.now(), pilgan: [], struktur: [], esai: [], kritis: [] };
+        LATIHAN_CACHE.bank.set(handoutId, b);
+        if (LATIHAN_CACHE.bank.size > 40) {
+            const firstKey = LATIHAN_CACHE.bank.keys().next().value;
+            LATIHAN_CACHE.bank.delete(firstKey);
+        }
+    }
+    return b;
+}
 
 function bersihkanTeksPdf(t) {
     if (!t) return '';
@@ -721,109 +1043,238 @@ async function ambilHandout(id) {
     if (!/^https:\/\//.test(url) || !(host.endsWith('cloudinary.com') || host === 'firebasestorage.googleapis.com')) {
         throw galat('Alamat file materi tidak diizinkan.', 400);
     }
-    return { judul: v('judul') || 'Materi', url };
+    return { judul: v('judul') || 'Materi', url, deskripsi: v('deskripsi') || '', kategori: v('kategori') || '' };
 }
 
 async function ambilPdfBuffer(url) {
-    const r = await fetch(url);
-    if (!r.ok) throw galat('File PDF tidak bisa dibuka (HTTP ' + r.status + ').', 502);
-    const ab = await r.arrayBuffer();
-    if (ab.byteLength > MAKS_PDF) throw galat('File PDF terlalu besar untuk dianalisis.', 413);
-    return Buffer.from(ab);
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), 22000);
+    try {
+        const r = await fetch(url, { signal: ac.signal });
+        if (!r.ok) throw galat('File PDF tidak bisa dibuka (HTTP ' + r.status + ').', 502);
+        const ab = await r.arrayBuffer();
+        if (ab.byteLength > MAKS_PDF) throw galat('File PDF terlalu besar untuk dianalisis.', 413);
+        return Buffer.from(ab);
+    } finally {
+        clearTimeout(timer);
+    }
 }
 
-function buatPromptLatihan(judul, teksMateri) {
-    const materiContext = teksMateri && teksMateri.length > 50
-        ? `Berikut adalah TEKS ASLI DARI MATERI PDF "${judul}":\n"""\n${teksMateri.slice(0, 45000)}\n"""`
-        : `Materi bertema "${judul}".`;
+/* ---------- PEMECAHAN & PENYARINGAN TEKS PDF (Anti Token Overflow) ---------- */
+const MARKER_RE = /\b(tesis|argumen|argumentasi|kesimpulan|simpulan|fakta|opini|bukti|data|riset|penelitian|karena|sebab|oleh karena itu|sehingga|dampak|manfaat|tujuan|definisi|pengertian|ciri|struktur|kaidah|konjungsi|sebaliknya|namun)\b/gi;
 
-    return `Kamu adalah guru Bahasa Indonesia yang ahli menyusun asesmen penalaran dan teks argumentasi untuk siswa SMP/SMA.
-${materiContext}
+function pecahDanSaringMateri(rawText, judul = 'Materi', deskripsi = '') {
+    const text = bersihkanTeksPdf(rawText);
+    if (!text || text.length < 80) {
+        const fallback = clSpace(`${judul}. ${deskripsi}`, 1200);
+        return { segmen: fallback ? [fallback] : [], paragrafTop: [], rawChars: text.length };
+    }
 
-TUGAS:
-Baca dengan cermat teks materi di atas, lalu susun SATU paket latihan harian yang seluruh soalnya WAJIB didasarkan pada isi materi tersebut (jangan mengarang fakta di luar dokumen).
+    const rawLines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const freq = new Map();
+    for (const l of rawLines) {
+        if (l.length <= 75) {
+            const k = l.toLowerCase().replace(/\d+/g, '#');
+            freq.set(k, (freq.get(k) || 0) + 1);
+        }
+    }
 
-Gunakan Bahasa Indonesia baku, teks polos (tanpa markdown). Keluarkan HANYA satu objek JSON valid dengan struktur persis berikut:
+    // Pecah baris kelewat panjang (misal hasil stream extractor tanpa \n) per kalimat agar tidak melebihi batas segmen
+    const expandedLines = [];
+    for (const l of rawLines) {
+        if (/^(hal\.?|halaman|page|bab)?\s*\d+(\s*(\/|dari|of)\s*\d+)?$/i.test(l)) continue;
+        if (/^https?:\/\/\S+$/i.test(l)) continue;
+        if (/^(isbn|issn|daftar pustaka|daftar isi|kata pengantar|copyright)/i.test(l)) continue;
+        const k = l.toLowerCase().replace(/\d+/g, '#');
+        if (l.length <= 75 && (freq.get(k) || 0) >= 3) continue;
+        if (l.replace(/[^a-zA-Z0-9]/g, '').length < 4) continue;
 
-{
- "ringkasan": "2-3 kalimat inti ringkasan materi",
- "pilgan": [
-   15 soal pilihan ganda, urut dari mudah ke sulit:
-   {
-     "p": "pertanyaan berdasarkan isi materi",
-     "opsi": ["Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D"],
-     "j": 0,
-     "tingkat": "mudah|sedang|sulit|hots",
-     "waktu": 45,
-     "bahas": "penjelasan mengapa jawaban ini benar berdasarkan teks materi (1-2 kalimat)"
-   }
- ],
- "struktur": {
-   "judul": "judul teks argumentasi dari materi",
-   "waktu": 300,
-   "teks": [
-     7 kalimat berurutan yang membentuk struktur teks argumentasi utuh:
-     {
-       "t": "kalimat",
-       "label": "tesis|argumen|kesimpulan",
-       "alasan": "mengapa kalimat ini berlabel demikian"
-     }
-   ]
- },
- "esai": [
-   6 soal esai terbuka (mengapa/bagaimana):
-   {
-     "p": "pertanyaan esai analitis tentang isi materi",
-     "tingkat": "sedang|sulit|hots",
-     "waktu": 300,
-     "bahas": "poin-poin kunci jawaban ideal yang diharapkan"
-   }
- ],
- "kritis": [
-   8 soal uji berpikir (teori penalaran: fakta vs opini, sebab-akibat, asumsi, sesat pikir, kredibilitas sumber):
-   {
-     "konsep": "nama konsep (misal: Fakta vs Opini, Sebab-Akibat, Asumsi Tersirat)",
-     "p": "skenario/pernyataan dari teks materi + pertanyaan",
-     "opsi": ["Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D"],
-     "j": 0,
-     "tingkat": "sedang|sulit|hots",
-     "waktu": 75,
-     "bahas": "penjelasan penalaran logis"
-   }
- ]
+        if (l.length <= 420) {
+            expandedLines.push(l);
+        } else {
+            const sents = l.split(/(?<=[.!?])\s+/);
+            for (const s of sents) {
+                const ts = s.trim();
+                if (!ts) continue;
+                if (ts.length <= 480) {
+                    expandedLines.push(ts);
+                } else {
+                    for (let i = 0; i < ts.length; i += 420) {
+                        expandedLines.push(ts.slice(i, i + 420).trim());
+                    }
+                }
+            }
+        }
+    }
+
+    // Rangkai baris menjadi paragraf bermakna (150-550 karakter)
+    const paras = [];
+    let buf = '';
+    for (const l of expandedLines) {
+        if (buf && buf.length + l.length + 1 > 520) {
+            paras.push(buf.trim().slice(0, 560));
+            buf = l;
+            continue;
+        }
+        buf = buf ? `${buf} ${l}` : l;
+        const akhirKalimat = /[.!?…]["')\]]?$/.test(l);
+        if (buf.length >= 340 || (akhirKalimat && buf.length >= 160)) {
+            paras.push(buf.trim().slice(0, 560));
+            buf = '';
+        }
+    }
+    if (buf.trim().length >= 60) paras.push(buf.trim().slice(0, 560));
+
+    const uniqueParas = [];
+    const seen = new Set();
+    for (const p of paras) {
+        const sig = p.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 60);
+        if (sig.length < 20 || seen.has(sig)) continue;
+        seen.add(sig);
+        const marks = (p.match(MARKER_RE) || []).length;
+        const hasNum = /\d+/.test(p) ? 1.5 : 0;
+        const lenScore = Math.min(3, p.length / 160);
+        const alphaRatio = (p.match(/[a-zA-Z]/g) || []).length / Math.max(1, p.length);
+        const noisePenalty = alphaRatio < 0.55 ? -4 : 0;
+        const score = marks * 2 + hasNum + lenScore + noisePenalty;
+        uniqueParas.push({ p, idx: uniqueParas.length, score });
+    }
+
+    if (!uniqueParas.length) {
+        const fallback = clSpace(text, 2200);
+        return { segmen: fallback ? [fallback] : [], paragrafTop: [], rawChars: text.length };
+    }
+
+    // Bagi dokumen merata ke 4 zona (Awal -> Tengah-1 -> Tengah-2 -> Akhir) agar teks >10.500 token terwakili adil tanpa melampaui batas token
+    const total = uniqueParas.length;
+    const bucketCount = Math.min(4, Math.max(1, Math.ceil(total / 3)));
+    const segmen = [];
+    const perSegMax = 2200; // ~550-650 token per segmen
+
+    for (let b = 0; b < bucketCount; b++) {
+        const lo = Math.floor((b / bucketCount) * total);
+        const hi = Math.floor(((b + 1) / bucketCount) * total);
+        const slice = uniqueParas.slice(lo, Math.max(lo + 1, hi));
+        const ranked = slice.slice().sort((a, b2) => b2.score - a.score);
+        const chosen = [];
+        let charSum = 0;
+        for (const item of ranked) {
+            if (charSum + item.p.length + 2 > perSegMax && chosen.length > 0) continue;
+            chosen.push(item);
+            charSum += item.p.length + 2;
+            if (charSum >= perSegMax - 120) break;
+        }
+        chosen.sort((a, b2) => a.idx - b2.idx);
+        const gab = chosen.map(x => x.p).join('\n').slice(0, perSegMax);
+        if (gab.trim().length >= 80) segmen.push(gab.trim());
+    }
+
+    const paragrafTop = uniqueParas.slice().sort((a, b) => b.score - a.score).slice(0, 8).map(x => x.p);
+    return { segmen: segmen.length ? segmen : [text.slice(0, 2200)], paragrafTop, rawChars: text.length };
 }
 
-ATURAN PENTING:
-- Pilgan: komposisi 4 mudah, 5 sedang, 3 sulit, 3 hots. "j" adalah angka indeks 0-3 dari pilihan yang benar.
-- Larang opsi "Semua benar" atau "Semua salah".
-- "waktu" dalam detik per soal.
-- Pastikan JSON valid dan LENGKAP tanpa terpotong.`;
+function ringkasEkstraktifFallback(judul, segmen = [], deskripsi = '') {
+    const sents = segmen.join(' ').split(/(?<=[.!?])\s+/).map(s => clSpace(s, 220)).filter(s => s.length >= 35);
+    const r = sents.slice(0, 2).join(' ') || clSpace(deskripsi || `Materi pembelajaran mengenai ${judul}.`, 350);
+    const poin = sents.slice(0, 4).map(s => `- ${s.slice(0, 140)}`).join('\n');
+    return { ringkasan: clSpace(r, 420), poinKunci: poin || `- Topik utama: ${judul}` };
+}
+
+function pilihKonteksStage(prep, slotIdx = 0, maxChars = 2500) {
+    const segs = Array.isArray(prep.segmen) && prep.segmen.length ? prep.segmen : [];
+    const primary = segs.length ? segs[Math.abs(slotIdx) % segs.length] : '';
+    const secondary = segs.length > 1 ? segs[(Math.abs(slotIdx) + 1) % segs.length] : '';
+    const head = prep.poinKunci ? `INTISARI:\n${String(prep.poinKunci).slice(0, 650)}\n\n` : '';
+    const room = Math.max(800, maxChars - head.length);
+    let kutip = primary.slice(0, room);
+    if (secondary && kutip.length < room - 450) {
+        kutip += '\n---\n' + secondary.slice(0, room - kutip.length - 5);
+    }
+    return `${head}KUTIPAN MATERI "${clSpace(prep.judul, 120)}":\n"""\n${kutip || clSpace(prep.ringkasan, 1200)}\n"""`;
+}
+
+/* ---------- VALIDASI, FILTER & DEDUPLIKASI SOAL ---------- */
+const BAD_OPSI_RE = /^(semua\s+(jawaban\s+)?(benar|salah|tepat|di\s+atas|di\s+bawah)|tidak\s+ada\s+(yang|jawaban)\s+(benar|tepat|sesuai)|[a-d]\s*(dan|&)\s*[a-d]\s+(benar|salah)|bukan\s+salah\s+satu)/i;
+const isBadOption = o => !o || o.length < 2 || BAD_OPSI_RE.test(o.trim());
+const STEM_STOP = new Set(['yang', 'dan', 'atau', 'dari', 'dalam', 'pada', 'atas', 'untuk', 'dengan', 'oleh', 'sebagai', 'adalah', 'dapat', 'jika', 'bila', 'maka', 'akan', 'tersebut', 'berikut', 'manakah', 'apakah', 'mengapa', 'bagaimana', 'pernyataan', 'pertanyaan', 'berdasarkan', 'kutipan', 'wacana', 'materi', 'teks', 'argumentasi', 'paling', 'tepat', 'sesuai', 'benar', 'salah']);
+const tokenizeStem = s => new Set(String(s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => (w.length >= 2 || /\d/.test(w)) && !STEM_STOP.has(w)));
+function isDupStem(stem, existingArr) {
+    const norm = String(stem || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (norm.length < 10) return true;
+    const tA = tokenizeStem(stem);
+    for (const ex of existingArr) {
+        const exNorm = String(ex || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (!exNorm) continue;
+        if (exNorm === norm) return true;
+        const tB = tokenizeStem(ex);
+        if (tA.size >= 4 && tB.size >= 4) {
+            let inter = 0;
+            tA.forEach(w => { if (tB.has(w)) inter++; });
+            const jaccard = inter / (tA.size + tB.size - inter);
+            if (jaccard >= 0.84) return true;
+        }
+    }
+    return false;
+}
+
+function parseJIndex(rawJ, opsi) {
+    if (Number.isInteger(rawJ) && rawJ >= 0 && rawJ <= 3) return rawJ;
+    const s = String(rawJ ?? '').trim().toUpperCase();
+    const abc = ['A', 'B', 'C', 'D'].indexOf(s);
+    if (abc >= 0) return abc;
+    const n = parseInt(s, 10);
+    if (Number.isInteger(n) && n >= 0 && n <= 3) return n;
+    if (opsi && s) {
+        const idx = opsi.findIndex(o => o.toLowerCase() === s.toLowerCase());
+        if (idx >= 0) return idx;
+    }
+    return -1;
 }
 
 function soalPgLatihan(x, tingkatDefault) {
-    const opsi = (Array.isArray(x.opsi) ? x.opsi : []).map(o => clSpace(o, 300)).filter(Boolean);
-    const j = Number(x.j);
-    const p = clSpace(x.p || x.tesis, 900);
-    if (!p || opsi.length !== 4 || new Set(opsi).size !== 4 || !Number.isInteger(j) || j < 0 || j > 3) return null;
+    if (!x || typeof x !== 'object') return null;
+    const rawOpsi = Array.isArray(x.opsi) ? x.opsi : (Array.isArray(x.pilihan) ? x.pilihan : []);
+    const opsi = rawOpsi.map(o => clSpace(o, 280)).filter(Boolean);
+    const j = parseJIndex(x.j ?? x.jawaban ?? x.kunci, opsi);
+    const p = clSpace(x.p || x.pertanyaan || x.tesis, 800);
+    if (!p || p.length < 15 || opsi.length !== 4) return null;
+    const lowerSet = new Set(opsi.map(o => o.toLowerCase()));
+    if (lowerSet.size !== 4 || opsi.some(isBadOption) || j < 0 || j > 3) return null;
+
     const benar = opsi[j];
     const baru = acak(opsi);
-    let tingkat = String(x.tingkat || '').toLowerCase();
+    let tingkat = String(x.tingkat || '').toLowerCase().trim();
     if (!TINGKAT_LAT.includes(tingkat)) tingkat = tingkatDefault;
-    const o = { p, opsi: baru, j: baru.indexOf(benar), tingkat, waktu: jepit(x.waktu, RENTANG_LAT[tingkat]), bahas: clSpace(x.bahas, 500) };
-    if (x.tesis) {
-        o.tesis = clSpace(x.tesis, 500);
-        o.p = o.tesis;
+    const o = {
+        p,
+        opsi: baru,
+        j: baru.indexOf(benar),
+        tingkat,
+        waktu: jepit(x.waktu, RENTANG_LAT[tingkat]),
+        bahas: clSpace(x.bahas || x.pembahasan || x.alasan, 450) || `Jawaban yang tepat adalah "${benar}" sesuai isi materi.`
+    };
+    if (x.tesis && !x.p) o.tesis = clSpace(x.tesis, 500);
+    if (x.kasus) o.kasus = clSpace(x.kasus, 450);
+    if (x.konsep || x.aspek) {
+        const kLabel = clSpace(x.konsep || x.aspek, 60);
+        o.konsep = kLabel;
+        o.aspek = kLabel;
     }
-    if (x.konsep) o.konsep = clSpace(x.konsep, 60);
     return o;
 }
 
 function soalEsaiLatihan(x, tingkatDefault) {
-    const p = clSpace(x.p || x.tesis || x.pertanyaan, 900);
-    if (!p) return null;
-    let tingkat = String(x.tingkat || '').toLowerCase();
-    if (!TINGKAT_LAT.includes(tingkat)) tingkat = tingkatDefault;
-    return { p, tingkat, waktu: jepit(x.waktu, [120, 600]), bahas: clSpace(x.bahas || x.kunci, 1000) };
+    if (!x || typeof x !== 'object') return null;
+    const p = clSpace(x.p || x.pertanyaan || x.tesis, 800);
+    if (!p || p.length < 18) return null;
+    let tingkat = String(x.tingkat || '').toLowerCase().trim();
+    if (!TINGKAT_LAT.includes(tingkat) || tingkat === 'mudah') tingkat = tingkatDefault;
+    return {
+        p,
+        tingkat,
+        waktu: jepit(x.waktu, [180, 540]),
+        bahas: clSpace(x.bahas || x.kunci || x.pembahasan, 700) || 'Jelaskan gagasan utama secara logis disertai alasan dan bukti yang relevan dari teks materi.'
+    };
 }
 
 function urutTingkatLatihan(a) {
@@ -832,87 +1283,606 @@ function urutTingkatLatihan(a) {
         .map(x => x[0]);
 }
 
-function rapikanLatihan(o) {
-    const jumlah = a => a.reduce((t, s) => t + s.waktu, 0);
-    const pilgan = urutTingkatLatihan((o.pilgan || []).map(x => soalPgLatihan(x, 'sedang')).filter(Boolean)).slice(0, 15);
-    if (pilgan.length < 10) throw new Error('Soal pilihan ganda kurang dari 10 (didapat ' + pilgan.length + ')');
-    const LAB = ['tesis', 'argumen', 'kesimpulan'];
-    const teks = ((o.struktur && o.struktur.teks) || []).map(k => ({
-        t: clSpace(k.t, 500),
-        label: String(k.label || '').toLowerCase().trim(),
-        alasan: clSpace(k.alasan, 300)
-    })).filter(k => k.t && LAB.includes(k.label)).slice(0, 9);
-    if (teks.length < 5 || !LAB.every(l => teks.some(k => k.label === l))) throw new Error('Bagian struktur tidak lengkap');
-    const esai = urutTingkatLatihan((o.esai || []).map(x => soalEsaiLatihan(x, 'sulit')).filter(Boolean)).slice(0, 6);
-    if (esai.length < 2) throw new Error('Soal esai kurang dari 2 (didapat ' + esai.length + ')');
-    const kritis = urutTingkatLatihan((o.kritis || []).map(x => soalPgLatihan(x, 'sulit')).filter(Boolean)).slice(0, 8);
-    if (kritis.length < 5) throw new Error('Soal uji berpikir kurang dari 5 (didapat ' + kritis.length + ')');
+function filterPgList(rawList, existingStems = [], tingkatDefault = 'sedang') {
+    const out = [];
+    const seen = existingStems.slice();
+    for (const raw of (Array.isArray(rawList) ? rawList : [])) {
+        const clean = soalPgLatihan(raw, tingkatDefault);
+        if (!clean || isDupStem(clean.p, seen)) continue;
+        seen.push(clean.p);
+        out.push(clean);
+    }
+    return out;
+}
 
+function normStrukturLabel(lbl) {
+    const s = String(lbl || '').toLowerCase().trim();
+    if (['tesis', 'pendapat', 'pernyataan umum', 'klaim', 'orientasi'].includes(s)) return 'tesis';
+    if (['argumen', 'argumentasi', 'alasan', 'bukti', 'isi'].includes(s)) return 'argumen';
+    if (['kesimpulan', 'simpulan', 'penegasan', 'penegasan ulang', 'penutup'].includes(s)) return 'kesimpulan';
+    return '';
+}
+
+function filterStrukturPack(raw) {
+    const src = raw && raw.struktur ? raw.struktur : (raw || {});
+    const arrTeks = Array.isArray(src.teks) ? src.teks : (Array.isArray(src.kalimat) ? src.kalimat : (Array.isArray(src.soal) ? src.soal : []));
+    const teks = arrTeks.map(k => ({
+        t: clSpace(k && (k.t || k.teks || k.kalimat), 480),
+        label: normStrukturLabel(k && k.label),
+        alasan: clSpace(k && (k.alasan || k.bahas), 280)
+    })).filter(k => k.t && k.t.length >= 15 && k.label).slice(0, 9);
+
+    for (const k of teks) {
+        if (!k.alasan) {
+            k.alasan = k.label === 'tesis' ? 'Kalimat ini menyatakan posisi/gagasan utama penulis.'
+                : k.label === 'kesimpulan' ? 'Kalimat ini menegaskan kembali inti argumen sebagai penutup.'
+                : 'Kalimat ini menyajikan alasan atau bukti pendukung bagi tesis.';
+        }
+    }
+    const LAB = ['tesis', 'argumen', 'kesimpulan'];
+    if (teks.length < 5 || !LAB.every(l => teks.some(k => k.label === l))) return null;
     return {
-        ringkasan: clSpace(o.ringkasan, 500),
-        pilgan: { soal: pilgan, total: jumlah(pilgan) },
-        struktur: {
-            judul: clSpace(o.struktur.judul, 150) || 'Teks Argumentasi',
-            teks,
-            waktu: jepit(o.struktur.waktu || teks.length * 40, [teks.length * 30, Math.max(600, teks.length * 80)])
-        },
-        esai: { soal: esai, total: jumlah(esai) },
-        kritis: { soal: kritis, total: jumlah(kritis) }
+        judul: clSpace(src.judul, 140) || 'Struktur Teks Argumentasi',
+        teks,
+        waktu: jepit(src.waktu || teks.length * 40, [teks.length * 30, Math.max(600, teks.length * 80)])
     };
 }
 
-async function tanyaGroqLatihan(judul, teksMateri) {
-    const { data, model } = await callGroqWithMeta({
-        userPrompt: buatPromptLatihan(judul, teksMateri),
-        temperature: 0.5,
-        maxTokens: 7500,
-        jsonMode: true,
-        timeoutMs: 42000
-    });
-    return { paket: rapikanLatihan(data), model };
+/* ---------- SINTESIS CADANGAN EKSTRAKTIF (Hanya jaring pengaman terakhir jika semua kuota AI habis total) ---------- */
+function potongKalimatMateri(prep) {
+    const text = [prep.poinKunci || '', ...(prep.segmen || []), prep.ringkasan || ''].join(' ');
+    const sents = text.split(/(?<=[.!?])\s+/).map(s => clSpace(s, 220)).filter(s => s.length >= 35 && /[a-zA-Z]{4,}/.test(s));
+    return [...new Set(sents)];
 }
 
-async function tanyaGeminiLatihan(judul, pdfB64, timeoutMs = 45000) {
-    const { data, model } = await callGeminiWithMeta({
-        prompt: buatPromptLatihan(judul, ''),
-        base64Data: pdfB64,
-        mimeType: 'application/pdf',
-        temperature: 0.5,
-        maxTokens: 16384,
-        timeoutMs
-    });
-    return { paket: rapikanLatihan(data), model };
+function bangunSoalDarurat(section, prep, countNeeded = 8, excludeStems = []) {
+    const sents = potongKalimatMateri(prep);
+    const topik = clSpace(prep.judul, 100) || 'Materi Pembelajaran';
+    const basePool = sents.length >= 3 ? sents : [
+        `Teks "${topik}" menyampaikan gagasan utama yang didukung oleh alasan serta bukti yang logis.`,
+        `Dalam menyusun argumentasi tentang "${topik}", penulis membedakan data faktual dan pendapat pribadi secara jelas.`,
+        `Hubungan sebab-akibat digunakan agar argumen mengenai "${topik}" tersusun runtut menuju kesimpulan yang kuat.`,
+        `Simpulan dalam pembahasan "${topik}" berfungsi menegaskan kembali posisi penulis berdasarkan rangkaian argumen sebelumnya.`
+    ];
+
+    if (section === 'pilgan') {
+        const templates = [
+            (s, alt) => ({ p: `Berdasarkan materi "${topik}", pernyataan manakah yang sesuai dengan gagasan berikut: "${s.slice(0, 120)}..."?`, opsi: [s.slice(0, 150), `Materi menegaskan bahwa ${topik} sama sekali tidak memerlukan bukti pendukung`, `Pembahasan menolak seluruh keterkaitan antara fakta dan simpulan pada ${topik}`, alt.slice(0, 140) + ' namun bertentangan dengan topik inti'], j: 0, tingkat: 'mudah', waktu: 45, bahas: `Pernyataan tersebut merujuk langsung pada isi materi "${topik}".` }),
+            (s) => ({ p: `Apa fungsi utama informasi berikut dalam struktur teks argumentasi pada materi "${topik}": "${s.slice(0, 125)}"?`, opsi: ['Memperkuat posisi atau gagasan dengan dasar penalaran yang relevan', 'Sekadar hiburan naratif tanpa kaitan logis', 'Daftar istilah acak yang tidak berhubungan dengan argumen', 'Kalimat penolakan tanpa dasar alasan'], j: 0, tingkat: 'sedang', waktu: 60, bahas: 'Informasi faktual atau konseptual dipakai untuk menguatkan tesis dalam teks argumentasi.' }),
+            (s) => ({ p: `Mengapa uraian "${s.slice(0, 110)}" penting dipertahankan dalam analisis materi "${topik}"?`, opsi: ['Karena menjaga kepaduan antara argumen, bukti pendukung, dan kesimpulan', 'Karena membuat paragraf lebih panjang tanpa menambah makna', 'Karena menggantikan kebutuhan data dengan asumsi bebas', 'Karena memutus alur logika pembaca'], j: 0, tingkat: 'sulit', waktu: 75, bahas: 'Argumen efektif menghubungkan konsep utama dan bukti secara padu.' }),
+            (s) => ({ p: `Jika seorang pembaca mengevaluasi klaim terkait "${s.slice(0, 100)}", langkah berpikir HOTS manakah yang paling tepat?`, opsi: ['Menguji konsistensi antara klaim, relevansi bukti, dan kelogisan simpulan', 'Langsung menerima klaim tanpa memeriksa dukungan data', 'Mengabaikan konteks materi dan hanya melihat panjang kalimat', 'Menganggap setiap opini sebagai fakta mutlak'], j: 0, tingkat: 'hots', waktu: 100, bahas: 'Evaluasi tingkat tinggi menuntut pengujian bukti dan koherensi logika klaim.' })
+        ];
+        const out = [];
+        for (let i = 0; i < countNeeded + 4 && out.length < countNeeded; i++) {
+            const s = basePool[i % basePool.length];
+            const alt = basePool[(i + 1) % basePool.length];
+            const raw = templates[i % templates.length](s, alt);
+            if (!isDupStem(raw.p, excludeStems)) {
+                const c = soalPgLatihan(raw, 'sedang');
+                if (c) { excludeStems.push(c.p); out.push(c); }
+            }
+        }
+        return out;
+    }
+
+    if (section === 'struktur') {
+        const s0 = basePool[0] || `Pembahasan mengenai ${topik} memiliki peran penting untuk dipahami secara menyeluruh.`;
+        const s1 = basePool[1] || `Pertama, pemahaman konsep inti dalam ${topik} didasarkan pada data dan pengamatan yang terukur.`;
+        const s2 = basePool[2] || `Kedua, hubungan sebab-akibat menunjukkan mengapa gagasan tersebut relevan dalam kehidupan nyata.`;
+        const s3 = basePool[3] || `Selain itu, contoh konkret membuktikan bahwa penerapan prinsip ${topik} memberi hasil lebih baik.`;
+        const s4 = basePool[Math.min(4, basePool.length - 1)] || `Faktor pendukung lainnya turut memperkuat validitas argumen yang dipaparkan penulis.`;
+        const s5 = basePool[Math.min(5, basePool.length - 1)] || `Jika dikaji lebih mendalam, pendekatan yang sistematis menghindarkan kita dari kesalahan penalaran.`;
+        return {
+            judul: clSpace(topik, 120),
+            waktu: 280,
+            teks: [
+                { t: clSpace(s0, 300), label: 'tesis', alasan: 'Memperkenalkan posisi atau gagasan awal mengenai topik.' },
+                { t: clSpace(s1, 300), label: 'argumen', alasan: 'Menyajikan alasan/konsep pendukung pertama dari materi.' },
+                { t: clSpace(s2, 300), label: 'argumen', alasan: 'Menjelaskan keterkaitan logis yang memperkuat argumen.' },
+                { t: clSpace(s3, 300), label: 'argumen', alasan: 'Memberikan rincian bukti atau aspek penjelas tambahan.' },
+                { t: clSpace(s4, 300), label: 'argumen', alasan: 'Melengkapi pemaparan sebab-akibat terhadap gagasan utama.' },
+                { t: clSpace(s5, 300), label: 'argumen', alasan: 'Menunjukkan implikasi logis dari pembahasan materi.' },
+                { t: clSpace(`Oleh karena itu, penguasaan gagasan utama pada materi "${topik}" menjadi kunci dalam menyusun argumen yang logis dan meyakinkan.`, 300), label: 'kesimpulan', alasan: 'Menegaskan kembali simpulan dari rangkaian argumen.' }
+            ]
+        };
+    }
+
+    if (section === 'esai') {
+        const baseQs = [
+            { p: `Jelaskan gagasan pokok atau tesis utama yang dikemukakan dalam materi "${topik}" beserta alasan pendukungnya!`, tingkat: 'sedang', waktu: 300, bahas: prep.ringkasan || basePool[0] },
+            { p: `Mengapa bukti atau fakta dari "${basePool[0].slice(0, 90)}" penting dalam memperkuat keutuhan argumen materi?`, tingkat: 'sedang', waktu: 300, bahas: 'Bukti membuat klaim bersifat objektif, rasional, dan dapat dipertanggungjawabkan.' },
+            { p: `Bagaimana hubungan sebab-akibat antarbagian pembahasan dalam materi "${topik}" membentuk kesimpulan yang logis?`, tingkat: 'sulit', waktu: 320, bahas: 'Setiap argumen mengarah secara konsisten pada penegasan simpulan akhir.' },
+            { p: `Apa dampak atau implikasi praktis yang terjadi apabila konsep utama pada "${topik}" diabaikan? Jelaskan argumenmu!`, tingkat: 'sulit', waktu: 320, bahas: 'Mengabaikan konsep inti melemahkan validitas penalaran dan pemecahan masalah.' },
+            { p: `Evaluasilah kekuatan penalaran dalam kutipan "${basePool[1 % basePool.length].slice(0, 95)}" dan berikan satu contoh pengembangan argumennya!`, tingkat: 'hots', waktu: 360, bahas: 'Penilaian mencakup kesesuaian klaim, kecukupan bukti, dan kejelasan contoh.' },
+            { p: `Susunlah sebuah simpulan kritis versi kamu sendiri untuk materi "${topik}" yang memadukan gagasan utama dan solusi logis!`, tingkat: 'hots', waktu: 360, bahas: 'Simpulan menegaskan kembali posisi utama dan menawarkan tindak lanjut rasional.' }
+        ];
+        return baseQs.slice(0, countNeeded).map(x => soalEsaiLatihan(x, 'sulit')).filter(Boolean);
+    }
+
+    // kritis
+    const kT = [
+        { k: 'Fakta vs Opini', q: 'Ciri utama yang menandakan klaim pada kutipan materi di atas dapat diuji sebagai argumen faktual adalah…', a: 'Didukung alasan terukur, data kontekstual, atau rujukan yang jelas', d: ['Hanya mengulang emosi tanpa bukti', 'Berdasarkan desas-desus semata', 'Tidak berkaitan dengan topik'] },
+        { k: 'Hubungan Sebab-Akibat', q: 'Jika dua gagasan dalam teks materi dihubungkan dengan pola kausalitas, syarat terkuat kelogisannya adalah…', a: 'Peristiwa sebab benar-benar relevan dan berkontribusi langsung pada akibat', d: ['Kedua kalimat kebetulan muncul di halaman yang sama', 'Menggunakan kata-kata rumit tanpa hubungan logis', 'Memaksa kesimpulan tanpa premis'] },
+        { k: 'Asumsi Tersirat', q: 'Apa asumsi dasar yang perlu dipenuhi agar argumen dalam materi di atas dapat diterima pembaca secara kritis?', a: 'Premis yang digunakan selaras dengan konteks nyata dan tidak saling bertentangan', d: ['Pembaca dilarang mempertanyakan sumber data', 'Kesimpulan boleh menyimpang dari tesis', 'Semua pihak selalu memiliki pendapat identik'] },
+        { k: 'Kekuatan Bukti', q: 'Mengapa suatu teks argumentasi menjadi lemah ketika hanya berisi klaim normatif tanpa uraian bukti pendukung?', a: 'Karena pembaca tidak memperoleh dasar verifikasi rasional untuk menyetujui tesis', d: ['Karena kalimat menjadi terlalu mudah dibaca', 'Karena teks tidak lagi memerlukan judul', 'Karena bukti hanya dipakai dalam teks puisi'] },
+        { k: 'Evaluasi Klaim', q: 'Langkah pertama yang paling tepat untuk menilai keabsahan argumen pada kutipan di atas adalah…', a: 'Memeriksa kesesuaian antara bukti yang diajukan dengan simpulan yang ditarik', d: ['Mengikuti pendapat yang paling panjang tulisannya', 'Menghindari pengecekan data pembanding', 'Menyetujui gagasan hanya karena kata-katanya tegas'] },
+        { k: 'Sesat Pikir', q: 'Kesalahan penalaran (fallacy) terjadi dalam pembahasan argumentasi seperti kutipan di atas apabila penulis…', a: 'Menarik generalisasi luas dari satu contoh terbatas tanpa bukti memadai', d: ['Menjelaskan sudut pandang tandingan secara objektif', 'Menyertakan definisi istilah kunci secara runtut', 'Menghubungkan data empiris dengan gagasan pokok'] },
+        { k: 'Konsistensi Simpulan', q: 'Suatu penegasan ulang pada akhir teks argumentasi dinilai konsisten dengan uraian di atas jika…', a: 'Menguatkan tesis awal berdasarkan rangkuman bukti yang telah dipaparkan', d: ['Memperkenalkan topik baru yang sama sekali tidak dibahas', 'Membantah data faktual yang disusun sebelumnya', 'Mengubah tema tulisan di kalimat penutup'] },
+        { k: 'Kredibilitas Sumber', q: 'Bukti tambahan apa yang paling relevan untuk semakin meyakinkan pembaca terhadap kasus pada materi tersebut?', a: 'Data pengamatan terverifikasi atau temuan studi yang relevan dengan isu', d: ['Dugaan pribadi tanpa pengukuran', 'Pernyataan emosional yang menyinggung pihak lain', 'Kalimat pengulangan tanpa informasi baru'] }
+    ];
+    const kOut = [];
+    for (let i = 0; i < countNeeded; i++) {
+        const s = basePool[i % basePool.length];
+        const t = kT[i % kT.length];
+        const stem = i >= kT.length ? `${t.q} (Telaah #${i + 1})` : t.q;
+        if (isDupStem(stem, excludeStems)) continue;
+        const c = soalPgLatihan({
+            konsep: t.k,
+            kasus: s,
+            p: stem,
+            opsi: [t.a, ...t.d],
+            j: 0,
+            tingkat: i >= 4 ? 'hots' : 'sulit',
+            waktu: i >= 4 ? 95 : 75,
+            bahas: `Pada analisis "${t.k}", argumen berkualitas harus berlandaskan bukti relevan dan alur premis-kesimpulan yang sah.`
+        }, 'sulit');
+        if (c) {
+            excludeStems.push(c.p);
+            kOut.push(c);
+        }
+    }
+    return kOut;
 }
 
-async function handleLatihan({ handoutId, ai }) {
-    try {
-        const startTs = Date.now();
+/* ---------- STAGE 1: PERSIAPAN & PENYARINGAN MATERI PDF ---------- */
+async function jalankanLatihanPrep(handoutId, { allowEmergencyFallback = false } = {}) {
+    const cached = LATIHAN_CACHE.prep.get(handoutId);
+    if (cached && Date.now() - cached.ts < 3 * 3600 * 1000) {
+        return { ...cached.data, fromCache: true };
+    }
+    if (LATIHAN_CACHE.inFlightPrep.has(handoutId)) {
+        return await LATIHAN_CACHE.inFlightPrep.get(handoutId);
+    }
+
+    const work = (async () => {
         const h = await ambilHandout(handoutId);
         const pdfBuffer = await ambilPdfBuffer(h.url);
         const teksMateri = await ekstrakTeksPdf(pdfBuffer);
 
-        let hasil;
-        const provider = String(ai || 'auto').toLowerCase();
-
-        if (provider === 'gemini') {
-            hasil = await tanyaGeminiLatihan(h.judul, pdfBuffer.toString('base64'));
-        } else if (provider === 'groq') {
-            hasil = await tanyaGroqLatihan(h.judul, teksMateri);
-        } else {
+        let result;
+        if (!teksMateri || teksMateri.length < 120) {
+            // PDF hasil pindai (gambar): Gemini Multimodal baca PDF sekali saja lalu ekstrak segmen teks bersih
+            const promptScan = `Kamu adalah asisten kurikulum Bahasa Indonesia. Baca PDF berjudul "${clSpace(h.judul, 120)}".
+Ekstrak isi pentingnya menjadi ringkas dan terstruktur ke dalam JSON VALID:
+{
+  "ringkasan": "2-3 kalimat inti isi dokumen",
+  "poinKunci": "5 poin konsep penting dipisahkan baris baru (maksimal 600 karakter)",
+  "segmen": [
+    "kutipan padat isi bagian awal dokumen (sekitar 1200-1800 karakter)",
+    "kutipan padat isi bagian tengah dokumen (sekitar 1200-1800 karakter)",
+    "kutipan padat isi bagian akhir/simpulan dokumen (sekitar 1200-1800 karakter)"
+  ]
+}
+Gunakan bahasa Indonesia baku tanpa markdown.`;
             try {
-                hasil = await tanyaGroqLatihan(h.judul, teksMateri);
-            } catch (errGroq) {
-                console.warn('Groq latihan gagal, beralih ke Gemini:', errGroq.message);
-                const sisaMs = Math.max(15000, 52000 - (Date.now() - startTs));
-                try {
-                    hasil = await tanyaGeminiLatihan(h.judul, pdfBuffer.toString('base64'), sisaMs);
-                } catch (errGemini) {
-                    throw galat(`Gagal membuat soal dari Groq dan Gemini. Groq: [${errGroq.message}] | Gemini: [${errGemini.message}]`, 502);
+                const { data, model } = await withAiSlot(() => callGeminiWithMeta({
+                    prompt: promptScan,
+                    base64Data: pdfBuffer.toString('base64'),
+                    mimeType: 'application/pdf',
+                    temperature: 0.2,
+                    maxTokens: 3200,
+                    timeoutMs: 26000
+                }));
+                const segmen = (Array.isArray(data.segmen) ? data.segmen : []).map(s => clSpace(s, 2200)).filter(s => s.length >= 60);
+                result = {
+                    handoutId,
+                    judul: h.judul,
+                    ringkasan: clSpace(data.ringkasan, 450) || clSpace(h.deskripsi || `Ringkasan materi ${h.judul}.`, 400),
+                    poinKunci: cl(String(data.poinKunci || '')).slice(0, 750),
+                    segmen: segmen.length ? segmen : [clSpace(`${h.judul}. ${h.deskripsi}`, 1600)],
+                    isScanned: true,
+                    model
+                };
+            } catch (e) {
+                if (!allowEmergencyFallback && !h.deskripsi) {
+                    const err = galat(e.message || 'Server sibuk membaca PDF pindai.', e.status === 429 ? 429 : 503);
+                    err.retryAfterMs = e.retryAfterMs || 5000;
+                    throw err;
+                }
+                const fb = ringkasEkstraktifFallback(h.judul, [], h.deskripsi);
+                result = {
+                    handoutId,
+                    judul: h.judul,
+                    ringkasan: fb.ringkasan,
+                    poinKunci: fb.poinKunci,
+                    segmen: [clSpace(`${h.judul}. ${h.deskripsi}`, 1500)].filter(Boolean),
+                    isScanned: true,
+                    model: 'fallback/metadata'
+                };
+            }
+        } else {
+            const { segmen } = pecahDanSaringMateri(teksMateri, h.judul, h.deskripsi);
+            const fb = ringkasEkstraktifFallback(h.judul, segmen, h.deskripsi);
+            let ringkasan = fb.ringkasan;
+            let poinKunci = fb.poinKunci;
+            let modelUsed = 'extractor/lokal';
+
+            // Panggilan AI mini (~850 token input, max 500 token output) untuk merangkum inti dari segmen awal & akhir
+            try {
+                const sampleSum = segmen.map((s, i) => `[Bagian ${i + 1}]\n${s.slice(0, 550)}`).join('\n\n').slice(0, 2200);
+                const { data, model } = await callAIJsonSmart({
+                    systemPrompt: 'Kamu menyaring inti materi pelajaran ke dalam JSON murni berbahasa Indonesia.',
+                    userPrompt: `Judul: "${clSpace(h.judul, 120)}"\nSaring kutipan berikut menjadi intisari padat:\n"""\n${sampleSum}\n"""\nKeluaran HANYA JSON:\n{"ringkasan":"2-3 kalimat ringkasan inti","poinKunci":"4-5 poin konsep utama dipisah baris baru (maks 550 karakter)"}`,
+                    temperature: 0.2,
+                    maxTokens: 650,
+                    timeoutMs: 11000
+                });
+                if (data.ringkasan) ringkasan = clSpace(data.ringkasan, 460);
+                if (data.poinKunci) {
+                    poinKunci = Array.isArray(data.poinKunci) ? arr(data.poinKunci, 6).join('\n') : String(data.poinKunci).trim().slice(0, 750);
+                }
+                modelUsed = model;
+            } catch (e) {
+                // Jangan gagal di prep bila ekstraksi teks sukses: intisari ekstraktif tetap akurat & cepat
+                console.warn('Prep summary fallback ekstraktif:', e.message);
+            }
+
+            result = {
+                handoutId,
+                judul: h.judul,
+                ringkasan,
+                poinKunci,
+                segmen,
+                isScanned: false,
+                rawChars: teksMateri.length,
+                model: modelUsed
+            };
+        }
+
+        LATIHAN_CACHE.prep.set(handoutId, { ts: Date.now(), data: result });
+        if (LATIHAN_CACHE.prep.size > 40) {
+            LATIHAN_CACHE.prep.delete(LATIHAN_CACHE.prep.keys().next().value);
+        }
+        return result;
+    })();
+
+    LATIHAN_CACHE.inFlightPrep.set(handoutId, work);
+    try {
+        return await work;
+    } finally {
+        LATIHAN_CACHE.inFlightPrep.delete(handoutId);
+    }
+}
+
+async function resolvePrep(body) {
+    if (body && body.handoutId && Array.isArray(body.segmen) && body.segmen.length) {
+        return {
+            handoutId: body.handoutId,
+            judul: clSpace(body.judul, 140) || 'Materi',
+            ringkasan: clSpace(body.ringkasan, 500),
+            poinKunci: String(body.poinKunci || '').slice(0, 800),
+            segmen: body.segmen.map(s => String(s || '').slice(0, 2400)).filter(Boolean).slice(0, 5)
+        };
+    }
+    return await jalankanLatihanPrep(body.handoutId, { allowEmergencyFallback: !!body.allowEmergencyFallback });
+}
+
+/* ---------- STAGE 2..5: PACU JALUR PER SATU BAGIAN (Dipecah, Disaring, Top-Up) ---------- */
+async function generatePilganBatch({ prep, targetCount, levelsSpec, excludeStems = [], slotOffset = 0, seed = 0, allowEmergencyFallback = false }) {
+    const valid = [];
+    const stems = excludeStems.slice();
+    const models = [];
+    let lastErr = null;
+    const bank = getBank(prep.handoutId);
+
+    for (let pass = 0; pass < 2 && valid.length < targetCount; pass++) {
+        const needed = targetCount - valid.length;
+        const askCount = Math.min(9, needed + 1);
+        const konteks = pilihKonteksStage(prep, slotOffset + pass, 2500);
+        const avoidTxt = stems.length ? `\nHindari mengulang topik pertanyaan ini:\n- ${stems.slice(-8).map(s => clSpace(s, 75)).join('\n- ')}` : '';
+        const prompt = `Kamu guru Bahasa Indonesia penyusun soal HOTS Teks Argumentasi.
+${konteks}
+${avoidTxt}
+
+TUGAS: Buat TEPAT ${askCount} soal pilihan ganda yang seluruhnya bersumber pada kutipan materi di atas.
+Komposisi tingkat kesulitan: ${pass === 0 ? levelsSpec : `${askCount} soal beragam (sedang/sulit)`}.
+Aturan wajib:
+- Bahasa Indonesia baku, teks polos tanpa markdown.
+- Opsi TEPAT 4 pilihan berbeda bermakna; DILARANG opsi "Semua benar" / "Semua salah".
+- "j" adalah angka integer 0, 1, 2, atau 3 menunjuk indeks opsi benar.
+- "bahas" = 1 kalimat alasan logis berdasar materi.
+
+Keluaran HANYA JSON valid:
+{"soal":[{"p":"","opsi":["","","",""],"j":0,"tingkat":"mudah|sedang|sulit|hots","waktu":45,"bahas":""}]}`;
+
+        try {
+            const { data, model } = await callAIJsonSmart({
+                systemPrompt: 'Kamu generator soal asesmen terstruktur. Balas HANYA JSON valid murni.',
+                userPrompt: prompt,
+                temperature: 0.45,
+                maxTokens: 2100,
+                timeoutMs: 14500,
+                seed: seed + pass
+            });
+            models.push(model);
+            const rawArr = data.soal || data.pilgan || (Array.isArray(data) ? data : []);
+            const cleaned = filterPgList(rawArr, stems, levelsSpec.includes('hots') ? 'sulit' : 'sedang');
+            for (const q of cleaned) {
+                if (valid.length >= targetCount) break;
+                stems.push(q.p);
+                valid.push(q);
+                if (bank.pilgan.length < 45 && !isDupStem(q.p, bank.pilgan.map(x => x.p))) {
+                    bank.pilgan.push(q);
+                    bank.ts = Date.now();
+                }
+            }
+        } catch (e) {
+            lastErr = e;
+            break;
+        }
+    }
+
+    // Jika hasil kurang atau AI 429 sementara, saring & tarik dari bank handout yang sama (tetap anti-duplikat)
+    if (valid.length < targetCount && bank.pilgan.length) {
+        for (const q of acak(bank.pilgan)) {
+            if (valid.length >= targetCount) break;
+            if (!isDupStem(q.p, stems)) {
+                const clone = soalPgLatihan(q, q.tingkat);
+                if (clone) {
+                    stems.push(clone.p);
+                    valid.push(clone);
                 }
             }
         }
+    }
 
-        return { judul: h.judul, handoutId, model: hasil.model, dibuat: Date.now(), ...hasil.paket };
+    if (valid.length < Math.min(4, targetCount)) {
+        if (allowEmergencyFallback) {
+            const extra = bangunSoalDarurat('pilgan', prep, targetCount - valid.length, stems);
+            valid.push(...extra);
+            return { soal: valid.slice(0, targetCount), model: models[0] || 'fallback/ekstraktif' };
+        }
+        if (lastErr) throw lastErr;
+        throw galat('Soal pilihan ganda belum mencukupi setelah penyaringan.', 503);
+    }
+
+    return { soal: valid.slice(0, targetCount), model: models.join(', ') || 'pool/cache' };
+}
+
+async function handleLatihanStage(action, body) {
+    const seed = Number.isFinite(Number(body.seed)) ? Number(body.seed) : Math.floor(Math.random() * 12);
+    const allowFallback = !!body.allowEmergencyFallback;
+    const isBusyDelay = () => (Date.now() - AI_RUNTIME.last429At < 8000 || AI_RUNTIME.activeCalls >= 4) ? 1600 : 350;
+
+    if (action === 'latihan_prep') {
+        if (!body.handoutId) throw galat('handoutId wajib disertakan.', 400);
+        const prep = await jalankanLatihanPrep(body.handoutId, { allowEmergencyFallback: allowFallback });
+        return { ...prep, suggestedDelayMs: isBusyDelay() };
+    }
+
+    const prep = await resolvePrep(body);
+    const bank = getBank(prep.handoutId);
+
+    if (action === 'latihan_pilgan') {
+        const part = String(body.part || 'all').toLowerCase();
+        const existing = Array.isArray(body.excludeStems) ? body.excludeStems.map(String) : [];
+
+        if (part === 'a') {
+            const r = await generatePilganBatch({ prep, targetCount: 8, levelsSpec: '4 mudah, 4 sedang', excludeStems: existing, slotOffset: 0, seed, allowEmergencyFallback: allowFallback });
+            return { part: 'a', soal: r.soal, total: r.soal.reduce((a, b) => a + b.waktu, 0), model: r.model, suggestedDelayMs: isBusyDelay() };
+        }
+        if (part === 'b') {
+            const r = await generatePilganBatch({ prep, targetCount: 7, levelsSpec: '4 sulit, 3 hots', excludeStems: existing, slotOffset: 2, seed: seed + 2, allowEmergencyFallback: allowFallback });
+            return { part: 'b', soal: r.soal, total: r.soal.reduce((a, b) => a + b.waktu, 0), model: r.model, suggestedDelayMs: isBusyDelay() };
+        }
+
+        const r1 = await generatePilganBatch({ prep, targetCount: 8, levelsSpec: '4 mudah, 4 sedang', excludeStems: existing, slotOffset: 0, seed, allowEmergencyFallback: allowFallback });
+        const stemsAll = existing.concat(r1.soal.map(x => x.p));
+        const r2 = await generatePilganBatch({ prep, targetCount: 7, levelsSpec: '4 sulit, 3 hots', excludeStems: stemsAll, slotOffset: 2, seed: seed + 2, allowEmergencyFallback: allowFallback });
+        const gabung = urutTingkatLatihan(r1.soal.concat(r2.soal)).slice(0, 15);
+        return { pilgan: { soal: gabung, total: gabung.reduce((a, b) => a + b.waktu, 0) }, model: `${r1.model}`, suggestedDelayMs: isBusyDelay() };
+    }
+
+    if (action === 'latihan_struktur') {
+        let lastErr = null;
+        for (let pass = 0; pass < 2; pass++) {
+            const konteks = pilihKonteksStage(prep, 1 + pass, 2300);
+            const prompt = `Kamu guru Bahasa Indonesia. Dari materi berikut:
+${konteks}
+
+Susun 1 teks argumentasi singkat padu (TEPAT 7 kalimat berurutan) berdasarkan isi materi di atas untuk latihan pelabelan struktur siswa.
+Susunan: 1-2 kalimat awal berlabel "tesis", 4-5 kalimat tengah berlabel "argumen", 1 kalimat akhir berlabel "kesimpulan". Ketiga label WAJIB ada.
+Keluaran HANYA JSON valid:
+{"judul":"Judul singkat","waktu":280,"teks":[{"t":"kalimat lengkap","label":"tesis|argumen|kesimpulan","alasan":"alasan singkat 1 kalimat"}]}`;
+            try {
+                const { data, model } = await callAIJsonSmart({
+                    systemPrompt: 'Balas HANYA format JSON valid tanpa markdown.',
+                    userPrompt: prompt,
+                    temperature: pass === 0 ? 0.35 : 0.2,
+                    maxTokens: 1450,
+                    timeoutMs: 13500,
+                    seed: seed + pass + 1
+                });
+                const clean = filterStrukturPack(data);
+                if (clean) {
+                    if (bank.struktur.length < 4) { bank.struktur.push(clean); bank.ts = Date.now(); }
+                    return { struktur: clean, model, suggestedDelayMs: isBusyDelay() };
+                }
+            } catch (e) {
+                lastErr = e;
+                if (e.status === 429) break;
+            }
+        }
+        if (bank.struktur.length) {
+            return { struktur: acak(bank.struktur)[0], model: 'pool/cache', suggestedDelayMs: isBusyDelay() };
+        }
+        if (allowFallback) {
+            return { struktur: bangunSoalDarurat('struktur', prep), model: 'fallback/ekstraktif', suggestedDelayMs: isBusyDelay() };
+        }
+        throw lastErr || galat('Struktur belum memenuhi kriteria label lengkap.', 503);
+    }
+
+    if (action === 'latihan_esai') {
+        const out = [];
+        const stems = Array.isArray(body.excludeStems) ? body.excludeStems.map(String) : [];
+        const models = [];
+        let lastErr = null;
+
+        for (let pass = 0; pass < 2 && out.length < 6; pass++) {
+            const need = Math.min(7, (6 - out.length) + 1);
+            const konteks = pilihKonteksStage(prep, 2 + pass, 2400);
+            const prompt = `Kamu guru Bahasa Indonesia penyusun soal HOTS.
+${konteks}
+
+TUGAS: Buat TEPAT ${need} soal esai analitis terbuka (mengapa/bagaimana/evaluasi) berdasarkan materi di atas.
+Komposisi tingkat: sedang, sulit, dan hots. Bahasa Indonesia baku, tanpa markdown.
+Sertakan "bahas" berupa poin-poin kunci jawaban ideal untuk rubrik koreksi AI.
+Keluaran HANYA JSON valid:
+{"soal":[{"p":"pertanyaan esai analitis","tingkat":"sedang|sulit|hots","waktu":300,"bahas":"poin kunci ekspektasi jawaban"}]}`;
+            try {
+                const { data, model } = await callAIJsonSmart({
+                    systemPrompt: 'Balas HANYA JSON valid murni.',
+                    userPrompt: prompt,
+                    temperature: 0.4,
+                    maxTokens: 1550,
+                    timeoutMs: 13500,
+                    seed: seed + pass + 3
+                });
+                models.push(model);
+                const rawArr = data.soal || data.esai || [];
+                for (const raw of rawArr) {
+                    if (out.length >= 6) break;
+                    const eItem = soalEsaiLatihan(raw, 'sulit');
+                    if (!eItem || isDupStem(eItem.p, stems)) continue;
+                    stems.push(eItem.p);
+                    out.push(eItem);
+                    if (bank.esai.length < 18 && !isDupStem(eItem.p, bank.esai.map(x => x.p))) {
+                        bank.esai.push(eItem);
+                        bank.ts = Date.now();
+                    }
+                }
+            } catch (e) {
+                lastErr = e;
+                break;
+            }
+        }
+
+        if (out.length < 6 && bank.esai.length) {
+            for (const q of acak(bank.esai)) {
+                if (out.length >= 6) break;
+                if (!isDupStem(q.p, stems)) {
+                    stems.push(q.p);
+                    out.push(q);
+                }
+            }
+        }
+        if (out.length < 3) {
+            if (allowFallback) {
+                out.push(...bangunSoalDarurat('esai', prep, 6 - out.length, stems));
+            } else {
+                throw lastErr || galat('Soal esai belum mencukupi setelah penyaringan.', 503);
+            }
+        }
+        const sorted = urutTingkatLatihan(out).slice(0, 6);
+        return { esai: { soal: sorted, total: sorted.reduce((a, b) => a + b.waktu, 0) }, model: models[0] || 'pool/cache', suggestedDelayMs: isBusyDelay() };
+    }
+
+    if (action === 'latihan_kritis') {
+        const out = [];
+        const stems = Array.isArray(body.excludeStems) ? body.excludeStems.map(String) : [];
+        const models = [];
+        let lastErr = null;
+
+        for (let pass = 0; pass < 2 && out.length < 8; pass++) {
+            const need = Math.min(9, (8 - out.length) + 1);
+            const konteks = pilihKonteksStage(prep, 3 + pass, 2400);
+            const avoidTxt = stems.length ? `\nHindari mengulang soal: ${stems.slice(-5).map(s => clSpace(s, 60)).join(' | ')}` : '';
+            const prompt = `Kamu guru Bahasa Indonesia penyusun soal berpikir kritis.
+${konteks}${avoidTxt}
+
+TUGAS: Buat TEPAT ${need} soal uji berpikir kritis bertumpu pada materi di atas (konsep: Fakta vs Opini, Sebab-Akibat, Asumsi Tersirat, Sesat Pikir, Kredibilitas Bukti).
+Aturan wajib:
+- 4 pilihan jawaban bermakna, DILARANG "Semua benar/salah".
+- "j" indeks 0-3 opsi benar.
+- "kasus" berisi pernyataan/skenario pemicu singkat dari materi, "p" adalah pertanyaannya.
+Keluaran HANYA JSON valid:
+{"soal":[{"konsep":"nama konsep","kasus":"kutipan/kasus singkat","p":"pertanyaan analisis","opsi":["","","",""],"j":0,"tingkat":"sedang|sulit|hots","waktu":75,"bahas":"penjelasan logis 1 kalimat"}]}`;
+            try {
+                const { data, model } = await callAIJsonSmart({
+                    systemPrompt: 'Balas HANYA JSON valid murni.',
+                    userPrompt: prompt,
+                    temperature: 0.45,
+                    maxTokens: 2200,
+                    timeoutMs: 14500,
+                    seed: seed + pass + 4
+                });
+                models.push(model);
+                const rawArr = data.soal || data.kritis || [];
+                const cleaned = filterPgList(rawArr, stems, 'sulit');
+                for (const q of cleaned) {
+                    if (out.length >= 8) break;
+                    stems.push(q.p);
+                    if (!q.konsep) q.konsep = 'Penalaran Kritis';
+                    out.push(q);
+                    if (bank.kritis.length < 24 && !isDupStem(q.p, bank.kritis.map(x => x.p))) {
+                        bank.kritis.push(q);
+                        bank.ts = Date.now();
+                    }
+                }
+            } catch (e) {
+                lastErr = e;
+                break;
+            }
+        }
+
+        if (out.length < 8 && bank.kritis.length) {
+            for (const q of acak(bank.kritis)) {
+                if (out.length >= 8) break;
+                if (!isDupStem(q.p, stems)) {
+                    const clone = soalPgLatihan(q, q.tingkat);
+                    if (clone) { stems.push(clone.p); out.push(clone); }
+                }
+            }
+        }
+        if (out.length < 5) {
+            if (allowFallback) {
+                out.push(...bangunSoalDarurat('kritis', prep, 8 - out.length, stems));
+            } else {
+                throw lastErr || galat('Soal uji berpikir belum mencukupi setelah penyaringan.', 503);
+            }
+        }
+        const sorted = urutTingkatLatihan(out).slice(0, 8);
+        return { kritis: { soal: sorted, total: sorted.reduce((a, b) => a + b.waktu, 0) }, model: models[0] || 'pool/cache', suggestedDelayMs: isBusyDelay() };
+    }
+
+    throw galat('Stage latihan tidak dikenali.', 400);
+}
+
+/* Fallback kompatibilitas bila ada pemanggil lama { action: 'buat_latihan', handoutId } */
+async function handleLatihan({ handoutId, ai }) {
+    try {
+        const prep = await jalankanLatihanPrep(handoutId, { allowEmergencyFallback: true });
+        const base = { ...prep, allowEmergencyFallback: true };
+        const [pRes, sRes] = await Promise.all([
+            handleLatihanStage('latihan_pilgan', { ...base, part: 'all', seed: 0 }),
+            handleLatihanStage('latihan_struktur', { ...base, seed: 1 })
+        ]);
+        const [eRes, kRes] = await Promise.all([
+            handleLatihanStage('latihan_esai', { ...base, seed: 2 }),
+            handleLatihanStage('latihan_kritis', { ...base, seed: 3 })
+        ]);
+
+        return {
+            judul: prep.judul,
+            handoutId,
+            model: pRes.model || prep.model,
+            dibuat: Date.now(),
+            ringkasan: prep.ringkasan,
+            pilgan: pRes.pilgan,
+            struktur: sRes.struktur,
+            esai: eRes.esai,
+            kritis: kRes.kritis
+        };
     } catch (e) {
         if (!e.errorTitle) e.errorTitle = 'Gagal menyiapkan soal';
         throw e;
@@ -1217,7 +2187,10 @@ module.exports = async function handler(req, res) {
             return res.status(200).json(await handleHandoutAI(body, token));
         }
 
-        // 7. Pembuatan Paket Latihan dari PDF Handout
+        // 7. Pembuatan Paket Latihan Bertahap & Penuh dari PDF Handout
+        if (action === 'latihan_prep' || action === 'latihan_pilgan' || action === 'latihan_struktur' || action === 'latihan_esai' || action === 'latihan_kritis') {
+            return res.status(200).json(await handleLatihanStage(action, body));
+        }
         if (action === 'latihan' || action === 'buat_latihan' || (action === 'buat' && body.handoutId)) {
             return res.status(200).json(await handleLatihan(body));
         }
@@ -1246,6 +2219,11 @@ module.exports = async function handler(req, res) {
                 ...Object.keys(KREASI_HANDLERS),
                 'handout_ai',
                 'latihan',
+                'latihan_prep',
+                'latihan_pilgan',
+                'latihan_struktur',
+                'latihan_esai',
+                'latihan_kritis',
                 'modul',
                 'suggest',
                 'help'
@@ -1253,9 +2231,15 @@ module.exports = async function handler(req, res) {
         });
     } catch (error) {
         console.error('Central AI API error:', error);
-        return res.status(error.status || 500).json({
+        const status = error.status || 500;
+        if ((status === 429 || status === 503) && error.retryAfterMs) {
+            res.setHeader('Retry-After', String(Math.ceil(error.retryAfterMs / 1000)));
+        }
+        return res.status(status).json({
             error: error.errorTitle || 'Sistem AI Gagal Bekerja',
-            detail_error: error.message
+            detail_error: error.message,
+            retryable: status === 429 || status === 503 || status === 504,
+            retryAfterMs: error.retryAfterMs || (status === 429 ? 8000 : 0)
         });
     }
 };

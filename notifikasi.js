@@ -393,7 +393,7 @@ const NotifikasiApp = (function() {
         const settings = getSettings();
         if (!settings.enabled) return Promise.resolve();
 
-        const { id, title, body, category = 'pengumuman', url = 'index.html', icon = 'icon-192.png', forceAlert = false } = options;
+        const { id, title, body, category = 'pengumuman', url = 'index.html', icon = 'icon-192.png', forceAlert = false, skipOsAlert = false } = options;
         const notifId = id || ('notif_' + Date.now());
 
         // Cek apakah notifikasi dengan ID ini SUDAH PERNAH DIKIRIM ke layar HP
@@ -429,6 +429,10 @@ const NotifikasiApp = (function() {
 
         // Tandai bahwa notifikasi ID ini SUDAH pernah ditampilkan ke HP
         markDelivered(notifId);
+
+        if (skipOsAlert) {
+            return Promise.resolve();
+        }
 
         // 2. Mainkan getar dan audio sintetis HANYA SEKALI saat notifikasi pertama kali masuk
         if (settings.vibrate && 'vibrate' in navigator) {
@@ -482,21 +486,19 @@ const NotifikasiApp = (function() {
             const lastCheck = Number(localStorage.getItem(STORAGE_KEYS.LAST_LATIHAN_CHECK)) || 0;
             const now = Date.now();
 
-            // Cek status latihan hari ini dari storage 'lat_v1_data'
-            const rawLat = localStorage.getItem('lat_v1_data');
+            // Cek status latihan hari ini dari storage utama 'lat_v1'
+            const rawLat = localStorage.getItem('lat_v1') || localStorage.getItem('lat_v1_data');
             let isExpiredOrNew = false;
 
             if (rawLat) {
                 const latData = JSON.parse(rawLat);
-                const activeKey = latData.aktif;
-                if (activeKey && latData.hari && latData.hari[activeKey]) {
-                    const spin = latData.hari[activeKey].spin;
-                    if (spin && spin.ts) {
-                        const sisaWaktu = (spin.ts + 864e5) - now;
-                        // Jika 24 jam sudah berlalu
-                        if (sisaWaktu <= 0) {
-                            isExpiredOrNew = true;
-                        }
+                const entries = Object.values((latData && latData.hari) || {}).filter(h => h && h.spin && h.spin.ts);
+                const latest = entries.sort((a, b) => b.spin.ts - a.spin.ts)[0];
+                if (latest && latest.spin && latest.spin.ts) {
+                    const sisaWaktu = (latest.spin.ts + 864e5) - now;
+                    // Jika 24 jam sudah berlalu
+                    if (sisaWaktu <= 0) {
+                        isExpiredOrNew = true;
                     }
                 } else {
                     isExpiredOrNew = true;
@@ -780,10 +782,425 @@ const NotifikasiApp = (function() {
         }
     }
 
+    // =========================================================================
+    // 5. KOORDINATOR LATAR BELAKANG PEMBUATAN SOAL LATIHAN (Lintas Halaman + Fallback SW)
+    // =========================================================================
+    const latihanBg = (function() {
+        const DBN = 'latihan-db';
+        const STORE = 'kv';
+        const CHANNEL = 'arg_latihan_bg';
+        const TAB_OWNER = 'tab_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        const STAGE_META = {
+            prep:     { pct: 12, label: 'Membaca & menyaring materi PDF…' },
+            pilgan_a: { pct: 28, label: 'Pacu jalur 1/5: Soal Pilihan Ganda (bagian 1)…' },
+            pilgan_b: { pct: 46, label: 'Pacu jalur 2/5: Soal Pilihan Ganda HOTS…' },
+            struktur: { pct: 64, label: 'Pacu jalur 3/5: Merancang Bedah Struktur…' },
+            esai:     { pct: 80, label: 'Pacu jalur 4/5: Menyusun Esai Analitis…' },
+            kritis:   { pct: 94, label: 'Pacu jalur 5/5: Merakit Uji Berpikir Kritis…' }
+        };
+        let activeTabRun = null;
+        let bgChan = null;
+        const doneSeen = new Set();
+
+        function openDb() {
+            if (typeof indexedDB === 'undefined') return Promise.resolve(null);
+            return new Promise(ok => {
+                try {
+                    const r = indexedDB.open(DBN, 1);
+                    r.onupgradeneeded = () => {
+                        if (!r.result.objectStoreNames.contains(STORE)) r.result.createObjectStore(STORE);
+                    };
+                    r.onsuccess = () => ok(r.result);
+                    r.onerror = () => ok(null);
+                } catch (e) { ok(null); }
+            });
+        }
+
+        async function readKey(key) {
+            const db = await openDb();
+            if (!db) return null;
+            return await new Promise(ok => {
+                try {
+                    const q = db.transaction(STORE, 'readonly').objectStore(STORE).get(key);
+                    q.onsuccess = () => ok(q.result || null);
+                    q.onerror = () => ok(null);
+                } catch (e) { ok(null); }
+            });
+        }
+
+        async function writeKey(key, val) {
+            const db = await openDb();
+            if (!db) return false;
+            return await new Promise(ok => {
+                try {
+                    const tx = db.transaction(STORE, 'readwrite');
+                    tx.objectStore(STORE).put(val, key);
+                    tx.oncomplete = () => ok(true);
+                    tx.onerror = () => ok(false);
+                    tx.onabort = () => ok(false);
+                } catch (e) { ok(false); }
+            });
+        }
+
+        async function mergePack(cycleKey, partial, fallbackSpin) {
+            const db = await openDb();
+            if (!db) return false;
+            let mergedState = null;
+            const saved = await new Promise(ok => {
+                try {
+                    const tx = db.transaction(STORE, 'readwrite');
+                    const store = tx.objectStore(STORE);
+                    const g = store.get('state');
+                    g.onsuccess = () => {
+                        const st = g.result && g.result.hari ? g.result : { v: 1, id: TAB_OWNER, u: Date.now(), hari: {} };
+                        if (!st.hari[cycleKey]) {
+                            if (!fallbackSpin) return;
+                            st.hari[cycleKey] = { spin: fallbackSpin, sesi: {}, hasil: {}, pack: {} };
+                        }
+                        const day = st.hari[cycleKey];
+                        day.pack = Object.assign({}, day.pack || {}, partial);
+                        st.u = Date.now();
+                        mergedState = st;
+                        store.put(st, 'state');
+                    };
+                    tx.oncomplete = () => ok(true);
+                    tx.onerror = () => ok(false);
+                    tx.onabort = () => ok(false);
+                } catch (e) { ok(false); }
+            });
+            if (saved && mergedState) {
+                try { localStorage.setItem('lat_v1', JSON.stringify(mergedState)); } catch (e) {}
+            }
+            return saved;
+        }
+
+        async function tryAcquireTabLock() {
+            const db = await openDb();
+            if (!db) return false;
+            return await new Promise(ok => {
+                let granted = false;
+                try {
+                    const tx = db.transaction(STORE, 'readwrite');
+                    const store = tx.objectStore(STORE);
+                    const r = store.get('latihan_lock');
+                    r.onsuccess = () => {
+                        const cur = r.result;
+                        const now = Date.now();
+                        if (!cur || cur.owner === TAB_OWNER || cur.expiresAt < now) {
+                            granted = true;
+                            store.put({ owner: TAB_OWNER, expiresAt: now + 26000 }, 'latihan_lock');
+                        }
+                    };
+                    tx.oncomplete = () => ok(granted);
+                    tx.onerror = () => ok(false);
+                    tx.onabort = () => ok(false);
+                } catch (e) { ok(false); }
+            });
+        }
+
+        function releaseTabLockSyncBestEffort() {
+            openDb().then(db => {
+                if (!db) return;
+                try {
+                    const tx = db.transaction(STORE, 'readwrite');
+                    const store = tx.objectStore(STORE);
+                    const r = store.get('latihan_lock');
+                    r.onsuccess = () => {
+                        const cur = r.result;
+                        if (cur && cur.owner === TAB_OWNER) {
+                            store.put({ owner: TAB_OWNER, expiresAt: 0 }, 'latihan_lock');
+                        }
+                    };
+                } catch (e) {}
+            });
+        }
+
+        function emitLocalAndChannel(type, payload) {
+            const msg = Object.assign({ type }, payload);
+            try {
+                if (typeof BroadcastChannel !== 'undefined') {
+                    const ch = new BroadcastChannel(CHANNEL);
+                    ch.postMessage(msg);
+                    ch.close();
+                }
+            } catch (e) {}
+            onBgEvent(msg);
+        }
+
+        function normalizePgUrut(arr) {
+            const rank = { mudah: 0, sedang: 1, sulit: 2, hots: 3 };
+            return (arr || []).map((s, i) => [s, i])
+                .sort((a, b) => ((rank[a[0].tingkat] ?? 1) - (rank[b[0].tingkat] ?? 1)) || a[1] - b[1])
+                .map(x => x[0]);
+        }
+
+        async function postCentral(body, timeoutMs = 28000) {
+            const ac = new AbortController();
+            const timer = setTimeout(() => ac.abort(), timeoutMs);
+            try {
+                const resp = await fetch('/api/central', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                    signal: ac.signal
+                });
+                const data = await resp.json().catch(() => ({}));
+                if (!resp.ok) {
+                    const raHdr = parseFloat(resp.headers.get('retry-after') || '0');
+                    const err = new Error(data.detail_error || data.error || ('HTTP ' + resp.status));
+                    err.status = resp.status;
+                    err.retryable = resp.status === 429 || resp.status === 503 || resp.status === 504 || resp.status === 502 || !!data.retryable;
+                    err.retryAfterMs = Number(data.retryAfterMs) || (Number.isFinite(raHdr) && raHdr > 0 ? raHdr * 1000 : 0);
+                    throw err;
+                }
+                return data;
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        async function runStageOnce(job) {
+            const allowEmergencyFallback = (job.retryCount || 0) >= 5;
+            const fallbackSpin = { hid: job.hid, judul: job.judul || 'Materi', cover: job.cover || '', ts: job.ts || Date.now() };
+            const basePrep = job.prep ? {
+                handoutId: job.hid,
+                judul: job.prep.judul,
+                ringkasan: job.prep.ringkasan,
+                poinKunci: job.prep.poinKunci,
+                segmen: job.prep.segmen
+            } : { handoutId: job.hid };
+
+            if (job.stage === 'prep') {
+                const res = await postCentral({ action: 'latihan_prep', handoutId: job.hid, allowEmergencyFallback });
+                job.prep = { judul: res.judul || job.judul, ringkasan: res.ringkasan || '', poinKunci: res.poinKunci || '', segmen: Array.isArray(res.segmen) ? res.segmen : [] };
+                await mergePack(job.cycleKey, { ringkasan: job.prep.ringkasan, judul: job.prep.judul, handoutId: job.hid }, fallbackSpin);
+                job.stage = 'pilgan_a';
+                return res.suggestedDelayMs || 350;
+            }
+            if (job.stage === 'pilgan_a') {
+                const res = await postCentral({ action: 'latihan_pilgan', part: 'a', ...basePrep, seed: job.seed, allowEmergencyFallback });
+                job.pilganA = Array.isArray(res.soal) ? res.soal : [];
+                job.stage = 'pilgan_b';
+                return res.suggestedDelayMs || 350;
+            }
+            if (job.stage === 'pilgan_b') {
+                const stems = (job.pilganA || []).map(x => x.p).filter(Boolean);
+                const res = await postCentral({ action: 'latihan_pilgan', part: 'b', ...basePrep, excludeStems: stems, seed: (job.seed || 0) + 1, allowEmergencyFallback });
+                const merged = normalizePgUrut((job.pilganA || []).concat(res.soal || [])).slice(0, 15);
+                const total = merged.reduce((t, s) => t + (s.waktu || 45), 0);
+                await mergePack(job.cycleKey, { ringkasan: (job.prep && job.prep.ringkasan) || '', pilgan: { soal: merged, total } }, fallbackSpin);
+                job.pilganA = null;
+                job.stage = 'struktur';
+                return res.suggestedDelayMs || 350;
+            }
+            if (job.stage === 'struktur') {
+                const res = await postCentral({ action: 'latihan_struktur', ...basePrep, seed: (job.seed || 0) + 2, allowEmergencyFallback });
+                await mergePack(job.cycleKey, { struktur: res.struktur }, fallbackSpin);
+                job.stage = 'esai';
+                return res.suggestedDelayMs || 350;
+            }
+            if (job.stage === 'esai') {
+                const res = await postCentral({ action: 'latihan_esai', ...basePrep, seed: (job.seed || 0) + 3, allowEmergencyFallback });
+                await mergePack(job.cycleKey, { esai: res.esai }, fallbackSpin);
+                job.stage = 'kritis';
+                return res.suggestedDelayMs || 350;
+            }
+            if (job.stage === 'kritis') {
+                const res = await postCentral({ action: 'latihan_kritis', ...basePrep, seed: (job.seed || 0) + 4, allowEmergencyFallback });
+                await mergePack(job.cycleKey, { kritis: res.kritis, dibuat: Date.now(), model: res.model || 'hybrid' }, fallbackSpin);
+                job.stage = 'done';
+                job.status = 'done';
+                job.pct = 100;
+                job.label = 'Semua soal siap dikerjakan!';
+                return 0;
+            }
+            job.stage = 'done'; job.status = 'done'; job.pct = 100;
+            return 0;
+        }
+
+        function runTabFallbackQueue() {
+            if (activeTabRun) return activeTabRun;
+            activeTabRun = (async () => {
+                try {
+                    const gotLock = await tryAcquireTabLock();
+                    if (!gotLock) return;
+
+                    let job = await readKey('latihan_job');
+                    if (!job || job.status === 'done' || job.status === 'error') return;
+
+                    if (job.stage === 'prep' && (job.retryCount || 0) === 0 && !job.initialJitterDone) {
+                        job.initialJitterDone = true;
+                        await writeKey('latihan_job', job);
+                        await new Promise(r => setTimeout(r, 120 + Math.floor(Math.random() * 850)));
+                    }
+
+                    let steps = 0;
+                    while (job && job.status !== 'done' && job.status !== 'error' && steps < 28) {
+                        steps++;
+                        const fresh = await readKey('latihan_job');
+                        if (!fresh || fresh.id !== job.id) {
+                            job = fresh;
+                            if (!job || job.status === 'done' || job.status === 'error') break;
+                        }
+                        if (!(await tryAcquireTabLock())) break;
+
+                        const meta = STAGE_META[job.stage] || { pct: 95, label: 'Menyiapkan soal…' };
+                        job.status = 'running';
+                        job.pct = meta.pct;
+                        job.label = meta.label;
+                        job.errorMsg = '';
+                        job.updatedAt = Date.now();
+                        await writeKey('latihan_job', job);
+                        emitLocalAndChannel('LATIHAN_PROGRESS', { job });
+
+                        try {
+                            const waitNext = await runStageOnce(job);
+                            job.retryCount = 0;
+                            job.updatedAt = Date.now();
+                            await writeKey('latihan_job', job);
+
+                            if (job.status === 'done') {
+                                emitLocalAndChannel('LATIHAN_DONE', { job, osNotified: false });
+                                break;
+                            } else {
+                                emitLocalAndChannel('LATIHAN_PROGRESS', { job });
+                                if (waitNext > 0) await new Promise(r => setTimeout(r, waitNext + Math.floor(Math.random() * 350)));
+                            }
+                        } catch (err) {
+                            const retryable = err.name === 'AbortError' || err.retryable || err.status === 429 || err.status === 503 || err.status === 504 || err.status === 502 || /network|fetch/i.test(String(err.message || ''));
+                            if (!retryable && (err.status === 400 || err.status === 404 || err.status === 413)) {
+                                job.status = 'error';
+                                job.errorMsg = err.message || 'Materi tidak dapat diproses.';
+                                job.updatedAt = Date.now();
+                                await writeKey('latihan_job', job);
+                                emitLocalAndChannel('LATIHAN_ERROR', { job });
+                                break;
+                            }
+                            job.retryCount = (job.retryCount || 0) + 1;
+                            if (job.retryCount > 9) {
+                                job.status = 'error';
+                                job.errorMsg = err.message || 'Antrean terlalu padat. Ketuk Coba Lagi.';
+                                job.updatedAt = Date.now();
+                                await writeKey('latihan_job', job);
+                                emitLocalAndChannel('LATIHAN_ERROR', { job });
+                                break;
+                            }
+                            const expWait = Math.min(14000, Math.round(1800 * Math.pow(1.45, Math.min(job.retryCount, 5))));
+                            const waitMs = Math.max(1500, Math.min(18000, err.retryAfterMs || expWait)) + Math.floor(Math.random() * 1200);
+                            job.status = 'waiting';
+                            job.label = `Menunggu giliran antrean AI (${Math.ceil(waitMs / 1000)} dtk)…`;
+                            job.updatedAt = Date.now();
+                            await writeKey('latihan_job', job);
+                            emitLocalAndChannel('LATIHAN_PROGRESS', { job });
+                            await new Promise(r => setTimeout(r, waitMs));
+                        }
+                    }
+                } finally {
+                    releaseTabLockSyncBestEffort();
+                    activeTabRun = null;
+                }
+            })();
+            return activeTabRun;
+        }
+
+        async function wakeSwQueue(type = 'LATIHAN_RESUME') {
+            try {
+                if (!('serviceWorker' in navigator)) return false;
+                let sent = false;
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({ type });
+                    sent = true;
+                }
+                const reg = await navigator.serviceWorker.getRegistration().catch(() => null);
+                if (reg) {
+                    const target = reg.active || reg.waiting || reg.installing;
+                    if (target && target !== navigator.serviceWorker.controller) {
+                        target.postMessage({ type });
+                        sent = true;
+                    }
+                }
+                return sent;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function scheduleFallbackCheck(expectedJobId, waitMs = 2200) {
+            setTimeout(async () => {
+                const job = await readKey('latihan_job');
+                if (!job || job.status === 'done' || job.status === 'error') return;
+                if (expectedJobId && job.id !== expectedJobId) return;
+                const lock = await readKey('latihan_lock');
+                if (!lock || lock.expiresAt < Date.now()) {
+                    await wakeSwQueue('LATIHAN_RESUME');
+                    await new Promise(r => setTimeout(r, 400));
+                    const lock2 = await readKey('latihan_lock');
+                    if (!lock2 || lock2.expiresAt < Date.now()) {
+                        runTabFallbackQueue();
+                    }
+                }
+            }, waitMs);
+        }
+
+        function onBgEvent(msg) {
+            if (!msg || !msg.type || !msg.job) return;
+            const diHalamanLatihan = /\/latihan(\.html)?$/i.test(location.pathname);
+            if (msg.type === 'LATIHAN_DONE') {
+                const doneKey = msg.job.id || msg.job.cycleKey;
+                if (doneSeen.has(doneKey)) return;
+                doneSeen.add(doneKey);
+                if (!diHalamanLatihan) {
+                    tampilkanToast(`🎯 Soal latihan "${msg.job.judul}" telah siap dikerjakan!`);
+                    kirimNotifikasiKePonsel({
+                        id: 'latihan_ready_' + msg.job.cycleKey,
+                        title: '🎯 Soal Latihan Hari Ini Siap!',
+                        body: `Semua paket soal untuk "${msg.job.judul}" telah selesai disiapkan dan siap dikerjakan.`,
+                        category: 'latihan',
+                        url: 'latihan.html',
+                        skipOsAlert: !!msg.osNotified
+                    });
+                }
+            }
+        }
+
+        function startBridge() {
+            window.addEventListener('pagehide', releaseTabLockSyncBestEffort);
+            try {
+                if (typeof BroadcastChannel !== 'undefined' && !bgChan) {
+                    bgChan = new BroadcastChannel(CHANNEL);
+                    bgChan.onmessage = (e) => onBgEvent(e.data);
+                }
+            } catch (e) {}
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.addEventListener('message', (e) => onBgEvent(e.data));
+            }
+            const diHalamanLatihan = /\/latihan(\.html)?$/i.test(location.pathname);
+            if (!diHalamanLatihan) {
+                setTimeout(async () => {
+                    const job = await readKey('latihan_job');
+                    if (job && job.status !== 'done' && job.status !== 'error') {
+                        await wakeSwQueue('LATIHAN_RESUME');
+                        scheduleFallbackCheck(job.id, 2800);
+                    }
+                }, 1800);
+            }
+        }
+
+        return {
+            readJob: () => readKey('latihan_job'),
+            writeJob: (j) => writeKey('latihan_job', j),
+            wakeSwQueue,
+            scheduleFallbackCheck,
+            runTabFallbackQueue,
+            startBridge
+        };
+    })();
+
     // INISIALISASI OTOMATIS
     function init() {
         updateBadgeUI();
         updatePermissionBannerUI();
+        latihanBg.startBridge();
 
         // Jalankan pengecekan notifikasi otomatis saat aplikasi dibuka
         setTimeout(() => {
@@ -826,7 +1243,8 @@ const NotifikasiApp = (function() {
         renderNotificationCenter,
         getNotifications,
         getSettings,
-        saveSettings
+        saveSettings,
+        latihanBg
     };
 })();
 
